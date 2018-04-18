@@ -1,0 +1,21 @@
+language: python
+
+python:
+  - 3.6
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+
+install:
+  - pip install -r requirements.txt
+  - pip install coveralls
+  - pip install pycodestyle
+
+script:
+  - coverage run --omit=*.virtualenvs*,*virtualenv* manage.py test .
+  - pycodestyle --count --show-source --exclude=migrations .
+
+after_success:
+  coveralls
