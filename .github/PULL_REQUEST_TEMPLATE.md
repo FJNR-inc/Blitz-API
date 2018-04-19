@@ -17,6 +17,7 @@
 Verification :
  -  [ ] My branch name respect the standard defined in `CONTRIBUTING.md`
  -  [ ] All my commits respect the standard defined in `CONTRIBUTING.md`
+ -  [ ] My additions are I18N
  -  [ ] This Pull-Request fully meets the requirements defined in the issue
  -  [ ] I added or modified the attached tests
  -  [ ] I added or modified the documentation
