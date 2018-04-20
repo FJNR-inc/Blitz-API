@@ -8,7 +8,7 @@ User = get_user_model()
 
 class AuthCustomTokenSerializer(serializers.Serializer):
     """
-
+    Verifies if the provided login is an email or username
     """
     login = serializers.CharField()
     password = serializers.CharField(style={'input_type': 'password'})
@@ -30,10 +30,10 @@ class AuthCustomTokenSerializer(serializers.Serializer):
 
             if not user:
                 msg = _('Unable to log in with provided credentials.')
-                raise serializers.ValidationError(msg, code='authorization')
+                raise serializers.ValidationError(msg)
         else:
             msg = _('Must include "login" and "password".')
-            raise serializers.ValidationError(msg, code='authorization')
+            raise serializers.ValidationError(msg)
 
         attrs['user'] = user
 

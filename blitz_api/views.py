@@ -29,29 +29,10 @@ class ObtainTemporaryAuthToken(ObtainAuthToken):
                 'USE_AUTHENTICATION_BACKENDS'
                 in CONFIG and CONFIG['USE_AUTHENTICATION_BACKENDS'])):
 
-            user = None
-            try:
-                user = serializer.validated_data['user']
-            except KeyError:
-                if ('email' in request.data and
-                        'username' in request.data and
-                        'password' in request.data):
-
-                    user = authenticate(
-                        email=request.data['email'],
-                        username=request.data['username'],
-                        password=request.data['password']
-                    )
-
-                elif ('email' in request.data and
-                        'password' in request.data):
-
-                    user = authenticate(
-                        email=request.data['email'],
-                        password=request.data['password']
-                    )
+            user = serializer.validated_data['user']
 
             token = None
+
             if user:
                 token, _created = TemporaryToken.objects.get_or_create(
                     user=user
