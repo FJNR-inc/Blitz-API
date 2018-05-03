@@ -20,3 +20,5 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
 admin.site.register(User, UserAdmin)
 admin.site.register(Organization, CustomOrganizationAdmin)
 admin.site.register(Domain)
+admin.site.register(ActionToken)
+admin.site.register(TemporaryToken)
