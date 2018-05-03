@@ -85,7 +85,7 @@ DATABASES = {
     }
 }
 
-# Custom user models
+# Custom user model
 
 AUTH_USER_MODEL = 'blitz_api.User'
 
@@ -172,3 +172,27 @@ ACTIVATION_TOKENS = {
     'MINUTES': 2880,
 }
 
+# Email service configuration.
+# Supported services: SendinBlue.
+
+SETTINGS_IMAILING = {
+    "SERVICE": "SendinBlue",
+    "API_KEY": "example_api_key",
+    "EMAIL_FROM": "admin@example.com",
+    "TEMPLATES": {
+        "CONFIRM_SIGN_UP": "example_template_id",
+        "FORGOT_PASSWORD": "example_template_id",
+    }
+}
+
+# User specific settings
+
+LOCAL_SETTINGS = {
+    'ORGANIZATION': "Blitz Paradisio",
+    "EMAIL_SERVICE": False,
+    "AUTO_ACTIVATE_USER": False,
+    "FRONTEND_INTEGRATION": {
+        "ACTIVATION_URL": "example.com/activate?activation_token={{token}}",
+        "FORGOT_PASSWORD_URL": "example.com/forgot_password?token={{token}}",
+    },
+}
