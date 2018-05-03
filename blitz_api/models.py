@@ -14,7 +14,70 @@ from .managers import ActionTokenManager
 
 class User(AbstractUser):
     """Abstraction of the base User model. Needed to extend in the future."""
-    pass
+
+    ACADEMIC_LEVEL_CHOICES = (
+        ('SEC', _("Secondary")),
+        ('COL', _("College")),
+        ('UNI', _("University"))
+    )
+
+    ACADEMIC_FIELD_CHOICES = (
+        ('SCI', _("Science")),
+        ('SOC', _("Social")),
+    )
+
+    GENDER_CHOICES = (
+        ('M', _("Male")),
+        ('F', _("Female")),
+        ('T', _("Trans")),
+        ('A', _("Do not wish to identify myself")),
+    )
+
+    phone = models.CharField(
+        verbose_name=_("Phone number"),
+        blank=True,
+        null=True,
+        max_length=17,
+    )
+    other_phone = models.CharField(
+        verbose_name=_("Other number"),
+        blank=True,
+        null=True,
+        max_length=17,
+    )
+    university = models.ForeignKey(
+        'Organization',
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+    academic_level = models.CharField(
+        blank=True,
+        null=True,
+        max_length=100,
+        choices=ACADEMIC_LEVEL_CHOICES,
+        verbose_name=_("Academic level"),
+    )
+    academic_field = models.CharField(
+        blank=True,
+        null=True,
+        max_length=100,
+        choices=ACADEMIC_FIELD_CHOICES,
+        verbose_name=_("Academic field"),
+    )
+    birthdate = models.DateField(
+        blank=True,
+        null=True,
+        max_length=100,
+        verbose_name=_("Birthdate"),
+    )
+    gender = models.CharField(
+        blank=True,
+        null=True,
+        max_length=100,
+        choices=GENDER_CHOICES,
+        verbose_name=_("Gender"),
+    )
 
 
 class TemporaryToken(Token):
