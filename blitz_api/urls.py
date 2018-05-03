@@ -14,16 +14,49 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from rest_framework.documentation import include_docs_urls
+from rest_framework.routers import DefaultRouter
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.conf.urls import include
 
-from .views import ObtainTemporaryAuthToken
+from . import views
+
+
+class OptionalSlashDefaultRouter(DefaultRouter):
+    """ Subclass of DefaultRouter to make the trailing slash optional """
+    def __init__(self, *args, **kwargs):
+        super(DefaultRouter, self).__init__(*args, **kwargs)
+        self.trailing_slash = '/?'
+
+
+# Create a router and register our viewsets with it.
+router = OptionalSlashDefaultRouter()
+router.register('users', views.UserViewSet)
+router.register('domains', views.DomainViewSet)
+router.register('organizations', views.OrganizationViewSet)
 
 urlpatterns = [
     path(
         'authentication',
-        ObtainTemporaryAuthToken.as_view(),
+        views.ObtainTemporaryAuthToken.as_view(),
         name='token_api'
+    ),
+    path(
+        'users/activate',
+        views.UsersActivation.as_view(),
+        name='users_activation',
+    ),
+    # Forgot password
+    path(
+        'reset_password',
+        views.ResetPassword.as_view(),
+        name='reset_password'
+        ),
+    path(
+        'change_password',
+        views.ChangePassword.as_view(),
+        name='change_password'
     ),
     path(
         'admin/', admin.site.urls
@@ -31,9 +64,11 @@ urlpatterns = [
     path(
         'docs/',
         include_docs_urls(
-            title='Blitz API',
+            title=settings.LOCAL_SETTINGS['ORGANIZATION'] + " API",
             authentication_classes=[],
             permission_classes=[]
         )
-    )
+    ),
+    path('api-auth/', include('rest_framework.urls')),
+    path('', include(router.urls)),  # includes router generated URL
 ]
