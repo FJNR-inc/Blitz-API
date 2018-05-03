@@ -14,8 +14,8 @@ install:
   - pip install pycodestyle
 
 script:
-  - coverage run --omit=*.virtualenvs*,*virtualenv* manage.py test .
-  - pycodestyle --count --show-source --exclude=migrations .
+  - coverage run --omit=*.virtualenvs*,*virtualenv*,*__init__*,*migrations/* manage.py test .
+  - pycodestyle --count --show-source --exclude=migrations,.*,__pycache__,docs,env  .
 
 after_success:
   coveralls
