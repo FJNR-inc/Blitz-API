@@ -219,3 +219,14 @@ class CustomAuthTokenSerializer(AuthTokenSerializer):
         attrs['user'] = user
 
         return attrs
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+
+    username = serializers.CharField(required=True)
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+
+    token = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
