@@ -1,6 +1,8 @@
 import re
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from rest_framework.authtoken.serializers import AuthTokenSerializer
+from rest_framework.compat import authenticate
 from django.contrib.auth import get_user_model, password_validation
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
@@ -10,7 +12,6 @@ from .models import Domain, Organization, ActionToken
 User = get_user_model()
 
 
-class AuthCustomTokenSerializer(serializers.Serializer):
 # Validator for phone numbers
 def phone_number_validator(phone):
     reg = re.compile('^([+][0-9]{1,2})?[0-9]{9,10}$')
@@ -165,33 +166,38 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         )
 
 
+class CustomAuthTokenSerializer(AuthTokenSerializer):
     """
-    Verifies if the provided login is an email or username
+    Subclass of default AuthTokenSerializer to enable email authentication
     """
-    login = serializers.CharField()
-    password = serializers.CharField(style={'input_type': 'password'})
+    username = serializers.CharField(label=_("Username"))
+    password = serializers.CharField(
+        label=_("Password"),
+        style={'input_type': 'password'},
+        trim_whitespace=False
+    )
 
     def validate(self, attrs):
-        login = attrs.get('login')
+        username = attrs.get('username')
         password = attrs.get('password')
 
-        if login and password:
+        if username and password:
             try:
-                user_obj = User.objects.get(email=login)
+                user_obj = User.objects.get(email=username)
                 if user_obj:
-                    login = user_obj.username
+                    username = user_obj.username
             except User.DoesNotExist:
                 pass
 
             user = authenticate(request=self.context.get('request'),
-                                username=login, password=password)
+                                username=username, password=password)
 
             if not user:
                 msg = _('Unable to log in with provided credentials.')
-                raise serializers.ValidationError(msg)
+                raise serializers.ValidationError(msg, code='authorization')
         else:
-            msg = _('Must include "login" and "password".')
-            raise serializers.ValidationError(msg)
+            msg = _('Must include "username" and "password".')
+            raise serializers.ValidationError(msg, code='authorization')
 
         attrs['user'] = user
 
