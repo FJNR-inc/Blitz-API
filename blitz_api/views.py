@@ -175,6 +175,37 @@ class UsersActivation(APIView):
             )
 
 
+class DomainViewSet(viewsets.ModelViewSet):
+    """
+    retrieve:
+    Return the given domain.
+
+    list:
+    Return a list of all the existing domains.
+
+    create:
+    Create a new domain instance.
+    """
+    serializer_class = serializers.DomainSerializer
+    queryset = Domain.objects.all()
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+
+
+class OrganizationViewSet(viewsets.ModelViewSet):
+    """
+    retrieve:
+    Return the given organization.
+
+    list:
+    Return a list of all the existing organizations.
+
+    create:
+    Create a new organization instance.
+    """
+    serializer_class = serializers.OrganizationSerializer
+    queryset = Organization.objects.all()
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+
 class ObtainTemporaryAuthToken(ObtainAuthToken):
     """
     Enables username/password exchange for expiring token.
@@ -217,5 +248,3 @@ class ObtainTemporaryAuthToken(ObtainAuthToken):
             {'error': error},
             status=status.HTTP_400_BAD_REQUEST
         )
-
-

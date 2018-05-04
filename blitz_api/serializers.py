@@ -23,6 +23,23 @@ def phone_number_validator(phone):
     return phone
 
 
+class DomainSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Domain
+        fields = '__all__'
+
+
+class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
+    name = serializers.CharField(
+        max_length=100,
+        required=True,
+    )
+
+    class Meta:
+        model = Organization
+        fields = '__all__'
+
+
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     new_password = serializers.CharField(max_length=128, required=False)
