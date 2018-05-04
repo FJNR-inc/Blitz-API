@@ -27,7 +27,7 @@ class ObtainTemporaryAuthTokenTests(APITestCase):
         Ensure we can authenticate on the platform.
         """
         data = {
-            'login': self.user.username,
+            'username': self.user.username,
             'password': 'Test123!'
         }
 
@@ -44,7 +44,7 @@ class ObtainTemporaryAuthTokenTests(APITestCase):
         Ensure we can authenticate on the platform when token is expired.
         """
         data = {
-            'login': self.user.username,
+            'username': self.user.username,
             'password': 'Test123!'
         }
 
@@ -71,7 +71,7 @@ class ObtainTemporaryAuthTokenTests(APITestCase):
         Ensure we can't authenticate with a wrong password'
         """
         data = {
-            'login': self.user.username,
+            'username': self.user.username,
             'password': 'test123!'  # No caps on the first letter
         }
 
@@ -88,7 +88,7 @@ class ObtainTemporaryAuthTokenTests(APITestCase):
         Ensure we can't authenticate with a wrong username
         """
         data = {
-            'login': 'Jon',  # Forget the `h` in `John`
+            'username': 'Jon',  # Forget the `h` in `John`
             'password': 'Test123!'
         }
 
@@ -105,7 +105,7 @@ class ObtainTemporaryAuthTokenTests(APITestCase):
         Ensure we can't authenticate if user is inactive
         """
         data = {
-            'login': self.user.username,
+            'username': self.user.username,
             'password': 'Test123!'
         }
 
@@ -129,7 +129,7 @@ class ObtainTemporaryAuthTokenTests(APITestCase):
 
     def test_authenticate_missing_parameter(self):
         """
-        Ensure we can't authenticate if "login" is not provided.
+        Ensure we can't authenticate if "username" is not provided.
         """
         data = {
             'password': 'Test123!'
@@ -138,7 +138,7 @@ class ObtainTemporaryAuthTokenTests(APITestCase):
         response = self.client.post(self.url, data, format='json')
 
         content = {
-            'login': [
+            'username': [
                 'This field is required.'
                 ]
             }

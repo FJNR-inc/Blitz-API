@@ -185,41 +185,37 @@ class ObtainTemporaryAuthToken(ObtainAuthToken):
         """
         Respond to POSTed username/password with token.
         """
-        serializer = serializers.AuthCustomTokenSerializer(data=request.data)
-
         CONFIG = settings.REST_FRAMEWORK_TEMPORARY_TOKENS
+        serializer = serializers.CustomAuthTokenSerializer(
+            data=request.data,
+            context={'request': request},
+        )
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token = None
 
-        if (serializer.is_valid() or (
-                'USE_AUTHENTICATION_BACKENDS'
-                in CONFIG and CONFIG['USE_AUTHENTICATION_BACKENDS'])):
+        token, _created = TemporaryToken.objects.get_or_create(
+            user=user
+        )
 
-            user = serializer.validated_data['user']
+        if token and token.expired:
+            # If the token is expired, generate a new one.
+            token.delete()
+            expires = timezone.now() + timezone.timedelta(
+                minutes=CONFIG['MINUTES']
+            )
 
-            token = None
+            token = TemporaryToken.objects.create(
+                user=user, expires=expires)
 
-            if user:
-                token, _created = TemporaryToken.objects.get_or_create(
-                    user=user
-                )
+        if token:
+            data = {'token': token.key}
+            return Response(data)
 
-            if token and token.expired:
-                # If the token is expired, generate a new one.
-                token.delete()
-                expires = timezone.now() + timezone.timedelta(
-                    minutes=CONFIG['MINUTES']
-                )
+        error = _("Could not authenticate user.")
+        return Response(
+            {'error': error},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-                token = TemporaryToken.objects.create(
-                    user=user, expires=expires)
 
-            if token:
-                data = {'token': token.key}
-                return Response(data)
-            else:
-                error = _("Could not authenticate user.")
-                return Response(
-                    {'error': error},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
