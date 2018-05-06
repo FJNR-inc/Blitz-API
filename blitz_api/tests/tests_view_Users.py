@@ -59,7 +59,7 @@ class UsersTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(json.loads(response.content)['phone'], '1234567890')
 
-        user = User.objects.get(username="John")
+        user = User.objects.get(email="John@mailinator.com")
         activation_token = ActionToken.objects.filter(
             user=user,
             type='account_activation',
@@ -84,8 +84,7 @@ class UsersTests(APITestCase):
         content = {
             'email': ['This field is required.'],
             'password': ['This field is required.'],
-            'university': ['This field is required.'],
-            'username': ['This field is required.']
+            'university': ['This field is required.']
         }
         self.assertEqual(json.loads(response.content), content)
 
@@ -223,7 +222,7 @@ class UsersTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(json.loads(response.content)['phone'], '1234567890')
 
-        user = User.objects.get(username="John")
+        user = User.objects.get(email="John@mailinator.com")
         activation_token = ActionToken.objects.filter(
             user=user,
             type='account_activation',
@@ -279,7 +278,7 @@ class UsersTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(json.loads(response.content), content)
 
-        user = User.objects.get(username="John")
+        user = User.objects.get(email="John@mailinator.com")
         activation_token = ActionToken.objects.filter(
             user=user,
             type='account_activation',
@@ -335,7 +334,7 @@ class UsersTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(json.loads(response.content), content)
 
-        user = User.objects.get(username="John")
+        user = User.objects.get(email="John@mailinator.com")
         activation_token = ActionToken.objects.filter(
             user=user,
             type='account_activation',
@@ -355,13 +354,12 @@ class UsersTests(APITestCase):
         self.assertEqual(json.loads(response.content)['count'], 2)
 
         first_user = json.loads(response.content)['results'][0]
-        self.assertEqual(first_user['username'], self.user.username)
+        self.assertEqual(first_user['email'], self.user.email)
 
         # Check the system doesn't return attributes not expected
         attributes = [
             'id',
             'url',
-            'username',
             'email',
             'first_name',
             'last_name',

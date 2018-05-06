@@ -42,6 +42,7 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
+    username = serializers.HiddenField(default=None)
     new_password = serializers.CharField(max_length=128, required=False)
     email = serializers.EmailField(
         label=_('Email address'),
@@ -77,10 +78,11 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         """
         Check that the university exists.
         """
-        org = Organization.objects.filter(name=value['name'])
+        if 'name' in value:
+            org = Organization.objects.filter(name=value['name'])
 
-        if org:
-            return org[0]
+            if org:
+                return org[0]
         raise serializers.ValidationError(_("This university does not exist."))
 
     def validate_phone(self, value):
@@ -137,6 +139,11 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         )
 
         return user
+
+    def validate(self, attrs):
+        if 'email' in attrs:
+            attrs['username'] = attrs['email']
+        return attrs
 
     def update(self, instance, validated_data):
         # Drop keys that cannot be updated. None ensures that no exception is
@@ -223,7 +230,7 @@ class CustomAuthTokenSerializer(AuthTokenSerializer):
 
 class ResetPasswordSerializer(serializers.Serializer):
 
-    username = serializers.CharField(required=True)
+    email = serializers.CharField(required=True)
 
 
 class ChangePasswordSerializer(serializers.Serializer):
