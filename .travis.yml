@@ -14,7 +14,7 @@ install:
   - pip install pycodestyle
 
 script:
-  - coverage run --omit=*.virtualenvs*,*virtualenv*,*__init__*,*migrations/* manage.py test .
+  - coverage run --include=blitz_api/* --omit=*.virtualenvs*,*virtualenv*,*__init__*,*migrations/*,*tests/* manage.py test .
   - pycodestyle --count --show-source --exclude=migrations,.*,__pycache__,docs,env  .
 
 after_success:
