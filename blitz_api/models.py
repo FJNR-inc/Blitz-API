@@ -222,3 +222,35 @@ class Domain(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class AcademicLevel(models.Model):
+    """Academic level such as college or university"""
+
+    class Meta:
+        verbose_name = _('Academic level')
+        verbose_name_plural = _('Academic levels')
+
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=100,
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class AcademicField(models.Model):
+    """Academic field such as engineering or health"""
+
+    class Meta:
+        verbose_name = _('Academic field')
+        verbose_name_plural = _('Academic fields')
+
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=100,
+    )
+
+    def __str__(self):
+        return self.name

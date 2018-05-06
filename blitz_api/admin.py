@@ -4,7 +4,10 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import AbstractUser, Permission
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
-from .models import User, Organization, Domain, TemporaryToken, ActionToken
+from .models import (
+    User, Organization, Domain, TemporaryToken, ActionToken, AcademicField,
+    AcademicLevel,
+)
 
 
 class CustomUserChangeForm(UserChangeForm):
@@ -71,3 +74,5 @@ admin.site.register(Organization, CustomOrganizationAdmin)
 admin.site.register(Domain)
 admin.site.register(ActionToken, ActionTokenAdmin)
 admin.site.register(TemporaryToken)
+admin.site.register(AcademicField)
+admin.site.register(AcademicLevel)
