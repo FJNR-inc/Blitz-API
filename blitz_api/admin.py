@@ -61,8 +61,13 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
     inlines = (DomainInline, )
 
 
+class ActionTokenAdmin(admin.ModelAdmin):
+    list_display = ('key', 'type', 'user',)
+    search_fields = ('type', 'user',)
+
+
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(Organization, CustomOrganizationAdmin)
 admin.site.register(Domain)
-admin.site.register(ActionToken)
+admin.site.register(ActionToken, ActionTokenAdmin)
 admin.site.register(TemporaryToken)
