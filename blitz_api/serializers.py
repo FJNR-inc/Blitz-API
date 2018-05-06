@@ -7,7 +7,9 @@ from django.contrib.auth import get_user_model, password_validation
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 
-from .models import Domain, Organization, ActionToken
+from .models import (
+    Domain, Organization, ActionToken, AcademicField, AcademicLevel,
+)
 
 User = get_user_model()
 
@@ -37,6 +39,28 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Organization
+        fields = '__all__'
+
+
+class AcademicLevelSerializer(serializers.HyperlinkedModelSerializer):
+    name = serializers.CharField(
+        max_length=100,
+        required=True,
+    )
+
+    class Meta:
+        model = AcademicLevel
+        fields = '__all__'
+
+
+class AcademicFieldSerializer(serializers.HyperlinkedModelSerializer):
+    name = serializers.CharField(
+        max_length=100,
+        required=True,
+    )
+
+    class Meta:
+        model = AcademicField
         fields = '__all__'
 
 
