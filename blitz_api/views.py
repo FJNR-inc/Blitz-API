@@ -16,7 +16,10 @@ from rest_framework.exceptions import PermissionDenied
 
 from imailing.Mailing import IMailing
 
-from .models import TemporaryToken, ActionToken, Domain, Organization
+from .models import (
+    TemporaryToken, ActionToken, Domain, Organization, AcademicLevel,
+    AcademicField,
+)
 
 from . import serializers, permissions
 
@@ -393,3 +396,35 @@ class ObtainTemporaryAuthToken(ObtainAuthToken):
             {'error': error},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class AcademicLevelViewSet(viewsets.ModelViewSet):
+    """
+    retrieve:
+    Return the given academic level.
+
+    list:
+    Return a list of all the existing academic levels.
+
+    create:
+    Create a new academic level instance.
+    """
+    serializer_class = serializers.AcademicLevelSerializer
+    queryset = AcademicLevel.objects.all()
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+
+
+class AcademicFieldViewSet(viewsets.ModelViewSet):
+    """
+    retrieve:
+    Return the given academic field.
+
+    list:
+    Return a list of all the existing academic fields.
+
+    create:
+    Create a new academic field instance.
+    """
+    serializer_class = serializers.AcademicFieldSerializer
+    queryset = AcademicField.objects.all()
+    permission_classes = (permissions.IsAdminOrReadOnly,)
