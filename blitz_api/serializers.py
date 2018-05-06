@@ -176,6 +176,12 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
             'password': {'write_only': True},
             'new_password': {'write_only': True},
             'university': {'required': True},
+            'academic_level': {'required': True},
+            'academic_field': {'required': True},
+            'gender': {'required': True},
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+            'birthdate': {'required': True},
         }
         read_only_fields = (
             'id',
