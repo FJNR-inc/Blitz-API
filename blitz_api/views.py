@@ -72,7 +72,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
-        user = User.objects.get(username=request.data["username"])
+        user = User.objects.get(email=request.data["email"])
         if response.status_code == status.HTTP_201_CREATED:
             if settings.LOCAL_SETTINGS['AUTO_ACTIVATE_USER'] is True:
                 user.is_active = True
@@ -129,7 +129,7 @@ class UsersActivation(APIView):
 
     def post(self, request):
         """
-        Respond to POSTed username/password with token.
+        Respond to POSTed email/password with token.
         """
         activation_token = request.data.get('activation_token')
 
@@ -192,12 +192,12 @@ class ResetPassword(APIView):
         serializer = serializers.ResetPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # get user from the username given in data
+        # get user from the email given in data
         try:
-            user = User.objects.get(username=request.data["username"])
+            user = User.objects.get(email=request.data["email"])
         except User.DoesNotExist:
             content = {
-                'detail': _("No account with this username."),
+                'detail': _("No account with this email."),
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
@@ -353,13 +353,13 @@ class OrganizationViewSet(viewsets.ModelViewSet):
 
 class ObtainTemporaryAuthToken(ObtainAuthToken):
     """
-    Enables username/password exchange for expiring token.
+    Enables email/password exchange for expiring token.
     """
     model = TemporaryToken
 
     def post(self, request):
         """
-        Respond to POSTed username/password with token.
+        Respond to POSTed email/password with token.
         """
         CONFIG = settings.REST_FRAMEWORK_TEMPORARY_TOKENS
         serializer = serializers.CustomAuthTokenSerializer(

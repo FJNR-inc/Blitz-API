@@ -36,7 +36,7 @@ class ResetPasswordTests(APITestCase):
         Ensure we can have a new token to change our password
         """
         data = {
-            'username': self.user.username,
+            'email': self.user.email,
         }
 
         instance_imailing = imailing.create_instance.return_value
@@ -71,10 +71,10 @@ class ResetPasswordTests(APITestCase):
         }
     )
     @mock.patch('blitz_api.views.IMailing')
-    def test_create_new_token_without_username_param(self, imailing):
+    def test_create_new_token_without_email_param(self, imailing):
         """
         Ensure we can't have a new token to change our password without
-        give our username in param
+        give our email in param
         """
         data = dict()
 
@@ -91,7 +91,7 @@ class ResetPasswordTests(APITestCase):
         )
 
         content = {
-            'username': ["This field is required."],
+            'email': ["This field is required."],
         }
         self.assertEqual(json.loads(response.content), content)
 
@@ -108,13 +108,13 @@ class ResetPasswordTests(APITestCase):
         }
     )
     @mock.patch('blitz_api.views.IMailing')
-    def test_create_new_token_with_an_empty_username_param(self, imailing):
+    def test_create_new_token_with_an_empty_email_param(self, imailing):
         """
         Ensure we can't have a new token to change our password without
-        give our username in param
+        give our email in param
         """
         data = {
-            'username': '',
+            'email': '',
         }
 
         response = self.client.post(
@@ -130,7 +130,7 @@ class ResetPasswordTests(APITestCase):
         )
 
         content = {
-            'username': ["This field may not be blank."],
+            'email': ["This field may not be blank."],
         }
         self.assertEqual(json.loads(response.content), content)
 
@@ -147,13 +147,13 @@ class ResetPasswordTests(APITestCase):
         }
     )
     @mock.patch('blitz_api.views.IMailing')
-    def test_create_new_token_with_bad_username(self, imailing):
+    def test_create_new_token_with_bad_email(self, imailing):
         """
         Ensure we can't have a new token to change our password without
-        a valid username
+        a valid email
         """
         data = {
-            'username': 'test',
+            'email': 'test',
         }
 
         response = self.client.post(
@@ -169,7 +169,7 @@ class ResetPasswordTests(APITestCase):
         )
 
         content = {
-            'detail': "No account with this username.",
+            'detail': "No account with this email.",
         }
         self.assertEqual(json.loads(response.content), content)
 
@@ -197,7 +197,7 @@ class ResetPasswordTests(APITestCase):
         )
 
         data = {
-            'username': self.user.username,
+            'email': self.user.email,
         }
 
         instance_imailing = imailing.create_instance.return_value
@@ -238,7 +238,7 @@ class ResetPasswordTests(APITestCase):
         Ensure we can have a new token to change our password
         """
         data = {
-            'username': self.user.username,
+            'email': self.user.email,
         }
 
         instance_imailing = imailing.create_instance.return_value
@@ -278,7 +278,7 @@ class ResetPasswordTests(APITestCase):
         Ensure we can have a new token to change our password
         """
         data = {
-            'username': self.user.username,
+            'email': self.user.email,
         }
 
         instance_imailing = imailing.create_instance.return_value

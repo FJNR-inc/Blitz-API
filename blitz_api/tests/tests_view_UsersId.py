@@ -82,7 +82,6 @@ class UsersIdTests(APITestCase):
         attributes = [
             'id',
             'url',
-            'username',
             'email',
             'first_name',
             'last_name',
@@ -151,7 +150,6 @@ class UsersIdTests(APITestCase):
         attributes = [
             'id',
             'url',
-            'username',
             'email',
             'first_name',
             'last_name',
