@@ -37,6 +37,11 @@ router.register('domains', views.DomainViewSet)
 router.register('organizations', views.OrganizationViewSet)
 router.register('academic_levels', views.AcademicLevelViewSet)
 router.register('academic_fields', views.AcademicFieldViewSet)
+router.register(
+    'authentication',
+    views.TemporaryTokenDestroy,
+    base_name="TemporaryToken",
+)
 
 urlpatterns = [
     path(

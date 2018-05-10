@@ -1,13 +1,11 @@
-from django.contrib.auth import (get_user_model,
-                                 authenticate,
-                                 password_validation)
+from django.contrib.auth import get_user_model, password_validation
 from django.conf import settings
 from django.utils import timezone
 from django.http import Http404
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, mixins
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -396,6 +394,20 @@ class ObtainTemporaryAuthToken(ObtainAuthToken):
             {'error': error},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class TemporaryTokenDestroy(viewsets.GenericViewSet, mixins.DestroyModelMixin):
+    """
+    destroy:
+    Delete a TemporaryToken object. Used to logout.
+    """
+    def get_queryset(self):
+        key = self.kwargs.get('pk')
+        tokens = TemporaryToken.objects.filter(
+            key=key,
+            user=self.request.user,
+        )
+        return tokens
 
 
 class AcademicLevelViewSet(viewsets.ModelViewSet):
