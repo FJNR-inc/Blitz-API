@@ -24,7 +24,9 @@ class TemporaryTokenAuthentication(TokenAuthentication):
             raise exceptions.AuthenticationFailed(_('Invalid token'))
 
         if not token.user.is_active:
-            raise exceptions.AuthenticationFailed(_('User inactive or deleted'))
+            raise exceptions.AuthenticationFailed(
+                _('User inactive or deleted')
+            )
 
         if token.expired:
             raise exceptions.AuthenticationFailed(_('Token has expired'))
