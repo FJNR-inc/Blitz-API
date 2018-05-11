@@ -10,12 +10,24 @@ from django.test.utils import override_settings
 from django.contrib.auth import get_user_model
 
 from ..factories import UserFactory, AdminFactory
-from ..models import TemporaryToken, ActionToken, Organization, Domain
+from ..models import (ActionToken, Organization, Domain,
+                      AcademicField, AcademicLevel)
 
 User = get_user_model()
 
 
 class UsersTests(APITestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(UsersTests, cls).setUpClass()
+        org = Organization.objects.create(name="random_university")
+        Domain.objects.create(
+            name="mailinator.com",
+            organization_id=org.id
+        )
+        AcademicField.objects.create(name="random_field")
+        AcademicLevel.objects.create(name="random_level")
 
     def setUp(self):
         self.client = APIClient()
@@ -27,12 +39,6 @@ class UsersTests(APITestCase):
         self.admin = AdminFactory()
         self.admin.set_password('Test123!')
         self.admin.save()
-
-        org = Organization.objects.create(name="random_university")
-        Domain.objects.create(
-            name="mailinator.com",
-            organization_id=org.id
-        )
 
     def test_create_new_user(self):
         """
@@ -46,8 +52,12 @@ class UsersTests(APITestCase):
             'first_name': 'Chuck',
             'last_name': 'Norris',
             'university': {
-                "name": "random_university"
-            }
+                'name': "random_university"
+            },
+            'academic_field': {'name': "random_field"},
+            'academic_level': {'name': "random_level"},
+            'gender': "M",
+            'birthdate': "1999-11-11",
         }
 
         response = self.client.post(
@@ -82,7 +92,13 @@ class UsersTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         content = {
+            'academic_field': ['This field is required.'],
+            'academic_level': ['This field is required.'],
+            'birthdate': ['This field is required.'],
             'email': ['This field is required.'],
+            'first_name': ['This field is required.'],
+            'gender': ['This field is required.'],
+            'last_name': ['This field is required.'],
             'password': ['This field is required.'],
             'university': ['This field is required.']
         }
@@ -100,7 +116,11 @@ class UsersTests(APITestCase):
             'last_name': 'Norris',
             'university': {
                 "name": "random_university"
-            }
+            },
+            'academic_field': {'name': "random_field"},
+            'academic_level': {'name': "random_level"},
+            'gender': "M",
+            'birthdate': "1999-11-11",
         }
 
         response = self.client.post(
@@ -128,7 +148,11 @@ class UsersTests(APITestCase):
             'last_name': 'Norris',
             'university': {
                 "name": "random_university"
-            }
+            },
+            'academic_field': {'name': "random_field"},
+            'academic_level': {'name': "random_level"},
+            'gender': "M",
+            'birthdate': "1999-11-11",
         }
 
         response = self.client.post(
@@ -159,7 +183,11 @@ class UsersTests(APITestCase):
             'last_name': 'Norris',
             'university': {
                 "name": "random_university"
-            }
+            },
+            'academic_field': {'name': "random_field"},
+            'academic_level': {'name': "random_level"},
+            'gender': "M",
+            'birthdate': "1999-11-11",
         }
 
         user = UserFactory()
@@ -205,7 +233,11 @@ class UsersTests(APITestCase):
             'last_name': 'Norris',
             'university': {
                 "name": "random_university"
-            }
+            },
+            'academic_field': {'name': "random_field"},
+            'academic_level': {'name': "random_level"},
+            'gender': "M",
+            'birthdate': "1999-11-11",
         }
 
         instance_imailing = imailing.create_instance.return_value
@@ -255,7 +287,11 @@ class UsersTests(APITestCase):
             'last_name': 'Norris',
             'university': {
                 "name": "random_university"
-            }
+            },
+            'academic_field': {'name': "random_field"},
+            'academic_level': {'name': "random_level"},
+            'gender': "M",
+            'birthdate': "1999-11-11",
         }
 
         instance_imailing = imailing.create_instance.return_value
@@ -311,7 +347,11 @@ class UsersTests(APITestCase):
             'last_name': 'Norris',
             'university': {
                 "name": "random_university"
-            }
+            },
+            'academic_field': {'name': "random_field"},
+            'academic_level': {'name': "random_level"},
+            'gender': "M",
+            'birthdate': "1999-11-11",
         }
 
         instance_imailing = imailing.create_instance.return_value

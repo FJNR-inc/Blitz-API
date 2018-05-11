@@ -97,6 +97,8 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         required=False,
     )
     university = OrganizationSerializer()
+    academic_level = AcademicLevelSerializer()
+    academic_field = AcademicFieldSerializer()
 
     def validate_university(self, value):
         """
@@ -108,6 +110,32 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
             if org:
                 return org[0]
         raise serializers.ValidationError(_("This university does not exist."))
+
+    def validate_academic_level(self, value):
+        """
+        Check that the academic level exists.
+        """
+        if 'name' in value:
+            lvl = AcademicLevel.objects.filter(name=value['name'])
+
+            if lvl:
+                return lvl[0]
+        raise serializers.ValidationError(
+            _("This academic level does not exist.")
+        )
+
+    def validate_academic_field(self, value):
+        """
+        Check that the academic field exists.
+        """
+        if 'name' in value:
+            field = AcademicField.objects.filter(name=value['name'])
+
+            if field:
+                return field[0]
+        raise serializers.ValidationError(
+            _("This academic field does not exist.")
+        )
 
     def validate_phone(self, value):
         return phone_number_validator(value)

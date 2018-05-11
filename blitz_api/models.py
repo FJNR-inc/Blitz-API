@@ -15,17 +15,6 @@ from .managers import ActionTokenManager
 class User(AbstractUser):
     """Abstraction of the base User model. Needed to extend in the future."""
 
-    ACADEMIC_LEVEL_CHOICES = (
-        ('SEC', _("Secondary")),
-        ('COL', _("College")),
-        ('UNI', _("University"))
-    )
-
-    ACADEMIC_FIELD_CHOICES = (
-        ('SCI', _("Science")),
-        ('SOC', _("Social")),
-    )
-
     GENDER_CHOICES = (
         ('M', _("Male")),
         ('F', _("Female")),
@@ -51,18 +40,18 @@ class User(AbstractUser):
         null=True,
         on_delete=models.SET_NULL,
     )
-    academic_level = models.CharField(
+    academic_level = models.ForeignKey(
+        'AcademicLevel',
         blank=True,
         null=True,
-        max_length=100,
-        choices=ACADEMIC_LEVEL_CHOICES,
+        on_delete=models.SET_NULL,
         verbose_name=_("Academic level"),
     )
-    academic_field = models.CharField(
+    academic_field = models.ForeignKey(
+        'AcademicField',
         blank=True,
         null=True,
-        max_length=100,
-        choices=ACADEMIC_FIELD_CHOICES,
+        on_delete=models.SET_NULL,
         verbose_name=_("Academic field"),
     )
     birthdate = models.DateField(
