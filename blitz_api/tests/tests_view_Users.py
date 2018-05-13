@@ -77,6 +77,50 @@ class UsersTests(APITestCase):
 
         self.assertEqual(1, len(activation_token))
 
+    def test_create_new_user_blank_fields(self):
+        """
+        Ensure we can't create a new user with blank fields
+        """
+        data = {
+            'email': '',
+            'password': '',
+            'phone': '',
+            'first_name': '',
+            'last_name': '',
+            'university': {
+                'name': ""
+            },
+            'academic_field': {'name': ""},
+            'academic_level': {'name': ""},
+            'gender': "",
+            'birthdate': "",
+        }
+
+        response = self.client.post(
+            reverse('user-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        content = {
+            'academic_field': {'name': ['This field may not be blank.']},
+            'academic_level': {'name': ['This field may not be blank.']},
+            'birthdate': [
+                'Date has wrong format. Use one of these formats instead: '
+                'YYYY[-MM[-DD]].'
+            ],
+            'first_name': ['This field may not be blank.'],
+            'gender': ['"" is not a valid choice.'],
+            'last_name': ['This field may not be blank.'],
+            'email': ['This field may not be blank.'],
+            'password': ['This field may not be blank.'],
+            'phone': ['Invalid format.'],
+            'university': {'name': ['This field may not be blank.']}
+        }
+        self.assertEqual(json.loads(response.content), content)
+
     def test_create_new_user_missing_fields(self):
         """
         Ensure we can't create a new user without required fields
@@ -132,6 +176,110 @@ class UsersTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         content = {"password": ['This password is entirely numeric.']}
+        self.assertEqual(json.loads(response.content), content)
+
+    def test_create_new_user_invalid_domain(self):
+        """
+        Ensure we can't create a new user with an invalid domain.
+        An invalid domain can be defined as:
+            - Non-existent
+            - Not matching with selected university
+        """
+        data = {
+            'username': 'John',
+            'email': 'John@invalid.com',
+            'password': '1927nce-736',
+            'first_name': 'Chuck',
+            'last_name': 'Norris',
+            'university': {
+                "name": "random_university"
+            },
+            'academic_field': {'name': "random_field"},
+            'academic_level': {'name': "random_level"},
+            'gender': "M",
+            'birthdate': "1999-11-11",
+        }
+
+        response = self.client.post(
+            reverse('user-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        content = {'email': ['Invalid domain name.']}
+        self.assertEqual(json.loads(response.content), content)
+
+    def test_create_new_user_invalid_university(self):
+        """
+        Ensure we can't create a new user with an invalid university.
+        """
+        data = {
+            'username': 'John',
+            'email': 'John@mailinator.com',
+            'password': '1927nce-736',
+            'first_name': 'Chuck',
+            'last_name': 'Norris',
+            'university': {
+                "name": "invalid_university"
+            },
+            'academic_field': {'name': "random_field"},
+            'academic_level': {'name': "random_level"},
+            'gender': "M",
+            'birthdate': "1999-11-11",
+        }
+
+        response = self.client.post(
+            reverse('user-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        content = {'university': ['This university does not exist.']}
+        self.assertEqual(json.loads(response.content), content)
+
+    def test_create_new_user_invalid_fields(self):
+        """
+        Ensure we can't create a new user with invalid fields.
+        Emails are validated at creation time, this is why no email validation
+        messages are sent in this case.
+        """
+        data = {
+            'username': 'John',
+            'email': 'John@invalid.com',
+            'password': '1927nce-736',
+            'first_name': 'Chuck',
+            'last_name': 'Norris',
+            'university': {
+                "name": "invalid_university"
+            },
+            'academic_field': {'name': "invalid_field"},
+            'academic_level': {'name': "invalid_level"},
+            'gender': "invalid_gender",
+            'birthdate': "invalid_date",
+        }
+
+        response = self.client.post(
+            reverse('user-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        content = {
+            'academic_field': ['This academic field does not exist.'],
+            'academic_level': ['This academic level does not exist.'],
+            'birthdate': [
+                'Date has wrong format. Use one of these formats instead: '
+                'YYYY[-MM[-DD]].'
+            ],
+            'gender': ['"invalid_gender" is not a valid choice.'],
+            'university': ['This university does not exist.']
+        }
         self.assertEqual(json.loads(response.content), content)
 
     def test_create_new_user_invalid_phone(self):
