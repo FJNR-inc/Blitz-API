@@ -14,19 +14,6 @@ class UserFactory(factory.DjangoModelFactory):
     email = factory.Sequence('john{0}@blitz.com'.format)
     password = 'Test123!'
 
-    @classmethod
-    def _prepare(cls, create, **kwargs):
-        if 'password' in kwargs.keys():
-            password = kwargs.pop('password', None)
-
-        user = super(UserFactory, cls)._prepare(create, **kwargs)
-
-        if password:
-            user.set_password(password)
-
-        user.save()
-        return user
-
 
 class AdminFactory(factory.DjangoModelFactory):
     class Meta:
@@ -38,16 +25,3 @@ class AdminFactory(factory.DjangoModelFactory):
     email = factory.Sequence('chuck{0}@blitz.com'.format)
     password = 'Test123!'
     is_staff = True
-
-    @classmethod
-    def _prepare(cls, create, **kwargs):
-        if 'password' in kwargs.keys():
-            password = kwargs.pop('password', None)
-
-        user = super(AdminFactory, cls)._prepare(create, **kwargs)
-
-        if password:
-            user.set_password(password)
-
-        user.save()
-        return user
