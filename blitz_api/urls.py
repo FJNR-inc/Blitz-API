@@ -40,7 +40,7 @@ router.register('academic_fields', views.AcademicFieldViewSet)
 router.register(
     'authentication',
     views.TemporaryTokenDestroy,
-    base_name="TemporaryToken",
+    base_name="authentication",
 )
 
 urlpatterns = [
