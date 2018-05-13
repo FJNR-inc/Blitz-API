@@ -19,7 +19,7 @@ class DomainTests(APITestCase):
             organization_id=self.org.id
         )
 
-        self.assertEquals(domain.name, "random_domain")
+        self.assertEqual(domain.__str__(), "random_domain")
 
     def test_create_invalid_organization(self):
         """
