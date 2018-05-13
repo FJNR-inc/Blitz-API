@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, MethodNotAllowed
 
 from imailing.Mailing import IMailing
 
@@ -34,9 +34,19 @@ class UserViewSet(viewsets.ModelViewSet):
 
     create:
     Create a new user instance.
+
+    update:
+    Update fields of a user instance.
+
+    delete:
+    Not implemented
     """
-    serializer_class = serializers.UserSerializer
     queryset = User.objects.all()
+
+    def get_serializer_class(self):
+        if (self.action == 'update') | (self.action == 'partial_update'):
+            return serializers.UserUpdateSerializer
+        return serializers.UserSerializer
 
     def get_permissions(self):
         """
@@ -61,6 +71,9 @@ class UserViewSet(viewsets.ModelViewSet):
             return super().retrieve(request, *args, **kwargs)
         except Http404:
             raise PermissionDenied
+
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed("DELETE")
 
     def update(self, request, *args, **kwargs):
         """ Hides non-existent objects by denying permission """
@@ -157,22 +170,15 @@ class UsersActivation(APIView):
 
             return Response(serializer.data)
 
-        # There is no reference to this token
-        elif not token:
+        # There is no reference to this token or multiple identical token
+        # token exists
+        else:
             error = '"{0}" is not a valid activation_token.'. \
                 format(activation_token)
 
             return Response(
                 {'detail': error},
                 status=status.HTTP_400_BAD_REQUEST
-            )
-        # We have multiple token with the same key (impossible)
-        else:
-            error = _("The system have a problem, please contact us, "
-                      "it is not your fault.")
-            return Response(
-                {'detail': error},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
 
@@ -301,22 +307,14 @@ class ChangePassword(APIView):
 
             return Response(serializer.data)
 
-        # There is no reference to this token
-        elif len(tokens) == 0:
+        # There is no reference to this token or multiple identical token
+        # token exists
+        else:
             error = '{0} is not a valid token.'.format(token)
 
             return Response(
                 {'detail': error},
                 status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # We have multiple token with the same key (impossible)
-        else:
-            error = _("The system has a problem, please contact us, "
-                      "it is not your fault.")
-            return Response(
-                {'detail': error},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
 
@@ -375,7 +373,7 @@ class ObtainTemporaryAuthToken(ObtainAuthToken):
             user=user
         )
 
-        if token and token.expired:
+        if token.expired:
             # If the token is expired, generate a new one.
             token.delete()
             expires = timezone.now() + timezone.timedelta(
@@ -385,15 +383,8 @@ class ObtainTemporaryAuthToken(ObtainAuthToken):
             token = TemporaryToken.objects.create(
                 user=user, expires=expires)
 
-        if token:
-            data = {'token': token.key}
-            return Response(data)
-
-        error = _("Could not authenticate user.")
-        return Response(
-            {'error': error},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        data = {'token': token.key}
+        return Response(data)
 
 
 class TemporaryTokenDestroy(viewsets.GenericViewSet, mixins.DestroyModelMixin):
