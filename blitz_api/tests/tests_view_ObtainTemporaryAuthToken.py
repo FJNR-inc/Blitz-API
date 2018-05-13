@@ -22,12 +22,29 @@ class ObtainTemporaryAuthTokenTests(APITestCase):
         self.user.save()
         self.url = reverse('token_api')
 
-    def test_authenticate(self):
+    def test_authenticate_username(self):
         """
         Ensure we can authenticate on the platform.
         """
         data = {
             'username': self.user.username,
+            'password': 'Test123!'
+        }
+
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        token = TemporaryToken.objects.get(
+            user__username=self.user.username,
+        )
+        self.assertContains(response, token)
+
+    def test_authenticate_email(self):
+        """
+        Ensure we can authenticate on the platform.
+        """
+        data = {
+            'username': self.user.email,
             'password': 'Test123!'
         }
 
@@ -129,19 +146,15 @@ class ObtainTemporaryAuthTokenTests(APITestCase):
 
     def test_authenticate_missing_parameter(self):
         """
-        Ensure we can't authenticate if "username" is not provided.
+        Ensure we can't authenticate if "username" or "password" are not
+        provided.
         """
-        data = {
-            'password': 'Test123!'
-        }
-
-        response = self.client.post(self.url, data, format='json')
+        response = self.client.post(self.url, {}, format='json')
 
         content = {
-            'username': [
-                'This field is required.'
-                ]
-            }
+            'password': ['This field is required.'],
+            'username': ['This field is required.']
+        }
 
         self.assertEqual(json.loads(response.content), content)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
