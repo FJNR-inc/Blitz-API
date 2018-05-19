@@ -392,6 +392,8 @@ class TemporaryTokenDestroy(viewsets.GenericViewSet, mixins.DestroyModelMixin):
     destroy:
     Delete a TemporaryToken object. Used to logout.
     """
+    queryset = TemporaryToken.objects.none()
+
     def get_queryset(self):
         key = self.kwargs.get('pk')
         tokens = TemporaryToken.objects.filter(
