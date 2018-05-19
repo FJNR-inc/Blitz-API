@@ -168,9 +168,46 @@ class ResetPasswordTests(APITestCase):
             type='password_change',
         )
 
-        content = {
-            'detail': "No account with this email.",
+        content = {'email': ['Enter a valid email address.']}
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.assertTrue(len(tokens) == 0)
+
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+            "FRONTEND_INTEGRATION": {
+                "FORGOT_PASSWORD_URL": "fake_url",
+            }
         }
+    )
+    @mock.patch('blitz_api.views.IMailing')
+    def test_create_new_token_with_non_existent_email(self, imailing):
+        """
+        Ensure we can't have a new token to change our password without
+        a valid email
+        """
+        data = {
+            'email': 'test@test.com',
+        }
+
+        response = self.client.post(
+            reverse('reset_password'),
+            data,
+            format='json',
+        )
+
+        # The token has been created
+        tokens = ActionToken.objects.filter(
+            user=self.user,
+            type='password_change',
+        )
+
+        content = {'email': ['No account associated to this email address.']}
+
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

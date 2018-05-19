@@ -197,16 +197,13 @@ class ResetPassword(APIView):
 
         # Valid params
         serializer = serializers.ResetPasswordSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        # get user from the email given in data
-        try:
-            user = User.objects.get(email=request.data["email"])
-        except User.DoesNotExist:
-            content = {
-                'detail': _("No account with this email."),
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        if serializer.is_valid():
+            user = serializer.validated_data
+        else:
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         # remove old tokens to change password
         tokens = ActionToken.objects.filter(
