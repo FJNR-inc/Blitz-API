@@ -333,7 +333,21 @@ class CustomAuthTokenSerializer(AuthTokenSerializer):
 
 class ResetPasswordSerializer(serializers.Serializer):
 
-    email = serializers.CharField(required=True)
+    email = serializers.EmailField(
+        label=_('Email address'),
+        max_length=254,
+        required=True,
+    )
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value):
+            return value
+        raise serializers.ValidationError(
+            _("No account associated to this email address.")
+        )
+
+    def validate(self, attrs):
+        return User.objects.get(email=attrs['email'])
 
 
 class ChangePasswordSerializer(serializers.Serializer):
