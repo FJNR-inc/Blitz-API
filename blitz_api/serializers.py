@@ -36,6 +36,7 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
         max_length=100,
         required=True,
     )
+    domains = DomainSerializer(many=True, read_only=True)
 
     class Meta:
         model = Organization

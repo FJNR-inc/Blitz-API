@@ -39,9 +39,11 @@ class OrganizationTests(APITestCase):
         )
 
         content = {
-            'name': "fake organization",
-            'url': 'http://testserver/organizations/2',
+            'domains': [],
+            'name': 'fake organization',
+            'url': 'http://testserver/organizations/2'
         }
+
 
         self.assertEqual(json.loads(response.content), content)
 
@@ -87,8 +89,9 @@ class OrganizationTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
+                'domains': [],
                 'name': 'random_organization',
-                'url': 'http://testserver/organizations/1',
+                'url': 'http://testserver/organizations/1'
             }]
         }
 
