@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     'blitz_api',
+    'location',
 ]
 
 MIDDLEWARE = [

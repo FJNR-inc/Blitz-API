@@ -109,7 +109,7 @@ class Test:
                       "This can take several minutes."
 
         test = "coverage run " \
-               "--include=blitz_api/* " \
+               "--include=blitz_api/*,location/* " \
                "--omit=*migrations/*,*tests/*,*__init__.py " \
                + PROJECT_PATH + "/manage.py " \
                "test " + PROJECT_PATH
