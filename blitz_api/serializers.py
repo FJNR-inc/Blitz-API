@@ -6,6 +6,7 @@ from rest_framework.compat import authenticate
 from django.contrib.auth import get_user_model, password_validation
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
+from django.db.models.base import ObjectDoesNotExist
 
 from .models import (
     Domain, Organization, ActionToken, AcademicField, AcademicLevel,
@@ -188,8 +189,9 @@ class UserSerializer(UserUpdateSerializer):
             ),
         ],
     )
-    university = OrganizationSerializer()
-    academic_level = AcademicLevelSerializer()
+    university = OrganizationSerializer(required=False)
+    academic_level = AcademicLevelSerializer(required=False)
+    academic_field = AcademicFieldSerializer(required=False)
 
     def validate_university(self, value):
         """
@@ -223,23 +225,33 @@ class UserSerializer(UserUpdateSerializer):
         return value
 
     def validate(self, attrs):
+        content = {}
         if 'email' in attrs:
             attrs['username'] = attrs['email']
+        if 'university' in attrs:
+            for key in ['academic_level', 'academic_field']:
+                if key not in attrs:
+                    content[key] = [_('This field is required.')]
+
+        if content:
+            raise serializers.ValidationError(content)
+
         return attrs
 
     def create(self, validated_data):
         """
         Check that the email domain correspond to the university.
         """
-        domains = Organization.objects.get(
-            name=validated_data['university'].name
-        ).domains.all()
+        if 'university' in validated_data:
+            domains = Organization.objects.get(
+                name=validated_data['university'].name
+            ).domains.all()
 
-        email_domain = validated_data['email'].split("@", 1)[1]
-        if not any(d.name == email_domain for d in domains):
-            raise serializers.ValidationError({
-                'email': [_("Invalid domain name.")]
-            })
+            email_domain = validated_data['email'].split("@", 1)[1]
+            if not any(d.name == email_domain for d in domains):
+                raise serializers.ValidationError({
+                    'email': [_("Invalid domain name.")]
+                })
 
         user = User(**validated_data)
 
@@ -265,9 +277,6 @@ class UserSerializer(UserUpdateSerializer):
         extra_kwargs = {
             'password': {'write_only': True},
             'new_password': {'write_only': True},
-            'university': {'required': True},
-            'academic_level': {'required': True},
-            'academic_field': {'required': True},
             'gender': {
                 'required': True,
                 'allow_blank': False,

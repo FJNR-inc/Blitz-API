@@ -40,7 +40,7 @@ class UsersTests(APITestCase):
         self.admin.set_password('Test123!')
         self.admin.save()
 
-    def test_create_new_user(self):
+    def test_create_new_student_user(self):
         """
         Ensure we can create a new user if we have the permission.
         """
@@ -76,6 +76,70 @@ class UsersTests(APITestCase):
         )
 
         self.assertEqual(1, len(activation_token))
+
+    def test_create_new_user(self):
+        """
+        Ensure we can create a new user if we have the permission.
+        """
+        data = {
+            'username': 'John',
+            'email': 'John@mailinator.com',
+            'password': 'test123!',
+            'phone': '1234567890',
+            'first_name': 'Chuck',
+            'last_name': 'Norris',
+            'gender': "M",
+            'birthdate': "1999-11-11",
+        }
+
+        response = self.client.post(
+            reverse('user-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(json.loads(response.content)['phone'], '1234567890')
+
+        user = User.objects.get(email="John@mailinator.com")
+        activation_token = ActionToken.objects.filter(
+            user=user,
+            type='account_activation',
+        )
+
+        self.assertEqual(1, len(activation_token))
+
+    def test_create_new_student_user_missing_field(self):
+        """
+        Ensure we can't create a student user without academic_* fields.
+        """
+        data = {
+            'username': 'John',
+            'email': 'John@mailinator.com',
+            'password': 'test123!',
+            'phone': '1234567890',
+            'first_name': 'Chuck',
+            'last_name': 'Norris',
+            'university': {
+                'name': "random_university"
+            },
+            'academic_field': {'name': "random_field"},
+            'gender': "M",
+            'birthdate': "1999-11-11",
+        }
+
+        response = self.client.post(
+            reverse('user-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        content = {
+            'academic_level': ['This field is required.']
+        }
+        self.assertEqual(json.loads(response.content), content)
 
     def test_create_new_user_blank_fields(self):
         """
@@ -136,15 +200,12 @@ class UsersTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         content = {
-            'academic_field': ['This field is required.'],
-            'academic_level': ['This field is required.'],
             'birthdate': ['This field is required.'],
             'email': ['This field is required.'],
             'first_name': ['This field is required.'],
             'gender': ['This field is required.'],
             'last_name': ['This field is required.'],
-            'password': ['This field is required.'],
-            'university': ['This field is required.']
+            'password': ['This field is required.']
         }
         self.assertEqual(json.loads(response.content), content)
 

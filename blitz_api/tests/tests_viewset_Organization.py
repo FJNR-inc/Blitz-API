@@ -44,7 +44,6 @@ class OrganizationTests(APITestCase):
             'url': 'http://testserver/organizations/2'
         }
 
-
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
