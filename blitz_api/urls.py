@@ -19,6 +19,9 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls import include
+from django.conf.urls.static import static
+
+from workplace.urls import router as workplace_router
 
 from . import views
 
@@ -32,6 +35,10 @@ class OptionalSlashDefaultRouter(DefaultRouter):
 
 # Create a router and register our viewsets with it.
 router = OptionalSlashDefaultRouter()
+
+# External workplace application
+router.registry.extend(workplace_router.registry)
+
 router.register('users', views.UserViewSet)
 router.register('domains', views.DomainViewSet)
 router.register('organizations', views.OrganizationViewSet)
@@ -83,4 +90,4 @@ urlpatterns = [
     ),
     path('api-auth/', include('rest_framework.urls')),
     path('', include(router.urls)),  # includes router generated URL
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -7,3 +7,4 @@ factory-boy==2.10.0
 Markdown==2.6.11
 Pygments==2.2.0
 imailing==1.0.0
+Pillow==5.1.0
