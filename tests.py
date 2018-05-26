@@ -108,16 +108,10 @@ class Test:
         description = "We will run all tests of the project. " \
                       "This can take several minutes."
 
-        test = "coverage run " \
-               "--include=blitz_api/*,location/* " \
-               "--omit=*migrations/*,*tests/*,*__init__.py " \
-               + PROJECT_PATH + "/manage.py " \
+        test = "coverage run " + PROJECT_PATH + "/manage.py " \
                "test " + PROJECT_PATH
 
-        coverage = "coverage report " \
-                   "-m " \
-                   "--skip-covered " \
-                   "--include=./*"
+        coverage = "coverage report"
 
         return name, description, [test, coverage]
 
@@ -128,10 +122,7 @@ class Test:
         """
         name = "Pycodestyle"
         description = "Output will be empty if there are no styling errors."
-        styling = "pycodestyle " \
-                  "--count " \
-                  "--show-source " \
-                  "--exclude=migrations,.*,__pycache__,docs,env "+PROJECT_PATH
+        styling = "pycodestyle --config=.pycodestylerc " + PROJECT_PATH
 
         return name, description, [styling]
 
