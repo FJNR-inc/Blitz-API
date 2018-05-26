@@ -33,6 +33,7 @@ app_name = "workplace"
 router = OptionalSlashSimpleRouter()
 router.register('workplaces', views.WorkplaceViewSet)
 router.register('pictures', views.PictureViewSet)
+router.register('periods', views.PeriodViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),  # includes router generated URL

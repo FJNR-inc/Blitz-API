@@ -78,7 +78,7 @@ class PictureTests(APITestCase):
 
     def test_create(self):
         """
-        Ensure we can create an workplace if user has permission.
+        Ensure we can create a picture if user has permission.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -281,36 +281,21 @@ class PictureTests(APITestCase):
 
     def test_read(self):
         """
-        Ensure we can read a workplace as an unauthenticated user.
+        Ensure we can read a picture as an unauthenticated user.
         """
 
         response = self.client.get(
             reverse(
-                'workplace-detail',
+                'picture-detail',
                 kwargs={'pk': 1},
             ),
         )
 
         content = {
-            'details': 'short_description',
-            'location': {
-                'address_line1': 'random_address_1',
-                'address_line2': '',
-                'city': 'random_city',
-                'country': {
-                    'iso_code': 'RC',
-                    'name': 'Random_Country'
-                },
-                'id': 1,
-                'postal_code': 'RAN_DOM',
-                'state_province': {
-                    'iso_code': 'RS',
-                    'name': 'Random_State'
-                }
-            },
-            'name': 'Blitz',
-            'seats': 40,
-            'url': 'http://testserver/workplaces/1'
+            'name': 'random_picture',
+            'picture': 'http://testserver' + self.picture.picture.url,
+            'url': 'http://testserver/pictures/1',
+            'workplace': 'http://testserver/workplaces/1'
         }
 
         self.assertEqual(json.loads(response.content), content)

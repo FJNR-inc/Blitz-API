@@ -74,3 +74,47 @@ class Picture(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Period(models.Model):
+    """Represents periods of time that has certain attributes"""
+
+    class Meta:
+        verbose_name = _("Period")
+        verbose_name_plural = _("Periods")
+
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=253,
+    )
+
+    workplace = models.ForeignKey(
+        Workplace,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        verbose_name=_("Workplace"),
+        related_name='periods',
+    )
+
+    price = models.PositiveIntegerField(
+        verbose_name=_("Price"),
+    )
+
+    start_date = models.DateTimeField(
+        verbose_name=_("Start Date"),
+        blank=True,
+    )
+
+    end_date = models.DateTimeField(
+        verbose_name=_("End Date"),
+        blank=True,
+    )
+
+    is_active = models.BooleanField(
+        verbose_name=_("Activation"),
+        default=False,
+    )
+
+    def __str__(self):
+        return self.name

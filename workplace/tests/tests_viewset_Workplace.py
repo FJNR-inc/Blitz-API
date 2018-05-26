@@ -50,7 +50,7 @@ class WorkplaceTests(APITestCase):
 
     def test_create(self):
         """
-        Ensure we can create an workplace if user has permission.
+        Ensure we can create a workplace if user has permission.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -94,8 +94,7 @@ class WorkplaceTests(APITestCase):
 
     def test_create_without_permission(self):
         """
-        Ensure we can't create a domain with valid workplace if user has no
-        permission.
+        Ensure we can't create a workplace if user has no permission.
         """
         self.client.force_authenticate(user=self.user)
 
