@@ -34,6 +34,7 @@ router = OptionalSlashSimpleRouter()
 router.register('workplaces', views.WorkplaceViewSet)
 router.register('pictures', views.PictureViewSet)
 router.register('periods', views.PeriodViewSet)
+router.register('time_slots', views.TimeSlotViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),  # includes router generated URL

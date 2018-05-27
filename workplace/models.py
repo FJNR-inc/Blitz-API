@@ -118,3 +118,44 @@ class Period(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class TimeSlot(models.Model):
+    """Represents time slots in a day"""
+
+    class Meta:
+        verbose_name = _("Time slot")
+        verbose_name_plural = _("Time slots")
+
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=253,
+    )
+
+    period = models.ForeignKey(
+        Period,
+        on_delete=models.CASCADE,
+        verbose_name=_("Period"),
+        related_name='time_slots',
+    )
+
+    price = models.PositiveIntegerField(
+        verbose_name=_("Price"),
+        blank=True,
+        null=True,
+    )
+
+    start_time = models.TimeField(
+        verbose_name=_("Start time"),
+    )
+
+    end_time = models.TimeField(
+        verbose_name=_("End time"),
+    )
+
+    day = models.DateField(
+        verbose_name=_("Day"),
+    )
+
+    def __str__(self):
+        return self.name

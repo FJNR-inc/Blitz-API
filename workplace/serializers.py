@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from location.models import Address
 from location.serializers import AddressBasicSerializer
 
-from .models import Workplace, Picture, Period
+from .models import Workplace, Picture, Period, TimeSlot
 
 
 class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
@@ -75,7 +75,7 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
             },
             'name': {
                 'required': True,
-                'help_text': _("Name of the picture."),
+                'help_text': _("Name of the period."),
             },
             'price': {
                 'required': True,
@@ -89,6 +89,72 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
                 'required': True,
             },
             'end_date': {
+                'required': True,
+            },
+        }
+
+
+class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
+
+    def validate(self, attrs):
+        """Prevents overlapping timeslots and invalid start/end time"""
+        start = attrs['start_time']
+        end = attrs['end_time']
+
+        if start >= end:
+            raise serializers.ValidationError({
+                'end_time': [_("End time must be later than start_time.")],
+                'start_time': [_("End time must be earlier than end_time.")],
+            })
+
+        # Generate a list of tuples containing start/end time of existing
+        # timeslots in the requested period.
+        existing_timeslot = TimeSlot.objects.filter(
+            period=attrs['period']
+        ).values_list('start_time', 'end_time')
+
+        for timeslots in existing_timeslot:
+            if max(timeslots[0], start) < min(timeslots[1], end):
+                raise serializers.ValidationError({
+                    'detail': _(
+                        "An existing timeslot overlaps with the provided "
+                        "start_time and end_time."
+                    ),
+                })
+
+        return attrs
+
+    def create(self, validated_data):
+        """
+        Uses period's price if no price is provided.
+        """
+        if 'price' not in validated_data:
+            validated_data['price'] = validated_data['period'].price
+
+        return super().create(validated_data)
+
+    class Meta:
+        model = TimeSlot
+        fields = '__all__'
+        extra_kwargs = {
+            'period': {
+                'required': True,
+                'help_text': _("Period to which this time slot applies.")
+            },
+            'name': {
+                'required': True,
+                'help_text': _("Name of the time slot."),
+            },
+            'price': {
+                'help_text': _(
+                    "Hourly rate applied to this time slot. Overrides period "
+                    "price."
+                )
+            },
+            'start_time': {
+                'required': True,
+            },
+            'end_time': {
                 'required': True,
             },
         }
