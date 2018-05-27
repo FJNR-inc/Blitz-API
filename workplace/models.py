@@ -1,8 +1,11 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import format_html
+from django.contrib.auth import get_user_model
 
 from location.models import Address
+
+User = get_user_model()
 
 
 class Workplace(models.Model):
@@ -136,6 +139,13 @@ class TimeSlot(models.Model):
         Period,
         on_delete=models.CASCADE,
         verbose_name=_("Period"),
+        related_name='time_slots',
+    )
+
+    users = models.ManyToManyField(
+        User,
+        blank=True,
+        verbose_name=_("User"),
         related_name='time_slots',
     )
 

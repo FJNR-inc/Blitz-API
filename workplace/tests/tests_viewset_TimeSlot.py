@@ -46,12 +46,13 @@ class TimeSlotTests(APITestCase):
             end_time=time(hour=12),
             day=date.today(),
         )
+        cls.time_slot.users.set([cls.admin, cls.user])
         cls.time_slot_active = TimeSlot.objects.create(
             name="evening_time_slot_active",
             period=cls.period_active,
             price=3,
-            start_time=time(hour=8),
-            end_time=time(hour=12),
+            start_time=time(hour=18),
+            end_time=time(hour=22),
             day=date.today(),
         )
 
@@ -68,6 +69,7 @@ class TimeSlotTests(APITestCase):
             'start_time': time(hour=12),
             'end_time': time(hour=16),
             'day': date.today(),
+            'users': [reverse('user-detail', args=[self.user.id])]
         }
 
         response = self.client.post(
@@ -83,7 +85,8 @@ class TimeSlotTests(APITestCase):
             'price': 10,
             'start_time': time(hour=12).isoformat(),
             'url': 'http://testserver/time_slots/3',
-            'period': 'http://testserver/periods/1'
+            'period': 'http://testserver/periods/1',
+            'users': ['http://testserver/users/1']
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -118,7 +121,8 @@ class TimeSlotTests(APITestCase):
             'price': 3,
             'start_time': time(hour=12).isoformat(),
             'url': 'http://testserver/time_slots/3',
-            'period': 'http://testserver/periods/1'
+            'period': 'http://testserver/periods/1',
+            'users': []
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -186,6 +190,39 @@ class TimeSlotTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_create_overlapping_user(self):
+        """
+        Ensure we can't create timeslot that has user thet has other timeslots
+        are overlappong with this one.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': "random_time_slot",
+            'period': reverse('period-detail', args=[self.period_active.id]),
+            'price': 10,  # Will use Period's price if not provided
+            'start_time': time(hour=10),  # overlaps with self.timeslot
+            'end_time': time(hour=14),
+            'day': date.today(),
+            'users': [reverse('user-detail', args=[self.admin.id])]
+        }
+
+        response = self.client.post(
+            reverse('timeslot-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'detail': [
+                'The user has an overlapping timeslot.'
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_create_invalid_start_end(self):
         """
         Ensure we can't create timeslots with start_time greater than end_time.
@@ -216,9 +253,9 @@ class TimeSlotTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_create_non_existent_period(self):
+    def test_create_non_existent_period_user(self):
         """
-        Ensure we can't create a timeslot with a non-existent workplace.
+        Ensure we can't create a timeslot with a non-existent period or user.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -229,6 +266,7 @@ class TimeSlotTests(APITestCase):
             'start_time': time(hour=12),
             'end_time': time(hour=16),
             'day': date.today(),
+            'users': [reverse('user-detail', args=[999])],
         }
 
         response = self.client.post(
@@ -237,7 +275,10 @@ class TimeSlotTests(APITestCase):
             format='json',
         )
 
-        content = {'period': ['Invalid hyperlink - Object does not exist.']}
+        content = {
+            'period': ['Invalid hyperlink - Object does not exist.'],
+            'users': ['Invalid hyperlink - Object does not exist.']
+        }
 
         self.assertEqual(json.loads(response.content), content)
 
@@ -376,7 +417,8 @@ class TimeSlotTests(APITestCase):
             'price': 10,
             'start_time': time(hour=12).isoformat(),
             'url': 'http://testserver/time_slots/1',
-            'period': 'http://testserver/periods/1'
+            'period': 'http://testserver/periods/1',
+            'users': ['http://testserver/users/1', 'http://testserver/users/2']
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -415,12 +457,13 @@ class TimeSlotTests(APITestCase):
             'previous': None,
             'results': [{
                 'day': date.today().isoformat(),
-                'end_time': time(hour=12).isoformat(),
+                'end_time': time(hour=22).isoformat(),
                 'name': 'evening_time_slot_active',
                 'price': 3,
-                'start_time': time(hour=8).isoformat(),
+                'start_time': time(hour=18).isoformat(),
                 'url': 'http://testserver/time_slots/2',
-                'period': 'http://testserver/periods/2'
+                'period': 'http://testserver/periods/2',
+                'users': []
             }]
         }
 
@@ -446,21 +489,26 @@ class TimeSlotTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                'day': '2018-05-26',
-                'end_time': '12:00:00',
+                'day': date.today().isoformat(),
+                'end_time': time(hour=12).isoformat(),
                 'name': 'evening_time_slot',
                 'period': 'http://testserver/periods/1',
                 'price': 3,
-                'start_time': '08:00:00',
-                'url': 'http://testserver/time_slots/1'
+                'start_time': time(hour=8).isoformat(),
+                'url': 'http://testserver/time_slots/1',
+                'users': [
+                    'http://testserver/users/1',
+                    'http://testserver/users/2'
+                ]
             }, {
                 'day': date.today().isoformat(),
-                'end_time': time(hour=12).isoformat(),
+                'end_time': time(hour=22).isoformat(),
                 'name': 'evening_time_slot_active',
                 'price': 3,
-                'start_time': time(hour=8).isoformat(),
+                'start_time': time(hour=18).isoformat(),
                 'url': 'http://testserver/time_slots/2',
-                'period': 'http://testserver/periods/2'
+                'period': 'http://testserver/periods/2',
+                'users': []
             }]
         }
 
@@ -485,12 +533,13 @@ class TimeSlotTests(APITestCase):
 
         content = {
             'day': date.today().isoformat(),
-            'end_time': time(hour=12).isoformat(),
+            'end_time': time(hour=22).isoformat(),
             'name': 'evening_time_slot_active',
             'price': 3,
-            'start_time': time(hour=8).isoformat(),
+            'start_time': time(hour=18).isoformat(),
             'url': 'http://testserver/time_slots/2',
-            'period': 'http://testserver/periods/2'
+            'period': 'http://testserver/periods/2',
+            'users': []
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -535,7 +584,11 @@ class TimeSlotTests(APITestCase):
             'period': 'http://testserver/periods/1',
             'price': 3,
             'start_time': time(hour=8).isoformat(),
-            'url': 'http://testserver/time_slots/1'
+            'url': 'http://testserver/time_slots/1',
+            'users': [
+                'http://testserver/users/1',
+                'http://testserver/users/2'
+            ]
         }
 
         self.assertEqual(json.loads(response.content), content)

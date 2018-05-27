@@ -150,6 +150,22 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
                     ),
                 })
 
+        if 'users' in attrs:
+            for user in attrs['users']:
+                # Generate a list of tuples containing start/end time of
+                # existing timeslots in the requested user.
+                existing_timeslot = TimeSlot.objects.filter(
+                    users=user
+                ).values_list('start_time', 'end_time')
+
+                for timeslots in existing_timeslot:
+                    if max(timeslots[0], start) < min(timeslots[1], end):
+                        raise serializers.ValidationError({
+                            'detail': _(
+                                "The user has an overlapping timeslot."
+                            ),
+                        })
+
         return attrs
 
     def create(self, validated_data):
