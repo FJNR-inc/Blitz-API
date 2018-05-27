@@ -338,6 +338,7 @@ class PeriodTests(APITestCase):
         """
         Ensure we can't read a period as non_admin if it is inactive.
         """
+        self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
             reverse(
@@ -346,11 +347,21 @@ class PeriodTests(APITestCase):
             ),
         )
 
-        content = {'detail': 'Not found.'}
+        data = json.loads(response.content)
+
+        content = {
+            'end_date': data['end_date'],
+            'is_active': False,
+            'name': 'random_period',
+            'price': 3,
+            'start_date': data['start_date'],
+            'url': 'http://testserver/periods/1',
+            'workplace': 'http://testserver/workplaces/1'
+        }
 
         self.assertEqual(json.loads(response.content), content)
 
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_read_inactive(self):
         """

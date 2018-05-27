@@ -1,6 +1,3 @@
-import tempfile
-import shutil
-
 from datetime import timedelta
 
 from rest_framework.test import APITestCase
