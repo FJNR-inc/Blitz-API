@@ -73,8 +73,8 @@ class PeriodTests(APITestCase):
         data = {
             'name': "random_period",
             'workplace': reverse('workplace-detail', args=[self.workplace.id]),
-            'start_date': timezone.now(),
-            'end_date': timezone.now() + timedelta(weeks=4),
+            'start_date': timezone.now() + timedelta(weeks=5),
+            'end_date': timezone.now() + timedelta(weeks=10),
             'price': 3,
             'is_active': True,
         }
@@ -127,6 +127,68 @@ class PeriodTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_create_overlapping(self):
+        """
+        Ensure we can't create overlapping period in the same workplace.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': "random_period",
+            'workplace': reverse('workplace-detail', args=[self.workplace.id]),
+            'start_date': timezone.now(),
+            'end_date': timezone.now() + timedelta(weeks=4),
+            'price': 3,
+            'is_active': True,
+        }
+
+        response = self.client.post(
+            reverse('period-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'detail': [
+                'An existing period overlaps with the provided start_date '
+                'and end_date.'
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_invalid_start_end(self):
+        """
+        Ensure we can't create periods with start_date greater than end_date.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': "random_period",
+            'workplace': reverse('workplace-detail', args=[self.workplace.id]),
+            'start_date': timezone.now(),
+            'end_date': timezone.now() - timedelta(weeks=4),
+            'price': 3,
+            'is_active': True,
+        }
+
+        response = self.client.post(
+            reverse('period-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'end_date': ['End date must be later than start_date.'],
+            'start_date': ['End date must be earlier than end_date.']
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_non_existent_workplace(self):
         """
@@ -182,6 +244,79 @@ class PeriodTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_create_blank_field(self):
+        """
+        Ensure we can't create a period when required field are blank.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': None,
+            'workplace': None,
+            'start_date': None,
+            'end_date': None,
+            'price': None,
+            'is_active': None,
+        }
+
+        response = self.client.post(
+            reverse('period-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'name': ['This field may not be null.'],
+            'start_date': ['This field may not be null.'],
+            'end_date': ['This field may not be null.'],
+            'price': ['This field may not be null.'],
+            'is_active': ['This field may not be null.']
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_invalid_field(self):
+        """
+        Ensure we can't create a timeslot when required field are invalid.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': "",
+            'workplace': "invalid",
+            'start_date': "",
+            'end_date': "",
+            'price': "",
+            'is_active': "",
+        }
+
+        response = self.client.post(
+            reverse('period-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'end_date': [
+                'Datetime has wrong format. Use one of these formats instead: '
+                'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
+            ],
+            'is_active': ['"" is not a valid boolean.'],
+            'name': ['This field may not be blank.'],
+            'price': ['A valid integer is required.'],
+            'start_date': [
+                'Datetime has wrong format. Use one of these formats instead: '
+                'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
+            ],
+            'workplace': ['Invalid hyperlink - No URL match.']
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_update(self):
         """
         Ensure we can update a period.
@@ -191,8 +326,8 @@ class PeriodTests(APITestCase):
         data = {
             'name': "new_period",
             'workplace': reverse('workplace-detail', args=[self.workplace.id]),
-            'start_date': timezone.now(),
-            'end_date': timezone.now() + timedelta(weeks=4),
+            'start_date': timezone.now() + timedelta(weeks=5),
+            'end_date': timezone.now() + timedelta(weeks=10),
             'price': 3,
             'is_active': True,
         }

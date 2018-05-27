@@ -65,6 +65,34 @@ class PictureSerializer(serializers.HyperlinkedModelSerializer):
 
 class PeriodSerializer(serializers.HyperlinkedModelSerializer):
 
+    def validate(self, attrs):
+        """Prevents overlapping periods and invalid start/end date"""
+        start = attrs['start_date']
+        end = attrs['end_date']
+
+        if start >= end:
+            raise serializers.ValidationError({
+                'end_date': [_("End date must be later than start_date.")],
+                'start_date': [_("End date must be earlier than end_date.")],
+            })
+
+        # Generate a list of tuples containing start/end date of existing
+        # periods in the requested workplace.
+        existing_periods = Period.objects.filter(
+            workplace=attrs['workplace']
+        ).values_list('start_date', 'end_date')
+
+        for periods in existing_periods:
+            if max(periods[0], start) < min(periods[1], end):
+                raise serializers.ValidationError({
+                    'detail': _(
+                        "An existing period overlaps with the provided "
+                        "start_date and end_date."
+                    ),
+                })
+
+        return attrs
+
     class Meta:
         model = Period
         fields = '__all__'

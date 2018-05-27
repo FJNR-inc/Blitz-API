@@ -309,7 +309,7 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': 123,
+            'name': "",
             'period': "123",
             'price': "",  # Will use Period's price if not provided
             'start_time': "",
@@ -332,6 +332,7 @@ class TimeSlotTests(APITestCase):
                 'Time has wrong format. Use one of these formats instead: '
                 'hh:mm[:ss[.uuuuuu]].'
             ],
+            'name': ['This field may not be blank.'],
             'period': ['Invalid hyperlink - No URL match.'],
             'price': ['A valid integer is required.'],
             'start_time': [
