@@ -74,6 +74,7 @@ class WorkplaceTests(APITestCase):
 
         content = {
             'details': 'short_description',
+            'id': 2,
             'location': {
                 'address_line1': 'random_address_1',
                 'address_line2': '',
@@ -281,6 +282,7 @@ class WorkplaceTests(APITestCase):
 
         content = {
             'details': 'new_short_description',
+            'id': 1,
             'location': {
                 'address_line1': 'new_address',
                 'address_line2': '',
@@ -329,6 +331,7 @@ class WorkplaceTests(APITestCase):
             'previous': None,
             'results': [{
                 'details': 'short_description',
+                'id': 1,
                 'location': {
                     'address_line1': 'random_address_1',
                     'address_line2': '',
@@ -368,6 +371,7 @@ class WorkplaceTests(APITestCase):
 
         content = {
             'details': 'short_description',
+            'id': 1,
             'location': {
                 'address_line1': 'random_address_1',
                 'address_line2': '',

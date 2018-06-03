@@ -104,6 +104,7 @@ class TimeSlotTests(APITestCase):
         )
 
         content = {
+            'id': 3,
             'day': date.today().isoformat(),
             'end_time': time(hour=16).isoformat(),
             'name': 'random_time_slot',
@@ -140,6 +141,7 @@ class TimeSlotTests(APITestCase):
         )
 
         content = {
+            'id': 3,
             'day': date.today().isoformat(),
             'end_time': time(hour=16).isoformat(),
             'name': 'random_time_slot',
@@ -436,6 +438,7 @@ class TimeSlotTests(APITestCase):
         )
 
         content = {
+            'id': 1,
             'day': date.today().isoformat(),
             'end_time': time(hour=16).isoformat(),
             'name': 'random_time_slot',
@@ -481,6 +484,7 @@ class TimeSlotTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
+                'id': 2,
                 'day': date.today().isoformat(),
                 'end_time': time(hour=22).isoformat(),
                 'name': 'evening_time_slot_active',
@@ -514,6 +518,7 @@ class TimeSlotTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
+                'id': 1,
                 'day': date.today().isoformat(),
                 'end_time': time(hour=12).isoformat(),
                 'name': 'evening_time_slot',
@@ -526,6 +531,7 @@ class TimeSlotTests(APITestCase):
                     'http://testserver/users/2'
                 ]
             }, {
+                'id': 2,
                 'day': date.today().isoformat(),
                 'end_time': time(hour=22).isoformat(),
                 'name': 'evening_time_slot_active',
@@ -559,6 +565,7 @@ class TimeSlotTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
+                'id': 1,
                 'day': date.today().isoformat(),
                 'end_time': time(hour=12).isoformat(),
                 'name': 'evening_time_slot',
@@ -618,6 +625,7 @@ class TimeSlotTests(APITestCase):
         data = json.loads(response.content)
 
         content = {
+            'id': 2,
             'day': date.today().isoformat(),
             'end_time': time(hour=22).isoformat(),
             'name': 'evening_time_slot_active',
@@ -664,6 +672,7 @@ class TimeSlotTests(APITestCase):
         )
 
         content = {
+            'id': 1,
             'day': date.today().isoformat(),
             'end_time': time(hour=12).isoformat(),
             'name': 'evening_time_slot',

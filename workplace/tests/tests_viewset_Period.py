@@ -86,6 +86,7 @@ class PeriodTests(APITestCase):
         )
 
         content = {
+            'id': 3,
             'end_date': data['end_date'].astimezone().isoformat(),
             'is_active': True,
             'name': 'random_period',
@@ -342,6 +343,7 @@ class PeriodTests(APITestCase):
         )
 
         content = {
+            'id': 1,
             'end_date': data['end_date'].astimezone().isoformat(),
             'is_active': True,
             'name': 'new_period',
@@ -387,6 +389,7 @@ class PeriodTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
+                'id': 2,
                 'end_date': data['results'][0]['end_date'],
                 'is_active': True,
                 'name': 'random_period_active',
@@ -419,6 +422,7 @@ class PeriodTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
+                'id': 1,
                 'end_date': data['results'][0]['end_date'],
                 'is_active': False,
                 'name': 'random_period',
@@ -427,6 +431,7 @@ class PeriodTests(APITestCase):
                 'url': 'http://testserver/periods/1',
                 'workplace': 'http://testserver/workplaces/1'
             }, {
+                'id': 2,
                 'end_date': data['results'][1]['end_date'],
                 'is_active': True,
                 'name': 'random_period_active',
@@ -456,6 +461,7 @@ class PeriodTests(APITestCase):
         data = json.loads(response.content)
 
         content = {
+            'id': 2,
             'end_date': data['end_date'],
             'is_active': True,
             'name': 'random_period_active',
@@ -485,6 +491,7 @@ class PeriodTests(APITestCase):
         data = json.loads(response.content)
 
         content = {
+            'id': 1,
             'end_date': data['end_date'],
             'is_active': False,
             'name': 'random_period',

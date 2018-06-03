@@ -96,6 +96,7 @@ class PictureTests(APITestCase):
         fname = self.picture_file.name.replace('\\', '/').split("/")[-1]
 
         content = {
+            'id': 2,
             'name': 'random_picture',
             'picture': 'http://testserver/media/workplaces/' + fname,
             'url': 'http://testserver/pictures/2',
@@ -228,6 +229,7 @@ class PictureTests(APITestCase):
         )
 
         content = {
+            'id': 1,
             'name': 'new_picture',
             'picture': 'http://testserver/media/workplaces/' + fname,
             'url': 'http://testserver/pictures/1',
@@ -268,6 +270,7 @@ class PictureTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
+                'id': 1,
                 'name': 'random_picture',
                 'picture': 'http://testserver' + self.picture.picture.url,
                 'url': 'http://testserver/pictures/1',
@@ -292,6 +295,7 @@ class PictureTests(APITestCase):
         )
 
         content = {
+            'id': 1,
             'name': 'random_picture',
             'picture': 'http://testserver' + self.picture.picture.url,
             'url': 'http://testserver/pictures/1',

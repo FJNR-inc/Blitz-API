@@ -10,6 +10,7 @@ from .models import Workplace, Picture, Period, TimeSlot
 
 
 class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
     location = AddressBasicSerializer(
         # This overrides UniqueTogether constraint of the Address serializer
         validators=[],
@@ -46,6 +47,7 @@ class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class PictureSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
 
     class Meta:
         model = Picture
@@ -64,6 +66,7 @@ class PictureSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class PeriodSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
 
     def validate(self, attrs):
         """Prevents overlapping periods and invalid start/end date"""
@@ -123,6 +126,7 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
 
     def validate(self, attrs):
         """Prevents overlapping timeslots and invalid start/end time"""
