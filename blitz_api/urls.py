@@ -61,6 +61,14 @@ urlpatterns = [
         views.UsersActivation.as_view(),
         name='users_activation',
     ),
+    path(
+        'profile',
+        views.UserViewSet.as_view({
+            'get': 'retrieve'
+        }),
+        name='profile',
+        kwargs={'pk': 'me'},
+    ),
     # Forgot password
     path(
         'reset_password',

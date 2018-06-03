@@ -48,6 +48,13 @@ class UserViewSet(viewsets.ModelViewSet):
             return serializers.UserUpdateSerializer
         return serializers.UserSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        queryset = User.objects.all()
+        if self.kwargs.get("pk", "") == "me":
+            self.kwargs['pk'] = user.id
+        return queryset
+
     def get_permissions(self):
         """
         Returns the list of permissions that this view requires.
