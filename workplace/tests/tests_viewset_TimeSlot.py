@@ -11,7 +11,9 @@ from django.contrib.auth import get_user_model
 
 from blitz_api.factories import UserFactory, AdminFactory
 
-from ..models import Period, TimeSlot
+from location.models import Country, StateProvince, Address
+
+from ..models import Period, TimeSlot, Workplace
 
 User = get_user_model()
 
@@ -24,8 +26,31 @@ class TimeSlotTests(APITestCase):
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()
+        cls.random_country = Country.objects.create(
+            name="Random_Country",
+            iso_code="RC",
+        )
+        cls.random_state_province = StateProvince.objects.create(
+            name="Random_State",
+            iso_code="RS",
+            country=cls.random_country,
+        )
+        cls.address = Address.objects.create(
+            address_line1='random_address_1',
+            postal_code='RAN_DOM',
+            city='random_city',
+            state_province=cls.random_state_province,
+            country=cls.random_country,
+        )
+        cls.workplace = Workplace.objects.create(
+            name="Blitz",
+            seats=40,
+            details="short_description",
+            location=cls.address,
+        )
         cls.period = Period.objects.create(
             name="random_period",
+            workplace=cls.workplace,
             start_date=timezone.now(),
             end_date=timezone.now() + timedelta(weeks=4),
             price=3,
@@ -510,6 +535,67 @@ class TimeSlotTests(APITestCase):
                 'period': 'http://testserver/periods/2',
                 'users': []
             }]
+        }
+
+        self.assertEqual(data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_filter_by_workplace(self):
+        """
+        Ensure we can list all timeslots linked to a workplace.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.get(
+            reverse('timeslot-list') + "?period__workplace=1",
+            format='json',
+        )
+
+        data = json.loads(response.content)
+
+        content = {
+            'count': 1,
+            'next': None,
+            'previous': None,
+            'results': [{
+                'day': date.today().isoformat(),
+                'end_time': time(hour=12).isoformat(),
+                'name': 'evening_time_slot',
+                'period': 'http://testserver/periods/1',
+                'price': 3,
+                'start_time': time(hour=8).isoformat(),
+                'url': 'http://testserver/time_slots/1',
+                'users': [
+                    'http://testserver/users/1',
+                    'http://testserver/users/2'
+                ]
+            }]
+        }
+
+        self.assertEqual(data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_filter_not_overiding_active(self):
+        """
+        Ensure we can list all timeslots linked to a workplace without
+        overriding is_active default filtering.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.get(
+            reverse('timeslot-list') + "?period__workplace=1",
+            format='json',
+        )
+
+        data = json.loads(response.content)
+
+        content = {
+            'count': 0,
+            'next': None,
+            'previous': None,
+            'results': []
         }
 
         self.assertEqual(data, content)
