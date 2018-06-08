@@ -85,6 +85,7 @@ class WorkplaceTests(APITestCase):
                 'state_province': {'iso_code': 'RS', 'name': 'Random_State'}
             },
             'name': 'random_workplace',
+            'pictures': [],
             'seats': 40,
             'url': 'http://testserver/workplaces/2'
         }
@@ -292,6 +293,7 @@ class WorkplaceTests(APITestCase):
                 'postal_code': 'NEW_CIT',
                 'state_province': {'iso_code': 'RS', 'name': 'Random_State'}},
             'name': 'new_workplace',
+            'pictures': [],
             'seats': 200,
             'url': 'http://testserver/workplaces/1'
         }
@@ -348,6 +350,7 @@ class WorkplaceTests(APITestCase):
                     }
                 },
                 'name': 'Blitz',
+                'pictures': [],
                 'seats': 40,
                 'url': 'http://testserver/workplaces/1'
             }]
@@ -388,6 +391,7 @@ class WorkplaceTests(APITestCase):
                 }
             },
             'name': 'Blitz',
+            'pictures': [],
             'seats': 40,
             'url': 'http://testserver/workplaces/1'
         }

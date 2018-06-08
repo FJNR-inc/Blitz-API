@@ -17,6 +17,19 @@ class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
         help_text=_("Address of the workplace."),
     )
 
+    # June 7th 2018
+    # The SlugRelatedField serializer can't get a field's attributes.
+    # Ex: It can't get the "url" attribute of Imagefield Picture.picture.url
+    # So here is a workaround: a SerializerMethodField is used to manually get
+    # picture urls. This works but is not as clean as it could be.
+    # Note: this is a read-only field so it isn't used for Workplace creation.
+    pictures = serializers.SerializerMethodField()
+
+    def get_pictures(self, obj):
+        request = self.context['request']
+        picture_urls = [picture.picture.url for picture in obj.pictures.all()]
+        return [request.build_absolute_uri(url) for url in picture_urls]
+
     def validate_location(self, value):
         """
         Checks that the address exists. Since the AddressBasicSerializer
