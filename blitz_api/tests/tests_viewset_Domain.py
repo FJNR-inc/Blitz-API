@@ -35,6 +35,7 @@ class DomainTests(APITestCase):
 
         data = {
             'name': "fake.domain",
+            'example': "email@fake.domain",
             'organization': reverse('organization-detail', args=[self.org.id]),
         }
 
@@ -45,6 +46,7 @@ class DomainTests(APITestCase):
         )
 
         content = {
+            'example': "email@fake.domain",
             'name': 'fake.domain',
             'organization': 'http://testserver/organizations/1',
             'url': 'http://testserver/domains/2'
@@ -121,6 +123,7 @@ class DomainTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
+                'example': None,
                 'name': 'random.domain',
                 'organization': 'http://testserver/organizations/1',
                 'url': 'http://testserver/domains/1'

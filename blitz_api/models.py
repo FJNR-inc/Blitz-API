@@ -203,6 +203,13 @@ class Domain(models.Model):
         max_length=253,
     )
 
+    example = models.CharField(
+        verbose_name=_("Email example"),
+        null=True,
+        blank=True,
+        max_length=253,
+    )
+
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
