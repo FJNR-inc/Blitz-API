@@ -146,10 +146,21 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         start = attrs['start_time']
         end = attrs['end_time']
 
+        # Make sure both DateTimes refer to the same day
+        if start.date() != end.date():
+            raise serializers.ValidationError({
+                'end_time': [
+                    _("End time must be the same day as start_time.")
+                ],
+                'start_time': [
+                    _("Start time must be the same day as end_time.")
+                ],
+            })
+
         if start >= end:
             raise serializers.ValidationError({
                 'end_time': [_("End time must be later than start_time.")],
-                'start_time': [_("End time must be earlier than end_time.")],
+                'start_time': [_("Start time must be earlier than end_time.")],
             })
 
         # Generate a list of tuples containing start/end time of existing

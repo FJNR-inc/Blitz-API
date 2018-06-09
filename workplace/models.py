@@ -159,16 +159,12 @@ class TimeSlot(models.Model):
         null=True,
     )
 
-    start_time = models.TimeField(
+    start_time = models.DateTimeField(
         verbose_name=_("Start time"),
     )
 
-    end_time = models.TimeField(
+    end_time = models.DateTimeField(
         verbose_name=_("End time"),
-    )
-
-    day = models.DateField(
-        verbose_name=_("Day"),
     )
 
     def __str__(self):

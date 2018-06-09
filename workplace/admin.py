@@ -31,7 +31,6 @@ class TimeSlotAdmin(admin.ModelAdmin):
     list_display = (
         'start_time',
         'end_time',
-        'day',
         'period',
         'price',
     )

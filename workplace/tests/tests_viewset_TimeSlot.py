@@ -1,12 +1,14 @@
 import json
+import pytz
 
-from datetime import time, date, timedelta
+from datetime import datetime, timedelta
 
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from django.urls import reverse
 from django.utils import timezone
+from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from blitz_api.factories import UserFactory, AdminFactory
@@ -16,6 +18,8 @@ from location.models import Country, StateProvince, Address
 from ..models import Period, TimeSlot, Workplace
 
 User = get_user_model()
+
+LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
 class TimeSlotTests(APITestCase):
@@ -67,18 +71,16 @@ class TimeSlotTests(APITestCase):
             name="evening_time_slot",
             period=cls.period,
             price=3,
-            start_time=time(hour=8),
-            end_time=time(hour=12),
-            day=date.today(),
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
         cls.time_slot.users.set([cls.admin, cls.user])
         cls.time_slot_active = TimeSlot.objects.create(
             name="evening_time_slot_active",
             period=cls.period_active,
             price=3,
-            start_time=time(hour=18),
-            end_time=time(hour=22),
-            day=date.today(),
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 18)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 22)),
         )
 
     def test_create(self):
@@ -91,9 +93,8 @@ class TimeSlotTests(APITestCase):
             'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period.id]),
             'price': '10.00',  # Will use Period's price if not provided
-            'start_time': time(hour=12),
-            'end_time': time(hour=16),
-            'day': date.today(),
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
             'users': [reverse('user-detail', args=[self.user.id])]
         }
 
@@ -105,11 +106,10 @@ class TimeSlotTests(APITestCase):
 
         content = {
             'id': 3,
-            'day': date.today().isoformat(),
-            'end_time': time(hour=16).isoformat(),
+            'end_time': data['end_time'].isoformat(),
             'name': 'random_time_slot',
             'price': '10.00',
-            'start_time': time(hour=12).isoformat(),
+            'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/3',
             'period': 'http://testserver/periods/1',
             'users': ['http://testserver/users/1']
@@ -129,9 +129,8 @@ class TimeSlotTests(APITestCase):
             'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period.id]),
             # 'price': '10.00',  # Will use Period's price if not provided
-            'start_time': time(hour=12),
-            'end_time': time(hour=16),
-            'day': date.today(),
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
         }
 
         response = self.client.post(
@@ -142,11 +141,10 @@ class TimeSlotTests(APITestCase):
 
         content = {
             'id': 3,
-            'day': date.today().isoformat(),
-            'end_time': time(hour=16).isoformat(),
+            'end_time': data['end_time'].isoformat(),
             'name': 'random_time_slot',
             'price': '3.00',
-            'start_time': time(hour=12).isoformat(),
+            'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/3',
             'period': 'http://testserver/periods/1',
             'users': []
@@ -166,9 +164,8 @@ class TimeSlotTests(APITestCase):
             'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period.id]),
             # 'price': '10.00',  # Will use Period's price if not provided
-            'start_time': time(hour=12),
-            'end_time': time(hour=16),
-            'day': date.today(),
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
         }
 
         response = self.client.post(
@@ -195,9 +192,8 @@ class TimeSlotTests(APITestCase):
             'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period.id]),
             'price': '10.00',  # Will use Period's price if not provided
-            'start_time': time(hour=11),
-            'end_time': time(hour=15),
-            'day': date.today(),
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 11)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 15)),
         }
 
         response = self.client.post(
@@ -228,9 +224,9 @@ class TimeSlotTests(APITestCase):
             'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period_active.id]),
             'price': '10.00',  # Will use Period's price if not provided
-            'start_time': time(hour=10),  # overlaps with self.timeslot
-            'end_time': time(hour=14),
-            'day': date.today(),
+            # start_time overlaps with self.timeslot
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 10)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
             'users': [reverse('user-detail', args=[self.admin.id])]
         }
 
@@ -260,9 +256,8 @@ class TimeSlotTests(APITestCase):
             'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period.id]),
             'price': '10.00',  # Will use Period's price if not provided
-            'start_time': time(hour=14),
-            'end_time': time(hour=10),
-            'day': date.today(),
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 14)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 10)),
         }
 
         response = self.client.post(
@@ -273,7 +268,37 @@ class TimeSlotTests(APITestCase):
 
         content = {
             'end_time': ['End time must be later than start_time.'],
-            'start_time': ['End time must be earlier than end_time.']
+            'start_time': ['Start time must be earlier than end_time.']
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_inconsistent_day(self):
+        """
+        Ensure we can't create timeslots with start_time and end_time in
+        different days.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': "random_time_slot",
+            'period': reverse('period-detail', args=[self.period.id]),
+            'price': '10.00',  # Will use Period's price if not provided
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 14)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 16, 10)),
+        }
+
+        response = self.client.post(
+            reverse('timeslot-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'end_time': ['End time must be the same day as start_time.'],
+            'start_time': ['Start time must be the same day as end_time.']
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -290,9 +315,8 @@ class TimeSlotTests(APITestCase):
             'name': "random_time_slot",
             'period': reverse('period-detail', args=[999]),
             # 'price': '10.00',  # Will use Period's price if not provided
-            'start_time': time(hour=12),
-            'end_time': time(hour=16),
-            'day': date.today(),
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
             'users': [reverse('user-detail', args=[999])],
         }
 
@@ -326,7 +350,6 @@ class TimeSlotTests(APITestCase):
         )
 
         content = {
-            'day': ['This field is required.'],
             'end_time': ['This field is required.'],
             'name': ['This field is required.'],
             'period': ['This field is required.'],
@@ -349,7 +372,6 @@ class TimeSlotTests(APITestCase):
             'price': None,  # Will use Period's price if not provided
             'start_time': None,
             'end_time': None,
-            'day': None,
         }
 
         response = self.client.post(
@@ -359,7 +381,6 @@ class TimeSlotTests(APITestCase):
         )
 
         content = {
-            'day': ['This field may not be null.'],
             'end_time': ['This field may not be null.'],
             'name': ['This field may not be blank.'],
             'period': ['This field may not be null.'],
@@ -382,7 +403,6 @@ class TimeSlotTests(APITestCase):
             'price': "",  # Will use Period's price if not provided
             'start_time': "",
             'end_time': "",
-            'day': "",
         }
 
         response = self.client.post(
@@ -392,20 +412,16 @@ class TimeSlotTests(APITestCase):
         )
 
         content = {
-            'day': [
-                'Date has wrong format. Use one of these formats instead: '
-                'YYYY[-MM[-DD]].'
-            ],
             'end_time': [
-                'Time has wrong format. Use one of these formats instead: '
-                'hh:mm[:ss[.uuuuuu]].'
+                'Datetime has wrong format. Use one of these formats instead: '
+                'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
             ],
             'name': ['This field may not be blank.'],
             'period': ['Invalid hyperlink - No URL match.'],
             'price': ['A valid number is required.'],
             'start_time': [
-                'Time has wrong format. Use one of these formats instead: '
-                'hh:mm[:ss[.uuuuuu]].'
+                'Datetime has wrong format. Use one of these formats instead: '
+                'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
             ]
         }
 
@@ -423,9 +439,8 @@ class TimeSlotTests(APITestCase):
             'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period.id]),
             'price': '10.00',  # Will use Period's price if not provided
-            'start_time': time(hour=12),
-            'end_time': time(hour=16),
-            'day': date.today(),
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
         }
 
         response = self.client.put(
@@ -439,11 +454,10 @@ class TimeSlotTests(APITestCase):
 
         content = {
             'id': 1,
-            'day': date.today().isoformat(),
-            'end_time': time(hour=16).isoformat(),
+            'end_time': data['end_time'].isoformat(),
             'name': 'random_time_slot',
             'price': '10.00',
-            'start_time': time(hour=12).isoformat(),
+            'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/1',
             'period': 'http://testserver/periods/1',
             'users': ['http://testserver/users/1', 'http://testserver/users/2']
@@ -485,11 +499,10 @@ class TimeSlotTests(APITestCase):
             'previous': None,
             'results': [{
                 'id': 2,
-                'day': date.today().isoformat(),
-                'end_time': time(hour=22).isoformat(),
+                'end_time': data['results'][0]['end_time'],
                 'name': 'evening_time_slot_active',
                 'price': '3.00',
-                'start_time': time(hour=18).isoformat(),
+                'start_time': data['results'][0]['start_time'],
                 'url': 'http://testserver/time_slots/2',
                 'period': 'http://testserver/periods/2',
                 'users': []
@@ -519,12 +532,11 @@ class TimeSlotTests(APITestCase):
             'previous': None,
             'results': [{
                 'id': 1,
-                'day': date.today().isoformat(),
-                'end_time': time(hour=12).isoformat(),
+                'end_time': data['results'][0]['end_time'],
                 'name': 'evening_time_slot',
                 'period': 'http://testserver/periods/1',
                 'price': '3.00',
-                'start_time': time(hour=8).isoformat(),
+                'start_time': data['results'][0]['start_time'],
                 'url': 'http://testserver/time_slots/1',
                 'users': [
                     'http://testserver/users/1',
@@ -532,11 +544,10 @@ class TimeSlotTests(APITestCase):
                 ]
             }, {
                 'id': 2,
-                'day': date.today().isoformat(),
-                'end_time': time(hour=22).isoformat(),
+                'end_time': data['results'][1]['end_time'],
                 'name': 'evening_time_slot_active',
                 'price': '3.00',
-                'start_time': time(hour=18).isoformat(),
+                'start_time': data['results'][1]['start_time'],
                 'url': 'http://testserver/time_slots/2',
                 'period': 'http://testserver/periods/2',
                 'users': []
@@ -566,12 +577,11 @@ class TimeSlotTests(APITestCase):
             'previous': None,
             'results': [{
                 'id': 1,
-                'day': date.today().isoformat(),
-                'end_time': time(hour=12).isoformat(),
+                'end_time': data['results'][0]['end_time'],
                 'name': 'evening_time_slot',
                 'period': 'http://testserver/periods/1',
                 'price': '3.00',
-                'start_time': time(hour=8).isoformat(),
+                'start_time': data['results'][0]['start_time'],
                 'url': 'http://testserver/time_slots/1',
                 'users': [
                     'http://testserver/users/1',
@@ -626,11 +636,10 @@ class TimeSlotTests(APITestCase):
 
         content = {
             'id': 2,
-            'day': date.today().isoformat(),
-            'end_time': time(hour=22).isoformat(),
+            'end_time': data['end_time'],
             'name': 'evening_time_slot_active',
             'price': '3.00',
-            'start_time': time(hour=18).isoformat(),
+            'start_time': data['start_time'],
             'url': 'http://testserver/time_slots/2',
             'period': 'http://testserver/periods/2',
             'users': []
@@ -671,14 +680,15 @@ class TimeSlotTests(APITestCase):
             ),
         )
 
+        data = json.loads(response.content)
+
         content = {
             'id': 1,
-            'day': date.today().isoformat(),
-            'end_time': time(hour=12).isoformat(),
+            'end_time': data['end_time'],
             'name': 'evening_time_slot',
             'period': 'http://testserver/periods/1',
             'price': '3.00',
-            'start_time': time(hour=8).isoformat(),
+            'start_time': data['start_time'],
             'url': 'http://testserver/time_slots/1',
             'users': [
                 'http://testserver/users/1',

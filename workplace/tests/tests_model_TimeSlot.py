@@ -1,4 +1,4 @@
-from datetime import time, date, timedelta
+from datetime import timedelta
 
 from rest_framework.test import APITestCase
 
@@ -53,9 +53,8 @@ class TimeSlotTests(APITestCase):
             name="random_time_slot",
             period=self.period,
             price=3,
-            start_time=time(hour=8),
-            end_time=time(hour=12),
-            day=date.today(),
+            start_time=timezone.now(),
+            end_time=timezone.now() + timedelta(hours=4),
         )
 
         self.assertEqual(time_slot.__str__(), "random_time_slot")
