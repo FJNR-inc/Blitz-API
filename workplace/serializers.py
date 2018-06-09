@@ -207,7 +207,7 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = TimeSlot
-        fields = '__all__'
+        exclude = ('name', )
         extra_kwargs = {
             'period': {
                 'required': True,

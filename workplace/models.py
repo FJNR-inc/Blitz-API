@@ -134,6 +134,8 @@ class TimeSlot(models.Model):
 
     name = models.CharField(
         verbose_name=_("Name"),
+        blank=True,
+        null=True,
         max_length=253,
     )
 

@@ -90,7 +90,6 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period.id]),
             'price': '10.00',  # Will use Period's price if not provided
             'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
@@ -107,7 +106,6 @@ class TimeSlotTests(APITestCase):
         content = {
             'id': 3,
             'end_time': data['end_time'].isoformat(),
-            'name': 'random_time_slot',
             'price': '10.00',
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/3',
@@ -126,7 +124,6 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period.id]),
             # 'price': '10.00',  # Will use Period's price if not provided
             'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
@@ -142,7 +139,6 @@ class TimeSlotTests(APITestCase):
         content = {
             'id': 3,
             'end_time': data['end_time'].isoformat(),
-            'name': 'random_time_slot',
             'price': '3.00',
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/3',
@@ -161,7 +157,6 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.user)
 
         data = {
-            'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period.id]),
             # 'price': '10.00',  # Will use Period's price if not provided
             'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
@@ -189,7 +184,6 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period.id]),
             'price': '10.00',  # Will use Period's price if not provided
             'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 11)),
@@ -221,7 +215,6 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period_active.id]),
             'price': '10.00',  # Will use Period's price if not provided
             # start_time overlaps with self.timeslot
@@ -253,7 +246,6 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period.id]),
             'price': '10.00',  # Will use Period's price if not provided
             'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 14)),
@@ -283,7 +275,6 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period.id]),
             'price': '10.00',  # Will use Period's price if not provided
             'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 14)),
@@ -312,7 +303,6 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': "random_time_slot",
             'period': reverse('period-detail', args=[999]),
             # 'price': '10.00',  # Will use Period's price if not provided
             'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
@@ -351,7 +341,6 @@ class TimeSlotTests(APITestCase):
 
         content = {
             'end_time': ['This field is required.'],
-            'name': ['This field is required.'],
             'period': ['This field is required.'],
             'start_time': ['This field is required.']
         }
@@ -367,7 +356,6 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': "",
             'period': None,
             'price': None,  # Will use Period's price if not provided
             'start_time': None,
@@ -382,7 +370,6 @@ class TimeSlotTests(APITestCase):
 
         content = {
             'end_time': ['This field may not be null.'],
-            'name': ['This field may not be blank.'],
             'period': ['This field may not be null.'],
             'start_time': ['This field may not be null.']
         }
@@ -398,7 +385,6 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': "",
             'period': "123",
             'price': "",  # Will use Period's price if not provided
             'start_time': "",
@@ -416,7 +402,6 @@ class TimeSlotTests(APITestCase):
                 'Datetime has wrong format. Use one of these formats instead: '
                 'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
             ],
-            'name': ['This field may not be blank.'],
             'period': ['Invalid hyperlink - No URL match.'],
             'price': ['A valid number is required.'],
             'start_time': [
@@ -436,7 +421,6 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': "random_time_slot",
             'period': reverse('period-detail', args=[self.period.id]),
             'price': '10.00',  # Will use Period's price if not provided
             'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
@@ -455,7 +439,6 @@ class TimeSlotTests(APITestCase):
         content = {
             'id': 1,
             'end_time': data['end_time'].isoformat(),
-            'name': 'random_time_slot',
             'price': '10.00',
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/1',
@@ -500,7 +483,6 @@ class TimeSlotTests(APITestCase):
             'results': [{
                 'id': 2,
                 'end_time': data['results'][0]['end_time'],
-                'name': 'evening_time_slot_active',
                 'price': '3.00',
                 'start_time': data['results'][0]['start_time'],
                 'url': 'http://testserver/time_slots/2',
@@ -533,7 +515,6 @@ class TimeSlotTests(APITestCase):
             'results': [{
                 'id': 1,
                 'end_time': data['results'][0]['end_time'],
-                'name': 'evening_time_slot',
                 'period': 'http://testserver/periods/1',
                 'price': '3.00',
                 'start_time': data['results'][0]['start_time'],
@@ -545,7 +526,6 @@ class TimeSlotTests(APITestCase):
             }, {
                 'id': 2,
                 'end_time': data['results'][1]['end_time'],
-                'name': 'evening_time_slot_active',
                 'price': '3.00',
                 'start_time': data['results'][1]['start_time'],
                 'url': 'http://testserver/time_slots/2',
@@ -578,7 +558,6 @@ class TimeSlotTests(APITestCase):
             'results': [{
                 'id': 1,
                 'end_time': data['results'][0]['end_time'],
-                'name': 'evening_time_slot',
                 'period': 'http://testserver/periods/1',
                 'price': '3.00',
                 'start_time': data['results'][0]['start_time'],
@@ -637,7 +616,6 @@ class TimeSlotTests(APITestCase):
         content = {
             'id': 2,
             'end_time': data['end_time'],
-            'name': 'evening_time_slot_active',
             'price': '3.00',
             'start_time': data['start_time'],
             'url': 'http://testserver/time_slots/2',
@@ -685,7 +663,6 @@ class TimeSlotTests(APITestCase):
         content = {
             'id': 1,
             'end_time': data['end_time'],
-            'name': 'evening_time_slot',
             'period': 'http://testserver/periods/1',
             'price': '3.00',
             'start_time': data['start_time'],
