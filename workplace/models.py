@@ -100,7 +100,9 @@ class Period(models.Model):
         related_name='periods',
     )
 
-    price = models.PositiveIntegerField(
+    price = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
         verbose_name=_("Price"),
     )
 
@@ -149,7 +151,9 @@ class TimeSlot(models.Model):
         related_name='time_slots',
     )
 
-    price = models.PositiveIntegerField(
+    price = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
         verbose_name=_("Price"),
         blank=True,
         null=True,

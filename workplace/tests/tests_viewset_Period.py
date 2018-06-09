@@ -75,7 +75,7 @@ class PeriodTests(APITestCase):
             'workplace': reverse('workplace-detail', args=[self.workplace.id]),
             'start_date': timezone.now() + timedelta(weeks=5),
             'end_date': timezone.now() + timedelta(weeks=10),
-            'price': 3,
+            'price': '3.00',
             'is_active': True,
         }
 
@@ -90,7 +90,7 @@ class PeriodTests(APITestCase):
             'end_date': data['end_date'].astimezone().isoformat(),
             'is_active': True,
             'name': 'random_period',
-            'price': 3,
+            'price': '3.00',
             'start_date': data['start_date'].astimezone().isoformat(),
             'url': 'http://testserver/periods/3',
             'workplace': 'http://testserver/workplaces/1'
@@ -111,7 +111,7 @@ class PeriodTests(APITestCase):
             'workplace': reverse('workplace-detail', args=[self.workplace.id]),
             'start_date': timezone.now(),
             'end_date': timezone.now() + timedelta(weeks=4),
-            'price': 3,
+            'price': '3.00',
             'is_active': True,
         }
 
@@ -140,7 +140,7 @@ class PeriodTests(APITestCase):
             'workplace': reverse('workplace-detail', args=[self.workplace.id]),
             'start_date': timezone.now(),
             'end_date': timezone.now() + timedelta(weeks=4),
-            'price': 3,
+            'price': '3.00',
             'is_active': True,
         }
 
@@ -172,7 +172,7 @@ class PeriodTests(APITestCase):
             'workplace': reverse('workplace-detail', args=[self.workplace.id]),
             'start_date': timezone.now(),
             'end_date': timezone.now() - timedelta(weeks=4),
-            'price': 3,
+            'price': '3.00',
             'is_active': True,
         }
 
@@ -202,7 +202,7 @@ class PeriodTests(APITestCase):
             'workplace': reverse('workplace-detail', args=[999]),
             'start_date': timezone.now(),
             'end_date': timezone.now() + timedelta(weeks=4),
-            'price': 3,
+            'price': '3.00',
             'is_active': True,
         }
 
@@ -306,7 +306,7 @@ class PeriodTests(APITestCase):
             ],
             'is_active': ['"" is not a valid boolean.'],
             'name': ['This field may not be blank.'],
-            'price': ['A valid integer is required.'],
+            'price': ['A valid number is required.'],
             'start_date': [
                 'Datetime has wrong format. Use one of these formats instead: '
                 'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
@@ -329,7 +329,7 @@ class PeriodTests(APITestCase):
             'workplace': reverse('workplace-detail', args=[self.workplace.id]),
             'start_date': timezone.now() + timedelta(weeks=5),
             'end_date': timezone.now() + timedelta(weeks=10),
-            'price': 3,
+            'price': '3.00',
             'is_active': True,
         }
 
@@ -347,7 +347,7 @@ class PeriodTests(APITestCase):
             'end_date': data['end_date'].astimezone().isoformat(),
             'is_active': True,
             'name': 'new_period',
-            'price': 3,
+            'price': '3.00',
             'start_date': data['start_date'].astimezone().isoformat(),
             'url': 'http://testserver/periods/1',
             'workplace': 'http://testserver/workplaces/1'
@@ -393,7 +393,7 @@ class PeriodTests(APITestCase):
                 'end_date': data['results'][0]['end_date'],
                 'is_active': True,
                 'name': 'random_period_active',
-                'price': 3,
+                'price': '3.00',
                 'start_date': data['results'][0]['start_date'],
                 'url': 'http://testserver/periods/2',
                 'workplace': 'http://testserver/workplaces/1'
@@ -426,7 +426,7 @@ class PeriodTests(APITestCase):
                 'end_date': data['results'][0]['end_date'],
                 'is_active': False,
                 'name': 'random_period',
-                'price': 3,
+                'price': '3.00',
                 'start_date': data['results'][0]['start_date'],
                 'url': 'http://testserver/periods/1',
                 'workplace': 'http://testserver/workplaces/1'
@@ -435,7 +435,7 @@ class PeriodTests(APITestCase):
                 'end_date': data['results'][1]['end_date'],
                 'is_active': True,
                 'name': 'random_period_active',
-                'price': 3,
+                'price': '3.00',
                 'start_date': data['results'][1]['start_date'],
                 'url': 'http://testserver/periods/2',
                 'workplace': 'http://testserver/workplaces/1'
@@ -465,7 +465,7 @@ class PeriodTests(APITestCase):
             'end_date': data['end_date'],
             'is_active': True,
             'name': 'random_period_active',
-            'price': 3,
+            'price': '3.00',
             'start_date': data['start_date'],
             'url': 'http://testserver/periods/2',
             'workplace': 'http://testserver/workplaces/1'
@@ -495,7 +495,7 @@ class PeriodTests(APITestCase):
             'end_date': data['end_date'],
             'is_active': False,
             'name': 'random_period',
-            'price': 3,
+            'price': '3.00',
             'start_date': data['start_date'],
             'url': 'http://testserver/periods/1',
             'workplace': 'http://testserver/workplaces/1'
