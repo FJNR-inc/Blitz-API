@@ -22,6 +22,7 @@ from django.conf.urls import include
 from django.conf.urls.static import static
 
 from workplace.urls import router as workplace_router
+from store.urls import router as store_router
 
 from . import views
 
@@ -38,6 +39,7 @@ router = OptionalSlashDefaultRouter()
 
 # External workplace application
 router.registry.extend(workplace_router.registry)
+router.registry.extend(store_router.registry)
 
 router.register('users', views.UserViewSet)
 router.register('domains', views.DomainViewSet)

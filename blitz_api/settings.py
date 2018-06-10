@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'blitz_api',
     'location',
     'workplace',
+    'store',
 ]
 
 MIDDLEWARE = [
