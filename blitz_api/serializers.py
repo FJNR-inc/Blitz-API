@@ -33,6 +33,7 @@ class DomainSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
     name = serializers.CharField(
         max_length=100,
         required=True,
