@@ -82,30 +82,56 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
 
     def validate(self, attrs):
-        """Prevents overlapping periods and invalid start/end date"""
-        start = attrs['start_date']
-        end = attrs['end_date']
+        """Prevents overlapping active periods and invalid start/end date"""
+        # Get instance values of start_date, end_date and is_active if not
+        # provided in request data (needed for validation).
+        start = attrs.get(
+            'start_date',
+            getattr(self.instance, 'start_date', None)
+        )
+        end = attrs.get(
+            'end_date',
+            getattr(self.instance, 'end_date', None)
+        )
+        is_active = attrs.get(
+            'is_active',
+            getattr(self.instance, 'is_active', None)
+        )
 
         if start >= end:
             raise serializers.ValidationError({
                 'end_date': [_("End date must be later than start_date.")],
-                'start_date': [_("End date must be earlier than end_date.")],
+                'start_date': [_("Start date must be earlier than end_date.")],
             })
 
-        # Generate a list of tuples containing start/end date of existing
-        # periods in the requested workplace.
-        existing_periods = Period.objects.filter(
-            workplace=attrs['workplace']
-        ).values_list('start_date', 'end_date')
+        # If creating/updating an active period, make sure that it does not
+        # overlap with another active period
+        if is_active:
+            instance_id = getattr(self.instance, 'id', None)
+            workplace = attrs.get(
+                'workplace',
+                getattr(self.instance, 'workplace', None)
+            )
+            # Get other active periods aasociated to the same workplace
+            workplace_periods = Period.objects.filter(
+                workplace=workplace,
+                is_active=True,
+            )
+            # Exclude current period (for updates)
+            workplace_periods = workplace_periods.exclude(id=instance_id)
+            # Keep start_date & end_date for validation
+            # This creates a list of tuple: [(start_date, end_date), ...]
+            date_list = workplace_periods.values_list('start_date', 'end_date')
 
-        for periods in existing_periods:
-            if max(periods[0], start) < min(periods[1], end):
-                raise serializers.ValidationError({
-                    'detail': _(
-                        "An existing period overlaps with the provided "
-                        "start_date and end_date."
-                    ),
-                })
+            for duration in date_list:
+                if max(duration[0], start) < min(duration[1], end):
+                    raise serializers.ValidationError({
+                        'detail': _(
+                            "An active period associated to the same "
+                            "workplace overlaps with the provided start_date "
+                            "and end_date."
+                        ),
+                    })
 
         return attrs
 

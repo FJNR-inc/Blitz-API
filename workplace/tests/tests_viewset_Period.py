@@ -152,8 +152,8 @@ class PeriodTests(APITestCase):
 
         content = {
             'detail': [
-                'An existing period overlaps with the provided start_date '
-                'and end_date.'
+                'An active period associated to the same workplace overlaps '
+                'with the provided start_date and end_date.'
             ]
         }
 
@@ -184,7 +184,7 @@ class PeriodTests(APITestCase):
 
         content = {
             'end_date': ['End date must be later than start_date.'],
-            'start_date': ['End date must be earlier than end_date.']
+            'start_date': ['Start date must be earlier than end_date.']
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -356,6 +356,78 @@ class PeriodTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_update_partial(self):
+        """
+        Ensure we can partially update a period.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': "updated_period",
+            'start_date': timezone.now() + timedelta(weeks=1),
+            'price': '2000.00',
+        }
+
+        response = self.client.patch(
+            reverse(
+                'period-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'id': 1,
+            'is_active': False,
+            'name': 'updated_period',
+            'price': '2000.00',
+            'end_date': response_data['end_date'],
+            'start_date': data['start_date'].astimezone().isoformat(),
+            'url': 'http://testserver/periods/1',
+            'workplace': 'http://testserver/workplaces/1'
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_update_partial_overlapping(self):
+        """
+        Ensure we can't partially update an active period if it overlaps with
+        another active period.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': "updated_period",
+            'start_date': timezone.now() + timedelta(weeks=1),
+            'price': '2000.00',
+            'is_active': True,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'period-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'detail': [
+                'An active period associated to the same workplace overlaps '
+                'with the provided start_date and end_date.'
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_delete(self):
         """
