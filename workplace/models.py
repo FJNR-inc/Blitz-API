@@ -35,6 +35,11 @@ class Workplace(models.Model):
         related_name="location",
     )
 
+    timezone = models.CharField(
+        verbose_name=_("Timezone"),
+        max_length=100,
+    )
+
     def __str__(self):
         return self.name
 

@@ -46,6 +46,7 @@ class WorkplaceTests(APITestCase):
             seats=40,
             details="short_description",
             location=self.address,
+            timezone="America/Montreal",
         )
 
     def test_create(self):
@@ -64,6 +65,7 @@ class WorkplaceTests(APITestCase):
             'seats': 40,
             'details': "short_description",
             'location': location,
+            'timezone': "America/Montreal"
         }
 
         response = self.client.post(
@@ -87,6 +89,7 @@ class WorkplaceTests(APITestCase):
             'name': 'random_workplace',
             'pictures': [],
             'seats': 40,
+            'timezone': "America/Montreal",
             'url': 'http://testserver/workplaces/2'
         }
 
@@ -110,6 +113,7 @@ class WorkplaceTests(APITestCase):
             'seats': 40,
             'details': "short_description",
             'location': location,
+            'timezone': "America/Montreal"
         }
 
         response = self.client.post(
@@ -142,6 +146,7 @@ class WorkplaceTests(APITestCase):
             'seats': 40,
             'details': "short_description",
             'location': location,
+            'timezone': "America/Montreal"
         }
 
         response = self.client.post(
@@ -175,6 +180,7 @@ class WorkplaceTests(APITestCase):
                 'postal_code': 'RAN_DOM',
                 'state_province': 'RS',
             },
+            'timezone': "America/Montreal"
         }
 
         response = self.client.post(
@@ -207,7 +213,44 @@ class WorkplaceTests(APITestCase):
             'details': ['This field is required.'],
             'location': ['This field is required.'],
             'name': ['This field is required.'],
-            'seats': ['This field is required.']
+            'seats': ['This field is required.'],
+            'timezone': ['This field is required.']
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_invalid_field(self):
+        """
+        Ensure we can't create a workplace with invalid fields.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': ("invalid",),
+            'seats': "invalid",
+            'details': ("invalid",),
+            'location': "invalid",
+            'timezone': ("invalid",),
+        }
+
+        response = self.client.post(
+            reverse('workplace-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'details': ['Not a valid string.'],
+            'location': {
+                'non_field_errors': [
+                    'Invalid data. Expected a dictionary, but got str.'
+                ]
+            },
+            'name': ['Not a valid string.'],
+            'seats': ['A valid integer is required.'],
+            'timezone': ['Unknown timezone']
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -225,6 +268,7 @@ class WorkplaceTests(APITestCase):
             'seats': 40,
             'details': "short_description",
             'location': {},
+            'timezone': "America/Montreal",
         }
 
         response = self.client.post(
@@ -270,6 +314,7 @@ class WorkplaceTests(APITestCase):
             'seats': 200,
             'details': "new_short_description",
             'location': location,
+            'timezone': "America/Montreal",
         }
 
         response = self.client.put(
@@ -295,6 +340,7 @@ class WorkplaceTests(APITestCase):
             'name': 'new_workplace',
             'pictures': [],
             'seats': 200,
+            'timezone': 'America/Montreal',
             'url': 'http://testserver/workplaces/1'
         }
 
@@ -352,6 +398,7 @@ class WorkplaceTests(APITestCase):
                 'name': 'Blitz',
                 'pictures': [],
                 'seats': 40,
+                'timezone': 'America/Montreal',
                 'url': 'http://testserver/workplaces/1'
             }]
         }
@@ -393,6 +440,7 @@ class WorkplaceTests(APITestCase):
             'name': 'Blitz',
             'pictures': [],
             'seats': 40,
+            'timezone': 'America/Montreal',
             'url': 'http://testserver/workplaces/1'
         }
 

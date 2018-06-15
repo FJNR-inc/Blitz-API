@@ -7,6 +7,7 @@ from location.models import Address
 from location.serializers import AddressBasicSerializer
 
 from .models import Workplace, Picture, Period, TimeSlot
+from .fields import TimezoneField
 
 
 class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
@@ -15,6 +16,10 @@ class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
         # This overrides UniqueTogether constraint of the Address serializer
         validators=[],
         help_text=_("Address of the workplace."),
+    )
+    timezone = TimezoneField(
+        required=True,
+        help_text=_("Timezone of the workplace."),
     )
 
     # June 7th 2018
