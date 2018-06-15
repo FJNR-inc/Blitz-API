@@ -76,7 +76,7 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.TimeSlotSerializer
     queryset = TimeSlot.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
-    filter_fields = ('period__workplace',)
+    filter_fields = ('period__workplace', 'period',)
 
     def get_queryset(self):
         """
