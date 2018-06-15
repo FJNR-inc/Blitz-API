@@ -174,8 +174,22 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
 
     def validate(self, attrs):
         """Prevents overlapping timeslots and invalid start/end time"""
-        start = attrs['start_time']
-        end = attrs['end_time']
+        # Get instance values of start_time and end_time if not
+        # provided in request data (needed for validation).
+        start = attrs.get(
+            'start_time',
+            getattr(self.instance, 'start_time', None)
+        )
+        end = attrs.get(
+            'end_time',
+            getattr(self.instance, 'end_time', None)
+        )
+        period = attrs.get(
+            'period',
+            getattr(self.instance, 'period', None)
+        )
+        # Will always be None if request method is not "update"
+        instance_id = getattr(self.instance, 'id', None)
 
         # Make sure both DateTimes refer to the same day
         if start.date() != end.date():
@@ -196,12 +210,15 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
 
         # Generate a list of tuples containing start/end time of existing
         # timeslots in the requested period.
-        existing_timeslot = TimeSlot.objects.filter(
-            period=attrs['period']
-        ).values_list('start_time', 'end_time')
+        period_timeslots = TimeSlot.objects.filter(
+            period=period
+        )
+        # Exclude current period (for updates)
+        period_timeslots = period_timeslots.exclude(id=instance_id)
+        time_list = period_timeslots.values_list('start_time', 'end_time')
 
-        for timeslots in existing_timeslot:
-            if max(timeslots[0], start) < min(timeslots[1], end):
+        for duration in time_list:
+            if max(duration[0], start) < min(duration[1], end):
                 raise serializers.ValidationError({
                     'detail': _(
                         "An existing timeslot overlaps with the provided "

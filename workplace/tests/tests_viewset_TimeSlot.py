@@ -450,6 +450,42 @@ class TimeSlotTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_update_partial(self):
+        """
+        Ensure we can partially update a timeslot.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'price': '1000.00',
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 6)),
+        }
+
+        response = self.client.patch(
+            reverse(
+                'timeslot-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'id': 1,
+            'end_time': response_data['end_time'],
+            'price': '1000.00',
+            'start_time': data['start_time'].isoformat(),
+            'url': 'http://testserver/time_slots/1',
+            'period': 'http://testserver/periods/1',
+            'users': ['http://testserver/users/1', 'http://testserver/users/2']
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_delete(self):
         """
         Ensure we can delete a timeslot.
