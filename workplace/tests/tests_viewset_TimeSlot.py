@@ -52,6 +52,12 @@ class TimeSlotTests(APITestCase):
             details="short_description",
             location=cls.address,
         )
+        cls.workplace2 = Workplace.objects.create(
+            name="Blitz2",
+            seats=40,
+            details="short_description",
+            location=cls.address,
+        )
         cls.period = Period.objects.create(
             name="random_period",
             workplace=cls.workplace,
@@ -62,6 +68,7 @@ class TimeSlotTests(APITestCase):
         )
         cls.period_active = Period.objects.create(
             name="random_period_active",
+            workplace=cls.workplace2,
             start_date=timezone.now(),
             end_date=timezone.now() + timedelta(weeks=4),
             price=3,
@@ -107,6 +114,7 @@ class TimeSlotTests(APITestCase):
             'id': 3,
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
+            'places_remaining': 39,
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/3',
             'period': 'http://testserver/periods/1',
@@ -140,6 +148,7 @@ class TimeSlotTests(APITestCase):
             'id': 3,
             'end_time': data['end_time'].isoformat(),
             'price': '3.00',
+            'places_remaining': 40,
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/3',
             'period': 'http://testserver/periods/1',
@@ -440,6 +449,7 @@ class TimeSlotTests(APITestCase):
             'id': 1,
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
+            'places_remaining': 38,
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/1',
             'period': 'http://testserver/periods/1',
@@ -476,6 +486,7 @@ class TimeSlotTests(APITestCase):
             'id': 1,
             'end_time': response_data['end_time'],
             'price': '1000.00',
+            'places_remaining': 38,
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/1',
             'period': 'http://testserver/periods/1',
@@ -520,6 +531,7 @@ class TimeSlotTests(APITestCase):
                 'id': 2,
                 'end_time': data['results'][0]['end_time'],
                 'price': '3.00',
+                'places_remaining': 40,
                 'start_time': data['results'][0]['start_time'],
                 'url': 'http://testserver/time_slots/2',
                 'period': 'http://testserver/periods/2',
@@ -553,6 +565,7 @@ class TimeSlotTests(APITestCase):
                 'end_time': data['results'][0]['end_time'],
                 'period': 'http://testserver/periods/1',
                 'price': '3.00',
+                'places_remaining': 38,
                 'start_time': data['results'][0]['start_time'],
                 'url': 'http://testserver/time_slots/1',
                 'users': [
@@ -563,6 +576,7 @@ class TimeSlotTests(APITestCase):
                 'id': 2,
                 'end_time': data['results'][1]['end_time'],
                 'price': '3.00',
+                'places_remaining': 40,
                 'start_time': data['results'][1]['start_time'],
                 'url': 'http://testserver/time_slots/2',
                 'period': 'http://testserver/periods/2',
@@ -595,6 +609,7 @@ class TimeSlotTests(APITestCase):
                 'id': 1,
                 'end_time': data['results'][0]['end_time'],
                 'period': 'http://testserver/periods/1',
+                'places_remaining': 38,
                 'price': '3.00',
                 'start_time': data['results'][0]['start_time'],
                 'url': 'http://testserver/time_slots/1',
@@ -653,6 +668,7 @@ class TimeSlotTests(APITestCase):
             'id': 2,
             'end_time': data['end_time'],
             'price': '3.00',
+            'places_remaining': 40,
             'start_time': data['start_time'],
             'url': 'http://testserver/time_slots/2',
             'period': 'http://testserver/periods/2',
@@ -701,6 +717,7 @@ class TimeSlotTests(APITestCase):
             'end_time': data['end_time'],
             'period': 'http://testserver/periods/1',
             'price': '3.00',
+            'places_remaining': 38,
             'start_time': data['start_time'],
             'url': 'http://testserver/time_slots/1',
             'users': [

@@ -171,6 +171,12 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
 
 class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
+    places_remaining = serializers.SerializerMethodField()
+
+    def get_places_remaining(self, obj):
+        seats = obj.period.workplace.seats
+        reservations = obj.users.count()
+        return seats - reservations
 
     def validate(self, attrs):
         """Prevents overlapping timeslots and invalid start/end time"""
