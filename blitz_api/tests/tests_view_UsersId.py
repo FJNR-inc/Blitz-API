@@ -41,6 +41,8 @@ class UsersIdTests(APITestCase):
             'birthdate',
             'groups',
             'user_permissions',
+            'reservations',
+            'membership',
         ]
 
     def setUp(self):

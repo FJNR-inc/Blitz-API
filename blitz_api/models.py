@@ -67,6 +67,18 @@ class User(AbstractUser):
         choices=GENDER_CHOICES,
         verbose_name=_("Gender"),
     )
+    membership = models.ForeignKey(
+        'store.Membership',
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        verbose_name=_("Membership"),
+    )
+    reservations = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        verbose_name=_("Reservations"),
+    )
 
 
 class TemporaryToken(Token):
