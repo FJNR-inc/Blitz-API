@@ -12,7 +12,8 @@ from django.contrib.contenttypes.models import ContentType
 
 from blitz_api.factories import UserFactory, AdminFactory
 
-from ..models import Package, Order, OrderLine
+from blitz_api.models import AcademicLevel
+from ..models import Package, Order, OrderLine, Membership
 
 User = get_user_model()
 
@@ -43,6 +44,16 @@ class PackageTests(APITestCase):
             content_type=cls.package_type,
             object_id=1,
         )
+        cls.academic_level = AcademicLevel.objects.create(
+            name="University"
+        )
+        cls.membership = Membership.objects.create(
+            name="basic_membership",
+            details="1-Year student membership",
+            price=50,
+            duration=timedelta(days=365),
+            academic_level=cls.academic_level,
+        )
 
     def test_create(self):
         """
@@ -55,6 +66,9 @@ class PackageTests(APITestCase):
             'details': "10 reservations package",
             'price': 50,
             'reservations': 10,
+            'exclusive_memberships': [
+                reverse('membership-detail', args=[self.membership.id]),
+            ],
         }
 
         response = self.client.post(
@@ -65,6 +79,7 @@ class PackageTests(APITestCase):
 
         content = {
             'details': '10 reservations package',
+            'exclusive_memberships': ['http://testserver/memberships/1'],
             'id': 2,
             'name': 'basic_package',
             'order_lines': [],
@@ -139,6 +154,7 @@ class PackageTests(APITestCase):
             'details': None,
             'price': None,
             'reservations': None,
+            'exclusive_memberships': None,
         }
 
         response = self.client.post(
@@ -148,6 +164,7 @@ class PackageTests(APITestCase):
         )
 
         content = {
+            'exclusive_memberships': ['This field may not be null.'],
             'name': ['This field may not be null.'],
             'price': ['This field may not be null.'],
             'reservations': ['This field may not be null.']
@@ -168,6 +185,7 @@ class PackageTests(APITestCase):
             'details': (1,),
             'price': "",
             'reservations': "",
+            'exclusive_memberships': (1,),
         }
 
         response = self.client.post(
@@ -178,6 +196,9 @@ class PackageTests(APITestCase):
 
         content = {
             'details': ['Not a valid string.'],
+            'exclusive_memberships': [
+                'Incorrect type. Expected URL string, received int.'
+            ],
             'name': ['Not a valid string.'],
             'price': ['A valid number is required.'],
             'reservations': ['A valid integer is required.']
@@ -211,11 +232,47 @@ class PackageTests(APITestCase):
 
         content = {
             'details': '999 reservations package',
+            'exclusive_memberships': [],
             'id': 1,
             'name': 'extreme_package_updated',
             'order_lines': ['http://testserver/order_lines/1'],
             'price': '1.00',
             'reservations': 999,
+            'url': 'http://testserver/packages/1'
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_update_partial(self):
+        """
+        Ensure we can partially update a package.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'details': "New very cool details",
+            'price': 99,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'package-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'details': 'New very cool details',
+            'exclusive_memberships': [],
+            'id': 1,
+            'name': 'extreme_package',
+            'order_lines': ['http://testserver/order_lines/1'],
+            'price': '99.00',
+            'reservations': 100,
             'url': 'http://testserver/packages/1'
         }
 
@@ -255,6 +312,7 @@ class PackageTests(APITestCase):
             'previous': None,
             'results': [{
                 'details': '100 reservations package',
+                'exclusive_memberships': [],
                 'id': 1,
                 'name': 'extreme_package',
                 'price': '400.00',
@@ -281,6 +339,7 @@ class PackageTests(APITestCase):
 
         content = {
             'details': '100 reservations package',
+            'exclusive_memberships': [],
             'id': 1,
             'name': 'extreme_package',
             'price': '400.00',
@@ -307,6 +366,7 @@ class PackageTests(APITestCase):
 
         content = {
             'details': '100 reservations package',
+            'exclusive_memberships': [],
             'id': 1,
             'name': 'extreme_package',
             'order_lines': ['http://testserver/order_lines/1'],

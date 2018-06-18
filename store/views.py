@@ -76,7 +76,7 @@ class OrderLineViewSet(viewsets.ModelViewSet):
     """
     serializer_class = serializers.OrderLineSerializer
     queryset = OrderLine.objects.all()
-    permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         """

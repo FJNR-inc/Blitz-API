@@ -136,5 +136,12 @@ class Package(BaseProduct):
         verbose_name=_("Reservations"),
     )
 
+    exclusive_memberships = models.ManyToManyField(
+        Membership,
+        blank=True,
+        verbose_name=_("Memberships"),
+        related_name='packages',
+    )
+
     def __str__(self):
         return self.name

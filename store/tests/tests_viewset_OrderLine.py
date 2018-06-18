@@ -11,8 +11,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 
 from blitz_api.factories import UserFactory, AdminFactory
+from blitz_api.models import AcademicLevel
 
-from ..models import Package, Order, OrderLine
+from ..models import Membership, Order, OrderLine, Package
 
 User = get_user_model()
 
@@ -26,12 +27,25 @@ class OrderLineTests(APITestCase):
         cls.user = UserFactory()
         cls.admin = AdminFactory()
         cls.package_type = ContentType.objects.get_for_model(Package)
+        cls.academic_level = AcademicLevel.objects.create(
+            name="University"
+        )
+        cls.membership = Membership.objects.create(
+            name="basic_membership",
+            details="1-Year student membership",
+            price=50,
+            duration=timedelta(days=365),
+            academic_level=cls.academic_level,
+        )
         cls.package = Package.objects.create(
             name="extreme_package",
             details="100 reservations package",
             price=400,
             reservations=100,
         )
+        cls.package.exclusive_memberships.set([
+            cls.membership,
+        ])
         cls.order = Order.objects.create(
             user=cls.user,
             transaction_date=timezone.now(),
@@ -55,7 +69,7 @@ class OrderLineTests(APITestCase):
             object_id=1,
         )
 
-    def test_create(self):
+    def test_create_package(self):
         """
         Ensure we can create an order line if user has permission.
         """
@@ -86,9 +100,10 @@ class OrderLineTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_create_without_permission(self):
+    def test_create_without_membership(self):
         """
-        Ensure we can't create an order line if user has no permission.
+        Ensure we can't create an order line if user does not have the required
+        membership.
         """
         self.client.force_authenticate(user=self.user)
 
@@ -106,12 +121,81 @@ class OrderLineTests(APITestCase):
         )
 
         content = {
-            'detail': 'You do not have permission to perform this action.'
+            'object_id': [
+                'User does not have the required membership to order this '
+                'package.'
+            ]
         }
 
         self.assertEqual(json.loads(response.content), content)
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_with_membership(self):
+        """
+        Ensure we can create an order line if user has the required membership.
+        """
+        self.user.membership = self.membership
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            'order': reverse('order-detail', args=[self.order.id]),
+            'quantity': 2,
+            'content_type': "package",
+            'object_id': 1,
+        }
+
+        response = self.client.post(
+            reverse('orderline-list'),
+            data,
+            format='json',
+        )
+
+        self.user.membership = None
+
+        content = {
+            'content_type': 'package',
+            'id': 3,
+            'object_id': 1,
+            'order': 'http://testserver/orders/1',
+            'quantity': 2,
+            'url': 'http://testserver/order_lines/3'
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_create_membership(self):
+        """
+        Ensure we can create an order line if user has permission.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            'order': reverse('order-detail', args=[self.order.id]),
+            'quantity': 1,
+            'content_type': "membership",
+            'object_id': 1,
+        }
+
+        response = self.client.post(
+            reverse('orderline-list'),
+            data,
+        )
+
+        content = {
+            'content_type': 'membership',
+            'id': 3,
+            'object_id': 1,
+            'order': 'http://testserver/orders/1',
+            'quantity': 1,
+            'url': 'http://testserver/order_lines/3'
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_create_missing_field(self):
         """
@@ -170,7 +254,12 @@ class OrderLineTests(APITestCase):
 
     def test_create_invalid_field(self):
         """
-        Ensure we can't create an order when required field are invalid.
+        Ensure we can't create an order when requi{
+            'object_id': [
+                'User does not have the required membership to order this '
+                'package.'
+            ]
+        }red field are invalid.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -232,6 +321,89 @@ class OrderLineTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_update_partial(self):
+        """
+        Ensure we can partially update an order line.
+        """
+        self.user.membership = self.membership
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            'order': reverse('order-detail', args=[self.order.id]),
+            'quantity': 9999,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'orderline-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        self.user.membership = None
+
+        content = {
+            'content_type': 'package',
+            'id': 1,
+            'object_id': 1,
+            'order': 'http://testserver/orders/1',
+            'quantity': 9999,
+            'url': 'http://testserver/order_lines/1'
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_delete(self):
+        """
+        Ensure we can delete an order line.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.delete(
+            reverse(
+                'orderline-detail',
+                kwargs={'pk': 1},
+            ),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_update_partial_without_membership(self):
+        """
+        Ensure we can't partially update an order line without required
+        membership for ordered package.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            'order': reverse('order-detail', args=[self.order.id]),
+            'quantity': 9999,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'orderline-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'object_id': [
+                'User does not have the required membership to order this '
+                'package.'
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_delete(self):
         """
