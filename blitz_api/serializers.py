@@ -169,6 +169,8 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
             'university',
             'academic_level',
             'email',
+            'membership',
+            'reservations',
         )
 
 
@@ -304,6 +306,8 @@ class UserSerializer(UserUpdateSerializer):
             'last_login',
             'groups',
             'user_permissions',
+            'membership',
+            'reservations',
         )
 
 
