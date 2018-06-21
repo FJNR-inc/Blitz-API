@@ -208,6 +208,41 @@ class PackageTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_create_negative_price_and_reservations(self):
+        """
+        Ensure we can't create a package with a negative price.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': "basic_package",
+            'details': "10 reservations package",
+            'price': -1,
+            'reservations': -10,
+            'exclusive_memberships': [
+                reverse('membership-detail', args=[self.membership.id]),
+            ],
+        }
+
+        response = self.client.post(
+            reverse('package-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'price': [
+                'Ensure this value is greater than or equal to 0.1.'
+            ],
+            'reservations': [
+                'Ensure this value is greater than or equal to 1.'
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_update(self):
         """
         Ensure we can update a package.

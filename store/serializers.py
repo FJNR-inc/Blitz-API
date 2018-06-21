@@ -14,6 +14,11 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
         read_only=True,
         view_name='orderline-detail'
     )
+    price = serializers.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        min_value=0.1,
+    )
 
     def to_representation(self, instance):
         user = self.context['request'].user
@@ -43,6 +48,10 @@ class MembershipSerializer(BaseProductSerializer):
 
 
 class PackageSerializer(BaseProductSerializer):
+    reservations = serializers.IntegerField(
+        min_value=1,
+    )
+
     class Meta:
         model = Package
         fields = '__all__'
