@@ -1,5 +1,6 @@
 import json
 
+from datetime import timedelta
 from unittest import mock
 
 from rest_framework import status
@@ -12,6 +13,7 @@ from django.contrib.auth import get_user_model
 from ..factories import UserFactory, AdminFactory
 from ..models import (ActionToken, Organization, Domain,
                       AcademicField, AcademicLevel)
+from store.models import Membership
 
 User = get_user_model()
 
@@ -27,13 +29,21 @@ class UsersTests(APITestCase):
             organization_id=org.id
         )
         AcademicField.objects.create(name="random_field")
-        AcademicLevel.objects.create(name="random_level")
+        cls.academic_level = AcademicLevel.objects.create(name="random_level")
+        cls.membership = Membership.objects.create(
+            name="basic_membership",
+            details="1-Year student membership",
+            price=50,
+            duration=timedelta(days=365),
+            academic_level=cls.academic_level,
+        )
 
     def setUp(self):
         self.client = APIClient()
 
         self.user = UserFactory()
         self.user.set_password('Test123!')
+        self.user.membership = self.membership
         self.user.save()
 
         self.admin = AdminFactory()
@@ -599,11 +609,23 @@ class UsersTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(reverse('user-list'))
-
         self.assertEqual(json.loads(response.content)['count'], 2)
 
         first_user = json.loads(response.content)['results'][0]
         self.assertEqual(first_user['email'], self.user.email)
+
+        membership = {
+            'url': 'http://testserver/memberships/1',
+            'id': 1,
+            'order_lines': [],
+            'name': 'basic_membership',
+            'price': '50.00',
+            'details': '1-Year student membership',
+            'duration': '365 00:00:00',
+            'academic_level': 'http://testserver/academic_levels/1'
+        }
+
+        self.assertEqual(first_user['membership'], membership)
 
         # Check the system doesn't return attributes not expected
         attributes = [

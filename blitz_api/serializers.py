@@ -11,6 +11,7 @@ from django.db.models.base import ObjectDoesNotExist
 from .models import (
     Domain, Organization, ActionToken, AcademicField, AcademicLevel,
 )
+from store.serializers import MembershipSerializer
 
 User = get_user_model()
 
@@ -92,6 +93,9 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
     academic_field = AcademicFieldSerializer()
     university = OrganizationSerializer(read_only=True)
     academic_level = AcademicLevelSerializer(read_only=True)
+    membership = MembershipSerializer(
+        read_only=True,
+    )
 
     def validate_academic_field(self, value):
         """
@@ -169,7 +173,6 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
             'university',
             'academic_level',
             'email',
-            'membership',
             'reservations',
         )
 
@@ -195,6 +198,9 @@ class UserSerializer(UserUpdateSerializer):
     university = OrganizationSerializer(required=False)
     academic_level = AcademicLevelSerializer(required=False)
     academic_field = AcademicFieldSerializer(required=False)
+    membership = MembershipSerializer(
+        read_only=True,
+    )
 
     def validate_university(self, value):
         """
@@ -306,7 +312,6 @@ class UserSerializer(UserUpdateSerializer):
             'last_login',
             'groups',
             'user_permissions',
-            'membership',
             'reservations',
         )
 
