@@ -4,8 +4,6 @@ from rest_framework.test import APITestCase
 
 from django.utils import timezone
 
-from location.models import Address, Country, StateProvince
-
 from ..models import Workplace, Period, TimeSlot
 
 
@@ -14,27 +12,14 @@ class TimeSlotTests(APITestCase):
     @classmethod
     def setUpClass(cls):
         super(TimeSlotTests, cls).setUpClass()
-        cls.random_country = Country.objects.create(
-            name="Random Country",
-            iso_code="RC",
-        )
-        cls.random_state_province = StateProvince.objects.create(
-            name="Random State",
-            iso_code="RS",
-            country=cls.random_country,
-        )
-        cls.address = Address.objects.create(
-            address_line1='random address 1',
-            postal_code='RAN DOM',
-            city='random city',
-            state_province=cls.random_state_province,
-            country=cls.random_country,
-        )
         cls.workplace = Workplace.objects.create(
             name="random_workplace",
             details="This is a description of the workplace.",
             seats=40,
-            location=cls.address,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
         )
         cls.period = Period.objects.create(
             name="random_period",

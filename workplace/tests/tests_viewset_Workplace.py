@@ -7,8 +7,6 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 
 from blitz_api.factories import UserFactory, AdminFactory
-from location.models import Address, Country, StateProvince
-from location.serializers import AddressBasicSerializer
 
 from ..models import Workplace
 
@@ -23,29 +21,17 @@ class WorkplaceTests(APITestCase):
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()
-        cls.random_country = Country.objects.create(
-            name="Random_Country",
-            iso_code="RC",
-        )
-        cls.random_state_province = StateProvince.objects.create(
-            name="Random_State",
-            iso_code="RS",
-            country=cls.random_country,
-        )
-        cls.address = Address.objects.create(
-            address_line1='random_address_1',
-            postal_code='RAN_DOM',
-            city='random_city',
-            state_province=cls.random_state_province,
-            country=cls.random_country,
-        )
 
     def setUp(self):
         self.workplace = Workplace.objects.create(
             name="Blitz",
             seats=40,
             details="short_description",
-            location=self.address,
+            address_line1="random_address_1",
+            postal_code="RAN_DOM",
+            city='random_city',
+            state_province="Random_State",
+            country="Random_Country",
             timezone="America/Montreal",
         )
 
@@ -55,16 +41,17 @@ class WorkplaceTests(APITestCase):
         """
         self.client.force_authenticate(user=self.admin)
 
-        # Serialize our address object and set FK instead of nested repr.
-        location = AddressBasicSerializer(self.address).data
-        location['country'] = self.address.country.pk
-        location['state_province'] = self.address.state_province.pk
-
         data = {
             'name': "random_workplace",
             'seats': 40,
             'details': "short_description",
-            'location': location,
+            'address_line1': 'random_address_1',
+            'address_line2': '',
+            'city': 'random_city',
+            'country': 'Random_Country',
+            'postal_code': 'RAN_DOM',
+            'state_province': 'Random_State',
+            'name': 'random_workplace',
             'timezone': "America/Montreal"
         }
 
@@ -77,15 +64,14 @@ class WorkplaceTests(APITestCase):
         content = {
             'details': 'short_description',
             'id': 2,
-            'location': {
-                'address_line1': 'random_address_1',
-                'address_line2': '',
-                'city': 'random_city',
-                'country': {'iso_code': 'RC', 'name': 'Random_Country'},
-                'id': 1,
-                'postal_code': 'RAN_DOM',
-                'state_province': {'iso_code': 'RS', 'name': 'Random_State'}
-            },
+            'address_line1': 'random_address_1',
+            'address_line2': '',
+            'city': 'random_city',
+            'country': 'Random_Country',
+            'postal_code': 'RAN_DOM',
+            'state_province': 'Random_State',
+            'latitude': None,
+            'longitude': None,
             'name': 'random_workplace',
             'pictures': [],
             'seats': 40,
@@ -103,16 +89,16 @@ class WorkplaceTests(APITestCase):
         """
         self.client.force_authenticate(user=self.user)
 
-        # Serialize our address object and set FK instead of nested repr.
-        location = AddressBasicSerializer(self.address).data
-        location['country'] = self.address.country.pk
-        location['state_province'] = self.address.state_province.pk
-
         data = {
             'name': "random_workplace",
             'seats': 40,
             'details': "short_description",
-            'location': location,
+            'address_line1': 'random_address_1',
+            'address_line2': '',
+            'city': 'random_city',
+            'country': 'Random_Country',
+            'postal_code': 'RAN_DOM',
+            'state_province': 'Random_State',
             'timezone': "America/Montreal"
         }
 
@@ -136,16 +122,16 @@ class WorkplaceTests(APITestCase):
         """
         self.client.force_authenticate(user=self.admin)
 
-        # Serialize our address object and set FK instead of nested repr.
-        location = AddressBasicSerializer(self.address).data
-        location['country'] = self.address.country.pk
-        location['state_province'] = self.address.state_province.pk
-
         data = {
             'name': "Blitz",
             'seats': 40,
             'details': "short_description",
-            'location': location,
+            'address_line1': 'random_address_1',
+            'address_line2': '',
+            'city': 'random_city',
+            'country': 'Random_Country',
+            'postal_code': 'RAN_DOM',
+            'state_province': 'Random_State',
             'timezone': "America/Montreal"
         }
 
@@ -156,40 +142,6 @@ class WorkplaceTests(APITestCase):
         )
 
         content = {'name': ['This field must be unique.']}
-
-        self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_create_non_existent_location(self):
-        """
-        Ensure we can't create a workplace with a non-existent location.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        data = {
-            'name': "unique_name",
-            'seats': 40,
-            'details': "short_description",
-            'location': {
-                'address_line1': 'invalid_address_line',
-                'address_line2': '',
-                'city': 'random_city',
-                'country': 'RC',
-                'id': 1,
-                'postal_code': 'RAN_DOM',
-                'state_province': 'RS',
-            },
-            'timezone': "America/Montreal"
-        }
-
-        response = self.client.post(
-            reverse('workplace-list'),
-            data,
-            format='json',
-        )
-
-        content = {'location': ['This address does not exist.']}
 
         self.assertEqual(json.loads(response.content), content)
 
@@ -211,9 +163,13 @@ class WorkplaceTests(APITestCase):
 
         content = {
             'details': ['This field is required.'],
-            'location': ['This field is required.'],
+            'address_line1': ['This field is required.'],
+            'city': ['This field is required.'],
+            'country': ['This field is required.'],
             'name': ['This field is required.'],
+            'postal_code': ['This field is required.'],
             'seats': ['This field is required.'],
+            'state_province': ['This field is required.'],
             'timezone': ['This field is required.']
         }
 
@@ -231,7 +187,11 @@ class WorkplaceTests(APITestCase):
             'name': ("invalid",),
             'seats': "invalid",
             'details': ("invalid",),
-            'location': "invalid",
+            'postal_code': (1,),
+            'city': (1,),
+            'address_line1': (1,),
+            'country': (1,),
+            'state_province': (1,),
             'timezone': ("invalid",),
         }
 
@@ -243,48 +203,14 @@ class WorkplaceTests(APITestCase):
 
         content = {
             'details': ['Not a valid string.'],
-            'location': {
-                'non_field_errors': [
-                    'Invalid data. Expected a dictionary, but got str.'
-                ]
-            },
             'name': ['Not a valid string.'],
+            'city': ['Not a valid string.'],
+            'address_line1': ['Not a valid string.'],
+            'postal_code': ['Not a valid string.'],
+            'state_province': ['Not a valid string.'],
+            'country': ['Not a valid string.'],
             'seats': ['A valid integer is required.'],
             'timezone': ['Unknown timezone']
-        }
-
-        self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_create_missing_location_content(self):
-        """
-        Ensure we can't create a workplace when required field are missing.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        data = {
-            'name': "unique_name",
-            'seats': 40,
-            'details': "short_description",
-            'location': {},
-            'timezone': "America/Montreal",
-        }
-
-        response = self.client.post(
-            reverse('workplace-list'),
-            data,
-            format='json',
-        )
-
-        content = {
-            'location': {
-                'address_line1': ['This field is required.'],
-                'city': ['This field is required.'],
-                'country': ['This field is required.'],
-                'postal_code': ['This field is required.'],
-                'state_province': ['This field is required.']
-            }
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -297,23 +223,16 @@ class WorkplaceTests(APITestCase):
         """
         self.client.force_authenticate(user=self.admin)
 
-        # Serialize our address object and set FK instead of nested repr.
-        address = Address.objects.create(
-            address_line1='new_address',
-            postal_code='NEW_CIT',
-            city='new_city',
-            state_province=self.random_state_province,
-            country=self.random_country,
-        )
-        location = AddressBasicSerializer(address).data
-        location['country'] = address.country.pk
-        location['state_province'] = address.state_province.pk
-
         data = {
             'name': "new_workplace",
             'seats': 200,
             'details': "new_short_description",
-            'location': location,
+            'address_line1': 'new_address',
+            'address_line2': '',
+            'city': 'new_city',
+            'country': 'Random_Country',
+            'postal_code': 'NEW_CIT',
+            'state_province': 'Random_State',
             'timezone': "America/Montreal",
         }
 
@@ -329,14 +248,14 @@ class WorkplaceTests(APITestCase):
         content = {
             'details': 'new_short_description',
             'id': 1,
-            'location': {
-                'address_line1': 'new_address',
-                'address_line2': '',
-                'city': 'new_city',
-                'country': {'iso_code': 'RC', 'name': 'Random_Country'},
-                'id': 2,
-                'postal_code': 'NEW_CIT',
-                'state_province': {'iso_code': 'RS', 'name': 'Random_State'}},
+            'longitude': None,
+            'latitude': None,
+            'address_line1': 'new_address',
+            'address_line2': '',
+            'city': 'new_city',
+            'country': 'Random_Country',
+            'postal_code': 'NEW_CIT',
+            'state_province': 'Random_State',
             'name': 'new_workplace',
             'pictures': [],
             'seats': 200,
@@ -380,21 +299,14 @@ class WorkplaceTests(APITestCase):
             'results': [{
                 'details': 'short_description',
                 'id': 1,
-                'location': {
-                    'address_line1': 'random_address_1',
-                    'address_line2': '',
-                    'city': 'random_city',
-                    'country': {
-                        'iso_code': 'RC',
-                        'name': 'Random_Country'
-                    },
-                    'id': 1,
-                    'postal_code': 'RAN_DOM',
-                    'state_province': {
-                        'iso_code': 'RS',
-                        'name': 'Random_State'
-                    }
-                },
+                'latitude': None,
+                'longitude': None,
+                'address_line1': 'random_address_1',
+                'address_line2': '',
+                'city': 'random_city',
+                'country': 'Random_Country',
+                'postal_code': 'RAN_DOM',
+                'state_province': 'Random_State',
                 'name': 'Blitz',
                 'pictures': [],
                 'seats': 40,
@@ -422,21 +334,15 @@ class WorkplaceTests(APITestCase):
         content = {
             'details': 'short_description',
             'id': 1,
-            'location': {
-                'address_line1': 'random_address_1',
-                'address_line2': '',
-                'city': 'random_city',
-                'country': {
-                    'iso_code': 'RC',
-                    'name': 'Random_Country'
-                },
-                'id': 1,
-                'postal_code': 'RAN_DOM',
-                'state_province': {
-                    'iso_code': 'RS',
-                    'name': 'Random_State'
-                }
-            },
+            'address_line1': 'random_address_1',
+            'address_line2': '',
+            'city': 'random_city',
+            'country': 'Random_Country',
+            'id': 1,
+            'longitude': None,
+            'latitude': None,
+            'postal_code': 'RAN_DOM',
+            'state_province': 'Random_State',
             'name': 'Blitz',
             'pictures': [],
             'seats': 40,

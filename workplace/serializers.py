@@ -3,20 +3,12 @@ from rest_framework.validators import UniqueValidator
 
 from django.utils.translation import ugettext_lazy as _
 
-from location.models import Address
-from location.serializers import AddressBasicSerializer
-
 from .models import Workplace, Picture, Period, TimeSlot
 from .fields import TimezoneField
 
 
 class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
-    location = AddressBasicSerializer(
-        # This overrides UniqueTogether constraint of the Address serializer
-        validators=[],
-        help_text=_("Address of the workplace."),
-    )
     timezone = TimezoneField(
         required=True,
         help_text=_("Timezone of the workplace."),
@@ -34,20 +26,6 @@ class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
         request = self.context['request']
         picture_urls = [picture.picture.url for picture in obj.pictures.all()]
         return [request.build_absolute_uri(url) for url in picture_urls]
-
-    def validate_location(self, value):
-        """
-        Checks that the address exists. Since the AddressBasicSerializer
-        returns a dictionary containing the address' informations, we
-        unpack that dictionary as kwargs for the Address model query.
-        """
-        address = Address.objects.filter(**value)
-
-        if address:
-            return address[0]
-        raise serializers.ValidationError(
-            _("This address does not exist.")
-        )
 
     class Meta:
         model = Workplace

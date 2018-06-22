@@ -262,3 +262,56 @@ class AcademicField(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Address(models.Model):
+    """Abstract model for address"""
+    country = models.CharField(
+        max_length=45,
+        blank=False,
+        verbose_name=_("Country"),
+    )
+
+    state_province = models.CharField(
+        max_length=55,
+        blank=False,
+        verbose_name=_("State/Province"),
+    )
+    city = models.CharField(
+        max_length=50,
+        blank=False,
+        verbose_name=_("City"),
+    )
+    address_line1 = models.CharField(
+        max_length=45,
+        verbose_name=_("Address line 1"),
+    )
+    address_line2 = models.CharField(
+        max_length=45,
+        blank=True,
+        default='',
+        verbose_name=_("Address line 2"),
+    )
+    postal_code = models.CharField(
+        max_length=10,
+        verbose_name=_("Postal code"),
+    )
+    latitude = models.FloatField(
+        blank=True,
+        null=True,
+        verbose_name=_("Latitude"),
+    )
+    longitude = models.FloatField(
+        blank=True,
+        null=True,
+        verbose_name=_("Longitude"),
+    )
+    timezone = models.CharField(
+        blank=True,
+        null=True,
+        max_length=100,
+        verbose_name=_("Timezone"),
+    )
+
+    class Meta:
+        abstract = True

@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('location', '0002_auto_20171230_2347'),
+        # ('location', '0002_auto_20171230_2347'),
     ]
 
     operations = [
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=253, verbose_name='Name')),
                 ('details', models.CharField(max_length=1000, verbose_name='Details')),
                 ('seats', models.IntegerField(verbose_name='Seats')),
-                ('location', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='location', to='location.Address')),
+                # ('location', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='location', to='location.Address')),
             ],
             options={
                 'verbose_name': 'Workplace',

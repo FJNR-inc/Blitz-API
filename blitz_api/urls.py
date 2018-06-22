@@ -84,10 +84,6 @@ urlpatterns = [
     ),
     # External location application
     path(
-        '/',
-        include('location.urls'),
-    ),
-    path(
         'admin/', admin.site.urls
     ),
     path(

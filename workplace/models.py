@@ -3,12 +3,12 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.html import format_html
 from django.contrib.auth import get_user_model
 
-from location.models import Address
+from blitz_api.models import Address
 
 User = get_user_model()
 
 
-class Workplace(models.Model):
+class Workplace(Address):
     """Represents physical places."""
 
     class Meta:
@@ -27,17 +27,6 @@ class Workplace(models.Model):
 
     seats = models.IntegerField(
         verbose_name=_("Seats"),
-    )
-
-    location = models.ForeignKey(
-        Address,
-        on_delete=models.CASCADE,
-        related_name="location",
-    )
-
-    timezone = models.CharField(
-        verbose_name=_("Timezone"),
-        max_length=100,
     )
 
     def __str__(self):

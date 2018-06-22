@@ -9,10 +9,8 @@ from django.contrib.auth import get_user_model
 from django.test import override_settings
 
 from blitz_api.factories import UserFactory, AdminFactory
-from location.models import Address, Country, StateProvince
 
 from ..models import Workplace, Picture
-from ..serializers import WorkplaceSerializer
 
 User = get_user_model()
 MEDIA_ROOT = tempfile.mkdtemp()
@@ -42,29 +40,16 @@ class PictureTests(APITestCase):
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()
-        cls.random_country = Country.objects.create(
-            name="Random_Country",
-            iso_code="RC",
-        )
-        cls.random_state_province = StateProvince.objects.create(
-            name="Random_State",
-            iso_code="RS",
-            country=cls.random_country,
-        )
-        cls.address = Address.objects.create(
-            address_line1='random_address_1',
-            postal_code='RAN_DOM',
-            city='random_city',
-            state_province=cls.random_state_province,
-            country=cls.random_country,
-        )
 
     def setUp(self):
         self.workplace = Workplace.objects.create(
             name="Blitz",
             seats=40,
             details="short_description",
-            location=self.address,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
         )
         self.picture = Picture.objects.create(
             name="random_picture",

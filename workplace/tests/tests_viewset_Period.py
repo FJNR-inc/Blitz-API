@@ -10,7 +10,6 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 
 from blitz_api.factories import UserFactory, AdminFactory
-from location.models import Address, Country, StateProvince
 
 from ..models import Workplace, Period
 
@@ -25,27 +24,14 @@ class PeriodTests(APITestCase):
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()
-        cls.random_country = Country.objects.create(
-            name="Random_Country",
-            iso_code="RC",
-        )
-        cls.random_state_province = StateProvince.objects.create(
-            name="Random_State",
-            iso_code="RS",
-            country=cls.random_country,
-        )
-        cls.address = Address.objects.create(
-            address_line1='random_address_1',
-            postal_code='RAN_DOM',
-            city='random_city',
-            state_province=cls.random_state_province,
-            country=cls.random_country,
-        )
         cls.workplace = Workplace.objects.create(
             name="Blitz",
             seats=40,
             details="short_description",
-            location=cls.address,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
         )
         cls.period = Period.objects.create(
             name="random_period",
