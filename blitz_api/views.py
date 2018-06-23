@@ -42,6 +42,7 @@ class UserViewSet(viewsets.ModelViewSet):
     Not implemented
     """
     queryset = User.objects.all()
+    filter_fields = '__all__'
 
     def get_serializer_class(self):
         if (self.action == 'update') | (self.action == 'partial_update'):
