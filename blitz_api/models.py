@@ -74,6 +74,12 @@ class User(AbstractUser):
         on_delete=models.SET_NULL,
         verbose_name=_("Membership"),
     )
+    membership_end = models.DateField(
+        blank=True,
+        null=True,
+        max_length=100,
+        verbose_name=_("Membership end date"),
+    )
     reservations = models.PositiveSmallIntegerField(
         blank=True,
         null=True,

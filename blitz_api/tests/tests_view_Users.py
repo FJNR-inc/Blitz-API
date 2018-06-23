@@ -650,6 +650,7 @@ class UsersTests(APITestCase):
             'user_permissions',
             'reservations',
             'membership',
+            'membership_end',
         ]
         for key in first_user.keys():
             self.assertTrue(

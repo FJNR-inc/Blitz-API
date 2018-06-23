@@ -43,6 +43,7 @@ class UsersIdTests(APITestCase):
             'user_permissions',
             'reservations',
             'membership',
+            'membership_end',
         ]
 
     def setUp(self):
