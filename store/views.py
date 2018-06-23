@@ -20,6 +20,7 @@ class MembershipViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.MembershipSerializer
     queryset = Membership.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
+    filter_fields = '__all__'
 
 
 class PackageViewSet(viewsets.ModelViewSet):
