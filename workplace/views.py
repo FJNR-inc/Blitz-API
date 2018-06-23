@@ -76,13 +76,17 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.TimeSlotSerializer
     queryset = TimeSlot.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
-    filter_fields = ('period__workplace', 'period',)
+    # We need to find a way to use '__all__' without excluding nested
+    # attributes through FKs such as period__workplace. For now, we declare
+    # each fields one by one.
+    filter_fields = ('period__workplace', 'period__is_active', 'users')
 
-    def get_queryset(self):
+    def filter_queryset(self, queryset):
         """
         This viewset should return active timeslots except if
         the currently authenticated user is an admin (is_staff).
         """
+        queryset = super(TimeSlotViewSet, self).filter_queryset(queryset)
         if self.request.user.is_staff:
-            return TimeSlot.objects.all()
-        return TimeSlot.objects.filter(period__is_active=True)
+            return queryset
+        return queryset.filter(period__is_active=True)
