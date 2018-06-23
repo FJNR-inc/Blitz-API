@@ -538,11 +538,32 @@ class UsersIdTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_delete_user_as_admin(self):
+        """
+        Ensure we can deactivate a user as an admin.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.delete(
+            reverse(
+                'user-detail',
+                kwargs={'pk': self.user.id},
+            ),
+        )
+        self.user.refresh_from_db()
+
+        self.assertEqual(
+            response.status_code, status.HTTP_204_NO_CONTENT
+        )
+        self.assertFalse(self.user.is_active)
+
+        self.user.is_active = True
+        self.user.refresh_from_db()
+
     def test_delete_user(self):
         """
-        Ensure we can't delete a user.
+        Ensure that a user can't deactivate its own account.
         """
-
         self.client.force_authenticate(user=self.user)
 
         response = self.client.delete(
@@ -551,7 +572,29 @@ class UsersIdTests(APITestCase):
                 kwargs={'pk': self.user.id},
             ),
         )
+        self.user.refresh_from_db()
 
         self.assertEqual(
-            response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED
+            response.status_code, status.HTTP_204_NO_CONTENT
+        )
+        self.assertFalse(self.user.is_active)
+
+        self.user.is_active = True
+        self.user.refresh_from_db()
+
+    def test_delete_inexistent_user(self):
+        """
+        Ensure that deleting a non-existent user does nothing.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.delete(
+            reverse(
+                'user-detail',
+                kwargs={'pk': 999},
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code, status.HTTP_204_NO_CONTENT
         )

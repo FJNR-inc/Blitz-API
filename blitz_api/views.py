@@ -39,7 +39,7 @@ class UserViewSet(viewsets.ModelViewSet):
     Update fields of a user instance.
 
     delete:
-    Not implemented
+    Sets the user inactive.
     """
     queryset = User.objects.all()
     filter_fields = '__all__'
@@ -81,7 +81,13 @@ class UserViewSet(viewsets.ModelViewSet):
             raise PermissionDenied
 
     def destroy(self, request, *args, **kwargs):
-        raise MethodNotAllowed("DELETE")
+        try:
+            instance = self.get_object()
+            instance.is_active = False
+            instance.save()
+        except Http404:
+            pass
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def update(self, request, *args, **kwargs):
         """ Hides non-existent objects by denying permission """
