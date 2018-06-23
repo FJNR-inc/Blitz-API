@@ -65,14 +65,6 @@ class PackageSerializer(BaseProductSerializer):
         }
 
 
-class OrderSerializer(serializers.HyperlinkedModelSerializer):
-    id = serializers.ReadOnlyField()
-
-    class Meta:
-        model = Order
-        fields = '__all__'
-
-
 class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     content_type = serializers.SlugRelatedField(
@@ -94,7 +86,14 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
             'object_id',
             getattr(self.instance, 'object_id', None)
         )
-        obj = content_type.get_object_for_this_type(pk=object_id)
+        try:
+            obj = content_type.get_object_for_this_type(pk=object_id)
+        except content_type.model_class().DoesNotExist:
+            raise serializers.ValidationError({
+                'object_id': [
+                    _("The referenced object does not exist.")
+                ],
+            })
 
         if (not self.context['request'].user.is_staff and
                 content_type.model == 'package' and
@@ -113,4 +112,33 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = OrderLine
+        fields = '__all__'
+
+
+class OrderSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+    order_lines = OrderLineSerializer(many=True)
+
+    def create(self, validated_data):
+        orderlines_data = validated_data.pop('order_lines')
+        order = Order.objects.create(**validated_data)
+        for orderline_data in orderlines_data:
+            orderline_data.pop('order')
+            OrderLine.objects.create(order=order, **orderline_data)
+        return order
+
+    def update(self, instance, validated_data):
+        orderlines_data = validated_data.pop('order_lines')
+        order = super().update(instance, validated_data)
+        for orderline_data in orderlines_data:
+            OrderLine.objects.update_or_create(
+                order=order,
+                content_type=orderline_data.get('content_type'),
+                object_id=orderline_data.get('object_id'),
+                defaults=orderline_data,
+            )
+        return order
+
+    class Meta:
+        model = Order
         fields = '__all__'

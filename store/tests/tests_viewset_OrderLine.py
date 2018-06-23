@@ -131,6 +131,34 @@ class OrderLineTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_create_inexistent_object(self):
+        """
+        Ensure we can't create an order line if the reference object does
+        not exist.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            'order': reverse('order-detail', args=[self.order.id]),
+            'quantity': 2,
+            'content_type': "package",
+            'object_id': 999,
+        }
+
+        response = self.client.post(
+            reverse('orderline-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'object_id': ['The referenced object does not exist.']
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_create_with_membership(self):
         """
         Ensure we can create an order line if user has the required membership.

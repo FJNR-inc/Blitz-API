@@ -11,8 +11,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 
 from blitz_api.factories import UserFactory, AdminFactory
+from blitz_api.models import AcademicLevel
 
-from ..models import Package, Order, OrderLine
+from ..models import Package, Order, OrderLine, Membership
 
 User = get_user_model()
 
@@ -25,6 +26,16 @@ class OrderTests(APITestCase):
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()
+        cls.academic_level = AcademicLevel.objects.create(
+            name="University"
+        )
+        cls.membership = Membership.objects.create(
+            name="basic_membership",
+            details="1-Year student membership",
+            price=50,
+            duration=timedelta(days=365),
+            academic_level=cls.academic_level,
+        )
         cls.package_type = ContentType.objects.get_for_model(Package)
         cls.package = Package.objects.create(
             name="extreme_package",
@@ -59,15 +70,31 @@ class OrderTests(APITestCase):
             'user': reverse('user-detail', args=[self.user.id]),
             'transaction_date': timezone.now(),
             'transaction_id': 1,
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'order': 'http://testserver/orders/1',
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/1'
+            }],
         }
 
         response = self.client.post(
             reverse('order-list'),
             data,
+            format='json',
         )
 
         content = {
             'id': 3,
+            'order_lines': [{
+                'content_type': 'membership',
+                'id': 2,
+                'object_id': 1,
+                'order': 'http://testserver/orders/3',
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/2'
+            }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/1',
             'transaction_date': data['transaction_date'].astimezone()
@@ -122,7 +149,8 @@ class OrderTests(APITestCase):
         content = {
             'transaction_date': ['This field is required.'],
             'transaction_id': ['This field is required.'],
-            'user': ['This field is required.']
+            'user': ['This field is required.'],
+            'order_lines': ['This field is required.']
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -139,6 +167,7 @@ class OrderTests(APITestCase):
             'user': None,
             'transaction_date': None,
             'transaction_id': None,
+            'order_lines': None,
         }
 
         response = self.client.post(
@@ -150,7 +179,8 @@ class OrderTests(APITestCase):
         content = {
             'transaction_date': ['This field may not be null.'],
             'transaction_id': ['This field may not be null.'],
-            'user': ['This field may not be null.']
+            'user': ['This field may not be null.'],
+            'order_lines': ['This field may not be null.']
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -167,6 +197,7 @@ class OrderTests(APITestCase):
             'user': "invalid",
             'transaction_date': (1,),
             'transaction_id': "invalid",
+            'order_lines': (1,),
         }
 
         response = self.client.post(
@@ -180,7 +211,12 @@ class OrderTests(APITestCase):
                 'Datetime has wrong format. Use one of these formats '
                 'instead: YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
             ],
-            'user': ['Invalid hyperlink - No URL match.']
+            'user': ['Invalid hyperlink - No URL match.'],
+            'order_lines': [{
+                'non_field_errors': [
+                    'Invalid data. Expected a dictionary, but got int.'
+                ]
+            }]
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -190,6 +226,7 @@ class OrderTests(APITestCase):
     def test_update(self):
         """
         Ensure we can update an order.
+        An empty 'order_lines' list will be ignored.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -197,6 +234,14 @@ class OrderTests(APITestCase):
             'user': reverse('user-detail', args=[self.user.id]),
             'transaction_date': timezone.now(),
             'transaction_id': 2,
+            'order_lines': [{
+                'content_type': 'package',
+                'id': 1,
+                'object_id': 1,
+                'order': 'http://testserver/orders/1',
+                'quantity': 99,
+                'url': 'http://testserver/order_lines/1'
+            }],
         }
 
         response = self.client.put(
@@ -215,6 +260,14 @@ class OrderTests(APITestCase):
             'transaction_date': data['transaction_date'].astimezone()
                                                         .isoformat(),
             'transaction_id': '2',
+            'order_lines': [{
+                'content_type': 'package',
+                'id': 1,
+                'object_id': 1,
+                'order': 'http://testserver/orders/1',
+                'quantity': 99,
+                'url': 'http://testserver/order_lines/1'
+            }]
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -274,6 +327,14 @@ class OrderTests(APITestCase):
                 'id': 1,
                 'transaction_date': data['results'][0]['transaction_date'],
                 'transaction_id': '1',
+                'order_lines': [{
+                    'content_type': 'package',
+                    'id': 1,
+                    'object_id': 1,
+                    'order': 'http://testserver/orders/1',
+                    'quantity': 1,
+                    'url': 'http://testserver/order_lines/1'
+                }],
                 'url': 'http://testserver/orders/1',
                 'user': 'http://testserver/users/1'
             }]
@@ -304,12 +365,21 @@ class OrderTests(APITestCase):
                 'id': 1,
                 'transaction_date': data['results'][0]['transaction_date'],
                 'transaction_id': '1',
+                'order_lines': [{
+                    'content_type': 'package',
+                    'id': 1,
+                    'object_id': 1,
+                    'order': 'http://testserver/orders/1',
+                    'quantity': 1,
+                    'url': 'http://testserver/order_lines/1'
+                }],
                 'url': 'http://testserver/orders/1',
                 'user': 'http://testserver/users/1'
             }, {
                 'id': 2,
                 'transaction_date': data['results'][1]['transaction_date'],
                 'transaction_id': '1',
+                'order_lines': [],
                 'url': 'http://testserver/orders/2',
                 'user': 'http://testserver/users/2'
             }]
@@ -356,6 +426,14 @@ class OrderTests(APITestCase):
             'id': 1,
             'transaction_date': data['transaction_date'],
             'transaction_id': '1',
+            'order_lines': [{
+                'content_type': 'package',
+                'id': 1,
+                'object_id': 1,
+                'order': 'http://testserver/orders/1',
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/1'
+            }],
             'url': 'http://testserver/orders/1',
             'user': 'http://testserver/users/1'
         }
@@ -402,6 +480,14 @@ class OrderTests(APITestCase):
             'id': 1,
             'transaction_date': data['transaction_date'],
             'transaction_id': '1',
+            'order_lines': [{
+                'content_type': 'package',
+                'id': 1,
+                'object_id': 1,
+                'order': 'http://testserver/orders/1',
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/1'
+            }],
             'url': 'http://testserver/orders/1',
             'user': 'http://testserver/users/1'
         }
