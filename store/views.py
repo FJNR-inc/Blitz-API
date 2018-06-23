@@ -36,6 +36,7 @@ class PackageViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.PackageSerializer
     queryset = Package.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
+    filter_fields = '__all__'
 
 
 class OrderViewSet(viewsets.ModelViewSet):
