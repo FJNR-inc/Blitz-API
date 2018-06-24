@@ -35,6 +35,7 @@ router.register('workplaces', views.WorkplaceViewSet)
 router.register('pictures', views.PictureViewSet)
 router.register('periods', views.PeriodViewSet)
 router.register('time_slots', views.TimeSlotViewSet)
+router.register('reservations', views.ReservationViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),  # includes router generated URL

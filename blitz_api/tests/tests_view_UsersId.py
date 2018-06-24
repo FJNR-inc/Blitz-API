@@ -41,7 +41,7 @@ class UsersIdTests(APITestCase):
             'birthdate',
             'groups',
             'user_permissions',
-            'reservations',
+            'tickets',
             'membership',
             'membership_end',
         ]

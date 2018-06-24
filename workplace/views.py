@@ -1,6 +1,8 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
-from .models import Workplace, Picture, Period, TimeSlot
+from .models import Workplace, Picture, Period, TimeSlot, Reservation
 
 from . import serializers, permissions
 
@@ -90,3 +92,32 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
         if self.request.user.is_staff:
             return queryset
         return queryset.filter(period__is_active=True)
+
+
+class ReservationViewSet(viewsets.ModelViewSet):
+    """
+    retrieve:
+    Return the given reservation.
+
+    list:
+    Return a list of all the existing reservations.
+
+    create:
+    Create a new reservation instance.
+    """
+    serializer_class = serializers.ReservationSerializer
+    queryset = Reservation.objects.all()
+    permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
+    filter_fields = '__all__'
+
+    def get_queryset(self):
+        """
+        This viewset should return the request user's reservations except if
+        the currently authenticated user is an admin (is_staff).
+        """
+        if self.request.user.is_staff:
+            return Reservation.objects.all()
+        return Reservation.objects.filter(user=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_501_NOT_IMPLEMENTED)

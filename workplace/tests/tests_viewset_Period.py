@@ -13,7 +13,7 @@ from django.contrib.auth import get_user_model
 
 from blitz_api.factories import UserFactory, AdminFactory
 
-from ..models import Workplace, Period, TimeSlot
+from ..models import Workplace, Period, TimeSlot, Reservation
 
 User = get_user_model()
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
@@ -59,7 +59,11 @@ class PeriodTests(APITestCase):
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 18)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 22)),
         )
-        cls.time_slot_active.users.set([cls.user.id])
+        cls.reservation = Reservation.objects.create(
+            user=cls.user,
+            timeslot=cls.time_slot_active,
+            is_active=True,
+        )
 
     def test_create(self):
         """

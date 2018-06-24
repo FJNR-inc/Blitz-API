@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from blitz_api.serializers import UserSerializer
 
-from .models import Workplace, Picture, Period, TimeSlot
+from .models import Workplace, Picture, Period, TimeSlot, Reservation
 from .fields import TimezoneField
 
 
@@ -228,22 +228,6 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
                     ),
                 })
 
-        if 'users' in attrs:
-            for user in attrs['users']:
-                # Generate a list of tuples containing start/end time of
-                # existing timeslots in the requested user.
-                existing_timeslot = TimeSlot.objects.filter(
-                    users=user
-                ).values_list('start_time', 'end_time')
-
-                for timeslots in existing_timeslot:
-                    if max(timeslots[0], start) < min(timeslots[1], end):
-                        raise serializers.ValidationError({
-                            'detail': _(
-                                "The user has an overlapping timeslot."
-                            ),
-                        })
-
         return attrs
 
     def create(self, validated_data):
@@ -283,5 +267,50 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
             },
             'end_time': {
                 'required': True,
+            },
+        }
+
+
+class ReservationSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    def validate(self, attrs):
+        """Prevents overlapping and no-workplace reservations."""
+        validated_data = super(ReservationSerializer, self).validate(attrs)
+        if 'timeslot' in attrs:
+            if not attrs['timeslot'].period.workplace:
+                raise serializers.ValidationError(
+                    'No reservation are allowed for time slots without '
+                    'workplace.'
+                )
+
+        if 'user' in validated_data or 'timeslot' in validated_data:
+            # Generate a list of tuples containing start/end time of
+            # existing reservations.
+            start = validated_data['timeslot'].start_time
+            end = validated_data['timeslot'].end_time
+            active_reservations = Reservation.objects.filter(
+                user=validated_data['user'],
+                is_active=True,
+            ).exclude(**validated_data).values_list(
+                'timeslot__start_time',
+                'timeslot__end_time'
+            )
+
+            for timeslots in active_reservations:
+                if max(timeslots[0], start) < min(timeslots[1], end):
+                    raise serializers.ValidationError(
+                        'This reservation overlaps with another active '
+                        'reservations for this user.'
+                    )
+        return attrs
+
+    class Meta:
+        model = Reservation
+        fields = '__all__'
+        extra_kwargs = {
+            'is_active': {
+                'required': True,
+                'help_text': _("Whether the reservation is active or not."),
             },
         }

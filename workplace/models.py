@@ -142,6 +142,7 @@ class TimeSlot(models.Model):
 
     users = models.ManyToManyField(
         User,
+        through='Reservation',
         blank=True,
         verbose_name=_("User"),
         related_name='time_slots',
@@ -165,3 +166,25 @@ class TimeSlot(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Reservation(models.Model):
+    """Represents a user registration to a TimeSlot"""
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_("User"),
+        related_name='reservations',
+    )
+    timeslot = models.ForeignKey(
+        TimeSlot,
+        on_delete=models.CASCADE,
+        verbose_name=_("Time slot"),
+        related_name='reservations',
+    )
+    is_active = models.BooleanField(
+        verbose_name=_("Active")
+    )
+
+    def __str__(self):
+        return str(self.user)

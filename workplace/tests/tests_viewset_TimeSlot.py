@@ -13,7 +13,7 @@ from django.contrib.auth import get_user_model
 
 from blitz_api.factories import UserFactory, AdminFactory
 
-from ..models import Period, TimeSlot, Workplace
+from ..models import Period, TimeSlot, Workplace, Reservation
 
 User = get_user_model()
 
@@ -76,7 +76,16 @@ class TimeSlotTests(APITestCase):
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
-        cls.time_slot.users.set([cls.admin, cls.user])
+        cls.reservation = Reservation.objects.create(
+            user=cls.user,
+            timeslot=cls.time_slot,
+            is_active=True,
+        )
+        cls.reservation_admin = Reservation.objects.create(
+            user=cls.admin,
+            timeslot=cls.time_slot,
+            is_active=True,
+        )
         cls.time_slot_active = TimeSlot.objects.create(
             name="evening_time_slot_active",
             period=cls.period_active,
@@ -100,7 +109,6 @@ class TimeSlotTests(APITestCase):
             'price': '10.00',  # Will use Period's price if not provided
             'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
             'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
-            'users': [reverse('user-detail', args=[self.user.id])]
         }
 
         response = self.client.post(
@@ -117,7 +125,7 @@ class TimeSlotTests(APITestCase):
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/3',
             'period': 'http://testserver/periods/3',
-            'users': ['http://testserver/users/1'],
+            'users': [],
             "workplace": None
         }
 
@@ -233,38 +241,6 @@ class TimeSlotTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_create_overlapping_user(self):
-        """
-        Ensure we can't create timeslot that has user thet has other timeslots
-        are overlappong with this one.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        data = {
-            'period': reverse('period-detail', args=[self.period_active.id]),
-            'price': '10.00',  # Will use Period's price if not provided
-            # start_time overlaps with self.timeslot
-            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 10)),
-            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
-            'users': [reverse('user-detail', args=[self.admin.id])]
-        }
-
-        response = self.client.post(
-            reverse('timeslot-list'),
-            data,
-            format='json',
-        )
-
-        content = {
-            'detail': [
-                'The user has an overlapping timeslot.'
-            ]
-        }
-
-        self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
     def test_create_invalid_start_end(self):
         """
         Ensure we can't create timeslots with start_time greater than end_time.
@@ -322,9 +298,9 @@ class TimeSlotTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_create_non_existent_period_user(self):
+    def test_create_non_existent_period(self):
         """
-        Ensure we can't create a timeslot with a non-existent period or user.
+        Ensure we can't create a timeslot with a non-existent user.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -333,7 +309,6 @@ class TimeSlotTests(APITestCase):
             # 'price': '10.00',  # Will use Period's price if not provided
             'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
             'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
-            'users': [reverse('user-detail', args=[999])],
         }
 
         response = self.client.post(
@@ -344,7 +319,6 @@ class TimeSlotTests(APITestCase):
 
         content = {
             'period': ['Invalid hyperlink - Object does not exist.'],
-            'users': ['Invalid hyperlink - Object does not exist.']
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -853,7 +827,6 @@ class TimeSlotTests(APITestCase):
         )
 
         data = json.loads(response.content)
-
         content = {
             'id': 1,
             'end_time': data['end_time'],
@@ -881,7 +854,7 @@ class TimeSlotTests(APITestCase):
                 "membership_end": None,
                 "other_phone": None,
                 "phone": None,
-                "reservations": None,
+                "tickets": None,
                 "university": None,
                 "url": "http://testserver/users/1",
                 "user_permissions": []

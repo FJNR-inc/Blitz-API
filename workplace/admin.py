@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
-from .models import Workplace, Picture, Period, TimeSlot
+from .models import Workplace, Picture, Period, TimeSlot, Reservation
 
 
 class PictureAdminInline(admin.TabularInline):
@@ -36,7 +36,16 @@ class TimeSlotAdmin(admin.ModelAdmin):
     )
 
 
+class ReservationAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'timeslot',
+        'is_active',
+    )
+
+
 admin.site.register(Workplace, WorkplaceAdmin)
 admin.site.register(Picture, PictureAdmin)
 admin.site.register(Period, PeriodAdmin)
 admin.site.register(TimeSlot, TimeSlotAdmin)
+admin.site.register(Reservation, ReservationAdmin)

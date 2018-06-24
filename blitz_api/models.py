@@ -80,10 +80,10 @@ class User(AbstractUser):
         max_length=100,
         verbose_name=_("Membership end date"),
     )
-    reservations = models.PositiveSmallIntegerField(
+    tickets = models.PositiveSmallIntegerField(
         blank=True,
         null=True,
-        verbose_name=_("Reservations"),
+        verbose_name=_("Tickets"),
     )
 
 
