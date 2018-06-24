@@ -162,6 +162,10 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
 class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     places_remaining = serializers.SerializerMethodField()
+    workplace = WorkplaceSerializer(
+        read_only=True,
+        source='period.workplace',
+    )
 
     def get_places_remaining(self, obj):
         seats = obj.period.workplace.seats

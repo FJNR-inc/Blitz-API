@@ -106,7 +106,24 @@ class TimeSlotTests(APITestCase):
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/3',
             'period': 'http://testserver/periods/1',
-            'users': ['http://testserver/users/1']
+            'users': ['http://testserver/users/1'],
+            "workplace": {
+                "address_line1": "123 random street",
+                "address_line2": "",
+                "city": "",
+                "country": "Random country",
+                "details": "short_description",
+                "id": 1,
+                "latitude": None,
+                "longitude": None,
+                "name": "Blitz",
+                "pictures": [],
+                "postal_code": "123 456",
+                "seats": 40,
+                "state_province": "Random state",
+                "timezone": None,
+                "url": "http://testserver/workplaces/1"
+            }
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -140,7 +157,24 @@ class TimeSlotTests(APITestCase):
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/3',
             'period': 'http://testserver/periods/1',
-            'users': []
+            'users': [],
+            "workplace": {
+                "address_line1": "123 random street",
+                "address_line2": "",
+                "city": "",
+                "country": "Random country",
+                "details": "short_description",
+                "id": 1,
+                "latitude": None,
+                "longitude": None,
+                "name": "Blitz",
+                "pictures": [],
+                "postal_code": "123 456",
+                "seats": 40,
+                "state_province": "Random state",
+                "timezone": None,
+                "url": "http://testserver/workplaces/1"
+            }
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -441,7 +475,27 @@ class TimeSlotTests(APITestCase):
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/1',
             'period': 'http://testserver/periods/1',
-            'users': ['http://testserver/users/1', 'http://testserver/users/2']
+            'users': [
+                'http://testserver/users/1',
+                'http://testserver/users/2'
+            ],
+            "workplace": {
+                "address_line1": "123 random street",
+                "address_line2": "",
+                "city": "",
+                "country": "Random country",
+                "details": "short_description",
+                "id": 1,
+                "latitude": None,
+                "longitude": None,
+                "name": "Blitz",
+                "pictures": [],
+                "postal_code": "123 456",
+                "seats": 40,
+                "state_province": "Random state",
+                "timezone": None,
+                "url": "http://testserver/workplaces/1"
+            }
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -478,7 +532,27 @@ class TimeSlotTests(APITestCase):
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/1',
             'period': 'http://testserver/periods/1',
-            'users': ['http://testserver/users/1', 'http://testserver/users/2']
+            'users': [
+                'http://testserver/users/1',
+                'http://testserver/users/2'
+            ],
+            "workplace": {
+                "address_line1": "123 random street",
+                "address_line2": "",
+                "city": "",
+                "country": "Random country",
+                "details": "short_description",
+                "id": 1,
+                "latitude": None,
+                "longitude": None,
+                "name": "Blitz",
+                "pictures": [],
+                "postal_code": "123 456",
+                "seats": 40,
+                "state_province": "Random state",
+                "timezone": None,
+                "url": "http://testserver/workplaces/1"
+            }
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -523,7 +597,24 @@ class TimeSlotTests(APITestCase):
                 'start_time': data['results'][0]['start_time'],
                 'url': 'http://testserver/time_slots/2',
                 'period': 'http://testserver/periods/2',
-                'users': []
+                'users': [],
+                "workplace": {
+                    "address_line1": "123 random street",
+                    "address_line2": "",
+                    "city": "",
+                    "country": "Random country",
+                    "details": "short_description",
+                    "id": 2,
+                    "latitude": None,
+                    "longitude": None,
+                    "name": "Blitz2",
+                    "pictures": [],
+                    "postal_code": "123 456",
+                    "seats": 40,
+                    "state_province": "Random state",
+                    "timezone": None,
+                    "url": "http://testserver/workplaces/2"
+                }
             }]
         }
 
@@ -559,7 +650,24 @@ class TimeSlotTests(APITestCase):
                 'users': [
                     'http://testserver/users/1',
                     'http://testserver/users/2'
-                ]
+                ],
+                "workplace": {
+                    "address_line1": "123 random street",
+                    "address_line2": "",
+                    "city": "",
+                    "country": "Random country",
+                    "details": "short_description",
+                    "id": 1,
+                    "latitude": None,
+                    "longitude": None,
+                    "name": "Blitz",
+                    "pictures": [],
+                    "postal_code": "123 456",
+                    "seats": 40,
+                    "state_province": "Random state",
+                    "timezone": None,
+                    "url": "http://testserver/workplaces/1"
+                }
             }, {
                 'id': 2,
                 'end_time': data['results'][1]['end_time'],
@@ -568,7 +676,24 @@ class TimeSlotTests(APITestCase):
                 'start_time': data['results'][1]['start_time'],
                 'url': 'http://testserver/time_slots/2',
                 'period': 'http://testserver/periods/2',
-                'users': []
+                'users': [],
+                "workplace": {
+                    "address_line1": "123 random street",
+                    "address_line2": "",
+                    "city": "",
+                    "country": "Random country",
+                    "details": "short_description",
+                    "id": 2,
+                    "latitude": None,
+                    "longitude": None,
+                    "name": "Blitz2",
+                    "pictures": [],
+                    "postal_code": "123 456",
+                    "seats": 40,
+                    "state_province": "Random state",
+                    "timezone": None,
+                    "url": "http://testserver/workplaces/2"
+                }
             }]
         }
 
@@ -604,7 +729,24 @@ class TimeSlotTests(APITestCase):
                 'users': [
                     'http://testserver/users/1',
                     'http://testserver/users/2'
-                ]
+                ],
+                "workplace": {
+                    "address_line1": "123 random street",
+                    "address_line2": "",
+                    "city": "",
+                    "country": "Random country",
+                    "details": "short_description",
+                    "id": 1,
+                    "latitude": None,
+                    "longitude": None,
+                    "name": "Blitz",
+                    "pictures": [],
+                    "postal_code": "123 456",
+                    "seats": 40,
+                    "state_province": "Random state",
+                    "timezone": None,
+                    "url": "http://testserver/workplaces/1"
+                }
             }]
         }
 
@@ -660,7 +802,24 @@ class TimeSlotTests(APITestCase):
             'start_time': data['start_time'],
             'url': 'http://testserver/time_slots/2',
             'period': 'http://testserver/periods/2',
-            'users': []
+            'users': [],
+            "workplace": {
+                "address_line1": "123 random street",
+                "address_line2": "",
+                "city": "",
+                "country": "Random country",
+                "details": "short_description",
+                "id": 2,
+                "latitude": None,
+                "longitude": None,
+                "name": "Blitz2",
+                "pictures": [],
+                "postal_code": "123 456",
+                "seats": 40,
+                "state_province": "Random state",
+                "timezone": None,
+                "url": "http://testserver/workplaces/2"
+            }
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -732,7 +891,24 @@ class TimeSlotTests(APITestCase):
                 "url": "http://testserver/users/1",
                 "user_permissions": []
                 }, data['users'][1]
-            ]
+            ],
+            "workplace": {
+                "address_line1": "123 random street",
+                "address_line2": "",
+                "city": "",
+                "country": "Random country",
+                "details": "short_description",
+                "id": 1,
+                "latitude": None,
+                "longitude": None,
+                "name": "Blitz",
+                "pictures": [],
+                "postal_code": "123 456",
+                "seats": 40,
+                "state_province": "Random state",
+                "timezone": None,
+                "url": "http://testserver/workplaces/1"
+            }
         }
 
         self.assertEqual(json.loads(response.content), content)
