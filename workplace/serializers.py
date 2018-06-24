@@ -3,6 +3,8 @@ from rest_framework.validators import UniqueValidator
 
 from django.utils.translation import ugettext_lazy as _
 
+from blitz_api.serializers import UserSerializer
+
 from .models import Workplace, Picture, Period, TimeSlot
 from .fields import TimezoneField
 
@@ -246,6 +248,11 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
             validated_data['price'] = validated_data['period'].price
 
         return super().create(validated_data)
+
+    def to_representation(self, instance):
+        if self.context['view'].action == 'retrieve':
+            self.fields['users'] = UserSerializer(many=True)
+        return super(TimeSlotSerializer, self).to_representation(instance)
 
     class Meta:
         model = TimeSlot

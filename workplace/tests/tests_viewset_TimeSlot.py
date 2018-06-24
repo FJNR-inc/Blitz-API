@@ -708,9 +708,30 @@ class TimeSlotTests(APITestCase):
             'places_remaining': 38,
             'start_time': data['start_time'],
             'url': 'http://testserver/time_slots/1',
-            'users': [
-                'http://testserver/users/1',
-                'http://testserver/users/2'
+            'users': [{
+                "academic_field": None,
+                "academic_level": None,
+                "birthdate": None,
+                "date_joined": data['users'][0]['date_joined'],
+                "email": data['users'][0]['email'],
+                "first_name": data['users'][0]['first_name'],
+                "gender": None,
+                "groups": [],
+                "id": 1,
+                "is_active": True,
+                "is_staff": False,
+                "is_superuser": False,
+                "last_login": None,
+                "last_name": data['users'][0]['last_name'],
+                "membership": None,
+                "membership_end": None,
+                "other_phone": None,
+                "phone": None,
+                "reservations": None,
+                "university": None,
+                "url": "http://testserver/users/1",
+                "user_permissions": []
+                }, data['users'][1]
             ]
         }
 
