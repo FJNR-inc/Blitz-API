@@ -66,6 +66,16 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
 
     def validate(self, attrs):
         """Prevents overlapping active periods and invalid start/end date"""
+        # Forbid Period full updates if
+        action = self.context['view'].action
+        if action == 'update' or action == 'partial_update':
+            reservations = TimeSlot.objects.filter(
+                period=self.instance
+            ).exclude(users=None).count()
+            if reservations:
+                raise serializers.ValidationError(
+                    _("The period contains timeslots with user reservations."),
+                )
         # Get instance values of start_date, end_date and is_active if not
         # provided in request data (needed for validation).
         start = attrs.get(
@@ -108,13 +118,13 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
 
             for duration in date_list:
                 if max(duration[0], start) < min(duration[1], end):
-                    raise serializers.ValidationError({
-                        'detail': _(
+                    raise serializers.ValidationError(
+                        _(
                             "An active period associated to the same "
                             "workplace overlaps with the provided start_date "
                             "and end_date."
                         ),
-                    })
+                    )
 
         return attrs
 

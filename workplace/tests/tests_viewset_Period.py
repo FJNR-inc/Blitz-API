@@ -1,19 +1,22 @@
 import json
+import pytz
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from django.urls import reverse
 from django.utils import timezone
+from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from blitz_api.factories import UserFactory, AdminFactory
 
-from ..models import Workplace, Period
+from ..models import Workplace, Period, TimeSlot
 
 User = get_user_model()
+LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
 class PeriodTests(APITestCase):
@@ -41,7 +44,7 @@ class PeriodTests(APITestCase):
             price=3,
             is_active=False,
         )
-        cls.period = Period.objects.create(
+        cls.period_active = Period.objects.create(
             name="random_period_active",
             workplace=cls.workplace,
             start_date=timezone.now(),
@@ -49,6 +52,14 @@ class PeriodTests(APITestCase):
             price=3,
             is_active=True,
         )
+        cls.time_slot_active = TimeSlot.objects.create(
+            name="evening_time_slot_active",
+            period=cls.period_active,
+            price=3,
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 18)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 22)),
+        )
+        cls.time_slot_active.users.set([cls.user.id])
 
     def test_create(self):
         """
@@ -137,7 +148,7 @@ class PeriodTests(APITestCase):
         )
 
         content = {
-            'detail': [
+            'non_field_errors': [
                 'An active period associated to the same workplace overlaps '
                 'with the provided start_date and end_date.'
             ]
@@ -304,9 +315,18 @@ class PeriodTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    """
+    Full updates and partial updates are limited. If reservations exist, these
+    actions are forbidden.
+    In a future iteration, we could allow updates with the exception of:
+        - Postpone start_date
+        - Bring forward end_date
+        - Set is_active to False
+    """
+
     def test_update(self):
         """
-        Ensure we can update a period.
+        Ensure we can update a period without reservations.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -342,6 +362,41 @@ class PeriodTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_update_with_reservations(self):
+        """
+        Ensure we can't update a period that contains time slots with
+        reservations.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': "new_period",
+            'workplace': reverse('workplace-detail', args=[self.workplace.id]),
+            'start_date': timezone.now() + timedelta(weeks=5),
+            'end_date': timezone.now() + timedelta(weeks=10),
+            'price': '3.00',
+            'is_active': True,
+        }
+
+        response = self.client.put(
+            reverse(
+                'period-detail',
+                kwargs={'pk': 2},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'non_field_errors': [
+                "The period contains timeslots with user reservations."
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_update_partial(self):
         """
@@ -381,6 +436,43 @@ class PeriodTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_update_partial_with_reservations(self):
+        """
+        Ensure we can't partially update a period that contains time slots with
+        reservations.
+        The next step is to allow only these actions:
+            - The start_date can be set to an earlier date.
+            - The end_date can be set to a later date.
+            - The is_active field can be set to True.
+            - The name can change.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': "updated_period",
+            'start_date': timezone.now() + timedelta(weeks=1),
+            'price': '2000.00',
+        }
+
+        response = self.client.patch(
+            reverse(
+                'period-detail',
+                kwargs={'pk': 2},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'non_field_errors': [
+                "The period contains timeslots with user reservations."
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_update_partial_overlapping(self):
         """
         Ensure we can't partially update an active period if it overlaps with
@@ -405,7 +497,7 @@ class PeriodTests(APITestCase):
         )
 
         content = {
-            'detail': [
+            'non_field_errors': [
                 'An active period associated to the same workplace overlaps '
                 'with the provided start_date and end_date.'
             ]
