@@ -168,6 +168,8 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
     )
 
     def get_places_remaining(self, obj):
+        if not obj.period.workplace:
+            return 0
         seats = obj.period.workplace.seats
         reservations = obj.users.count()
         return seats - reservations

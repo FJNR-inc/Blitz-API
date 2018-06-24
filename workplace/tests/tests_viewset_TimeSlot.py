@@ -62,6 +62,13 @@ class TimeSlotTests(APITestCase):
             price=3,
             is_active=True,
         )
+        cls.period_no_workplace = Period.objects.create(
+            name="random_period_active",
+            start_date=timezone.now(),
+            end_date=timezone.now() + timedelta(weeks=4),
+            price=3,
+            is_active=True,
+        )
         cls.time_slot = TimeSlot.objects.create(
             name="evening_time_slot",
             period=cls.period,
@@ -81,11 +88,15 @@ class TimeSlotTests(APITestCase):
     def test_create(self):
         """
         Ensure we can create a timeslot if user has permission.
+        If the period is not assigned to a workplace, places_remaining should
+        be 0.
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'period': reverse('period-detail', args=[self.period.id]),
+            'period': reverse(
+                'period-detail', args=[self.period_no_workplace.id]
+            ),
             'price': '10.00',  # Will use Period's price if not provided
             'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
             'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
@@ -102,28 +113,12 @@ class TimeSlotTests(APITestCase):
             'id': 3,
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
-            'places_remaining': 39,
+            'places_remaining': 0,
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/3',
-            'period': 'http://testserver/periods/1',
+            'period': 'http://testserver/periods/3',
             'users': ['http://testserver/users/1'],
-            "workplace": {
-                "address_line1": "123 random street",
-                "address_line2": "",
-                "city": "",
-                "country": "Random country",
-                "details": "short_description",
-                "id": 1,
-                "latitude": None,
-                "longitude": None,
-                "name": "Blitz",
-                "pictures": [],
-                "postal_code": "123 456",
-                "seats": 40,
-                "state_province": "Random state",
-                "timezone": None,
-                "url": "http://testserver/workplaces/1"
-            }
+            "workplace": None
         }
 
         self.assertEqual(json.loads(response.content), content)
