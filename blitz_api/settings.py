@@ -186,6 +186,7 @@ SETTINGS_IMAILING = {
     "TEMPLATES": {
         "CONFIRM_SIGN_UP": "example_template_id",
         "FORGOT_PASSWORD": "example_template_id",
+        "RESERVATION_CANCELLED": "example_template_id",
     }
 }
 

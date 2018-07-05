@@ -1,12 +1,17 @@
-from rest_framework import serializers
+from rest_framework import serializers, status
 from rest_framework.validators import UniqueValidator
 
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.db.models import F
 from django.utils.translation import ugettext_lazy as _
 
 from blitz_api.serializers import UserSerializer
 
 from .models import Workplace, Picture, Period, TimeSlot, Reservation
 from .fields import TimezoneField
+
+User = get_user_model()
 
 
 class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
@@ -26,7 +31,9 @@ class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_pictures(self, obj):
         request = self.context['request']
-        picture_urls = [picture.picture.url for picture in obj.pictures.all()]
+        picture_urls = [
+            picture.picture.ursend_emaill for picture in obj.pictures.all()
+        ]
         return [request.build_absolute_uri(url) for url in picture_urls]
 
     class Meta:
@@ -68,7 +75,7 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
 
     def validate(self, attrs):
         """Prevents overlapping active periods and invalid start/end date"""
-        # Forbid Period full updates if
+        # Forbid Period full updates if users have reserved timeslots
         action = self.context['view'].action
         if action == 'update' or action == 'partial_update':
             reservations = TimeSlot.objects.filter(
@@ -162,9 +169,19 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
 class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     places_remaining = serializers.SerializerMethodField()
+    # users = serializers.SerializerMethodField()
     workplace = WorkplaceSerializer(
         read_only=True,
         source='period.workplace',
+    )
+    force_update = serializers.BooleanField(
+        required=False,
+        write_only=True,
+    )
+    custom_message = serializers.CharField(
+        required=False,
+        write_only=True,
+        max_length=1000,
     )
 
     def get_places_remaining(self, obj):
@@ -229,6 +246,40 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
                 })
 
         return attrs
+
+    @transaction.atomic()
+    def update(self, instance, validated_data):
+        """
+        If it is an update operation, we check if users will be affected by
+        the update. If yes, we make sure that the field "force_update" is
+        provided in the request. If provided, cancel reservations and refund
+        affected users tickets.
+        """
+        if instance.users.exists():
+            if (validated_data.get('start_time') or
+                    validated_data.get('end_time')):
+                if not validated_data.get('force_update'):
+                    raise serializers.ValidationError({
+                        "non_field_errors": [_(
+                            "Trying to push an update that affects users "
+                            "without providing `force_update` field."
+                        )]
+                    })
+                reservation_cancel = Reservation.objects.filter(
+                    timeslot=self.instance
+                )
+                affected_users_id = reservation_cancel.values_list('user')
+                affected_users = User.objects.filter(
+                    id__in=affected_users_id,
+                )
+
+                reservation_cancel.update(is_active=False)
+                affected_users.update(tickets=F('tickets') + 1)
+
+        return super(TimeSlotSerializer, self).update(
+            instance,
+            validated_data,
+        )
 
     def create(self, validated_data):
         """

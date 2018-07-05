@@ -1,10 +1,19 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, exceptions
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+
+from django.db import transaction
+from django.contrib.auth import get_user_model
+from django.utils.translation import ugettext_lazy as _
+
+from blitz_api.exceptions import MailServiceError
+from blitz_api.services import send_mail
 
 from .models import Workplace, Picture, Period, TimeSlot, Reservation
 
 from . import serializers, permissions
+
+User = get_user_model()
 
 
 class WorkplaceViewSet(viewsets.ModelViewSet):
@@ -92,6 +101,36 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
         if self.request.user.is_staff:
             return queryset
         return queryset.filter(period__is_active=True)
+
+    def perform_update(self, serializer):
+        validated_data = serializer.validated_data
+        instance = self.get_object()
+        try:
+            if (instance.users.exists() and
+                    (validated_data.get('start_time') or
+                     validated_data.get('end_time'))):
+                with transaction.atomic():
+                    new_instance = serializer.save()
+                    context = {
+                        "custom_message": validated_data.get('custom_message'),
+                    }
+                    reservation_cancel = Reservation.objects.filter(
+                        timeslot=instance
+                    )
+                    affected_users_id = reservation_cancel.values_list('user')
+                    affected_users = User.objects.filter(
+                        id__in=affected_users_id,
+                    )
+                    # Failed emails are not sent back in the response yet
+                    failed_emails = send_mail(
+                        affected_users,
+                        context,
+                        "RESERVATION_CANCELLED",
+                    )
+                    return new_instance
+        except MailServiceError as err:
+            raise exceptions.APIException(err)
+        return serializer.save()
 
 
 class ReservationViewSet(viewsets.ModelViewSet):

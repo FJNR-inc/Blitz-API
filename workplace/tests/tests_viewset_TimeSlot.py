@@ -1,6 +1,8 @@
 import json
 import pytz
 
+from unittest import mock
+
 from datetime import datetime, timedelta
 
 from rest_framework import status
@@ -10,6 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.test.utils import override_settings
 
 from blitz_api.factories import UserFactory, AdminFactory
 
@@ -27,7 +30,11 @@ class TimeSlotTests(APITestCase):
         super(TimeSlotTests, cls).setUpClass()
         cls.client = APIClient()
         cls.user = UserFactory()
+        cls.user.tickets = 0
+        cls.user.save()
         cls.admin = AdminFactory()
+        cls.admin.tickets = 0
+        cls.admin.save()
         cls.workplace = Workplace.objects.create(
             name="Blitz",
             seats=40,
@@ -70,7 +77,7 @@ class TimeSlotTests(APITestCase):
             is_active=True,
         )
         cls.time_slot = TimeSlot.objects.create(
-            name="evening_time_slot",
+            name="morning_time_slot",
             period=cls.period,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
@@ -416,7 +423,7 @@ class TimeSlotTests(APITestCase):
 
     def test_update(self):
         """
-        Ensure we can update a timeslot.
+        Ensure we can fully update a timeslot without users.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -425,6 +432,77 @@ class TimeSlotTests(APITestCase):
             'price': '10.00',  # Will use Period's price if not provided
             'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
             'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
+        }
+
+        response = self.client.put(
+            reverse(
+                'timeslot-detail',
+                kwargs={'pk': 2},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'id': 2,
+            'end_time': data['end_time'].isoformat(),
+            'price': '10.00',
+            'places_remaining': 40,
+            'start_time': data['start_time'].isoformat(),
+            'url': 'http://testserver/time_slots/2',
+            'period': 'http://testserver/periods/1',
+            'users': [],
+            "workplace": {
+                "address_line1": "123 random street",
+                "address_line2": "",
+                "city": "",
+                "country": "Random country",
+                "details": "short_description",
+                "id": 1,
+                "latitude": None,
+                "longitude": None,
+                "name": "Blitz",
+                "pictures": [],
+                "postal_code": "123 456",
+                "seats": 40,
+                "state_province": "Random state",
+                "timezone": None,
+                "url": "http://testserver/workplaces/1"
+            }
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+        }
+    )
+    @mock.patch('blitz_api.services.IMailing')
+    def test_update_registered_users(self, imailing):
+        """
+        Ensure we can fully update a timeslot with registered users.
+        To work properly, the email service needs to be activated and a field
+        'force_update' equal to True needs to be passed in the request.
+        A 'custom_message' field will be passed to the email template that
+        is sent to affected users.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        instance_imailing = imailing.create_instance.return_value
+        instance_imailing.send_templated_email.return_value = {
+            "code": "success",
+        }
+
+        data = {
+            'period': reverse('period-detail', args=[self.period.id]),
+            'price': '10.00',  # Will use Period's price if not provided
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
+            'force_update': True,
+            'custom_message': "This explains the cancellation.",
         }
 
         response = self.client.put(
@@ -471,15 +549,157 @@ class TimeSlotTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_update_partial(self):
+    def test_update_safe(self):
         """
-        Ensure we can partially update a timeslot.
+        Ensure we can partially update a timeslot with registered users if
+        start_time and end_time are not modified.
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
             'price': '1000.00',
+            'force_update': True,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'timeslot-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'id': 1,
+            'end_time': response_data['end_time'],
+            'price': '1000.00',
+            'places_remaining': 38,
+            'start_time': response_data['start_time'],
+            'url': 'http://testserver/time_slots/1',
+            'period': 'http://testserver/periods/1',
+            'users': [
+                'http://testserver/users/1',
+                'http://testserver/users/2'
+            ],
+            "workplace": {
+                "address_line1": "123 random street",
+                "address_line2": "",
+                "city": "",
+                "country": "Random country",
+                "details": "short_description",
+                "id": 1,
+                "latitude": None,
+                "longitude": None,
+                "name": "Blitz",
+                "pictures": [],
+                "postal_code": "123 456",
+                "seats": 40,
+                "state_province": "Random state",
+                "timezone": None,
+                "url": "http://testserver/workplaces/1"
+            }
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_update_email_disabled(self):
+        """
+        Ensure we can't update a timeslot start_time or end_time if email
+        service is disabled.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'period': reverse('period-detail', args=[self.period.id]),
+            'price': '10.00',  # Will use Period's price if not provided
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
+            'force_update': True,
+        }
+
+        response = self.client.put(
+            reverse(
+                'timeslot-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'detail': 'Email service is disabled.'
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    def test_update_not_force(self):
+        """
+        Ensure we can't update a timeslot start_time or end_time if the field
+        "force_update" is not provided.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'period': reverse('period-detail', args=[self.period.id]),
+            'price': '10.00',  # Will use Period's price if not provided
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
+        }
+
+        response = self.client.put(
+            reverse(
+                'timeslot-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'non_field_errors': [
+                'Trying to push an update that affects users without '
+                'providing `force_update` field.'
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+        }
+    )
+    @mock.patch('blitz_api.services.IMailing')
+    def test_update_timeslot(self, imailing):
+        """
+        Ensure we can partially update a timeslot.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        instance_imailing = imailing.create_instance.return_value
+        instance_imailing.send_templated_email.return_value = {
+            "code": "success",
+        }
+
+        data = {
+            'price': '1000.00',
             'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 6)),
+            'force_update': True,
         }
 
         response = self.client.patch(
@@ -525,6 +745,96 @@ class TimeSlotTests(APITestCase):
         }
 
         self.assertEqual(json.loads(response.content), content)
+
+        reservation = self.reservation
+        reservation.refresh_from_db()
+
+        self.assertFalse(reservation.is_active)
+
+        user = self.user
+        user.refresh_from_db()
+
+        self.assertEqual(user.tickets, 1)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+        }
+    )
+    @mock.patch('blitz_api.services.IMailing')
+    def test_update_timeslot_failed_emails(self, imailing):
+        """
+        Ensure we can partially update a timeslot, even if we were unable to
+        deliver emails to affected users.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        instance_imailing = imailing.create_instance.return_value
+        instance_imailing.send_templated_email.return_value = {
+            "code": "failure",
+        }
+
+        data = {
+            'price': '1000.00',
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 6)),
+            'force_update': True,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'timeslot-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'id': 1,
+            'end_time': response_data['end_time'],
+            'price': '1000.00',
+            'places_remaining': 38,
+            'start_time': data['start_time'].isoformat(),
+            'url': 'http://testserver/time_slots/1',
+            'period': 'http://testserver/periods/1',
+            'users': [
+                'http://testserver/users/1',
+                'http://testserver/users/2'
+            ],
+            "workplace": {
+                "address_line1": "123 random street",
+                "address_line2": "",
+                "city": "",
+                "country": "Random country",
+                "details": "short_description",
+                "id": 1,
+                "latitude": None,
+                "longitude": None,
+                "name": "Blitz",
+                "pictures": [],
+                "postal_code": "123 456",
+                "seats": 40,
+                "state_province": "Random state",
+                "timezone": None,
+                "url": "http://testserver/workplaces/1"
+            }
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        reservation = self.reservation
+        reservation.refresh_from_db()
+
+        self.assertFalse(reservation.is_active)
+
+        user = self.user
+        user.refresh_from_db()
+
+        self.assertEqual(user.tickets, 1)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -854,7 +1164,7 @@ class TimeSlotTests(APITestCase):
                 "membership_end": None,
                 "other_phone": None,
                 "phone": None,
-                "tickets": None,
+                "tickets": 0,
                 "university": None,
                 "url": "http://testserver/users/1",
                 "user_permissions": []
