@@ -32,7 +32,7 @@ class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
     def get_pictures(self, obj):
         request = self.context['request']
         picture_urls = [
-            picture.picture.ursend_emaill for picture in obj.pictures.all()
+            picture.picture.url for picture in obj.pictures.all()
         ]
         return [request.build_absolute_uri(url) for url in picture_urls]
 
