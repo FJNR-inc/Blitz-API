@@ -90,7 +90,13 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
     # We need to find a way to use '__all__' without excluding nested
     # attributes through FKs such as period__workplace. For now, we declare
     # each fields one by one.
-    filter_fields = ('period__workplace', 'period__is_active', 'users')
+    filter_fields = {
+        'period__workplace': ['exact'],
+        'period__is_active': ['exact'],
+        'users': ['exact'],
+        'start_time': ['exact', 'gte', 'lte'],
+        'end_time': ['exact', 'gte', 'lte'],
+    }
 
     def filter_queryset(self, queryset):
         """
