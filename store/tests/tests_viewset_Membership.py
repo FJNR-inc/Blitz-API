@@ -31,6 +31,15 @@ class MembershipTests(APITestCase):
             name="basic_membership",
             details="1-Year student membership",
             price=50,
+            available=True,
+            duration=timedelta(days=365),
+            academic_level=cls.academic_level,
+        )
+        cls.membership_unavailable = Membership.objects.create(
+            name="pending_membership",
+            details="todo",
+            price=50,
+            available=False,
             duration=timedelta(days=365),
             academic_level=cls.academic_level,
         )
@@ -44,6 +53,7 @@ class MembershipTests(APITestCase):
         data = {
             'name': "advanced_membership",
             'details': "3-Year student membership",
+            'available': True,
             'price': 125,
             'duration': timedelta(days=365*3),
             'academic_level': reverse(
@@ -58,13 +68,14 @@ class MembershipTests(APITestCase):
         )
 
         content = {
-            'id': 2,
+            'available': True,
+            'id': 3,
             'details': '3-Year student membership',
             'duration': '1095 00:00:00',
             'name': 'advanced_membership',
             'order_lines': [],
             'price': '125.00',
-            'url': 'http://testserver/memberships/2',
+            'url': 'http://testserver/memberships/3',
             'academic_level': 'http://testserver/academic_levels/1'
         }
 
@@ -216,6 +227,7 @@ class MembershipTests(APITestCase):
         )
 
         content = {
+            'available': True,
             'id': 1,
             'details': '1-Year student membership',
             'duration': '365 00:00:00',
@@ -230,9 +242,9 @@ class MembershipTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_delete(self):
+    def test_delete_as_admin(self):
         """
-        Ensure we can delete a membership.
+        Ensure we can make a membership unavailable as an admin.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -242,12 +254,51 @@ class MembershipTests(APITestCase):
                 kwargs={'pk': 1},
             ),
         )
+        membership = self.membership
+        membership.refresh_from_db()
 
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            response.status_code, status.HTTP_204_NO_CONTENT
+        )
+        self.assertFalse(self.membership.available)
+
+    def test_delete_as_user(self):
+        """
+        Ensure that a user can't make a membership unavailable.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.delete(
+            reverse(
+                'membership-detail',
+                kwargs={'pk': 1},
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code, status.HTTP_403_FORBIDDEN
+        )
+
+    def test_delete_inexistent(self):
+        """
+        Ensure that deleting a non-existent membership does nothing.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.delete(
+            reverse(
+                'membership-detail',
+                kwargs={'pk': 999},
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code, status.HTTP_204_NO_CONTENT
+        )
 
     def test_list(self):
         """
-        Ensure we can list memberships as an unauthenticated user.
+        Ensure we can list available memberships as an unauthenticated user.
         """
         response = self.client.get(
             reverse('membership-list'),
@@ -261,12 +312,57 @@ class MembershipTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
+                'available': True,
                 'id': 1,
                 'details': '1-Year student membership',
                 'duration': '365 00:00:00',
                 'name': 'basic_membership',
                 'price': '50.00',
                 'url': 'http://testserver/memberships/1',
+                'academic_level': 'http://testserver/academic_levels/1'
+            }]
+        }
+
+        self.assertEqual(data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_as_admin(self):
+        """
+        Ensure we can list all memberships as an admin.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.get(
+            reverse('membership-list'),
+            format='json',
+        )
+
+        data = json.loads(response.content)
+
+        content = {
+            'count': 2,
+            'next': None,
+            'previous': None,
+            'results': [{
+                'available': True,
+                'id': 1,
+                'details': '1-Year student membership',
+                'duration': '365 00:00:00',
+                'name': 'basic_membership',
+                'order_lines': [],
+                'price': '50.00',
+                'url': 'http://testserver/memberships/1',
+                'academic_level': 'http://testserver/academic_levels/1'
+            }, {
+                'available': False,
+                'id': 2,
+                'details': 'todo',
+                'duration': '365 00:00:00',
+                'name': 'pending_membership',
+                'order_lines': [],
+                'price': '50.00',
+                'url': 'http://testserver/memberships/2',
                 'academic_level': 'http://testserver/academic_levels/1'
             }]
         }
@@ -288,6 +384,7 @@ class MembershipTests(APITestCase):
         )
 
         content = {
+            'available': True,
             'id': 1,
             'details': '1-Year student membership',
             'duration': '365 00:00:00',
@@ -315,6 +412,7 @@ class MembershipTests(APITestCase):
         )
 
         content = {
+            'available': True,
             'id': 1,
             'details': '1-Year student membership',
             'duration': '365 00:00:00',

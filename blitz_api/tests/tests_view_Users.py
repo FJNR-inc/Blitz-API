@@ -33,6 +33,7 @@ class UsersTests(APITestCase):
         cls.membership = Membership.objects.create(
             name="basic_membership",
             details="1-Year student membership",
+            available=True,
             price=50,
             duration=timedelta(days=365),
             academic_level=cls.academic_level,
@@ -619,6 +620,7 @@ class UsersTests(APITestCase):
             'id': 1,
             'order_lines': [],
             'name': 'basic_membership',
+            'available': True,
             'price': '50.00',
             'details': '1-Year student membership',
             'duration': '365 00:00:00',

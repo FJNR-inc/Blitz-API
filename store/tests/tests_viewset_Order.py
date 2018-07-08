@@ -32,6 +32,7 @@ class OrderTests(APITestCase):
         cls.membership = Membership.objects.create(
             name="basic_membership",
             details="1-Year student membership",
+            available=True,
             price=50,
             duration=timedelta(days=365),
             academic_level=cls.academic_level,
@@ -40,6 +41,7 @@ class OrderTests(APITestCase):
         cls.package = Package.objects.create(
             name="extreme_package",
             details="100 reservations package",
+            available=True,
             price=400,
             reservations=100,
         )

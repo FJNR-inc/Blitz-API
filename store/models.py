@@ -84,6 +84,10 @@ class BaseProduct(models.Model):
         max_length=253,
     )
 
+    available = models.BooleanField(
+        verbose_name=_("Available")
+    )
+
     price = models.DecimalField(
         max_digits=6,
         decimal_places=2,

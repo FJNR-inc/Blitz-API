@@ -34,6 +34,7 @@ class PackageTests(APITestCase):
         package = Package.objects.create(
             name="basic_package",
             details="10 reservations package",
+            available=True,
             price=50,
             reservations=10,
         )
@@ -47,6 +48,7 @@ class PackageTests(APITestCase):
         package = Package.objects.create(
             name="basic_package",
             details="10 reservations package",
+            available=True,
             price=50,
             reservations=10,
         )

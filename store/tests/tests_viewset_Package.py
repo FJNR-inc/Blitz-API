@@ -30,6 +30,14 @@ class PackageTests(APITestCase):
         cls.package = Package.objects.create(
             name="extreme_package",
             details="100 reservations package",
+            available=True,
+            price=400,
+            reservations=100,
+        )
+        cls.package_unavailable = Package.objects.create(
+            name="pending_package",
+            details="todo",
+            available=False,
             price=400,
             reservations=100,
         )
@@ -50,6 +58,7 @@ class PackageTests(APITestCase):
         cls.membership = Membership.objects.create(
             name="basic_membership",
             details="1-Year student membership",
+            available=True,
             price=50,
             duration=timedelta(days=365),
             academic_level=cls.academic_level,
@@ -64,6 +73,7 @@ class PackageTests(APITestCase):
         data = {
             'name': "basic_package",
             'details': "10 reservations package",
+            'available': True,
             'price': 50,
             'reservations': 10,
             'exclusive_memberships': [
@@ -80,12 +90,13 @@ class PackageTests(APITestCase):
         content = {
             'details': '10 reservations package',
             'exclusive_memberships': ['http://testserver/memberships/1'],
-            'id': 2,
+            'available': True,
+            'id': 3,
             'name': 'basic_package',
             'order_lines': [],
             'price': '50.00',
             'reservations': 10,
-            'url': 'http://testserver/packages/2'
+            'url': 'http://testserver/packages/3'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -266,6 +277,7 @@ class PackageTests(APITestCase):
         )
 
         content = {
+            'available': True,
             'details': '999 reservations package',
             'exclusive_memberships': [],
             'id': 1,
@@ -301,6 +313,7 @@ class PackageTests(APITestCase):
         )
 
         content = {
+            'available': True,
             'details': 'New very cool details',
             'exclusive_memberships': [],
             'id': 1,
@@ -315,9 +328,9 @@ class PackageTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_delete(self):
+    def test_delete_as_admin(self):
         """
-        Ensure we can delete a package.
+        Ensure we can make a package unavailable as an admin.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -327,8 +340,47 @@ class PackageTests(APITestCase):
                 kwargs={'pk': 1},
             ),
         )
+        package = self.package
+        package.refresh_from_db()
 
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            response.status_code, status.HTTP_204_NO_CONTENT
+        )
+        self.assertFalse(self.package.available)
+
+    def test_delete_as_user(self):
+        """
+        Ensure that a user can't make a package unavailable.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.delete(
+            reverse(
+                'package-detail',
+                kwargs={'pk': 1},
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code, status.HTTP_403_FORBIDDEN
+        )
+
+    def test_delete_inexistent(self):
+        """
+        Ensure that deleting a non-existent package does nothing.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.delete(
+            reverse(
+                'package-detail',
+                kwargs={'pk': 999},
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code, status.HTTP_204_NO_CONTENT
+        )
 
     def test_list(self):
         """
@@ -346,6 +398,7 @@ class PackageTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
+                'available': True,
                 'details': '100 reservations package',
                 'exclusive_memberships': [],
                 'id': 1,
@@ -353,6 +406,50 @@ class PackageTests(APITestCase):
                 'price': '400.00',
                 'reservations': 100,
                 'url': 'http://testserver/packages/1'
+            }]
+        }
+
+        self.assertEqual(data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_as_admin(self):
+        """
+        Ensure we can list all packages as an admin.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.get(
+            reverse('package-list'),
+            format='json',
+        )
+
+        data = json.loads(response.content)
+
+        content = {
+            'count': 2,
+            'next': None,
+            'previous': None,
+            'results': [{
+                'available': True,
+                'details': '100 reservations package',
+                'exclusive_memberships': [],
+                'id': 1,
+                'name': 'extreme_package',
+                'order_lines': ['http://testserver/order_lines/1'],
+                'price': '400.00',
+                'reservations': 100,
+                'url': 'http://testserver/packages/1'
+            }, {
+                'available': False,
+                'details': 'todo',
+                'exclusive_memberships': [],
+                'id': 2,
+                'name': 'pending_package',
+                'order_lines': [],
+                'price': '400.00',
+                'reservations': 100,
+                'url': 'http://testserver/packages/2'
             }]
         }
 
@@ -373,6 +470,7 @@ class PackageTests(APITestCase):
         )
 
         content = {
+            'available': True,
             'details': '100 reservations package',
             'exclusive_memberships': [],
             'id': 1,
@@ -400,6 +498,7 @@ class PackageTests(APITestCase):
         )
 
         content = {
+            'available': True,
             'details': '100 reservations package',
             'exclusive_memberships': [],
             'id': 1,

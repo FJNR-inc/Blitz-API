@@ -20,6 +20,7 @@ class OrderTests(APITestCase):
         cls.package = Package.objects.create(
             name="extreme_package",
             details="100 reservations package",
+            available=True,
             price=400,
             reservations=100,
         )

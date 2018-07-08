@@ -34,6 +34,7 @@ class MembershipTests(APITestCase):
         membership = Membership.objects.create(
             name="basic_membership",
             details="1-Year student membership",
+            available=True,
             price=50,
             duration=timedelta(days=365),
             academic_level=self.academic_level,
@@ -48,6 +49,7 @@ class MembershipTests(APITestCase):
         membership = Membership.objects.create(
             name="basic_membership",
             details="1-Year student membership",
+            available=True,
             price=50,
             duration=timedelta(days=365),
             academic_level=self.academic_level,
