@@ -30,6 +30,7 @@ class WorkplaceViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.WorkplaceSerializer
     queryset = Workplace.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
+    filter_fields = '__all__'
 
 
 class PictureViewSet(viewsets.ModelViewSet):
@@ -46,6 +47,12 @@ class PictureViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.PictureSerializer
     queryset = Picture.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
+    # It is impossible to filter Imagefield by default. This is why we declare
+    # filter fields manually here.
+    filter_fields = {
+        'name',
+        'workplace',
+    }
 
 
 class PeriodViewSet(viewsets.ModelViewSet):
@@ -62,6 +69,7 @@ class PeriodViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.PeriodSerializer
     queryset = Period.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
+    filter_fields = '__all__'
 
     def get_queryset(self):
         """
