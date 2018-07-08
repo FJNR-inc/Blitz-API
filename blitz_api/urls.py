@@ -82,7 +82,6 @@ urlpatterns = [
         views.ChangePassword.as_view(),
         name='change_password'
     ),
-    # External location application
     path(
         'admin/', admin.site.urls
     ),

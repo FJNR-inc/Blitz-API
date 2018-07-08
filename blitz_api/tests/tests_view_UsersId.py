@@ -562,7 +562,7 @@ class UsersIdTests(APITestCase):
 
     def test_delete_user(self):
         """
-        Ensure that a user can't deactivate its own account.
+        Ensure that a user can deactivate its own account.
         """
         self.client.force_authenticate(user=self.user)
 
