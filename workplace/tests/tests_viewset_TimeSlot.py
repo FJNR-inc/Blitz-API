@@ -481,7 +481,7 @@ class TimeSlotTests(APITestCase):
         }
     )
     @mock.patch('blitz_api.services.IMailing')
-    def test_update_registered_users(self, imailing):
+    def test_update_timeslot_with_registered_users(self, imailing):
         """
         Ensure we can fully update a timeslot with registered users.
         To work properly, the email service needs to be activated and a field
@@ -518,7 +518,7 @@ class TimeSlotTests(APITestCase):
             'id': 1,
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
-            'places_remaining': 38,
+            'places_remaining': 40,
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/1',
             'period': 'http://testserver/periods/1',
@@ -546,6 +546,16 @@ class TimeSlotTests(APITestCase):
         }
 
         self.assertEqual(json.loads(response.content), content)
+
+        reservation = self.reservation
+        reservation.refresh_from_db()
+
+        self.assertFalse(reservation.is_active)
+
+        user = self.user
+        user.refresh_from_db()
+
+        self.assertEqual(user.tickets, 1)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -604,6 +614,16 @@ class TimeSlotTests(APITestCase):
         }
 
         self.assertEqual(json.loads(response.content), content)
+
+        reservation = self.reservation
+        reservation.refresh_from_db()
+
+        self.assertTrue(reservation.is_active)
+
+        user = self.user
+        user.refresh_from_db()
+
+        self.assertEqual(user.tickets, 0)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -717,7 +737,7 @@ class TimeSlotTests(APITestCase):
             'id': 1,
             'end_time': response_data['end_time'],
             'price': '1000.00',
-            'places_remaining': 38,
+            'places_remaining': 40,
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/1',
             'period': 'http://testserver/periods/1',
@@ -797,7 +817,7 @@ class TimeSlotTests(APITestCase):
             'id': 1,
             'end_time': response_data['end_time'],
             'price': '1000.00',
-            'places_remaining': 38,
+            'places_remaining': 40,
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/1',
             'period': 'http://testserver/periods/1',

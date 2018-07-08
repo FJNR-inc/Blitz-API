@@ -188,7 +188,7 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         if not obj.period.workplace:
             return 0
         seats = obj.period.workplace.seats
-        reservations = obj.users.count()
+        reservations = obj.reservations.filter(is_active=True).count()
         return seats - reservations
 
     def validate(self, attrs):
@@ -255,7 +255,7 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         provided in the request. If provided, cancel reservations and refund
         affected users tickets.
         """
-        if instance.users.exists():
+        if instance.reservations.filter(is_active=True).exists():
             if (validated_data.get('start_time') or
                     validated_data.get('end_time')):
                 if not validated_data.get('force_update'):
@@ -265,16 +265,21 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
                             "without providing `force_update` field."
                         )]
                     })
-                reservation_cancel = Reservation.objects.filter(
-                    timeslot=self.instance
+                reservation_cancel = instance.reservations.filter(
+                    is_active=True
                 )
                 affected_users_id = reservation_cancel.values_list('user')
                 affected_users = User.objects.filter(
                     id__in=affected_users_id,
                 )
 
-                reservation_cancel.update(is_active=False)
+                # Order is important here because the Queryset are dynamically
+                # changing when doing update(). If the `reservation_cancel`
+                # queryset objects are updated first, the queryset will become
+                # empty since it was filtered using "is_active=True". That
+                # would lead to an empty `affected_users` queryset.
                 affected_users.update(tickets=F('tickets') + 1)
+                reservation_cancel.update(is_active=False)
 
         return super(TimeSlotSerializer, self).update(
             instance,
