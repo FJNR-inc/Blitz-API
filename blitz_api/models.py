@@ -294,8 +294,7 @@ class Address(models.Model):
     )
     address_line2 = models.CharField(
         max_length=45,
-        blank=True,
-        default='',
+        null=True,
         verbose_name=_("Address line 2"),
     )
     postal_code = models.CharField(

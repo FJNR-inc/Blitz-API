@@ -170,7 +170,7 @@ class TimeSlotTests(APITestCase):
             'users': [],
             "workplace": {
                 "address_line1": "123 random street",
-                "address_line2": "",
+                "address_line2": None,
                 "city": "",
                 "country": "Random country",
                 "details": "short_description",
@@ -454,7 +454,7 @@ class TimeSlotTests(APITestCase):
             'users': [],
             "workplace": {
                 "address_line1": "123 random street",
-                "address_line2": "",
+                "address_line2": None,
                 "city": "",
                 "country": "Random country",
                 "details": "short_description",
@@ -528,7 +528,7 @@ class TimeSlotTests(APITestCase):
             ],
             "workplace": {
                 "address_line1": "123 random street",
-                "address_line2": "",
+                "address_line2": None,
                 "city": "",
                 "country": "Random country",
                 "details": "short_description",
@@ -586,7 +586,7 @@ class TimeSlotTests(APITestCase):
             ],
             "workplace": {
                 "address_line1": "123 random street",
-                "address_line2": "",
+                "address_line2": None,
                 "city": "",
                 "country": "Random country",
                 "details": "short_description",
@@ -727,7 +727,7 @@ class TimeSlotTests(APITestCase):
             ],
             "workplace": {
                 "address_line1": "123 random street",
-                "address_line2": "",
+                "address_line2": None,
                 "city": "",
                 "country": "Random country",
                 "details": "short_description",
@@ -807,7 +807,7 @@ class TimeSlotTests(APITestCase):
             ],
             "workplace": {
                 "address_line1": "123 random street",
-                "address_line2": "",
+                "address_line2": None,
                 "city": "",
                 "country": "Random country",
                 "details": "short_description",
@@ -879,7 +879,7 @@ class TimeSlotTests(APITestCase):
                 'users': [],
                 "workplace": {
                     "address_line1": "123 random street",
-                    "address_line2": "",
+                    "address_line2": None,
                     "city": "",
                     "country": "Random country",
                     "details": "short_description",
@@ -932,7 +932,7 @@ class TimeSlotTests(APITestCase):
                 ],
                 "workplace": {
                     "address_line1": "123 random street",
-                    "address_line2": "",
+                    "address_line2": None,
                     "city": "",
                     "country": "Random country",
                     "details": "short_description",
@@ -958,7 +958,7 @@ class TimeSlotTests(APITestCase):
                 'users': [],
                 "workplace": {
                     "address_line1": "123 random street",
-                    "address_line2": "",
+                    "address_line2": None,
                     "city": "",
                     "country": "Random country",
                     "details": "short_description",
@@ -1011,7 +1011,7 @@ class TimeSlotTests(APITestCase):
                 ],
                 "workplace": {
                     "address_line1": "123 random street",
-                    "address_line2": "",
+                    "address_line2": None,
                     "city": "",
                     "country": "Random country",
                     "details": "short_description",
@@ -1084,7 +1084,7 @@ class TimeSlotTests(APITestCase):
             'users': [],
             "workplace": {
                 "address_line1": "123 random street",
-                "address_line2": "",
+                "address_line2": None,
                 "city": "",
                 "country": "Random country",
                 "details": "short_description",
@@ -1172,7 +1172,7 @@ class TimeSlotTests(APITestCase):
             ],
             "workplace": {
                 "address_line1": "123 random street",
-                "address_line2": "",
+                "address_line2": None,
                 "city": "",
                 "country": "Random country",
                 "details": "short_description",
