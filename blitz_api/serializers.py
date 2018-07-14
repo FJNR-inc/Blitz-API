@@ -28,6 +28,8 @@ def phone_number_validator(phone):
 
 
 class DomainSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
     class Meta:
         model = Domain
         fields = '__all__'
@@ -47,6 +49,7 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class AcademicLevelSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
     name = serializers.CharField(
         max_length=100,
         required=True,
@@ -58,6 +61,7 @@ class AcademicLevelSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class AcademicFieldSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
     name = serializers.CharField(
         max_length=100,
         required=True,

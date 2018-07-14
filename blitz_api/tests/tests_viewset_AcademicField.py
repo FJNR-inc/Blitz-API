@@ -39,6 +39,7 @@ class AcademicFieldTests(APITestCase):
         )
 
         content = {
+            'id': 2,
             'name': "fake field",
             'url': 'http://testserver/academic_fields/2',
         }
@@ -87,6 +88,7 @@ class AcademicFieldTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
+                'id': 1,
                 'name': 'random_field',
                 'url': 'http://testserver/academic_fields/1'
             }]

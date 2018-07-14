@@ -46,6 +46,7 @@ class DomainTests(APITestCase):
         )
 
         content = {
+            'id': 2,
             'example': "email@fake.domain",
             'name': 'fake.domain',
             'organization': 'http://testserver/organizations/1',
@@ -123,6 +124,7 @@ class DomainTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
+                'id': 1,
                 'example': None,
                 'name': 'random.domain',
                 'organization': 'http://testserver/organizations/1',

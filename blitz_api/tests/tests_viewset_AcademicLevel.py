@@ -39,6 +39,7 @@ class AcademicLevelTests(APITestCase):
         )
 
         content = {
+            'id': 2,
             'name': "fake level",
             'url': 'http://testserver/academic_levels/2',
         }
@@ -87,6 +88,7 @@ class AcademicLevelTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
+                'id': 1,
                 'name': 'random_level',
                 'url': 'http://testserver/academic_levels/1'
             }]
