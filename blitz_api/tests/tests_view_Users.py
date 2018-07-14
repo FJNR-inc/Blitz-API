@@ -36,8 +36,8 @@ class UsersTests(APITestCase):
             available=True,
             price=50,
             duration=timedelta(days=365),
-            academic_level=cls.academic_level,
         )
+        cls.membership.academic_levels.set([cls.academic_level])
 
     def setUp(self):
         self.client = APIClient()
@@ -624,7 +624,7 @@ class UsersTests(APITestCase):
             'price': '50.00',
             'details': '1-Year student membership',
             'duration': '365 00:00:00',
-            'academic_level': 'http://testserver/academic_levels/1'
+            'academic_levels': ['http://testserver/academic_levels/1']
         }
 
         self.assertEqual(first_user['membership'], membership)

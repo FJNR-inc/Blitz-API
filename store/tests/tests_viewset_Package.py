@@ -61,8 +61,8 @@ class PackageTests(APITestCase):
             available=True,
             price=50,
             duration=timedelta(days=365),
-            academic_level=cls.academic_level,
         )
+        cls.membership.academic_levels.set([cls.academic_level])
 
     def test_create(self):
         """

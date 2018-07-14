@@ -116,12 +116,10 @@ class Membership(BaseProduct):
 
     duration = models.DurationField()
 
-    academic_level = models.ForeignKey(
+    academic_levels = models.ManyToManyField(
         AcademicLevel,
         blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
-        verbose_name=_("Academic level"),
+        verbose_name=_("Academic levels"),
         related_name='memberships',
     )
 

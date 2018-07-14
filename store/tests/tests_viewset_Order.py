@@ -35,8 +35,8 @@ class OrderTests(APITestCase):
             available=True,
             price=50,
             duration=timedelta(days=365),
-            academic_level=cls.academic_level,
         )
+        cls.membership.academic_levels.set([cls.academic_level])
         cls.package_type = ContentType.objects.get_for_model(Package)
         cls.package = Package.objects.create(
             name="extreme_package",

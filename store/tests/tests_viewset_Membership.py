@@ -33,16 +33,16 @@ class MembershipTests(APITestCase):
             price=50,
             available=True,
             duration=timedelta(days=365),
-            academic_level=cls.academic_level,
         )
+        cls.membership.academic_levels.set([cls.academic_level])
         cls.membership_unavailable = Membership.objects.create(
             name="pending_membership",
             details="todo",
             price=50,
             available=False,
             duration=timedelta(days=365),
-            academic_level=cls.academic_level,
         )
+        cls.membership_unavailable.academic_levels.set([cls.academic_level])
 
     def test_create(self):
         """
@@ -56,9 +56,9 @@ class MembershipTests(APITestCase):
             'available': True,
             'price': 125,
             'duration': timedelta(days=365*3),
-            'academic_level': reverse(
+            'academic_levels': [reverse(
                 'academiclevel-detail', args=[self.academic_level.id]
-            ),
+            )],
         }
 
         response = self.client.post(
@@ -76,7 +76,7 @@ class MembershipTests(APITestCase):
             'order_lines': [],
             'price': '125.00',
             'url': 'http://testserver/memberships/3',
-            'academic_level': 'http://testserver/academic_levels/1'
+            'academic_levels': ['http://testserver/academic_levels/1']
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -94,9 +94,9 @@ class MembershipTests(APITestCase):
             'details': "3-Year student membership",
             'price': 125,
             'duration': timedelta(days=365*3),
-            'academic_level': reverse(
+            'academic_levels': [reverse(
                 'academiclevel-detail', args=[self.academic_level.id]
-            ),
+            )],
         }
 
         response = self.client.post(
@@ -148,7 +148,6 @@ class MembershipTests(APITestCase):
             'details': None,
             'price': None,
             'duration': None,
-            'academic_level': None,
         }
 
         response = self.client.post(
@@ -178,7 +177,7 @@ class MembershipTests(APITestCase):
             'details': "",
             'price': "",
             'duration': "invalid",
-            'academic_level': "invalid",
+            'academic_levels': "invalid",
         }
 
         response = self.client.post(
@@ -188,7 +187,9 @@ class MembershipTests(APITestCase):
         )
 
         content = {
-            'academic_level': ['Invalid hyperlink - No URL match.'],
+            'academic_levels': [
+                'Expected a list of items but got type "str".'
+            ],
             'duration': [
                 'Duration has wrong format. Use one of these formats instead: '
                 '[DD] [HH:[MM:]]ss[.uuuuuu].'
@@ -212,9 +213,11 @@ class MembershipTests(APITestCase):
             'details': "1-Year student membership",
             'price': 10,
             'duration': timedelta(days=365),
-            'academic_level': reverse(
-                'academiclevel-detail', args=[self.academic_level.id]
-            ),
+            # ManytoMany relationship not required for some reasons.
+            # Needs investigtion.
+            # 'academic_levels': [reverse(
+            #     'academiclevel-detail', args=[self.academic_level.id]
+            # )],
         }
 
         response = self.client.put(
@@ -235,7 +238,7 @@ class MembershipTests(APITestCase):
             'order_lines': [],
             'price': '10.00',
             'url': 'http://testserver/memberships/1',
-            'academic_level': 'http://testserver/academic_levels/1'
+            'academic_levels': ['http://testserver/academic_levels/1']
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -319,7 +322,7 @@ class MembershipTests(APITestCase):
                 'name': 'basic_membership',
                 'price': '50.00',
                 'url': 'http://testserver/memberships/1',
-                'academic_level': 'http://testserver/academic_levels/1'
+                'academic_levels': ['http://testserver/academic_levels/1']
             }]
         }
 
@@ -353,7 +356,7 @@ class MembershipTests(APITestCase):
                 'order_lines': [],
                 'price': '50.00',
                 'url': 'http://testserver/memberships/1',
-                'academic_level': 'http://testserver/academic_levels/1'
+                'academic_levels': ['http://testserver/academic_levels/1']
             }, {
                 'available': False,
                 'id': 2,
@@ -363,7 +366,7 @@ class MembershipTests(APITestCase):
                 'order_lines': [],
                 'price': '50.00',
                 'url': 'http://testserver/memberships/2',
-                'academic_level': 'http://testserver/academic_levels/1'
+                'academic_levels': ['http://testserver/academic_levels/1']
             }]
         }
 
@@ -391,7 +394,7 @@ class MembershipTests(APITestCase):
             'name': 'basic_membership',
             'price': '50.00',
             'url': 'http://testserver/memberships/1',
-            'academic_level': 'http://testserver/academic_levels/1'
+            'academic_levels': ['http://testserver/academic_levels/1']
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -420,7 +423,7 @@ class MembershipTests(APITestCase):
             'order_lines': [],
             'price': '50.00',
             'url': 'http://testserver/memberships/1',
-            'academic_level': 'http://testserver/academic_levels/1'
+            'academic_levels': ['http://testserver/academic_levels/1']
         }
 
         self.assertEqual(json.loads(response.content), content)

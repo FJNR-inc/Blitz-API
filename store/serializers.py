@@ -73,7 +73,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
     )
 
     def validate(self, attrs):
-        """Limits packages according to request membership"""
+        """Limits packages according to request user membership"""
         validated_data = super().validate(attrs)
 
         user_membership = self.context['request'].user.membership

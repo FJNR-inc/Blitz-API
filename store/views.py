@@ -23,7 +23,14 @@ class MembershipViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.MembershipSerializer
     queryset = Membership.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
-    filter_fields = '__all__'
+    filter_fields = {
+        'duration': ['exact', 'gte', 'lte'],
+        'academic_levels': ['exact', 'isnull'],
+        'details': ['exact'],
+        'available': ['exact'],
+        'name': ['exact'],
+        'price': ['exact', 'gte', 'lte'],
+    }
 
     def get_queryset(self):
         """

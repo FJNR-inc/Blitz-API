@@ -8,7 +8,6 @@ class MembershipAdmin(admin.ModelAdmin):
         'name',
         'price',
         'duration',
-        'academic_level',
     )
 
 

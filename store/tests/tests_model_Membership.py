@@ -37,8 +37,9 @@ class MembershipTests(APITestCase):
             available=True,
             price=50,
             duration=timedelta(days=365),
-            academic_level=self.academic_level,
         )
+
+        membership.academic_levels.set([self.academic_level])
 
         self.assertEqual(membership.__str__(), "basic_membership")
 
@@ -52,8 +53,8 @@ class MembershipTests(APITestCase):
             available=True,
             price=50,
             duration=timedelta(days=365),
-            academic_level=self.academic_level,
         )
+        membership.academic_levels.set([self.academic_level])
         OrderLine.objects.create(
             order=self.order,
             quantity=1,
