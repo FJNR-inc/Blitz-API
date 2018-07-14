@@ -65,7 +65,14 @@ class PackageViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.PackageSerializer
     queryset = Package.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
-    filter_fields = '__all__'
+    filter_fields = {
+        'reservations': ['exact', 'gte', 'lte'],
+        'exclusive_memberships': ['exact', 'isnull'],
+        'details': ['exact'],
+        'available': ['exact'],
+        'name': ['exact'],
+        'price': ['exact', 'gte', 'lte'],
+    }
 
     def get_queryset(self):
         """
