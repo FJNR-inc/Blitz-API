@@ -147,3 +147,40 @@ class Package(BaseProduct):
 
     def __str__(self):
         return self.name
+
+
+class CreditCard(models.Model):
+    """Represents a credit card."""
+
+    class Meta:
+        verbose_name = _("Credit card")
+        verbose_name_plural = _("Credit cards")
+
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=253,
+    )
+
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_("User"),
+        related_name='credit_cards',
+    )
+
+    expiry_date = models.DateTimeField(
+        verbose_name=_("Expiration date"),
+    )
+
+    number = models.CharField(
+        verbose_name=_("Number"),
+        max_length=253,
+    )
+
+    external_api_id = models.CharField(
+        verbose_name=_("Number"),
+        max_length=253,
+    )
+
+    def __str__(self):
+        return self.name

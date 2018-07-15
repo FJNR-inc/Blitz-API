@@ -4,7 +4,8 @@ from rest_framework.validators import UniqueValidator
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 
-from .models import Package, Membership, Order, OrderLine, BaseProduct
+from .models import (Package, Membership, Order, OrderLine, BaseProduct,
+                     CreditCard)
 
 
 class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
@@ -60,6 +61,22 @@ class PackageSerializer(BaseProductSerializer):
                 'help_text': _("Name of the package."),
                 'validators': [
                     UniqueValidator(queryset=Package.objects.all())
+                ],
+            },
+        }
+
+
+class CreditCardSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = CreditCard
+        fields = '__all__'
+        extra_kwargs = {
+            'name': {
+                'help_text': _("Name of the credit card."),
+                'validators': [
+                    UniqueValidator(queryset=CreditCard.objects.all())
                 ],
             },
         }

@@ -1,10 +1,10 @@
 from django.http import Http404
 
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, mixins
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Package, Membership, Order, OrderLine
+from .models import Package, Membership, Order, OrderLine, CreditCard
 
 from . import serializers, permissions
 
@@ -91,6 +91,36 @@ class PackageViewSet(viewsets.ModelViewSet):
         except Http404:
             pass
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CreditCardViewSet(
+        viewsets.GenericViewSet,
+        mixins.ListModelMixin,
+        mixins.RetrieveModelMixin,
+        mixins.DestroyModelMixin):
+    """
+    retrieve:
+    Return the given credit card.
+
+    list:
+    Return a list of all the existing credit cards.
+
+    destroy:
+    Delete a saved credit card.
+    """
+    serializer_class = serializers.CreditCardSerializer
+    queryset = CreditCard.objects.all()
+    permission_classes = (permissions.IsOwner, IsAuthenticated)
+    filter_fields = '__all__'
+
+    def get_queryset(self):
+        """
+        This viewset should return a user's credit cards except if the
+        currently authenticated user is an admin (is_staff).
+        """
+        if self.request.user.is_staff:
+            return CreditCard.objects.all()
+        return CreditCard.objects.filter(owner=self.request.user)
 
 
 class OrderViewSet(viewsets.ModelViewSet):
