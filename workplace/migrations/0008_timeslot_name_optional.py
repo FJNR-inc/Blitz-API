@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('workplace', '0007_timeslot_datetime'),
+        ('workplace', '0006_price_decimal'),
     ]
 
     operations = [
