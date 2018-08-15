@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='workplace',
             name='postal_code',
-            field=models.CharField(default='random postal code', max_length=10, verbose_name='Postal code'),
+            field=models.CharField(default='HOH OHO', max_length=10, verbose_name='Postal code'),
             preserve_default=False,
         ),
         migrations.AddField(
