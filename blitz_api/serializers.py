@@ -274,6 +274,9 @@ class UserSerializer(UserUpdateSerializer):
         # Put user inactive by default
         user.is_active = False
 
+        # Free ticket for new users
+        user.tickets = 1
+
         user.save()
 
         # Create an ActivationToken to activate user in the future
