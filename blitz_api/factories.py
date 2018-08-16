@@ -13,6 +13,7 @@ class UserFactory(factory.DjangoModelFactory):
     username = factory.Sequence('John{0}'.format)
     email = factory.Sequence('john{0}@blitz.com'.format)
     password = 'Test123!'
+    tickets = 1
 
 
 class AdminFactory(factory.DjangoModelFactory):
@@ -25,3 +26,4 @@ class AdminFactory(factory.DjangoModelFactory):
     email = factory.Sequence('chuck{0}@blitz.com'.format)
     password = 'Test123!'
     is_staff = True
+    tickets = 1

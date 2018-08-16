@@ -48,12 +48,14 @@ class OrderTests(APITestCase):
         cls.order = Order.objects.create(
             user=cls.user,
             transaction_date=timezone.now(),
-            transaction_id=1,
+            authorization_id=1,
+            settlement_id=1,
         )
         cls.order_admin = Order.objects.create(
             user=cls.admin,
             transaction_date=timezone.now(),
-            transaction_id=1,
+            authorization_id=2,
+            settlement_id=2,
         )
         cls.order_line = OrderLine.objects.create(
             order=cls.order,
@@ -71,12 +73,17 @@ class OrderTests(APITestCase):
         data = {
             'user': reverse('user-detail', args=[self.user.id]),
             'transaction_date': timezone.now(),
-            'transaction_id': 1,
             'order_lines': [{
                 'content_type': 'membership',
                 'object_id': 1,
                 'order': 'http://testserver/orders/1',
                 'quantity': 1,
+                'url': 'http://testserver/order_lines/1'
+            }, {
+                'content_type': 'package',
+                'object_id': 1,
+                'order': 'http://testserver/orders/1',
+                'quantity': 2,
                 'url': 'http://testserver/order_lines/1'
             }],
         }
@@ -96,15 +103,29 @@ class OrderTests(APITestCase):
                 'order': 'http://testserver/orders/3',
                 'quantity': 1,
                 'url': 'http://testserver/order_lines/2'
+            }, {
+                'content_type': 'package',
+                'id': 3,
+                'object_id': 1,
+                'order': 'http://testserver/orders/3',
+                'quantity': 2,
+                'url': 'http://testserver/order_lines/3'
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/1',
             'transaction_date': data['transaction_date'].astimezone()
                                                         .isoformat(),
-            'transaction_id': '1',
+            'authorization_id': '1',
+            'settlement_id': '1',
         }
 
         self.assertEqual(json.loads(response.content), content)
+
+        user = self.user
+        user.refresh_from_db()
+
+        self.assertEqual(user.tickets, self.package.reservations * 2 + 1)
+        self.assertEqual(user.membership, self.membership)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -117,7 +138,8 @@ class OrderTests(APITestCase):
         data = {
             'user': reverse('user-detail', args=[self.user.id]),
             'transaction_date': timezone.now(),
-            'transaction_id': 1,
+            'authorization_id': 1,
+            'settlement_id': 1,
         }
 
         response = self.client.post(
@@ -150,7 +172,6 @@ class OrderTests(APITestCase):
 
         content = {
             'transaction_date': ['This field is required.'],
-            'transaction_id': ['This field is required.'],
             'user': ['This field is required.'],
             'order_lines': ['This field is required.']
         }
@@ -168,7 +189,6 @@ class OrderTests(APITestCase):
         data = {
             'user': None,
             'transaction_date': None,
-            'transaction_id': None,
             'order_lines': None,
         }
 
@@ -180,7 +200,6 @@ class OrderTests(APITestCase):
 
         content = {
             'transaction_date': ['This field may not be null.'],
-            'transaction_id': ['This field may not be null.'],
             'user': ['This field may not be null.'],
             'order_lines': ['This field may not be null.']
         }
@@ -198,7 +217,6 @@ class OrderTests(APITestCase):
         data = {
             'user': "invalid",
             'transaction_date': (1,),
-            'transaction_id': "invalid",
             'order_lines': (1,),
         }
 
@@ -235,7 +253,6 @@ class OrderTests(APITestCase):
         data = {
             'user': reverse('user-detail', args=[self.user.id]),
             'transaction_date': timezone.now(),
-            'transaction_id': 2,
             'order_lines': [{
                 'content_type': 'package',
                 'id': 1,
@@ -261,7 +278,8 @@ class OrderTests(APITestCase):
             'user': 'http://testserver/users/1',
             'transaction_date': data['transaction_date'].astimezone()
                                                         .isoformat(),
-            'transaction_id': '2',
+            'authorization_id': '1',
+            'settlement_id': '1',
             'order_lines': [{
                 'content_type': 'package',
                 'id': 1,
@@ -328,7 +346,8 @@ class OrderTests(APITestCase):
             'results': [{
                 'id': 1,
                 'transaction_date': data['results'][0]['transaction_date'],
-                'transaction_id': '1',
+                'authorization_id': '1',
+                'settlement_id': '1',
                 'order_lines': [{
                     'content_type': 'package',
                     'id': 1,
@@ -366,7 +385,8 @@ class OrderTests(APITestCase):
             'results': [{
                 'id': 1,
                 'transaction_date': data['results'][0]['transaction_date'],
-                'transaction_id': '1',
+                'authorization_id': '1',
+                'settlement_id': '1',
                 'order_lines': [{
                     'content_type': 'package',
                     'id': 1,
@@ -380,7 +400,8 @@ class OrderTests(APITestCase):
             }, {
                 'id': 2,
                 'transaction_date': data['results'][1]['transaction_date'],
-                'transaction_id': '1',
+                'authorization_id': '2',
+                'settlement_id': '2',
                 'order_lines': [],
                 'url': 'http://testserver/orders/2',
                 'user': 'http://testserver/users/2'
@@ -427,7 +448,8 @@ class OrderTests(APITestCase):
         content = {
             'id': 1,
             'transaction_date': data['transaction_date'],
-            'transaction_id': '1',
+            'authorization_id': '1',
+            'settlement_id': '1',
             'order_lines': [{
                 'content_type': 'package',
                 'id': 1,
@@ -481,7 +503,8 @@ class OrderTests(APITestCase):
         content = {
             'id': 1,
             'transaction_date': data['transaction_date'],
-            'transaction_id': '1',
+            'authorization_id': '1',
+            'settlement_id': '1',
             'order_lines': [{
                 'content_type': 'package',
                 'id': 1,

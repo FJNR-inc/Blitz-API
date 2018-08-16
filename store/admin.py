@@ -21,7 +21,8 @@ class PackageAdmin(admin.ModelAdmin):
 
 class OrderAdmin(admin.ModelAdmin):
     list_display = (
-        'transaction_id',
+        'authorization_id',
+        'settlement_id',
         'transaction_date',
         'user',
     )

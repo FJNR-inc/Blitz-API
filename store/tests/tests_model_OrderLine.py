@@ -27,7 +27,8 @@ class OrderTests(APITestCase):
         cls.order = Order.objects.create(
             user=cls.user,
             transaction_date=timezone.now(),
-            transaction_id=1,
+            authorization_id=1,
+            settlement_id=1,
         )
 
     def test_create(self):

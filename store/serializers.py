@@ -3,6 +3,7 @@ from rest_framework.validators import UniqueValidator
 
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
 
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
                      CreditCard)
@@ -134,14 +135,69 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
 
 class OrderSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
+    authorization_id = serializers.ReadOnlyField()
+    settlement_id = serializers.ReadOnlyField()
     order_lines = OrderLineSerializer(many=True)
+    payment_token = serializers.CharField(
+        write_only=True,
+        required=False,
+        allow_blank=True
+    )
+    single_use_token = serializers.CharField(
+        write_only=True,
+        required=False,
+        allow_blank=True
+    )
 
+    @transaction.atomic()
     def create(self, validated_data):
         orderlines_data = validated_data.pop('order_lines')
+        payment_token = validated_data.pop('payment_token', None)
+        single_use_token = validated_data.pop('single_use_token', None)
+        validated_data['authorization_id'] = "1"
+        validated_data['settlement_id'] = "1"
         order = Order.objects.create(**validated_data)
         for orderline_data in orderlines_data:
             orderline_data.pop('order')
             OrderLine.objects.create(order=order, **orderline_data)
+
+        if payment_token:
+            # Validate the payment with Paysafe
+            pass
+        elif single_use_token:
+            # Validate the payment with Paysafe
+            pass
+        else:
+            pass
+            # return serializers.ValidationError({
+            #     "non_field_errors": [_(
+            #         "A payment_token or single_use_token is required to "
+            #         "create an order."
+            #     )]
+            # })
+
+        user = order.user
+        membership_orderlines = order.order_lines.filter(
+            content_type__model="membership"
+        )
+        package_orderlines = order.order_lines.filter(
+            content_type__model="package"
+        )
+        if membership_orderlines:
+            user.membership = membership_orderlines[0].content_object
+        if package_orderlines:
+            for package_orderline in package_orderlines:
+                # new_tickets = sum(
+                #    packages_order.values_list(
+                #        "content_object__tickets", flat=True
+                #    )
+                # )
+                # user.tickets += new_tickets
+                user.tickets += (
+                    package_orderline.content_object.reservations *
+                    package_orderline.quantity
+                )
+        user.save()
         return order
 
     def update(self, instance, validated_data):

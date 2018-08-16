@@ -22,7 +22,8 @@ class OrderTests(APITestCase):
         order = Order.objects.create(
             user=self.user,
             transaction_date=timezone.now(),
-            transaction_id=1,
+            authorization_id=1,
+            settlement_id=1,
         )
 
         self.assertEqual(str(order), '1')

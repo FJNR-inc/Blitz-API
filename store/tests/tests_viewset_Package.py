@@ -44,7 +44,8 @@ class PackageTests(APITestCase):
         cls.order = Order.objects.create(
             user=cls.user,
             transaction_date=timezone.now(),
-            transaction_id=1,
+            authorization_id=1,
+            settlement_id=1,
         )
         cls.order_line = OrderLine.objects.create(
             order=cls.order,

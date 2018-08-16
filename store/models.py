@@ -30,13 +30,25 @@ class Order(models.Model):
         verbose_name=_("Transaction date"),
     )
 
-    transaction_id = models.CharField(
-        verbose_name=_("Transaction ID"),
+    authorization_id = models.CharField(
+        verbose_name=_("Authorization ID"),
         max_length=253,
     )
 
+    settlement_id = models.CharField(
+        verbose_name=_("Settlement ID"),
+        max_length=253,
+    )
+
+    @property
+    def total_cost(self):
+        cost = 0
+        for orderline in self.order_lines.all():
+            cost += orderline.content_object.price * orderline.quantity
+        return float(cost)
+
     def __str__(self):
-        return str(self.transaction_id)
+        return str(self.authorization_id)
 
 
 class OrderLine(models.Model):
