@@ -163,12 +163,14 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
     @transaction.atomic()
     def create(self, validated_data):
+        user = self.context['request'].user
         orderlines_data = validated_data.pop('order_lines')
         payment_token = validated_data.pop('payment_token', None)
         single_use_token = validated_data.pop('single_use_token', None)
         validated_data['authorization_id'] = "1"
         validated_data['settlement_id'] = "1"
         validated_data['transaction_date'] = timezone.now()
+        validated_data['user'] = user
         order = Order.objects.create(**validated_data)
         for orderline_data in orderlines_data:
             OrderLine.objects.create(order=order, **orderline_data)
@@ -188,7 +190,6 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             #     )]
             # })
 
-        user = order.user
         membership_orderlines = order.order_lines.filter(
             content_type__model="membership"
         )
@@ -229,6 +230,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         fields = '__all__'
         extra_kwargs = {
             'transaction_date': {
+                'read_only': True,
+            },
+            'user': {
                 'read_only': True,
             },
         }

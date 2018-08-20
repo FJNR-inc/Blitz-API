@@ -71,7 +71,6 @@ class OrderTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'user': reverse('user-detail', args=[self.user.id]),
             'order_lines': [{
                 'content_type': 'membership',
                 'object_id': 1,
@@ -109,7 +108,7 @@ class OrderTests(APITestCase):
                 'url': 'http://testserver/order_lines/3'
             }],
             'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/1',
+            'user': 'http://testserver/users/2',
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -117,11 +116,11 @@ class OrderTests(APITestCase):
 
         self.assertEqual(response_data, content)
 
-        user = self.user
-        user.refresh_from_db()
+        admin = self.admin
+        admin.refresh_from_db()
 
-        self.assertEqual(user.tickets, self.package.reservations * 2 + 1)
-        self.assertEqual(user.membership, self.membership)
+        self.assertEqual(admin.tickets, self.package.reservations * 2 + 1)
+        self.assertEqual(admin.membership, self.membership)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -166,7 +165,6 @@ class OrderTests(APITestCase):
         )
 
         content = {
-            'user': ['This field is required.'],
             'order_lines': ['This field is required.']
         }
 
@@ -181,7 +179,6 @@ class OrderTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'user': None,
             'order_lines': None,
         }
 
@@ -192,7 +189,6 @@ class OrderTests(APITestCase):
         )
 
         content = {
-            'user': ['This field may not be null.'],
             'order_lines': ['This field may not be null.']
         }
 
@@ -207,7 +203,6 @@ class OrderTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'user': "invalid",
             'order_lines': (1,),
         }
 
@@ -218,7 +213,6 @@ class OrderTests(APITestCase):
         )
 
         content = {
-            'user': ['Invalid hyperlink - No URL match.'],
             'order_lines': [{
                 'non_field_errors': [
                     'Invalid data. Expected a dictionary, but got int.'
@@ -238,7 +232,6 @@ class OrderTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'user': reverse('user-detail', args=[self.user.id]),
             'order_lines': [{
                 'content_type': 'package',
                 'object_id': 1,
