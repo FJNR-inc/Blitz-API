@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
@@ -133,11 +134,22 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
         fields = '__all__'
 
 
+class OrderLineSerializerNoOrder(OrderLineSerializer):
+    class Meta:
+        model = OrderLine
+        fields = '__all__'
+        extra_kwargs = {
+            'order': {
+                'read_only': True,
+            },
+        }
+
+
 class OrderSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     authorization_id = serializers.ReadOnlyField()
     settlement_id = serializers.ReadOnlyField()
-    order_lines = OrderLineSerializer(many=True)
+    order_lines = OrderLineSerializerNoOrder(many=True)
     payment_token = serializers.CharField(
         write_only=True,
         required=False,
@@ -156,9 +168,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         single_use_token = validated_data.pop('single_use_token', None)
         validated_data['authorization_id'] = "1"
         validated_data['settlement_id'] = "1"
+        validated_data['transaction_date'] = timezone.now()
         order = Order.objects.create(**validated_data)
         for orderline_data in orderlines_data:
-            orderline_data.pop('order')
             OrderLine.objects.create(order=order, **orderline_data)
 
         if payment_token:
@@ -215,3 +227,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Order
         fields = '__all__'
+        extra_kwargs = {
+            'transaction_date': {
+                'read_only': True,
+            },
+        }

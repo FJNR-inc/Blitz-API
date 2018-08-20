@@ -72,19 +72,14 @@ class OrderTests(APITestCase):
 
         data = {
             'user': reverse('user-detail', args=[self.user.id]),
-            'transaction_date': timezone.now(),
             'order_lines': [{
                 'content_type': 'membership',
                 'object_id': 1,
-                'order': 'http://testserver/orders/1',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/1'
             }, {
                 'content_type': 'package',
                 'object_id': 1,
-                'order': 'http://testserver/orders/1',
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/1'
             }],
         }
 
@@ -93,6 +88,8 @@ class OrderTests(APITestCase):
             data,
             format='json',
         )
+
+        response_data = json.loads(response.content)
 
         content = {
             'id': 3,
@@ -113,13 +110,12 @@ class OrderTests(APITestCase):
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/1',
-            'transaction_date': data['transaction_date'].astimezone()
-                                                        .isoformat(),
+            'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         user = self.user
         user.refresh_from_db()
@@ -137,7 +133,6 @@ class OrderTests(APITestCase):
 
         data = {
             'user': reverse('user-detail', args=[self.user.id]),
-            'transaction_date': timezone.now(),
             'authorization_id': 1,
             'settlement_id': 1,
         }
@@ -171,7 +166,6 @@ class OrderTests(APITestCase):
         )
 
         content = {
-            'transaction_date': ['This field is required.'],
             'user': ['This field is required.'],
             'order_lines': ['This field is required.']
         }
@@ -188,7 +182,6 @@ class OrderTests(APITestCase):
 
         data = {
             'user': None,
-            'transaction_date': None,
             'order_lines': None,
         }
 
@@ -199,7 +192,6 @@ class OrderTests(APITestCase):
         )
 
         content = {
-            'transaction_date': ['This field may not be null.'],
             'user': ['This field may not be null.'],
             'order_lines': ['This field may not be null.']
         }
@@ -216,7 +208,6 @@ class OrderTests(APITestCase):
 
         data = {
             'user': "invalid",
-            'transaction_date': (1,),
             'order_lines': (1,),
         }
 
@@ -227,10 +218,6 @@ class OrderTests(APITestCase):
         )
 
         content = {
-            'transaction_date': [
-                'Datetime has wrong format. Use one of these formats '
-                'instead: YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
-            ],
             'user': ['Invalid hyperlink - No URL match.'],
             'order_lines': [{
                 'non_field_errors': [
@@ -252,14 +239,10 @@ class OrderTests(APITestCase):
 
         data = {
             'user': reverse('user-detail', args=[self.user.id]),
-            'transaction_date': timezone.now(),
             'order_lines': [{
                 'content_type': 'package',
-                'id': 1,
                 'object_id': 1,
-                'order': 'http://testserver/orders/1',
                 'quantity': 99,
-                'url': 'http://testserver/order_lines/1'
             }],
         }
 
@@ -272,12 +255,13 @@ class OrderTests(APITestCase):
             format='json',
         )
 
+        response_data = json.loads(response.content)
+
         content = {
             'id': 1,
             'url': 'http://testserver/orders/1',
             'user': 'http://testserver/users/1',
-            'transaction_date': data['transaction_date'].astimezone()
-                                                        .isoformat(),
+            'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
             'order_lines': [{
@@ -290,7 +274,7 @@ class OrderTests(APITestCase):
             }]
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
