@@ -6,6 +6,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 
+from workplace.models import Reservation
+
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
                      CreditCard)
 
@@ -196,6 +198,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         package_orderlines = order.order_lines.filter(
             content_type__model="package"
         )
+        reservation_orderlines = order.order_lines.filter(
+            content_type__model="timeslot"
+        )
         if membership_orderlines:
             user.membership = membership_orderlines[0].content_object
         if package_orderlines:
@@ -210,6 +215,14 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     package_orderline.content_object.reservations *
                     package_orderline.quantity
                 )
+        if reservation_orderlines:
+            for reservation_orderline in reservation_orderlines:
+                Reservation.objects.create(
+                    user=user,
+                    timeslot=reservation_orderline.content_object,
+                    is_active=True
+                )
+                user.tickets -= 1
         user.save()
         return order
 

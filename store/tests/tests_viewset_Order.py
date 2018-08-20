@@ -1,10 +1,12 @@
 import json
+import pytz
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
+from django.conf import settings
 from django.utils import timezone
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -13,9 +15,13 @@ from django.contrib.contenttypes.models import ContentType
 from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.models import AcademicLevel
 
+from workplace.models import Reservation, TimeSlot, Period
+
 from ..models import Package, Order, OrderLine, Membership
 
 User = get_user_model()
+
+LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
 class OrderTests(APITestCase):
@@ -63,6 +69,20 @@ class OrderTests(APITestCase):
             content_type=cls.package_type,
             object_id=1,
         )
+        cls.period = Period.objects.create(
+            name="random_period_active",
+            start_date=timezone.now(),
+            end_date=timezone.now() + timedelta(weeks=4),
+            price=3,
+            is_active=True,
+        )
+        cls.time_slot = TimeSlot.objects.create(
+            name="morning_time_slot",
+            period=cls.period,
+            price=3,
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+        )
 
     def test_create(self):
         """
@@ -79,6 +99,10 @@ class OrderTests(APITestCase):
                 'content_type': 'package',
                 'object_id': 1,
                 'quantity': 2,
+            }, {
+                'content_type': 'timeslot',
+                'object_id': 1,
+                'quantity': 1,
             }],
         }
 
@@ -106,6 +130,13 @@ class OrderTests(APITestCase):
                 'order': 'http://testserver/orders/3',
                 'quantity': 2,
                 'url': 'http://testserver/order_lines/3'
+            }, {
+                'content_type': 'timeslot',
+                'id': 4,
+                'object_id': 1,
+                'order': 'http://testserver/orders/3',
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/4'
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/2',
@@ -119,7 +150,7 @@ class OrderTests(APITestCase):
         admin = self.admin
         admin.refresh_from_db()
 
-        self.assertEqual(admin.tickets, self.package.reservations * 2 + 1)
+        self.assertEqual(admin.tickets, self.package.reservations * 2)
         self.assertEqual(admin.membership, self.membership)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
