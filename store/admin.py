@@ -1,6 +1,6 @@
 from django.contrib import admin
-from django.utils.translation import ugettext_lazy as _
-from .models import Membership, Package, Order, OrderLine, CreditCard
+from .models import (Membership, Package, Order, OrderLine, CreditCard,
+                     PaymentProfile,)
 
 
 class MembershipAdmin(admin.ModelAdmin):
@@ -46,8 +46,19 @@ class CreditCardAdmin(admin.ModelAdmin):
     )
 
 
+class PaymentProfileAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'owner',
+        'external_api_id',
+        'external_api_url',
+
+    )
+
+
 admin.site.register(Membership, MembershipAdmin)
 admin.site.register(Package, PackageAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderLine, OrderLineAdmin)
 admin.site.register(CreditCard, CreditCardAdmin)
+admin.site.register(PaymentProfile, PaymentProfileAdmin)

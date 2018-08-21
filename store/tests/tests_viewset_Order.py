@@ -1,5 +1,4 @@
 import json
-import pytz
 
 from datetime import datetime, timedelta
 
@@ -7,23 +6,46 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from django.conf import settings
-from django.utils import timezone
-from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
+from django.test.utils import override_settings
+from django.utils import timezone
+from django.urls import reverse
+
+import pytz
+import responses
 
 from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.models import AcademicLevel
 
-from workplace.models import Reservation, TimeSlot, Period
+from workplace.models import TimeSlot, Period
 
-from ..models import Package, Order, OrderLine, Membership
+from .paysafe_sample_responses import (SAMPLE_PROFILE_RESPONSE,
+                                       SAMPLE_PAYMENT_RESPONSE,
+                                       SAMPLE_CARD_RESPONSE,
+                                       SAMPLE_INVALID_PAYMENT_TOKEN,
+                                       SAMPLE_INVALID_SINGLE_USE_TOKEN,
+                                       SAMPLE_CARD_ALREADY_EXISTS,
+                                       SAMPLE_CARD_REFUSED,)
+
+
+from ..models import Package, Order, OrderLine, Membership, PaymentProfile
 
 User = get_user_model()
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
+@override_settings(
+    PAYSAFE={
+        'ACCOUNT_NUMBER': "0123456789",
+        'USER': "user",
+        'PASSWORD': "password",
+        'BASE_URL': "http://example.com/",
+        'VAULT_URL': "customervault/v1/",
+        'CARD_URL': "cardpayments/v1/"
+    }
+)
 class OrderTests(APITestCase):
 
     @classmethod
@@ -69,6 +91,12 @@ class OrderTests(APITestCase):
             content_type=cls.package_type,
             object_id=1,
         )
+        cls.payment_profile = PaymentProfile.objects.create(
+            name="payment_api_name",
+            owner=cls.admin,
+            external_api_id="123",
+            external_api_url="https://example.com/customervault/v1/profiles"
+        )
         cls.period = Period.objects.create(
             name="random_period_active",
             start_date=timezone.now(),
@@ -84,13 +112,23 @@ class OrderTests(APITestCase):
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
 
-    def test_create(self):
+    @responses.activate
+    def test_create_with_payment_token(self):
         """
-        Ensure we can create an order if user has permission.
+        Ensure we can create an order when provided with a payment_token.
+        (Token representing an existing payment card.)
         """
         self.client.force_authenticate(user=self.admin)
 
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
         data = {
+            'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
                 'object_id': 1,
@@ -151,20 +189,39 @@ class OrderTests(APITestCase):
         admin.refresh_from_db()
 
         self.assertEqual(admin.tickets, self.package.reservations * 2)
+        admin.tickets = 1
+        admin.save()
+
         self.assertEqual(admin.membership, self.membership)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_create_without_permission(self):
+    @responses.activate
+    def test_create_with_invalid_payment_token(self):
         """
-        Ensure we can't create an order if user has no permission.
+        Ensure we can't create an order when provided with a bad payment_token.
+        (Token representing an non-existing payment card.)
         """
-        self.client.force_authenticate(user=self.user)
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_INVALID_PAYMENT_TOKEN,
+            status=400
+        )
 
         data = {
-            'user': reverse('user-detail', args=[self.user.id]),
-            'authorization_id': 1,
-            'settlement_id': 1,
+            'payment_token': "invalid",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'package',
+                'object_id': 1,
+                'quantity': 2,
+            }],
         }
 
         response = self.client.post(
@@ -174,12 +231,386 @@ class OrderTests(APITestCase):
         )
 
         content = {
-            'detail': 'You do not have permission to perform this action.'
+            'message': "An error occured while processing the payment: "
+                       "invalid payment token or payment profile/card "
+                       "inactive."
         }
 
         self.assertEqual(json.loads(response.content), content)
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @responses.activate
+    def test_create_with_single_use_token_no_profile(self):
+        """
+        Ensure we can create an order when provided with a single_use_token.
+        (Token representing a new payment card.)
+        The PaymentProfile will be created if none exists.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/customervault/v1/profiles/",
+            json=SAMPLE_PROFILE_RESPONSE,
+            status=201
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'single_use_token': "SChsxyprFn176yhD",
+            'order_lines': [{
+                'content_type': 'timeslot',
+                'object_id': 1,
+                'quantity': 1,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'id': 3,
+            'order_lines': [{
+                'content_type': 'timeslot',
+                'id': 2,
+                'object_id': 1,
+                'order': 'http://testserver/orders/3',
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/2'
+            }],
+            'url': 'http://testserver/orders/3',
+            'user': 'http://testserver/users/1',
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '1',
+            'settlement_id': '1',
+        }
+
+        self.assertEqual(response_data, content)
+
+        user = self.user
+        user.refresh_from_db()
+
+        self.assertEqual(user.tickets, 0)
+        user.tickets = 1
+        user.save()
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    @responses.activate
+    def test_create_with_single_use_token_existing_profile(self):
+        """
+        Ensure we can create an order when provided with a single_use_token.
+        The existing PaymentProfile will be used. A new card will be added.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/customervault/v1/profiles/123/cards/",
+            json=SAMPLE_CARD_RESPONSE,
+            status=201
+        )
+
+        data = {
+            'single_use_token': "SChsxyprFn176yhD",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'package',
+                'object_id': 1,
+                'quantity': 2,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'id': 3,
+            'order_lines': [{
+                'content_type': 'membership',
+                'id': 2,
+                'object_id': 1,
+                'order': 'http://testserver/orders/3',
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/2'
+            }, {
+                'content_type': 'package',
+                'id': 3,
+                'object_id': 1,
+                'order': 'http://testserver/orders/3',
+                'quantity': 2,
+                'url': 'http://testserver/order_lines/3'
+            }],
+            'url': 'http://testserver/orders/3',
+            'user': 'http://testserver/users/2',
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '1',
+            'settlement_id': '1',
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        admin = self.admin
+        admin.refresh_from_db()
+
+        self.assertEqual(admin.tickets, self.package.reservations * 2 + 1)
+        self.assertEqual(admin.membership, self.membership)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    @responses.activate
+    def test_create_with_invalid_single_use_token(self):
+        """
+        Ensure we can't create an order when provided with a bad
+        single_use_token.
+        (Token representing a new payment card.)
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/customervault/v1/profiles/123/cards/",
+            json=SAMPLE_INVALID_SINGLE_USE_TOKEN,
+            status=400
+        )
+
+        data = {
+            'single_use_token': "invalid",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'package',
+                'object_id': 1,
+                'quantity': 2,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        content = content = {
+            'message': "An error occured while processing the payment: "
+                       "invalid payment or single-use token."
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @responses.activate
+    def test_create_with_invalid_single_use_token_no_profile(self):
+        """
+        Ensure we can't create an order when provided with a bad
+        single_use_token.
+        (Token representing a new payment card.)
+        """
+        self.client.force_authenticate(user=self.user)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/customervault/v1/profiles/",
+            json=SAMPLE_INVALID_SINGLE_USE_TOKEN,
+            status=400
+        )
+
+        data = {
+            'single_use_token': "invalid",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'package',
+                'object_id': 1,
+                'quantity': 2,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        content = content = {
+            'message': "An error occured while processing the payment: "
+                       "invalid payment or single-use token."
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @responses.activate
+    def test_create_payment_issue(self):
+        """
+        Ensure we can't create an order when the payment proccessing fails.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/customervault/v1/profiles/",
+            json=SAMPLE_PROFILE_RESPONSE,
+            status=201
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_CARD_REFUSED,
+            status=400
+        )
+
+        data = {
+            'single_use_token': "invalid",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'package',
+                'object_id': 1,
+                'quantity': 2,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        content = content = {
+            'message': "An error occured while processing the payment: "
+                       "the request has been declined by the issuing bank."
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @responses.activate
+    def test_create_with_single_use_token_existing_card(self):
+        """
+        Ensure we can't create an order when provided with a single_use_token
+        representing a card that is already stored in the user's profile.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/customervault/v1/profiles/123/cards/",
+            json=SAMPLE_CARD_ALREADY_EXISTS,
+            status=400
+        )
+
+        data = {
+            'user': reverse('user-detail', args=[self.admin.id]),
+            'single_use_token': "invalid",
+            'transaction_date': timezone.now(),
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'order': 'http://testserver/orders/1',
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/1'
+            }, {
+                'content_type': 'package',
+                'object_id': 1,
+                'order': 'http://testserver/orders/1',
+                'quantity': 2,
+                'url': 'http://testserver/order_lines/1'
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'message': "An error occured while adding the card: a card with "
+                       "that number already exists."
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_missing_payment_details(self):
+        """
+        Ensure we can't create an order if no payment details are provided.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'user': reverse('user-detail', args=[self.user.id]),
+            'transaction_date': timezone.now(),
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'order': 'http://testserver/orders/1',
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/1'
+            }, {
+                'content_type': 'package',
+                'object_id': 1,
+                'order': 'http://testserver/orders/1',
+                'quantity': 2,
+                'url': 'http://testserver/order_lines/1'
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'non_field_errors': [
+                'A payment_token or single_use_token is required to '
+                'create an order.'
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_missing_field(self):
         """

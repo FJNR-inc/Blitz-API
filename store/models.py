@@ -196,3 +196,36 @@ class CreditCard(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class PaymentProfile(models.Model):
+    """Represents a payment profile linked to an external payment API."""
+
+    class Meta:
+        verbose_name = _("Payment profile")
+        verbose_name_plural = _("Payment profiles")
+
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=253,
+    )
+
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_("User"),
+        related_name='payment_profiles',
+    )
+
+    external_api_id = models.CharField(
+        verbose_name=_("External profile ID"),
+        max_length=253,
+    )
+
+    external_api_url = models.CharField(
+        verbose_name=_("External profile url"),
+        max_length=253,
+    )
+
+    def __str__(self):
+        return self.name

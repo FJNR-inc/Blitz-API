@@ -4,7 +4,8 @@ from rest_framework import viewsets, status, mixins
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Package, Membership, Order, OrderLine, CreditCard
+from .models import (Package, Membership, Order, OrderLine, CreditCard,
+                     PaymentProfile,)
 
 from . import serializers, permissions
 
@@ -123,6 +124,32 @@ class CreditCardViewSet(
         return CreditCard.objects.filter(owner=self.request.user)
 
 
+class PaymentProfileViewSet(
+        viewsets.GenericViewSet,
+        mixins.ListModelMixin,
+        mixins.RetrieveModelMixin):
+    """
+    retrieve:
+    Return the given payment profile.
+
+    list:
+    Return a list of all the existing payment profiles.
+    """
+    serializer_class = serializers.PaymentProfileSerializer
+    queryset = PaymentProfile.objects.all()
+    permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
+    filter_fields = '__all__'
+
+    def get_queryset(self):
+        """
+        This viewset should return a user's credit cards except if the
+        currently authenticated user is an admin (is_staff).
+        """
+        if self.request.user.is_staff:
+            return PaymentProfile.objects.all()
+        return PaymentProfile.objects.filter(owner=self.request.user)
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     """
     retrieve:
@@ -136,7 +163,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     """
     serializer_class = serializers.OrderSerializer
     queryset = Order.objects.all()
-    permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
+    permission_classes = (permissions.IsAdminOrCreateReadOnly, IsAuthenticated)
 
     def get_queryset(self):
         """

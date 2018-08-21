@@ -22,6 +22,7 @@ router.register('order_lines', views.OrderLineViewSet)
 router.register('packages', views.PackageViewSet)
 router.register('memberships', views.MembershipViewSet)
 router.register('credit_cards', views.CreditCardViewSet)
+router.register('payment_profiles', views.PaymentProfileViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),  # includes router generated URL

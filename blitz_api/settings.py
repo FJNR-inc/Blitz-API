@@ -201,3 +201,14 @@ LOCAL_SETTINGS = {
         "FORGOT_PASSWORD_URL": "example.com/forgot_password?token={{token}}",
     },
 }
+
+# Payment settings
+
+PAYSAFE = {
+    'ACCOUNT_NUMBER': "0123456789",
+    'USER': "username",
+    'PASSWORD': "password",
+    'BASE_URL': "https://api.test.paysafe.com/",
+    'VAULT_URL': "customervault/v1/",
+    'CARD_URL': "cardpayments/v1/"
+}
