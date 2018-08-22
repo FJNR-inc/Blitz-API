@@ -43,9 +43,23 @@ class Order(models.Model):
     @property
     def total_cost(self):
         cost = 0
-        for orderline in self.order_lines.all():
+        orderlines = self.order_lines.filter(
+            models.Q(content_type__model='membership') |
+            models.Q(content_type__model='package')
+        )
+        for orderline in orderlines:
             cost += orderline.content_object.price * orderline.quantity
         return float(cost)
+
+    @property
+    def total_ticket(self):
+        tickets = 0
+        orderlines = self.order_lines.filter(
+            content_type__model='timeslot'
+        )
+        for orderline in orderlines:
+            tickets += orderline.content_object.price * orderline.quantity
+        return tickets
 
     def __str__(self):
         return str(self.authorization_id)

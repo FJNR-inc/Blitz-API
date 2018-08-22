@@ -213,6 +213,48 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             OrderLine.objects.create(order=order, **orderline_data)
         amount = int(round(order.total_cost*100))
 
+        membership_orderlines = order.order_lines.filter(
+            content_type__model="membership"
+        )
+        package_orderlines = order.order_lines.filter(
+            content_type__model="package"
+        )
+        reservation_orderlines = order.order_lines.filter(
+            content_type__model="timeslot"
+        )
+
+        if membership_orderlines:
+            user.membership = membership_orderlines[0].content_object
+        if package_orderlines:
+            for package_orderline in package_orderlines:
+                user.tickets += (
+                    package_orderline.content_object.reservations *
+                    package_orderline.quantity
+                )
+        if reservation_orderlines:
+            for reservation_orderline in reservation_orderlines:
+                timeslot = reservation_orderline.content_object
+                reserved = timeslot.reservations.filter(is_active=True).count()
+                if (timeslot.period.workplace and
+                        timeslot.period.workplace.seats - reserved > 0):
+                    Reservation.objects.create(
+                        user=user,
+                        timeslot=timeslot,
+                        is_active=True
+                    )
+                    # Decrement user tickets for each reservation.
+                    # OrderLine's quantity and TimeSlot's price will be used
+                    # in the future if we want to allow multiple reservations
+                    # of the same timeslot.
+                    user.tickets -= 1
+                else:
+                    raise serializers.ValidationError({
+                        'non_field_errors': [_(
+                            "There are no places left in the requested "
+                            "timeslot."
+                        )]
+                    })
+
         if payment_token:
             # Charge the order with the external payment API
             try:
@@ -291,33 +333,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         order.settlement_id = charge_response.json()['settlements'][0]['id']
         order.save()
 
-        user = order.user
-        membership_orderlines = order.order_lines.filter(
-            content_type__model="membership"
-        )
-        package_orderlines = order.order_lines.filter(
-            content_type__model="package"
-        )
-        reservation_orderlines = order.order_lines.filter(
-            content_type__model="timeslot"
-        )
-        if membership_orderlines:
-            user.membership = membership_orderlines[0].content_object
-        if package_orderlines:
-            for package_orderline in package_orderlines:
-                user.tickets += (
-                    package_orderline.content_object.reservations *
-                    package_orderline.quantity
-                )
-        if reservation_orderlines:
-            for reservation_orderline in reservation_orderlines:
-                Reservation.objects.create(
-                    user=user,
-                    timeslot=reservation_orderline.content_object,
-                    is_active=True
-                )
-                user.tickets -= 1
         user.save()
+
         return order
 
     def update(self, instance, validated_data):

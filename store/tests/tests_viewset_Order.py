@@ -18,7 +18,7 @@ import responses
 from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.models import AcademicLevel
 
-from workplace.models import TimeSlot, Period
+from workplace.models import TimeSlot, Period, Workplace
 
 from .paysafe_sample_responses import (SAMPLE_PROFILE_RESPONSE,
                                        SAMPLE_PAYMENT_RESPONSE,
@@ -97,8 +97,35 @@ class OrderTests(APITestCase):
             external_api_id="123",
             external_api_url="https://example.com/customervault/v1/profiles"
         )
+        cls.workplace = Workplace.objects.create(
+            name="random_workplace",
+            details="This is a description of the workplace.",
+            seats=40,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+        )
+        cls.workplace_no_seats = Workplace.objects.create(
+            name="random_workplace",
+            details="This is a description of the workplace.",
+            seats=0,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+        )
         cls.period = Period.objects.create(
             name="random_period_active",
+            workplace=cls.workplace,
+            start_date=timezone.now(),
+            end_date=timezone.now() + timedelta(weeks=4),
+            price=3,
+            is_active=True,
+        )
+        cls.period_no_seats = Period.objects.create(
+            name="random_period_active",
+            workplace=cls.workplace_no_seats,
             start_date=timezone.now(),
             end_date=timezone.now() + timedelta(weeks=4),
             price=3,
@@ -107,6 +134,13 @@ class OrderTests(APITestCase):
         cls.time_slot = TimeSlot.objects.create(
             name="morning_time_slot",
             period=cls.period,
+            price=3,
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+        )
+        cls.time_slot_no_seats = TimeSlot.objects.create(
+            name="no_place_left_timeslot",
+            period=cls.period_no_seats,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
@@ -189,12 +223,69 @@ class OrderTests(APITestCase):
         admin.refresh_from_db()
 
         self.assertEqual(admin.tickets, self.package.reservations * 2)
+        self.assertEqual(admin.membership, self.membership)
         admin.tickets = 1
+        admin.membership = None
         admin.save()
 
-        self.assertEqual(admin.membership, self.membership)
-
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    @responses.activate
+    def test_create_no_place_left(self):
+        """
+        Ensure we can't create an order with reservations if the requested
+        timeslot has no place left.
+        """
+        self.maxDiff = None
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'package',
+                'object_id': 1,
+                'quantity': 2,
+            }, {
+                'content_type': 'timeslot',
+                'object_id': self.time_slot_no_seats.id,
+                'quantity': 1,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                "There are no places left in the requested timeslot."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        admin = self.admin
+        admin.refresh_from_db()
+
+        self.assertEqual(admin.tickets, 1)
+        self.assertEqual(admin.membership, None)
 
     @responses.activate
     def test_create_with_invalid_payment_token(self):
@@ -239,6 +330,12 @@ class OrderTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        admin = self.admin
+        admin.refresh_from_db()
+
+        self.assertEqual(admin.tickets, 1)
+        self.assertEqual(admin.membership, None)
 
     @responses.activate
     def test_create_with_single_use_token_no_profile(self):
@@ -382,6 +479,9 @@ class OrderTests(APITestCase):
 
         self.assertEqual(admin.tickets, self.package.reservations * 2 + 1)
         self.assertEqual(admin.membership, self.membership)
+        admin.tickets = 1
+        admin.membership = None
+        admin.save()
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -429,6 +529,12 @@ class OrderTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+        admin = self.admin
+        admin.refresh_from_db()
+
+        self.assertEqual(admin.tickets, 1)
+        self.assertEqual(admin.membership, None)
+
     @responses.activate
     def test_create_with_invalid_single_use_token_no_profile(self):
         """
@@ -472,6 +578,12 @@ class OrderTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        user = self.user
+        user.refresh_from_db()
+
+        self.assertEqual(user.tickets, 1)
+        self.assertEqual(user.membership, None)
 
     @responses.activate
     def test_create_payment_issue(self):
@@ -522,6 +634,12 @@ class OrderTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+        user = self.user
+        user.refresh_from_db()
+
+        self.assertEqual(user.tickets, 1)
+        self.assertEqual(user.membership, None)
+
     @responses.activate
     def test_create_with_single_use_token_existing_card(self):
         """
@@ -571,6 +689,12 @@ class OrderTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+        admin = self.admin
+        admin.refresh_from_db()
+
+        self.assertEqual(admin.tickets, 1)
+        self.assertEqual(admin.membership, None)
+
     def test_create_missing_payment_details(self):
         """
         Ensure we can't create an order if no payment details are provided.
@@ -611,6 +735,12 @@ class OrderTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        admin = self.admin
+        admin.refresh_from_db()
+
+        self.assertEqual(admin.tickets, 1)
+        self.assertEqual(admin.membership, None)
 
     def test_create_missing_field(self):
         """
