@@ -7,6 +7,8 @@ from django.contrib.contenttypes.fields import (
 )
 from django.contrib.contenttypes.models import ContentType
 
+from simple_history.models import HistoricalRecords
+
 from blitz_api.models import AcademicLevel
 
 User = get_user_model()
@@ -39,6 +41,8 @@ class Order(models.Model):
         verbose_name=_("Settlement ID"),
         max_length=253,
     )
+
+    history = HistoricalRecords()
 
     @property
     def total_cost(self):
@@ -98,6 +102,8 @@ class OrderLine(models.Model):
         verbose_name=_("Quantity"),
     )
 
+    history = HistoricalRecords()
+
     def __str__(self):
         return str(self.content_object) + ', qt:' + str(self.quantity)
 
@@ -129,6 +135,8 @@ class BaseProduct(models.Model):
 
     order_lines = GenericRelation(OrderLine)
 
+    history = HistoricalRecords()
+
     class Meta:
         abstract = True
 
@@ -148,6 +156,8 @@ class Membership(BaseProduct):
         verbose_name=_("Academic levels"),
         related_name='memberships',
     )
+
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.name
@@ -170,6 +180,8 @@ class Package(BaseProduct):
         verbose_name=_("Memberships"),
         related_name='packages',
     )
+
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.name
@@ -208,6 +220,8 @@ class CreditCard(models.Model):
         max_length=253,
     )
 
+    history = HistoricalRecords()
+
     def __str__(self):
         return self.name
 
@@ -240,6 +254,8 @@ class PaymentProfile(models.Model):
         verbose_name=_("External profile url"),
         max_length=253,
     )
+
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.name

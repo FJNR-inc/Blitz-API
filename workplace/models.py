@@ -3,6 +3,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.html import format_html
 from django.contrib.auth import get_user_model
 
+from simple_history.models import HistoricalRecords
+
 from blitz_api.models import Address
 
 User = get_user_model()
@@ -28,6 +30,8 @@ class Workplace(Address):
     seats = models.IntegerField(
         verbose_name=_("Seats"),
     )
+
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.name
@@ -68,6 +72,8 @@ class Picture(models.Model):
 
     picture_tag.allow_tags = True
     picture_tag.short_description = 'Picture'
+
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.name
@@ -114,6 +120,8 @@ class Period(models.Model):
         verbose_name=_("Activation"),
         default=False,
     )
+
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.name
@@ -164,6 +172,8 @@ class TimeSlot(models.Model):
         verbose_name=_("End time"),
     )
 
+    history = HistoricalRecords()
+
     def __str__(self):
         return str(self.start_time) + " - " + str(self.end_time)
 
@@ -185,6 +195,8 @@ class Reservation(models.Model):
     is_active = models.BooleanField(
         verbose_name=_("Active")
     )
+
+    history = HistoricalRecords()
 
     def __str__(self):
         return str(self.user)

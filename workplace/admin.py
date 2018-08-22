@@ -1,5 +1,8 @@
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
+
+from simple_history.admin import SimpleHistoryAdmin
+
 from .models import Workplace, Picture, Period, TimeSlot, Reservation
 
 
@@ -8,15 +11,15 @@ class PictureAdminInline(admin.TabularInline):
     readonly_fields = ('picture_tag',)
 
 
-class WorkplaceAdmin(admin.ModelAdmin):
+class WorkplaceAdmin(SimpleHistoryAdmin):
     inlines = (PictureAdminInline,)
 
 
-class PictureAdmin(admin.ModelAdmin):
+class PictureAdmin(SimpleHistoryAdmin):
     list_display = ('name', 'workplace', 'picture_tag',)
 
 
-class PeriodAdmin(admin.ModelAdmin):
+class PeriodAdmin(SimpleHistoryAdmin):
     list_display = (
         'name',
         'workplace',
@@ -27,7 +30,7 @@ class PeriodAdmin(admin.ModelAdmin):
     )
 
 
-class TimeSlotAdmin(admin.ModelAdmin):
+class TimeSlotAdmin(SimpleHistoryAdmin):
     list_display = (
         'start_time',
         'end_time',
@@ -36,7 +39,7 @@ class TimeSlotAdmin(admin.ModelAdmin):
     )
 
 
-class ReservationAdmin(admin.ModelAdmin):
+class ReservationAdmin(SimpleHistoryAdmin):
     list_display = (
         'user',
         'timeslot',

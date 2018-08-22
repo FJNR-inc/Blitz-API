@@ -1,9 +1,12 @@
 from django.contrib import admin
+
+from simple_history.admin import SimpleHistoryAdmin
+
 from .models import (Membership, Package, Order, OrderLine, CreditCard,
                      PaymentProfile,)
 
 
-class MembershipAdmin(admin.ModelAdmin):
+class MembershipAdmin(SimpleHistoryAdmin):
     list_display = (
         'name',
         'price',
@@ -11,7 +14,7 @@ class MembershipAdmin(admin.ModelAdmin):
     )
 
 
-class PackageAdmin(admin.ModelAdmin):
+class PackageAdmin(SimpleHistoryAdmin):
     list_display = (
         'name',
         'price',
@@ -19,7 +22,7 @@ class PackageAdmin(admin.ModelAdmin):
     )
 
 
-class OrderAdmin(admin.ModelAdmin):
+class OrderAdmin(SimpleHistoryAdmin):
     list_display = (
         'authorization_id',
         'settlement_id',
@@ -28,7 +31,7 @@ class OrderAdmin(admin.ModelAdmin):
     )
 
 
-class OrderLineAdmin(admin.ModelAdmin):
+class OrderLineAdmin(SimpleHistoryAdmin):
     list_display = (
         'content_type',
         'content_object',
@@ -37,7 +40,7 @@ class OrderLineAdmin(admin.ModelAdmin):
     )
 
 
-class CreditCardAdmin(admin.ModelAdmin):
+class CreditCardAdmin(SimpleHistoryAdmin):
     list_display = (
         'name',
         'number',
@@ -46,7 +49,7 @@ class CreditCardAdmin(admin.ModelAdmin):
     )
 
 
-class PaymentProfileAdmin(admin.ModelAdmin):
+class PaymentProfileAdmin(SimpleHistoryAdmin):
     list_display = (
         'name',
         'owner',

@@ -7,6 +7,9 @@ from django.contrib.auth.models import AbstractUser
 
 from rest_framework.authtoken.models import Token
 
+from simple_history import register
+from simple_history.models import HistoricalRecords
+
 from django.utils.translation import ugettext_lazy as _
 
 from .managers import ActionTokenManager
@@ -85,6 +88,7 @@ class User(AbstractUser):
         null=True,
         verbose_name=_("Tickets"),
     )
+    history = HistoricalRecords()
 
 
 class TemporaryToken(Token):
@@ -98,6 +102,8 @@ class TemporaryToken(Token):
         verbose_name=_("Expiration date"),
         blank=True,
     )
+
+    history = HistoricalRecords()
 
     def save(self, *args, **kwargs):
         if not self.pk:
@@ -163,6 +169,8 @@ class ActionToken(models.Model):
 
     objects = ActionTokenManager()
 
+    history = HistoricalRecords()
+
     def save(self, *args, **kwargs):
         if not self.key:
             self.key = self.generate_key()
@@ -202,6 +210,8 @@ class Organization(models.Model):
         max_length=100,
     )
 
+    history = HistoricalRecords()
+
     def __str__(self):
         return self.name
 
@@ -234,6 +244,8 @@ class Domain(models.Model):
         related_name="domains",
     )
 
+    history = HistoricalRecords()
+
     def __str__(self):
         return self.name
 
@@ -250,6 +262,8 @@ class AcademicLevel(models.Model):
         max_length=100,
     )
 
+    history = HistoricalRecords()
+
     def __str__(self):
         return self.name
 
@@ -265,6 +279,8 @@ class AcademicField(models.Model):
         verbose_name=_("Name"),
         max_length=100,
     )
+
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.name
@@ -317,6 +333,8 @@ class Address(models.Model):
         max_length=100,
         verbose_name=_("Timezone"),
     )
+
+    history = HistoricalRecords()
 
     class Meta:
         abstract = True

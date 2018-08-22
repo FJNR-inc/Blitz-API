@@ -8,3 +8,4 @@ Markdown==2.6.11
 Pygments==2.2.0
 django-anymail==4.0
 Pillow==5.1.0
+django-simple-history==2.3.0

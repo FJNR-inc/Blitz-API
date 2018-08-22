@@ -4,6 +4,9 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import AbstractUser, Permission
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
+
+from simple_history.admin import SimpleHistoryAdmin
+
 from .models import (
     User, Organization, Domain, TemporaryToken, ActionToken, AcademicField,
     AcademicLevel,
@@ -30,7 +33,7 @@ class CustomUserCreationForm(UserCreationForm):
         raise forms.ValidationError(self.error_messages['duplicate_username'])
 
 
-class CustomUserAdmin(UserAdmin):
+class CustomUserAdmin(UserAdmin, SimpleHistoryAdmin):
     """ Required to display extra fields of users in Django Admin """
     form = CustomUserChangeForm
 
@@ -60,7 +63,7 @@ class DomainInline(admin.StackedInline):
     extra = 0  # No one extra blank field in the admin representation
 
 
-class CustomOrganizationAdmin(admin.ModelAdmin):
+class CustomOrganizationAdmin(SimpleHistoryAdmin):
     inlines = (DomainInline, )
 
 
@@ -71,8 +74,8 @@ class ActionTokenAdmin(admin.ModelAdmin):
 
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(Organization, CustomOrganizationAdmin)
-admin.site.register(Domain)
+admin.site.register(Domain, SimpleHistoryAdmin)
 admin.site.register(ActionToken, ActionTokenAdmin)
-admin.site.register(TemporaryToken)
-admin.site.register(AcademicField)
-admin.site.register(AcademicLevel)
+admin.site.register(TemporaryToken, SimpleHistoryAdmin)
+admin.site.register(AcademicField, SimpleHistoryAdmin)
+admin.site.register(AcademicLevel, SimpleHistoryAdmin)
