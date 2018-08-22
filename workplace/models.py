@@ -165,7 +165,7 @@ class TimeSlot(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return str(self.start_time) + " - " + str(self.end_time)
 
 
 class Reservation(models.Model):

@@ -42,4 +42,7 @@ class TimeSlotTests(APITestCase):
             end_time=timezone.now() + timedelta(hours=4),
         )
 
-        self.assertEqual(time_slot.__str__(), "random_time_slot")
+        self.assertEqual(
+            time_slot.__str__(),
+            str(time_slot.start_time) + " - " + str(time_slot.end_time)
+        )
