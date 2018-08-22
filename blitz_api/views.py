@@ -40,7 +40,26 @@ class UserViewSet(viewsets.ModelViewSet):
     Sets the user inactive.
     """
     queryset = User.objects.all()
-    filter_fields = '__all__'
+    filter_fields = {
+        'email': '__all__',
+        'phone': '__all__',
+        'other_phone': '__all__',
+        'academic_field': '__all__',
+        'university': '__all__',
+        'academic_level': '__all__',
+        'membership': '__all__',
+        'last_login': '__all__',
+        'first_name': '__all__',
+        'last_name': '__all__',
+        'is_active': '__all__',
+        'date_joined': '__all__',
+        'birthdate': '__all__',
+        'gender': '__all__',
+        'membership_end': '__all__',
+        'tickets': '__all__',
+        'groups': '__all__',
+        'user_permissions': '__all__'
+    }
 
     def get_serializer_class(self):
         if (self.action == 'update') | (self.action == 'partial_update'):
