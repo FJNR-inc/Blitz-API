@@ -54,9 +54,6 @@ class OrderTests(APITestCase):
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()
-        cls.academic_level = AcademicLevel.objects.create(
-            name="University"
-        )
         cls.membership = Membership.objects.create(
             name="basic_membership",
             details="1-Year student membership",
@@ -64,7 +61,6 @@ class OrderTests(APITestCase):
             price=50,
             duration=timedelta(days=365),
         )
-        cls.membership.academic_levels.set([cls.academic_level])
         cls.package_type = ContentType.objects.get_for_model(Package)
         cls.package = Package.objects.create(
             name="extreme_package",

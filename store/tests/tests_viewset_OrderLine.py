@@ -30,6 +30,16 @@ class OrderLineTests(APITestCase):
         cls.academic_level = AcademicLevel.objects.create(
             name="University"
         )
+        cls.membership_with_academic_level = Membership.objects.create(
+            name="basic_membership",
+            details="1-Year student membership",
+            available=True,
+            price=50,
+            duration=timedelta(days=365),
+        )
+        cls.membership_with_academic_level.academic_levels.set([
+            cls.academic_level
+        ])
         cls.membership = Membership.objects.create(
             name="basic_membership",
             details="1-Year student membership",
@@ -37,7 +47,6 @@ class OrderLineTests(APITestCase):
             price=50,
             duration=timedelta(days=365),
         )
-        cls.membership.academic_levels.set([cls.academic_level])
         cls.package = Package.objects.create(
             name="extreme_package",
             details="100 reservations package",
@@ -135,6 +144,37 @@ class OrderLineTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_create_without_academic_level(self):
+        """
+        Ensure we can't create an order line with a membership if the user does
+        not have the required academic level.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            'order': reverse('order-detail', args=[self.order.id]),
+            'quantity': 1,
+            'content_type': "membership",
+            'object_id': self.membership_with_academic_level.id,
+        }
+
+        response = self.client.post(
+            reverse('orderline-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'object_id': [
+                'User does not have the required academic_level to order this '
+                'membership.'
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_create_inexistent_object(self):
         """
         Ensure we can't create an order line if the reference object does
@@ -208,7 +248,7 @@ class OrderLineTests(APITestCase):
             'order': reverse('order-detail', args=[self.order.id]),
             'quantity': 1,
             'content_type': "membership",
-            'object_id': 1,
+            'object_id': self.membership.id,
         }
 
         response = self.client.post(
@@ -219,7 +259,7 @@ class OrderLineTests(APITestCase):
         content = {
             'content_type': 'membership',
             'id': 3,
-            'object_id': 1,
+            'object_id': self.membership.id,
             'order': 'http://testserver/orders/1',
             'quantity': 1,
             'url': 'http://testserver/order_lines/3'

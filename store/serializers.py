@@ -128,6 +128,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
         validated_data = super().validate(attrs)
 
         user_membership = self.context['request'].user.membership
+        user_academic_level = self.context['request'].user.academic_level
 
         content_type = validated_data.get(
             'content_type',
@@ -155,6 +156,18 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
                     _(
                         "User does not have the required membership to order "
                         "this package."
+                    )
+                ],
+            })
+        if (not self.context['request'].user.is_staff and
+                content_type.model == 'membership' and
+                obj.academic_levels.all() and
+                user_academic_level not in obj.academic_levels.all()):
+            raise serializers.ValidationError({
+                'object_id': [
+                    _(
+                        "User does not have the required academic_level to "
+                        "order this membership."
                     )
                 ],
             })
