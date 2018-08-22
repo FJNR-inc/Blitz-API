@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'blitz_api',
     'workplace',
     'store',
+    'anymail',
 ]
 
 MIDDLEWARE = [
@@ -176,19 +177,22 @@ ACTIVATION_TOKENS = {
     'MINUTES': 2880,
 }
 
-# Email service configuration.
-# Supported services: SendinBlue.
 
-SETTINGS_IMAILING = {
-    "SERVICE": "SendinBlue",
-    "API_KEY": "example_api_key",
-    "EMAIL_FROM": "admin@example.com",
+# Email service configuration (using Anymail).
+# Refer to Anymail's documentation for configuration details.
+
+ANYMAIL = {
+    "SENDINBLUE_API_KEY": "example_api_key",
     "TEMPLATES": {
         "CONFIRM_SIGN_UP": "example_template_id",
         "FORGOT_PASSWORD": "example_template_id",
         "RESERVATION_CANCELLED": "example_template_id",
-    }
+    },
 }
+EMAIL_BACKEND = "anymail.backends.sendinblue.EmailBackend"
+# This "FROM" email is not used with SendInBlue templates
+DEFAULT_FROM_EMAIL = "you@example.com"
+
 
 # User specific settings
 

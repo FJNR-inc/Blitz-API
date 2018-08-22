@@ -6,9 +6,10 @@ from unittest import mock
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
+from django.contrib.auth import get_user_model
+from django.core import mail
 from django.urls import reverse
 from django.test.utils import override_settings
-from django.contrib.auth import get_user_model
 
 from ..factories import UserFactory, AdminFactory
 from ..models import (ActionToken, Organization, Domain,
@@ -438,8 +439,7 @@ class UsersTests(APITestCase):
             }
         }
     )
-    @mock.patch('blitz_api.views.IMailing')
-    def test_create_user_activation_email(self, imailing):
+    def test_create_user_activation_email(self):
         """
         Ensure that the activation email is sent when user signs up.
         """
@@ -460,11 +460,6 @@ class UsersTests(APITestCase):
             'birthdate': "1999-11-11",
         }
 
-        instance_imailing = imailing.create_instance.return_value
-        instance_imailing.send_templated_email.return_value = {
-            "code": "success",
-        }
-
         response = self.client.post(
             reverse('user-list'),
             data,
@@ -483,6 +478,9 @@ class UsersTests(APITestCase):
         self.assertFalse(user.is_active)
         self.assertEqual(1, len(activation_token))
 
+        # Test that one message was sent:
+        self.assertEqual(len(mail.outbox), 1)
+
     @override_settings(
         LOCAL_SETTINGS={
             "EMAIL_SERVICE": True,
@@ -492,12 +490,11 @@ class UsersTests(APITestCase):
             }
         }
     )
-    @mock.patch('blitz_api.views.IMailing')
-    def test_create_user_activation_email_failure(self, imailing):
+    @mock.patch('blitz_api.services.EmailMessage.send', return_value=0)
+    def test_create_user_activation_email_failure(self, send):
         """
         Ensure that the user is notified that no email was sent.
         """
-
         data = {
             'username': 'John',
             'email': 'John@mailinator.com',
@@ -512,11 +509,6 @@ class UsersTests(APITestCase):
             'academic_level': {'name': "random_level"},
             'gender': "M",
             'birthdate': "1999-11-11",
-        }
-
-        instance_imailing = imailing.create_instance.return_value
-        instance_imailing.send_templated_email.return_value = {
-            "code": "failure",
         }
 
         response = self.client.post(
@@ -543,6 +535,9 @@ class UsersTests(APITestCase):
         self.assertFalse(user.is_active)
         self.assertEqual(1, len(activation_token))
 
+        # Test that no email was sent:
+        self.assertEqual(len(mail.outbox), 0)
+
     @override_settings(
         LOCAL_SETTINGS={
             "EMAIL_SERVICE": True,
@@ -552,12 +547,11 @@ class UsersTests(APITestCase):
             }
         }
     )
-    @mock.patch('blitz_api.views.IMailing')
-    def test_create_user_auto_activate(self, imailing):
+    @mock.patch('blitz_api.services.EmailMessage.send', return_value=0)
+    def test_create_user_auto_activate(self, services):
         """
         Ensure that the user is automatically activated.
         """
-
         data = {
             'username': 'John',
             'email': 'John@mailinator.com',
@@ -572,11 +566,6 @@ class UsersTests(APITestCase):
             'academic_level': {'name': "random_level"},
             'gender': "M",
             'birthdate': "1999-11-11",
-        }
-
-        instance_imailing = imailing.create_instance.return_value
-        instance_imailing.send_templated_email.return_value = {
-            "code": "failure",
         }
 
         response = self.client.post(
@@ -602,6 +591,9 @@ class UsersTests(APITestCase):
 
         self.assertTrue(user.is_active)
         self.assertEqual(1, len(activation_token))
+
+        # Test that no email was sent:
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_list_users(self):
         """

@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.test.utils import override_settings
 
 from blitz_api.factories import UserFactory, AdminFactory
@@ -480,8 +481,7 @@ class TimeSlotTests(APITestCase):
             "EMAIL_SERVICE": True,
         }
     )
-    @mock.patch('blitz_api.services.IMailing')
-    def test_update_timeslot_with_registered_users(self, imailing):
+    def test_update_timeslot_with_registered_users(self):
         """
         Ensure we can fully update a timeslot with registered users.
         To work properly, the email service needs to be activated and a field
@@ -490,11 +490,6 @@ class TimeSlotTests(APITestCase):
         is sent to affected users.
         """
         self.client.force_authenticate(user=self.admin)
-
-        instance_imailing = imailing.create_instance.return_value
-        instance_imailing.send_templated_email.return_value = {
-            "code": "success",
-        }
 
         data = {
             'period': reverse('period-detail', args=[self.period.id]),
@@ -558,6 +553,9 @@ class TimeSlotTests(APITestCase):
         self.assertEqual(user.tickets, 1)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Test that two message was sent:
+        self.assertEqual(len(mail.outbox), 2)
 
     def test_update_safe(self):
         """
@@ -627,6 +625,14 @@ class TimeSlotTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": False,
+            "FRONTEND_INTEGRATION": {
+                "FORGOT_PASSWORD_URL": "fake_url",
+            }
+        }
+    )
     def test_update_email_disabled(self):
         """
         Ensure we can't update a timeslot start_time or end_time if email
@@ -704,17 +710,11 @@ class TimeSlotTests(APITestCase):
             "EMAIL_SERVICE": True,
         }
     )
-    @mock.patch('blitz_api.services.IMailing')
-    def test_update_timeslot(self, imailing):
+    def test_update_timeslot(self):
         """
         Ensure we can partially update a timeslot.
         """
         self.client.force_authenticate(user=self.admin)
-
-        instance_imailing = imailing.create_instance.return_value
-        instance_imailing.send_templated_email.return_value = {
-            "code": "success",
-        }
 
         data = {
             'price': '1000.00',
@@ -777,24 +777,22 @@ class TimeSlotTests(APITestCase):
         self.assertEqual(user.tickets, 1)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Test that two message was sent:
+        self.assertEqual(len(mail.outbox), 2)
 
     @override_settings(
         LOCAL_SETTINGS={
             "EMAIL_SERVICE": True,
         }
     )
-    @mock.patch('blitz_api.services.IMailing')
-    def test_update_timeslot_failed_emails(self, imailing):
+    @mock.patch('blitz_api.services.EmailMessage.send', return_value=0)
+    def test_update_timeslot_failed_emails(self, send):
         """
         Ensure we can partially update a timeslot, even if we were unable to
         deliver emails to affected users.
         """
         self.client.force_authenticate(user=self.admin)
-
-        instance_imailing = imailing.create_instance.return_value
-        instance_imailing.send_templated_email.return_value = {
-            "code": "failure",
-        }
 
         data = {
             'price': '1000.00',
@@ -857,6 +855,9 @@ class TimeSlotTests(APITestCase):
         self.assertEqual(user.tickets, 1)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Test that no email was sent:
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_delete(self):
         """
