@@ -186,13 +186,27 @@ class UsersActivation(APIView):
             # We delete the token used
             token[0].delete()
 
+            # Authenticate the user automatically
+            token, _created = TemporaryToken.objects.get_or_create(
+                user=user
+            )
+            CONFIG = settings.REST_FRAMEWORK_TEMPORARY_TOKENS
+            token.expires = timezone.now() + timezone.timedelta(
+                minutes=CONFIG['MINUTES']
+            )
+            token.save()
+
             # We return the user
             serializer = serializers.UserSerializer(
                 user,
                 context={'request': request},
             )
 
-            return Response(serializer.data)
+            return_data = dict()
+            return_data['user'] = serializer.data
+            return_data['token'] = token.key
+
+            return Response(return_data)
 
         # There is no reference to this token or multiple identical token
         # token exists

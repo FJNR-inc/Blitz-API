@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 
 from ..factories import UserFactory
-from ..models import ActionToken
+from ..models import ActionToken, TemporaryToken
 
 User = get_user_model()
 
@@ -31,8 +31,6 @@ class UsersActivationTests(APITestCase):
         """
         Ensure we can activate a user by using an ActionToken.
         """
-        self.client.force_authenticate(user=self.user)
-
         data = {
             'activation_token': self.activation_token.key,
         }
@@ -43,8 +41,10 @@ class UsersActivationTests(APITestCase):
             format='json',
         )
 
+        response_data = json.loads(response.content)
+
         # It's the good user
-        self.assertEqual(json.loads(response.content)['id'], self.user.id)
+        self.assertEqual(response_data['user']['id'], self.user.id)
 
         # We read a new time the user to be synchronized
         user_sync = User.objects.get(id=self.user.id)
@@ -52,7 +52,14 @@ class UsersActivationTests(APITestCase):
         # The user is now active
         self.assertTrue(user_sync.is_active)
 
-        # The token has been removed
+        # A temporary authentication token has been created and returned
+        auth_token = TemporaryToken.objects.filter(
+            user=user_sync,
+        )
+        self.assertTrue(auth_token.count() == 1)
+        self.assertEqual(response_data['token'], auth_token[0].key)
+
+        # The activation token has been removed
         tokens = ActionToken.objects.filter(
             user=user_sync,
             type='account_activation',
