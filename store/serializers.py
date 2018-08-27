@@ -206,7 +206,6 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         allow_blank=True
     )
 
-    @transaction.atomic()
     def create(self, validated_data):
         """
         Create an Order and charge the user.
@@ -220,120 +219,125 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         validated_data['settlement_id'] = "0"
         validated_data['transaction_date'] = timezone.now()
         validated_data['user'] = user
+        profile = PaymentProfile.objects.filter(owner=user).first()
 
-        order = Order.objects.create(**validated_data)
-        for orderline_data in orderlines_data:
-            OrderLine.objects.create(order=order, **orderline_data)
-        amount = int(round(order.total_cost*100))
-
-        membership_orderlines = order.order_lines.filter(
-            content_type__model="membership"
-        )
-        package_orderlines = order.order_lines.filter(
-            content_type__model="package"
-        )
-        reservation_orderlines = order.order_lines.filter(
-            content_type__model="timeslot"
-        )
-
-        if membership_orderlines:
-            user.membership = membership_orderlines[0].content_object
-        if package_orderlines:
-            for package_orderline in package_orderlines:
-                user.tickets += (
-                    package_orderline.content_object.reservations *
-                    package_orderline.quantity
-                )
-        if reservation_orderlines:
-            for reservation_orderline in reservation_orderlines:
-                timeslot = reservation_orderline.content_object
-                reserved = timeslot.reservations.filter(is_active=True).count()
-                if (timeslot.period.workplace and
-                        timeslot.period.workplace.seats - reserved > 0):
-                    Reservation.objects.create(
-                        user=user,
-                        timeslot=timeslot,
-                        is_active=True
-                    )
-                    # Decrement user tickets for each reservation.
-                    # OrderLine's quantity and TimeSlot's price will be used
-                    # in the future if we want to allow multiple reservations
-                    # of the same timeslot.
-                    user.tickets -= 1
-                else:
-                    raise serializers.ValidationError({
-                        'non_field_errors': [_(
-                            "There are no places left in the requested "
-                            "timeslot."
-                        )]
-                    })
-
-        if payment_token:
-            # Charge the order with the external payment API
+        if single_use_token and not profile:
+            # Create external profile
             try:
-                charge_response = charge_payment(
-                    amount,
-                    payment_token,
-                    str(order.id)
+                create_profile_response = create_external_payment_profile(
+                    user
                 )
             except PaymentAPIError as err:
                 raise serializers.ValidationError({
                     'message': err
                 })
+            # Create local profile
+            profile = PaymentProfile.objects.create(
+                name="Paysafe",
+                owner=user,
+                external_api_id=create_profile_response.json()['id'],
+                external_api_url='{0}{1}'.format(
+                    create_profile_response.url,
+                    create_profile_response.json()['id']
+                )
+            )
 
-        elif single_use_token:
-            # Try to get existing PaymentProfile
-            profile = PaymentProfile.objects.filter(owner=order.user).first()
-            if not profile:
-                # Create external profile
+        with transaction.atomic():
+            order = Order.objects.create(**validated_data)
+            for orderline_data in orderlines_data:
+                OrderLine.objects.create(order=order, **orderline_data)
+            amount = int(round(order.total_cost*100))
+
+            membership_orderlines = order.order_lines.filter(
+                content_type__model="membership"
+            )
+            package_orderlines = order.order_lines.filter(
+                content_type__model="package"
+            )
+            reservation_orderlines = order.order_lines.filter(
+                content_type__model="timeslot"
+            )
+
+            if membership_orderlines:
+                user.membership = membership_orderlines[0].content_object
+                user.membership_end = timezone.now() + user.membership.duration
+            if package_orderlines:
+                for package_orderline in package_orderlines:
+                    user.tickets += (
+                        package_orderline.content_object.reservations *
+                        package_orderline.quantity
+                    )
+            if reservation_orderlines:
+                for reservation_orderline in reservation_orderlines:
+                    timeslot = reservation_orderline.content_object
+                    reserved = (
+                        timeslot.reservations.filter(is_active=True).count()
+                    )
+                    if (timeslot.period.workplace and
+                            timeslot.period.workplace.seats - reserved > 0):
+                        Reservation.objects.create(
+                            user=user,
+                            timeslot=timeslot,
+                            is_active=True
+                        )
+                        # Decrement user tickets for each reservation.
+                        # OrderLine's quantity and TimeSlot's price will be
+                        # used in the future if we want to allow multiple
+                        # reservations of the same timeslot.
+                        user.tickets -= 1
+                    else:
+                        raise serializers.ValidationError({
+                            'non_field_errors': [_(
+                                "There are no places left in the requested "
+                                "timeslot."
+                            )]
+                        })
+
+            if payment_token:
+                # Charge the order with the external payment API
                 try:
-                    create_profile_response = create_external_payment_profile(
-                        order.user
+                    charge_response = charge_payment(
+                        amount,
+                        payment_token,
+                        str(order.id)
                     )
                 except PaymentAPIError as err:
                     raise serializers.ValidationError({
                         'message': err
                     })
-                # Create local profile
-                profile = PaymentProfile.objects.create(
-                    name="Paysafe",
-                    owner=order.user,
-                    external_api_id=create_profile_response.json()['id'],
-                    external_api_url='{0}{1}'.format(
-                        create_profile_response.url,
-                        create_profile_response.json()['id']
+
+            elif single_use_token:
+                # Add card to the external profile & charge user
+                try:
+                    card_create_response = create_external_card(
+                        profile.external_api_id,
+                        single_use_token
                     )
-                )
-            # Add card to the external profile & charge user
-            try:
-                card_create_response = create_external_card(
-                    profile.external_api_id,
-                    single_use_token
-                )
-                charge_response = charge_payment(
-                    amount,
-                    card_create_response.json()['paymentToken'],
-                    str(order.id)
-                )
-            except PaymentAPIError as err:
+                    charge_response = charge_payment(
+                        amount,
+                        card_create_response.json()['paymentToken'],
+                        str(order.id)
+                    )
+                except PaymentAPIError as err:
+                    raise serializers.ValidationError({
+                        'message': err
+                    })
+            else:
                 raise serializers.ValidationError({
-                    'message': err
+                    'non_field_errors': [_(
+                        "A payment_token or single_use_token is required to "
+                        "create an order."
+                    )]
                 })
-        else:
-            raise serializers.ValidationError({
-                'non_field_errors': [_(
-                    "A payment_token or single_use_token is required to "
-                    "create an order."
-                )]
-            })
 
-        order.authorization_id = charge_response.json()['id']
-        order.settlement_id = charge_response.json()['settlements'][0]['id']
-        order.save()
+            charge_res_content = charge_response.json()
+            order.authorization_id = charge_res_content['id']
+            order.settlement_id = charge_res_content['settlements'][0]['id']
+            order.save()
 
-        user.save()
+            user.save()
 
-        return order
+            return order
 
     def update(self, instance, validated_data):
         orderlines_data = validated_data.pop('order_lines')
