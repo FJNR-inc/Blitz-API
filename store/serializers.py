@@ -275,6 +275,13 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     reserved = (
                         timeslot.reservations.filter(is_active=True).count()
                     )
+                    if timeslot.price > user.tickets:
+                        raise serializers.ValidationError({
+                            'non_field_errors': [_(
+                                "You don't have enough tickets to make this "
+                                "reservation."
+                            )]
+                        })
                     if (timeslot.period.workplace and
                             timeslot.period.workplace.seats - reserved > 0):
                         Reservation.objects.create(

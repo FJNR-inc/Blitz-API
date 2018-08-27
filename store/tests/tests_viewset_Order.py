@@ -131,7 +131,7 @@ class OrderTests(APITestCase):
         cls.time_slot = TimeSlot.objects.create(
             name="morning_time_slot",
             period=cls.period,
-            price=3,
+            price=1,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
@@ -241,7 +241,6 @@ class OrderTests(APITestCase):
         Ensure we can't create an order with reservations if the requested
         timeslot has no place left.
         """
-        self.maxDiff = None
         self.client.force_authenticate(user=self.admin)
 
         responses.add(
@@ -291,6 +290,64 @@ class OrderTests(APITestCase):
 
         self.assertEqual(admin.tickets, 1)
         self.assertEqual(admin.membership, None)
+
+    @responses.activate
+    def test_create_not_enough_tickets(self):
+        """
+        Ensure we can't create an order with reservations if the requesting
+        user doesn't have enough tickets.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        self.admin.tickets = 0
+        self.admin.save()
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'timeslot',
+                'object_id': self.time_slot_no_seats.id,
+                'quantity': 1,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                "You don't have enough tickets to make this reservation."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        admin = self.admin
+        admin.refresh_from_db()
+
+        self.assertEqual(admin.tickets, 0)
+        self.assertEqual(admin.membership, None)
+
+        self.admin.tickets = 1
+        self.admin.save()
 
     @responses.activate
     def test_create_with_invalid_payment_token(self):
