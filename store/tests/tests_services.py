@@ -81,7 +81,7 @@ class ServicesTests(APITestCase):
             json=SAMPLE_PROFILE_RESPONSE,
             status=201
         )
-        response = create_external_payment_profile(PAYMENT_TOKEN, self.user)
+        response = create_external_payment_profile(self.user)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(json.loads(response.content), SAMPLE_PROFILE_RESPONSE)
@@ -199,7 +199,6 @@ class ServicesTests(APITestCase):
         self.assertRaises(
             PaymentAPIError,
             create_external_payment_profile,
-            PAYMENT_TOKEN,
             self.user
         )
         self.assertRaises(
@@ -266,7 +265,6 @@ class ServicesTests(APITestCase):
         self.assertRaises(
             PaymentAPIError,
             create_external_payment_profile,
-            PAYMENT_TOKEN,
             self.user
         )
         self.assertRaises(

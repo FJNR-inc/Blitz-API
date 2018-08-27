@@ -284,35 +284,17 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         elif single_use_token:
             # Try to get existing PaymentProfile
             profile = PaymentProfile.objects.filter(owner=order.user).first()
-            if profile:
-                # Add card to the external profile
-                try:
-                    card_create_response = create_external_card(
-                        profile.external_api_id,
-                        single_use_token
-                    )
-                    charge_response = charge_payment(
-                        amount,
-                        card_create_response.json()['paymentToken'],
-                        str(order.id)
-                    )
-                except PaymentAPIError as err:
-                    raise serializers.ValidationError({
-                        'message': err
-                    })
-
-            else:
-                # Else create a new profile with the provided single_use_token
+            if not profile:
+                # Create external profile
                 try:
                     create_profile_response = create_external_payment_profile(
-                        single_use_token,
                         order.user
                     )
                 except PaymentAPIError as err:
                     raise serializers.ValidationError({
                         'message': err
                     })
-
+                # Create local profile
                 profile = PaymentProfile.objects.create(
                     name="Paysafe",
                     owner=order.user,
@@ -322,18 +304,21 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         create_profile_response.json()['id']
                     )
                 )
-                try:
-                    charge_response = charge_payment(
-                        amount,
-                        create_profile_response
-                        .json()['cards'][0]['paymentToken'],
-                        str(order.id)
-                    )
-                except PaymentAPIError as err:
-                    raise serializers.ValidationError({
-                        'message': err
-                    })
-
+            # Add card to the external profile & charge user
+            try:
+                card_create_response = create_external_card(
+                    profile.external_api_id,
+                    single_use_token
+                )
+                charge_response = charge_payment(
+                    amount,
+                    card_create_response.json()['paymentToken'],
+                    str(order.id)
+                )
+            except PaymentAPIError as err:
+                raise serializers.ValidationError({
+                    'message': err
+                })
         else:
             raise serializers.ValidationError({
                 'non_field_errors': [_(

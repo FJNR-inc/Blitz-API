@@ -6,7 +6,7 @@ August 21th 2018
 
 
 SAMPLE_PROFILE_RESPONSE = {
-    "id": "19390257-a494-464e-95e6-6a24f1053289",
+    "id": "123",
     "status": "ACTIVE",
     "merchantCustomerId": "mycustomer1",
     "locale": "en_US",

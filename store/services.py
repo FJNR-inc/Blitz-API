@@ -8,18 +8,9 @@ from django.utils.translation import ugettext_lazy as _
 from .exceptions import PaymentAPIError
 
 PAYSAFE_EXCEPTION = {
-    '5500': "{0}{1}".format(
-        _("An error occured while processing the payment: "),
-        _("invalid payment token or payment profile/card inactive.")
-    ),
-
-    '5068': "{0}{1}".format(
-        _("An error occured while processing the payment: "),
-        _("invalid payment or single-use token.")
-    ),
-    '7503': "{0}{1}".format(
+    '3004': "{0}{1}".format(
         _("An error occured while adding the card: "),
-        _("a card with that number already exists.")
+        _("the zip/postal code must be provided for an AVS check request.")
     ),
     '3009': "{0}{1}".format(
         _("An error occured while processing the payment: "),
@@ -28,6 +19,22 @@ PAYSAFE_EXCEPTION = {
     '3022': "{0}{1}".format(
         _("An error occured while processing the payment: "),
         _("the card has been declined due to insufficient funds.")
+    ),
+    '5068': "{0}{1}".format(
+        _("An error occured while processing the payment: "),
+        _("invalid payment or single-use token.")
+    ),
+    '5270': "{0}{1}".format(
+        _("An error occured while processing the payment: "),
+        _("permission denied.")
+    ),
+    '5500': "{0}{1}".format(
+        _("An error occured while processing the payment: "),
+        _("invalid payment token or payment profile/card inactive.")
+    ),
+    '7503': "{0}{1}".format(
+        _("An error occured while adding the card: "),
+        _("a card with that number already exists.")
     ),
     '7505': "{0}{1}".format(
         _("An error occured while adding the card: "),
@@ -82,13 +89,12 @@ def charge_payment(amount, payment_token, reference_number):
     return r
 
 
-def create_external_payment_profile(single_use_token, user):
+def create_external_payment_profile(user):
     """
     This method is used to create a payment profile in external payment API.
     This is tigthly coupled with Paysafe for now, but this should be made
     generic in the future to ease migrations to another payment patform.
 
-    payment_token:  Token that represents a payment card
     user:           Django User model instance
     """
     create_profile_url = '{0}{1}{2}'.format(
@@ -104,9 +110,6 @@ def create_external_payment_profile(single_use_token, user):
         "lastName": user.last_name,
         "email": user.email,
         "phone": user.phone,
-        "card": {
-            "singleUseToken": single_use_token
-        }
     }
 
     try:

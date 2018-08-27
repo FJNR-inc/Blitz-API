@@ -351,6 +351,13 @@ class OrderTests(APITestCase):
 
         responses.add(
             responses.POST,
+            "http://example.com/customervault/v1/profiles/123/cards/",
+            json=SAMPLE_CARD_RESPONSE,
+            status=201
+        )
+
+        responses.add(
+            responses.POST,
             "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
             json=SAMPLE_PAYMENT_RESPONSE,
             status=200
@@ -592,6 +599,13 @@ class OrderTests(APITestCase):
             responses.POST,
             "http://example.com/customervault/v1/profiles/",
             json=SAMPLE_PROFILE_RESPONSE,
+            status=201
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/customervault/v1/profiles/123/cards/",
+            json=SAMPLE_CARD_RESPONSE,
             status=201
         )
 
