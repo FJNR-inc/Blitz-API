@@ -260,7 +260,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
             if membership_orderlines:
                 user.membership = membership_orderlines[0].content_object
-                user.membership_end = timezone.now() + user.membership.duration
+                user.membership_end = (
+                    timezone.now() + user.membership.duration
+                )
             if package_orderlines:
                 for package_orderline in package_orderlines:
                     user.tickets += (

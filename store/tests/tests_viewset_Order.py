@@ -14,6 +14,7 @@ from django.urls import reverse
 
 import pytz
 import responses
+from unittest import mock
 
 from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.models import AcademicLevel
@@ -148,6 +149,8 @@ class OrderTests(APITestCase):
         Ensure we can create an order when provided with a payment_token.
         (Token representing an existing payment card.)
         """
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
         self.client.force_authenticate(user=self.admin)
 
         responses.add(
@@ -174,11 +177,13 @@ class OrderTests(APITestCase):
             }],
         }
 
-        response = self.client.post(
-            reverse('order-list'),
-            data,
-            format='json',
-        )
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
 
         response_data = json.loads(response.content)
 
@@ -220,6 +225,10 @@ class OrderTests(APITestCase):
 
         self.assertEqual(admin.tickets, self.package.reservations * 2)
         self.assertEqual(admin.membership, self.membership)
+        self.assertEqual(
+            admin.membership_end,
+            FIXED_TIME.date() + self.membership.duration
+        )
         admin.tickets = 1
         admin.membership = None
         admin.save()
