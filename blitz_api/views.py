@@ -143,7 +143,11 @@ class UserViewSet(viewsets.ModelViewSet):
 
                 response_send_mail = services.send_mail(
                     [user],
-                    {"activation_url": activation_url},
+                    {
+                        "activation_url": activation_url,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                    },
                     "CONFIRM_SIGN_UP",
                 )
 
