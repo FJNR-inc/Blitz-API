@@ -20,6 +20,10 @@ PAYSAFE_EXCEPTION = {
         _("An error occured while processing the payment: "),
         _("the card has been declined due to insufficient funds.")
     ),
+    '5031': "{0}{1}".format(
+        _("An error occured while processing the payment: "),
+        _("the transaction has already been processed.")
+    ),
     '5068': "{0}{1}".format(
         _("An error occured while processing the payment: "),
         _("invalid payment or single-use token.")
