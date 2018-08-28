@@ -10,7 +10,7 @@ from workplace.models import Reservation
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
-                     CreditCard, PaymentProfile)
+                     PaymentProfile,)
 from .services import (charge_payment,
                        create_external_payment_profile,
                        create_external_card,
@@ -70,22 +70,6 @@ class PackageSerializer(BaseProductSerializer):
                 'help_text': _("Name of the package."),
                 'validators': [
                     UniqueValidator(queryset=Package.objects.all())
-                ],
-            },
-        }
-
-
-class CreditCardSerializer(serializers.HyperlinkedModelSerializer):
-    id = serializers.ReadOnlyField()
-
-    class Meta:
-        model = CreditCard
-        fields = '__all__'
-        extra_kwargs = {
-            'name': {
-                'help_text': _("Name of the credit card."),
-                'validators': [
-                    UniqueValidator(queryset=CreditCard.objects.all())
                 ],
             },
         }

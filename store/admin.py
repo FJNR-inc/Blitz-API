@@ -2,8 +2,7 @@ from django.contrib import admin
 
 from simple_history.admin import SimpleHistoryAdmin
 
-from .models import (Membership, Package, Order, OrderLine, CreditCard,
-                     PaymentProfile,)
+from .models import Membership, Package, Order, OrderLine, PaymentProfile
 
 
 class MembershipAdmin(SimpleHistoryAdmin):
@@ -40,15 +39,6 @@ class OrderLineAdmin(SimpleHistoryAdmin):
     )
 
 
-class CreditCardAdmin(SimpleHistoryAdmin):
-    list_display = (
-        'name',
-        'number',
-        'expiry_date',
-        'owner',
-    )
-
-
 class PaymentProfileAdmin(SimpleHistoryAdmin):
     list_display = (
         'name',
@@ -63,5 +53,4 @@ admin.site.register(Membership, MembershipAdmin)
 admin.site.register(Package, PackageAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderLine, OrderLineAdmin)
-admin.site.register(CreditCard, CreditCardAdmin)
 admin.site.register(PaymentProfile, PaymentProfileAdmin)
