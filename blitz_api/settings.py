@@ -10,24 +10,27 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
-import os
+from ast import literal_eval
+import logging
+from pathlib import Path
+import sys
+
+from decouple import config, Csv
+from dj_database_url import parse as db_url
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).absolute().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ')xbn0sz8_y34m_q+=dt1izlkqenx@h$*xxv#b7dso%3y-dg1q1'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
-
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost', cast=Csv())
 
 # Application definition
 
@@ -44,6 +47,7 @@ INSTALLED_APPS = [
     'blitz_api',
     'workplace',
     'store',
+    'storages',
     'anymail',
     'simple_history',
     'rest_framework_filters',
@@ -60,7 +64,41 @@ MIDDLEWARE = [
     'django.middleware.locale.LocaleMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'simple_history.middleware.HistoryRequestMiddleware',
+    'request_logging.middleware.LoggingMiddleware', # logs requests body
 ]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'include_html': True,
+            'formatter': 'simple'
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console', 'mail_admins'],
+            'level': 'DEBUG',  # change debug level as appropiate
+            'propagate': False,
+        },
+    },
+}
+# Disable logging during unittests. Can be overriden in specific tests with:
+#   import logging
+#   logging.disable(logging.NOTSET)
+if len(sys.argv) > 1 and sys.argv[1] == 'test':
+    logging.disable(logging.CRITICAL)
 
 ROOT_URLCONF = 'blitz_api.urls'
 
@@ -87,10 +125,11 @@ WSGI_APPLICATION = 'blitz_api.wsgi.application'
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+    'default': config(
+        'DATABASE_URL',
+        default='sqlite:///' + str(BASE_DIR.joinpath('db.sqlite3')),
+        cast=db_url
+    )
 }
 
 # Custom user model
@@ -134,11 +173,26 @@ USE_L10N = True
 USE_TZ = True
 
 
+# AWS Deployment configuration (with Zappa)
+AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='ca-central-1')
+AWS_STORAGE_STATIC_BUCKET_NAME = config('AWS_STORAGE_STATIC_BUCKET_NAME', default='example_static')
+AWS_STORAGE_MEDIA_BUCKET_NAME = config('AWS_STORAGE_MEDIA_BUCKET_NAME', default='example_media')
+AWS_S3_STATIC_CUSTOM_DOMAIN = config('AWS_S3_STATIC_CUSTOM_DOMAIN', default='example_static.s3.region.amazonaws.com')
+AWS_S3_MEDIA_CUSTOM_DOMAIN = config('AWS_S3_MEDIA_CUSTOM_DOMAIN', default='example_media.s3.region.amazonaws.com')
+AWS_S3_STATIC_DIR = config('AWS_S3_STATIC_DIR', default='static')
+AWS_S3_MEDIA_DIR = config('AWS_S3_MEDIA_DIR', default='media')
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = config('STATIC_URL', default='/static/')
+STATICFILES_STORAGE = config('STATICFILES_STORAGE', default='django.contrib.staticfiles.storage.StaticFilesStorage')
 
+# User uploaded files (MEDIA)
+
+MEDIA_URL = config('MEDIA_URL', default='/media/')
+MEDIA_ROOT = config('MEDIA_ROOT', default='media/')
+DEFAULT_FILE_STORAGE = config('DEFAULT_FILE_STORAGE', default='django.core.files.storage.FileSystemStorage')
 
 # Django Rest Framework
 
@@ -169,15 +223,15 @@ CORS_ORIGIN_ALLOW_ALL = True
 # Temporary Token
 
 REST_FRAMEWORK_TEMPORARY_TOKENS = {
-    'MINUTES': 30,
-    'RENEW_ON_SUCCESS': True,
-    'USE_AUTHENTICATION_BACKENDS': False,
+    'MINUTES': config('TEMPORARY_TOKEN_MINUTES', default=30, cast=int),
+    'RENEW_ON_SUCCESS': config('TEMPORARY_TOKEN_RENEW_ON_SUCCESS', default=True, cast=bool),
+    'USE_AUTHENTICATION_BACKENDS': config('USE_AUTHENTICATION_BACKENDS', default=False, cast=bool),
 }
 
 # Activation Token
 
 ACTIVATION_TOKENS = {
-    'MINUTES': 2880,
+    'MINUTES': config('ACTIVATION_TOKENS_MINUTES', default=30, cast=int),
 }
 
 
@@ -185,37 +239,47 @@ ACTIVATION_TOKENS = {
 # Refer to Anymail's documentation for configuration details.
 
 ANYMAIL = {
-    "SENDINBLUE_API_KEY": "example_api_key",
-    "TEMPLATES": {
-        "CONFIRM_SIGN_UP": "example_template_id",
-        "FORGOT_PASSWORD": "example_template_id",
-        "RESERVATION_CANCELLED": "example_template_id",
+    'SENDINBLUE_API_KEY': config('SENDINBLUE_API_KEY', default='example_key'),
+    'TEMPLATES': {
+        'CONFIRM_SIGN_UP': config('CONFIRM_SIGN_UP', default='example_id'),
+        'FORGOT_PASSWORD': config('FORGOT_PASSWORD', default='example_id'),
+        'RESERVATION_CANCELLED': config('RESERVATION_CANCELLED', default='example_id'),
     },
 }
-EMAIL_BACKEND = "anymail.backends.sendinblue.EmailBackend"
-# This "FROM" email is not used with SendInBlue templates
-DEFAULT_FROM_EMAIL = "you@example.com"
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+# This 'FROM' email is not used with SendInBlue templates
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@example.org')
+
+# Django email service. Used for administrative emails.
+
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True)
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='example@gmail.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='password')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+# Email addresses to notify in case of error
+ADMINS = config('ADMINS', default="", cast=lambda v: literal_eval("["+v+"]"))
 
 
 # User specific settings
 
 LOCAL_SETTINGS = {
-    'ORGANIZATION': "Blitz Paradisio",
-    "EMAIL_SERVICE": False,
-    "AUTO_ACTIVATE_USER": False,
-    "FRONTEND_INTEGRATION": {
-        "ACTIVATION_URL": "example.com/activate?activation_token={{token}}",
-        "FORGOT_PASSWORD_URL": "example.com/forgot_password?token={{token}}",
+    'ORGANIZATION': config('ORGANIZATION', default='Blitz'),
+    'EMAIL_SERVICE': config('EMAIL_SERVICE', default=False, cast=bool),
+    'AUTO_ACTIVATE_USER': config('AUTO_ACTIVATE_USER', default=False, cast=bool),
+    'FRONTEND_INTEGRATION': {
+        'ACTIVATION_URL': config('ACTIVATION_URL', default='https://example.com/activate/{{token}}'),
+        'FORGOT_PASSWORD_URL': config('FORGOT_PASSWORD_URL', default='https://example.com/reset-password/{{token}}'),
     },
 }
 
 # Payment settings
 
 PAYSAFE = {
-    'ACCOUNT_NUMBER': "0123456789",
-    'USER': "username",
-    'PASSWORD': "password",
-    'BASE_URL': "https://api.test.paysafe.com/",
-    'VAULT_URL': "customervault/v1/",
-    'CARD_URL': "cardpayments/v1/"
+    'ACCOUNT_NUMBER': config('PAYSAFE_ACCOUNT_NUMBER', default='1234567890'),
+    'USER': config('PAYSAFE_USER', default='user'),
+    'PASSWORD': config('PAYSAFE_PASSWORD', default='password'),
+    'BASE_URL': config('PAYSAFE_BASE_URL', default='https://api.test.paysafe.com/'),
+    'VAULT_URL': config('PAYSAFE_VAULT_URL', default='customervault/v1/'),
+    'CARD_URL': config('PAYSAFE_CARD_URL', default='cardpayments/v1/'),
 }
