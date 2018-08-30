@@ -79,16 +79,18 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
         },
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler',
-            'include_html': True,
-            'formatter': 'simple'
-        },
+        # 'mail_admins': {
+        #     'level': 'ERROR',
+        #     'class': 'django.utils.log.AdminEmailHandler',
+        #     'email_backend': 'django.core.mail.backends.smtp.EmailBackend',
+        #     'include_html': True,
+        #     'filters': [],
+        #     'formatter': 'simple'
+        # },
     },
     'loggers': {
         'django.request': {
-            'handlers': ['console', 'mail_admins'],
+            'handlers': ['console', ],#'mail_admins'],
             'level': 'DEBUG',  # change debug level as appropiate
             'propagate': False,
         },
@@ -123,14 +125,19 @@ WSGI_APPLICATION = 'blitz_api.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
-
-DATABASES = {
-    'default': config(
-        'DATABASE_URL',
-        default='sqlite:///' + str(BASE_DIR.joinpath('db.sqlite3')),
-        cast=db_url
-    )
-}
+# Force sqlite3 during unittests. Temporary.
+if len(sys.argv) > 1 and sys.argv[1] == 'test':
+    DATABASES = {
+        'default': db_url('sqlite:///' + str(BASE_DIR.joinpath('db.sqlite3'))),
+    }
+else:
+    DATABASES = {
+        'default': config(
+            'DATABASE_URL',
+            default='sqlite:///' + str(BASE_DIR.joinpath('db.sqlite3')),
+            cast=db_url
+        )
+    }
 
 # Custom user model
 
@@ -184,15 +191,24 @@ AWS_S3_MEDIA_DIR = config('AWS_S3_MEDIA_DIR', default='media')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
-
-STATIC_URL = config('STATIC_URL', default='/static/')
-STATICFILES_STORAGE = config('STATICFILES_STORAGE', default='django.contrib.staticfiles.storage.StaticFilesStorage')
+# Force local storage for unittests. Temporary.
+if len(sys.argv) > 1 and sys.argv[1] == 'test':
+    STATIC_URL = '/static/'
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+else:
+    STATIC_URL = config('STATIC_URL', default='/static/')
+    STATICFILES_STORAGE = config('STATICFILES_STORAGE', default='django.contrib.staticfiles.storage.StaticFilesStorage')
 
 # User uploaded files (MEDIA)
-
-MEDIA_URL = config('MEDIA_URL', default='/media/')
-MEDIA_ROOT = config('MEDIA_ROOT', default='media/')
-DEFAULT_FILE_STORAGE = config('DEFAULT_FILE_STORAGE', default='django.core.files.storage.FileSystemStorage')
+# Force local storage for unittests. Temporary.
+if len(sys.argv) > 1 and sys.argv[1] == 'test':
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = 'media/'
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+else:
+    MEDIA_URL = config('MEDIA_URL', default='/media/')
+    MEDIA_ROOT = config('MEDIA_ROOT', default='media/')
+    DEFAULT_FILE_STORAGE = config('DEFAULT_FILE_STORAGE', default='django.core.files.storage.FileSystemStorage')
 
 # Django Rest Framework
 
@@ -259,6 +275,7 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='password')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 # Email addresses to notify in case of error
 ADMINS = config('ADMINS', default="", cast=lambda v: literal_eval("["+v+"]"))
+SERVER_EMAIL = config('SERVER_EMAIL', default='example@gmail.com')
 
 
 # User specific settings

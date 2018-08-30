@@ -1,0 +1,50 @@
+{
+    "dev": {
+        "aws_region": "ca-central-1",
+        "django_settings": "blitz_api.settings",
+        "project_name": "task",
+        "runtime": "python3.6",
+        "s3_bucket": "thesezvous-api",
+        "aws_environment_variables": {
+            "SENDINBLUE_API_KEY": "",
+            "SECRET_KEY": "",
+            "DATABASE_URL": "",
+            "PAYSAFE_ACCOUNT_NUMBER": "",
+            "PAYSAFE_USER": "",
+            "PAYSAFE_PASSWORD": "",
+            "EMAIL_HOST_PASSWORD": "",
+            "DEBUG": "True",
+            "ALLOWED_HOSTS": "127.0.0.1, localhost, h7alt5p1bi.execute-api.ca-central-1.amazonaws.com,",
+            "ORGANIZATION": "Blitz Paradisio",
+            "EMAIL_SERVICE": "True",
+            "AUTO_ACTIVATE_USER": "False",
+            "ACTIVATION_URL": "https://da6gat167y18o.cloudfront.net/membership/confirmation/{{token}}",
+            "FORGOT_PASSWORD_URL": "https://da6gat167y18o.cloudfront.net/reset-password/{{token}}",
+            "AWS_S3_REGION_NAME": "ca-central-1",
+            "AWS_STORAGE_STATIC_BUCKET_NAME": "thesezvous-api-static",
+            "AWS_STORAGE_MEDIA_BUCKET_NAME": "thesezvous-api-media-dev",
+            "AWS_S3_STATIC_CUSTOM_DOMAIN": "thesezvous-api-static.s3.ca-central-1.amazonaws.com",
+            "AWS_S3_MEDIA_CUSTOM_DOMAIN": "thesezvous-api-media-dev.s3.ca-central-1.amazonaws.com",
+            "STATIC_URL": "https://thesezvous-api-static.s3.ca-central-1.amazonaws.com/",
+            "STATICFILES_STORAGE": "blitz_api.storage_backends.S3StaticStorage",
+            "MEDIA_URL": "https://thesezvous-api-media-dev.s3.ca-central-1.amazonaws.com/",
+            "MEDIA_ROOT": "https://thesezvous-api-media-dev.s3.ca-central-1.amazonaws.com/",
+            "DEFAULT_FILE_STORAGE": "blitz_api.storage_backends.S3MediaStorage",
+            "CONFIRM_SIGN_UP": "6",
+            "FORGOT_PASSWORD": "7",
+            "EMAIL_BACKEND": "anymail.backends.sendinblue.EmailBackend",
+            "DEFAULT_FROM_EMAIL": "noreply@thesezvous.org",
+            "PAYSAFE_BASE_URL": "https://api.test.paysafe.com/",
+            "PAYSAFE_VAULT_URL": "customervault/v1/",
+            "PAYSAFE_CARD_URL": "cardpayments/v1/",
+            "EMAIL_HOST_USER": "admin@fjnr.ca",
+            "ADMINS": "('Francis Jeanneau', 'francis.jeanneau@fjnr.ca'), ('Noël Rignon', 'noel.rignon@fjnr.ca')",
+            "SERVER_EMAIL": "admin@fjnr.ca",
+            "EMAIL_HOST": "smtp.zoho.com"
+        },
+        "vpc_config" : {
+            "SubnetIds": [ "subnet-0bd158ff494029446","subnet-087e1408264ff9358" ],
+            "SecurityGroupIds": [ "sg-0527af17c3fcdbe73" ]
+        }
+    }
+}
