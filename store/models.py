@@ -1,6 +1,7 @@
+import decimal
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.utils.html import format_html
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import (
     GenericForeignKey, GenericRelation
@@ -12,6 +13,8 @@ from simple_history.models import HistoricalRecords
 from blitz_api.models import AcademicLevel
 
 User = get_user_model()
+
+TAX = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
 class Order(models.Model):
@@ -53,7 +56,7 @@ class Order(models.Model):
         )
         for orderline in orderlines:
             cost += orderline.content_object.price * orderline.quantity
-        return float(cost)
+        return round(decimal.Decimal(float(cost) + TAX * float(cost)), 2)
 
     @property
     def total_ticket(self):

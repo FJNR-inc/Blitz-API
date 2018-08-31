@@ -266,6 +266,7 @@ EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.
 # This 'FROM' email is not used with SendInBlue templates
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@example.org')
 
+
 # Django email service. Used for administrative emails.
 
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True)
@@ -288,6 +289,7 @@ LOCAL_SETTINGS = {
         'ACTIVATION_URL': config('ACTIVATION_URL', default='https://example.com/activate/{{token}}'),
         'FORGOT_PASSWORD_URL': config('FORGOT_PASSWORD_URL', default='https://example.com/reset-password/{{token}}'),
     },
+    'SELLING_TAX': 0.14975,
 }
 
 # Payment settings

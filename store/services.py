@@ -1,6 +1,7 @@
 import json
 import random
 import requests
+import uuid
 
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
@@ -47,6 +48,18 @@ PAYSAFE_EXCEPTION = {
     'unknown': _("The request could not be processed.")
 }
 
+PAYSAFE_CARD_TYPE = {
+    'AM': "American Express",
+    'DC': "Discover",
+    'JC': "JCB",
+    'MC': "Mastercard",
+    'MD': "Maestro",
+    'SO': "Solo",
+    'VI': "Visa",
+    'VD': "Visa Debit",
+    'VE': "Visa Electron",
+}
+
 
 def charge_payment(amount, payment_token, reference_number):
     """
@@ -66,7 +79,7 @@ def charge_payment(amount, payment_token, reference_number):
     )
 
     data = {
-        "merchantRefNum": reference_number,
+        "merchantRefNum": str(uuid.uuid4()),
         "amount": amount,
         "settleWithAuth": True,
         "card": {
@@ -108,7 +121,7 @@ def create_external_payment_profile(user):
     )
 
     data = {
-        "merchantCustomerId": user.id,
+        "merchantCustomerId": str(uuid.uuid4()),
         "locale": "en_US",
         "firstName": user.first_name,
         "lastName": user.last_name,

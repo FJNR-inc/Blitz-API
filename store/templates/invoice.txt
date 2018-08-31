@@ -1,0 +1,36 @@
+
+** CONFIRMATION D'ACHAT
+------------------------------------------------------------
+
+Ceci est un recu pour votre achat. Merci d'en garder une copie.
+
+ 	* Numero de commande: {{ORDER_ID}}
+ 	* Date: {{DATETIME}}
+ 	* Numero de carte: **** **** **** {{CARD_NUMBER}}
+ 	* Autorisation: {{AUTHORIZATION}}
+ 	* Total: {{COST}}$ CAD
+
+ 
+** SOMMAIRE DE LA COMMANDE
+------------------------------------------------------------
+
+ {%for item in ITEM_LIST%}
+ {{item.name}}
+
+ {{item.price}}$ CAD {% endfor %}
+
+ TPS/TVQ
+
+ {{TAX}}$ CAD
+
+ Total
+
+ {{COST}}$ CAD
+
+ 
+** L'ÉQUIPE THÈSEZ-VOUS {{SELLER_COORDINATES}}
+------------------------------------------------------------
+
+Thèsez-vous n'autorise pas d'échanges ou de remboursements.
+
+Thèsez-vous? (Blitz Paradisio), 7640 Lajeunesse, Montreal, Quebec, H2R2J2, info@thesez-vous.com, www.thesez-vous.com

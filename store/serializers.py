@@ -1,10 +1,15 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
+import decimal
+
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
+from django.db import transaction, models
+from django.conf import settings
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
 
 from workplace.models import Reservation
 
@@ -14,7 +19,8 @@ from .models import (Package, Membership, Order, OrderLine, BaseProduct,
 from .services import (charge_payment,
                        create_external_payment_profile,
                        create_external_card,
-                       get_external_cards,)
+                       get_external_cards,
+                       PAYSAFE_CARD_TYPE,)
 
 
 class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
@@ -329,6 +335,54 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             order.save()
 
             user.save()
+
+            TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
+
+            orderlines = order.order_lines.filter(
+                models.Q(content_type__model='membership') |
+                models.Q(content_type__model='package')
+            )
+
+            items = [
+                {
+                    'price': orderline.content_object.price,
+                    'name': "{0}: {1}".format(
+                        str(orderline.content_type),
+                        orderline.content_object.name
+                    )
+                } for orderline in orderlines
+            ]
+
+            # Send order confirmation email
+            merge_data = {
+                'STATUS': "APPROUVÉE",
+                'CARD_NUMBER': charge_res_content['card']['lastDigits'],
+                'CARD_TYPE': PAYSAFE_CARD_TYPE[
+                    charge_res_content['card']['type']
+                ],
+                'DATETIME': timezone.localtime().strftime("%x %X"),
+                'ORDER_ID': order.id,
+                'CUSTOMER_NAME': user.first_name + " " + user.last_name,
+                'AUTHORIZATION': order.authorization_id,
+                'TYPE': "Achat",
+                'SELLER_COORDINATES': "",
+                'ITEM_LIST': items,
+                'TAX': round(decimal.Decimal(float(
+                    sum(item['price'] for item in items)
+                ) * TAX_RATE), 2),
+                'COST': order.total_cost,
+            }
+
+            plain_msg = render_to_string("invoice.txt", merge_data)
+            msg_html = render_to_string("invoice.html", merge_data)
+
+            send_mail(
+                'Thèsez-Vous?: Reçu pour votre achat',
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [order.user.email],
+                html_message=msg_html,
+            )
 
             return order
 
