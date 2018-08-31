@@ -141,6 +141,10 @@ SAMPLE_CARD_ALREADY_EXISTS = {
         "code": "7503",
         "message": "Card number already in use - 456",
     },
+    'links': [{
+        'rel': 'existing_entity',
+        'href': 'https://api.test.paysafe.com/customervault/v1/cards/456'
+    }],
 }
 
 SAMPLE_CARD_REFUSED = {

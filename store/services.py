@@ -243,7 +243,18 @@ def create_external_card(profile_id, single_use_token):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        err_code = json.loads(err.response.content)['error']['code']
+        err = json.loads(err.response.content)
+        err_code = err['error']['code']
+        if err_code == "7503":
+            try:
+                r = get_external_card(
+                    err['links'][0]['href'].split("/")[-1]
+                )
+                return r
+            except requests.exceptions.HTTPError as err:
+                if err_code in PAYSAFE_EXCEPTION:
+                    raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
+                raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
         if err_code in PAYSAFE_EXCEPTION:
             raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
         raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
@@ -276,3 +287,33 @@ def get_external_cards(profile_id):
         cards[idx]['status'] = card.get('status')
 
     return cards
+
+
+def get_external_card(card_id):
+    """
+    This method is used to get an existing card of a payment profile from an
+    external payment API.
+    This is tigthly coupled with Paysafe for now, but this should be made
+    generic in the future to ease migrations to another payment patform.
+
+    card_id:   External card ID
+    """
+    get_card_url = '{0}{1}{2}'.format(
+        settings.PAYSAFE['BASE_URL'],
+        settings.PAYSAFE['VAULT_URL'],
+        "cards/" + card_id,
+    )
+
+    try:
+        r = requests.get(
+            get_card_url,
+            auth=(settings.PAYSAFE['USER'], settings.PAYSAFE['PASSWORD']),
+        )
+        r.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        err_code = json.loads(err.response.content)['error']['code']
+        if err_code in PAYSAFE_EXCEPTION:
+            raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
+        raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
+
+    return r

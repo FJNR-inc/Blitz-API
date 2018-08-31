@@ -719,7 +719,7 @@ class OrderTests(APITestCase):
     @responses.activate
     def test_create_with_single_use_token_existing_card(self):
         """
-        Ensure we can't create an order when provided with a single_use_token
+        Ensure we can create an order when provided with a single_use_token
         representing a card that is already stored in the user's profile.
         """
         self.client.force_authenticate(user=self.admin)
@@ -729,6 +729,20 @@ class OrderTests(APITestCase):
             "http://example.com/customervault/v1/profiles/123/cards/",
             json=SAMPLE_CARD_ALREADY_EXISTS,
             status=400
+        )
+
+        responses.add(
+            responses.GET,
+            "http://example.com/customervault/v1/cards/456",
+            json=SAMPLE_CARD_RESPONSE,
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
         )
 
         data = {
@@ -756,20 +770,45 @@ class OrderTests(APITestCase):
             format='json',
         )
 
+        response_data = json.loads(response.content)
+
         content = {
-            'message': "An error occured while adding the card: a card with "
-                       "that number already exists."
+            'authorization_id': '1',
+            'id': 3,
+            'order_lines': [{
+                'content_type': 'membership',
+                'id': 2,
+                'object_id': 1,
+                'order': 'http://testserver/orders/3',
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/2'
+            }, {
+                'content_type': 'package',
+                'id': 3,
+                'object_id': 1,
+                'order': 'http://testserver/orders/3',
+                'quantity': 2,
+                'url': 'http://testserver/order_lines/3'
+            }],
+            'settlement_id': '1',
+            'transaction_date': response_data['transaction_date'],
+            'url': 'http://testserver/orders/3',
+            'user': 'http://testserver/users/2'
         }
 
         self.assertEqual(json.loads(response.content), content)
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         admin = self.admin
         admin.refresh_from_db()
 
-        self.assertEqual(admin.tickets, 1)
-        self.assertEqual(admin.membership, None)
+        self.assertEqual(admin.tickets, self.package.reservations * 2 + 1)
+        self.assertEqual(admin.membership, self.membership)
+
+        admin.tickets = 1
+        admin.membership = None
+        admin.save()
 
     def test_create_missing_payment_details(self):
         """
