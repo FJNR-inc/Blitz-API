@@ -604,8 +604,10 @@ class UsersTests(APITestCase):
         response = self.client.get(reverse('user-list'))
         self.assertEqual(json.loads(response.content)['count'], 2)
 
+        # Users are ordered alphabetically by email
         first_user = json.loads(response.content)['results'][0]
-        self.assertEqual(first_user['email'], self.user.email)
+        second_user = json.loads(response.content)['results'][1]
+        self.assertEqual(first_user['email'], self.admin.email)
 
         membership = {
             'url': 'http://testserver/memberships/1',
@@ -619,7 +621,7 @@ class UsersTests(APITestCase):
             'academic_levels': ['http://testserver/academic_levels/1']
         }
 
-        self.assertEqual(first_user['membership'], membership)
+        self.assertEqual(second_user['membership'], membership)
 
         # Check the system doesn't return attributes not expected
         attributes = [

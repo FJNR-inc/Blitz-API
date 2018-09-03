@@ -31,6 +31,7 @@ class WorkplaceViewSet(viewsets.ModelViewSet):
     queryset = Workplace.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_fields = '__all__'
+    ordering = ('name',)
 
 
 class PictureViewSet(viewsets.ModelViewSet):
@@ -70,6 +71,7 @@ class PeriodViewSet(viewsets.ModelViewSet):
     queryset = Period.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_fields = '__all__'
+    ordering = ('name',)
 
     def get_queryset(self):
         """

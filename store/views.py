@@ -31,6 +31,7 @@ class MembershipViewSet(viewsets.ModelViewSet):
         'name': ['exact'],
         'price': ['exact', 'gte', 'lte'],
     }
+    ordering = ('name',)
 
     def get_queryset(self):
         """
@@ -73,6 +74,7 @@ class PackageViewSet(viewsets.ModelViewSet):
         'name': ['exact'],
         'price': ['exact', 'gte', 'lte'],
     }
+    ordering = ('name',)
 
     def get_queryset(self):
         """

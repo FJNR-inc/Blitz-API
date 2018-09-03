@@ -60,6 +60,7 @@ class UserViewSet(viewsets.ModelViewSet):
         'groups': '__all__',
         'user_permissions': '__all__'
     }
+    ordering = ('email',)
 
     def get_serializer_class(self):
         if (self.action == 'update') | (self.action == 'partial_update'):
@@ -363,6 +364,7 @@ class DomainViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.DomainSerializer
     queryset = Domain.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
+    ordering = ('name',)
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -379,6 +381,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.OrganizationSerializer
     queryset = Organization.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
+    ordering = ('name',)
 
 
 class ObtainTemporaryAuthToken(ObtainAuthToken):
@@ -448,6 +451,7 @@ class AcademicLevelViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.AcademicLevelSerializer
     queryset = AcademicLevel.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
+    ordering = ('name',)
 
 
 class AcademicFieldViewSet(viewsets.ModelViewSet):
@@ -464,3 +468,4 @@ class AcademicFieldViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.AcademicFieldSerializer
     queryset = AcademicField.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
+    ordering = ('name',)
