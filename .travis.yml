@@ -16,7 +16,7 @@ script:
 - pycodestyle --config=.pycodestylerc .
 after_success:
 - coveralls
-- python aws_env.py
+- python write_secure_env.py
 - bash deploy.sh
 env:
   global:
