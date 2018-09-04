@@ -79,18 +79,18 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
         },
-        # 'mail_admins': {
-        #     'level': 'ERROR',
-        #     'class': 'django.utils.log.AdminEmailHandler',
-        #     'email_backend': 'django.core.mail.backends.smtp.EmailBackend',
-        #     'include_html': True,
-        #     'filters': [],
-        #     'formatter': 'simple'
-        # },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'email_backend': 'django.core.mail.backends.smtp.EmailBackend',
+            'include_html': True,
+            'filters': [],
+            'formatter': 'simple'
+        },
     },
     'loggers': {
         'django.request': {
-            'handlers': ['console', ],#'mail_admins'],
+            'handlers': ['console', 'mail_admins'],
             'level': 'DEBUG',  # change debug level as appropiate
             'propagate': False,
         },
@@ -270,7 +270,7 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@example.org')
 
 # Django email service. Used for administrative emails.
 
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='example@gmail.com')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='password')
