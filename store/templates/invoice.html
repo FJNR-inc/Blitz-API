@@ -75,7 +75,8 @@
   <body>
     <div class="email">
       <div class="email__logo">
-        <img src="logo_general.png"/>
+        {% load static %}
+        <img src="{% static 'images/logo_general.png'%}" alt="">
       </div>
       <div class="email__content">
         <h1 class="email__content__title">
