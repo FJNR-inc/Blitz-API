@@ -67,6 +67,12 @@ MIDDLEWARE = [
     'request_logging.middleware.LoggingMiddleware', # logs requests body
 ]
 
+# django-request-logging settings
+
+REQUEST_LOGGING_HTTP_4XX_LOG_LEVEL = logging.WARNING
+
+# Django logging configuration
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
