@@ -44,11 +44,13 @@ You need to ensure the virtual environment is active each time you want to launc
 ## Install all requirements
 
 Requirements of the project are stored in the `requirements.txt` file.
+Requirements for development related actions are stored in the `requirements-dev.txt` file.
 You can install them with:
 
 **WARNING** : Make sure your virtual environment is active or you will install the packages system-wide.
 ```
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
 ## Configure the database
