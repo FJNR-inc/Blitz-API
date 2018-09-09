@@ -4,6 +4,9 @@ services:
 - docker
 python:
 - 3.6
+branches:
+  only:
+  - develop
 notifications:
   email:
     on_success: change
