@@ -21,6 +21,10 @@ PAYSAFE_EXCEPTION = {
         _("An error occured while processing the payment: "),
         _("the card has been declined due to insufficient funds.")
     ),
+    '3029': "{0}{1}".format(
+        _("An error occured while processing the payment: "),
+        _("The external processing gateway has rejected the transaction.")
+    ),
     '5031': "{0}{1}".format(
         _("An error occured while processing the payment: "),
         _("the transaction has already been processed.")
