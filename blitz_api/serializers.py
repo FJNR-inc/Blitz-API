@@ -260,8 +260,8 @@ class UserSerializer(UserUpdateSerializer):
                 name=validated_data['university'].name
             ).domains.all()
 
-            email_domain = validated_data['email'].split("@", 1)[1]
-            if not any(d.name == email_domain for d in domains):
+            email_d = validated_data['email'].split("@", 1)[1]
+            if not any(d.name.lower() == email_d.lower() for d in domains):
                 raise serializers.ValidationError({
                     'email': [_("Invalid domain name.")]
                 })
