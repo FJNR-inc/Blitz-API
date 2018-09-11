@@ -367,7 +367,6 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 'CUSTOMER_NUMBER': user.id,
                 'AUTHORIZATION': order.authorization_id,
                 'TYPE': "Achat",
-                'SELLER_COORDINATES': "",
                 'ITEM_LIST': items,
                 'TAX': round(decimal.Decimal(float(
                     sum(item['price'] for item in items)
