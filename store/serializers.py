@@ -364,6 +364,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 'ORDER_ID': order.id,
                 'CUSTOMER_NAME': user.first_name + " " + user.last_name,
                 'CUSTOMER_EMAIL': user.email,
+                'CUSTOMER_NUMBER': user.id,
                 'AUTHORIZATION': order.authorization_id,
                 'TYPE': "Achat",
                 'SELLER_COORDINATES': "",
