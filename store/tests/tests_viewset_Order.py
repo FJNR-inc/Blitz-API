@@ -236,6 +236,64 @@ class OrderTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     @responses.activate
+    def test_create_user_has_membership(self):
+        """
+        Ensure we can't create an order containing a membership if the user
+        already has a membership.
+        """
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }],
+        }
+
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                "You already have an active membership."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+        admin = self.admin
+        admin.refresh_from_db()
+
+        admin.tickets = 1
+        admin.membership = None
+        admin.save()
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @responses.activate
     def test_create_no_place_left(self):
         """
         Ensure we can't create an order with reservations if the requested
