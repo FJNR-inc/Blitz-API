@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/FJNR-inc/Blitz-API.svg?branch=develop)](https://travis-ci.org/FJNR-inc/Blitz-API)
 [![Coverage Status](https://coveralls.io/repos/github/FJNR-inc/Blitz-API/badge.svg?branch=develop)](https://coveralls.io/github/FJNR-inc/Blitz-API?branch=develop)
+[![Updates](https://pyup.io/repos/github/FJNR-inc/Blitz-API/shield.svg)](https://pyup.io/repos/github/FJNR-inc/Blitz-API/)
+
 
 # Blitz API
 
