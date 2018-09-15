@@ -19,8 +19,8 @@ script:
 - pycodestyle --config=.pycodestylerc .
 after_success:
 - coveralls
-- python write_secure_env.py
-- bash deploy.sh
+- python utils/write_secure_env.py
+- bash utils/deploy.sh
 env:
   global:
   - DEBUG=True

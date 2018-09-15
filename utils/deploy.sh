@@ -35,7 +35,7 @@ docker run \
 -e PAYSAFE_USER \
 -e PAYSAFE_PASSWORD \
 -e EMAIL_HOST_PASSWORD \
--ti -v $(pwd):/var/task lambci/lambda:build-python3.6 bash -c "\
+-ti -v $(pwd)/..:/var/task lambci/lambda:build-python3.6 bash -c "\
 echo -e \"\e[7m Initializing virtualenv... \e[27m\" && \
 virtualenv env && \
 . env/bin/activate && \
