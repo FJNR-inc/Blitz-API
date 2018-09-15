@@ -1,3 +1,5 @@
+CURRENT_DIR=$(readlink -f $0)
+PARENT_DIR="${CURRENT_DIR%/*/*}"
 echo -e "\e[7m Starting Docker container... \e[27m"
 docker run \
 -e AWS_ACCESS_KEY_ID \
@@ -35,7 +37,7 @@ docker run \
 -e PAYSAFE_USER \
 -e PAYSAFE_PASSWORD \
 -e EMAIL_HOST_PASSWORD \
--ti -v $(pwd)/..:/var/task lambci/lambda:build-python3.6 bash -c "\
+-ti -v $PARENT_DIR:/var/task lambci/lambda:build-python3.6 bash -c "\
 echo -e \"\e[7m Initializing virtualenv... \e[27m\" && \
 virtualenv env && \
 . env/bin/activate && \
