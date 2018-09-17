@@ -36,7 +36,7 @@
             "CONFIRM_SIGN_UP": "6",
             "FORGOT_PASSWORD": "7",
             "EMAIL_BACKEND": "anymail.backends.sendinblue.EmailBackend",
-            "DEFAULT_FROM_EMAIL": "noreply@thesezvous.org",
+            "DEFAULT_FROM_EMAIL": "Thèsez-Vous <noreply@thesezvous.org>",
             "PAYSAFE_BASE_URL": "https://api.test.paysafe.com/",
             "PAYSAFE_VAULT_URL": "customervault/v1/",
             "PAYSAFE_CARD_URL": "cardpayments/v1/",

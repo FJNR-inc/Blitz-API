@@ -384,7 +384,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             msg_html = render_to_string("invoice.html", merge_data)
 
             send_mail(
-                'Thèsez-Vous?: Reçu pour votre achat',
+                "Confirmation d'achat",
                 plain_msg,
                 settings.DEFAULT_FROM_EMAIL,
                 [order.user.email],
