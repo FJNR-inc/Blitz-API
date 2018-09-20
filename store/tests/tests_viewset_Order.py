@@ -236,6 +236,69 @@ class OrderTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     @responses.activate
+    def test_create_reservation_only(self):
+        """
+        Ensure we can create an order for a reservation only.
+        """
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'order_lines': [{
+                'content_type': 'timeslot',
+                'object_id': 1,
+                'quantity': 1,
+            }],
+        }
+
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'id': 3,
+            'order_lines': [{
+                'content_type': 'timeslot',
+                'id': 2,
+                'object_id': 1,
+                'order': 'http://testserver/orders/3',
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/2'
+            }],
+            'url': 'http://testserver/orders/3',
+            'user': 'http://testserver/users/2',
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '0',
+            'settlement_id': '0',
+        }
+
+        self.assertEqual(response_data, content)
+
+        admin = self.admin
+        admin.refresh_from_db()
+
+        self.assertEqual(admin.tickets, 0)
+        admin.tickets = 1
+        admin.membership = None
+        admin.save()
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    @responses.activate
     def test_create_user_has_membership(self):
         """
         Ensure we can't create an order containing a membership if the user
@@ -490,6 +553,10 @@ class OrderTests(APITestCase):
         data = {
             'single_use_token': "SChsxyprFn176yhD",
             'order_lines': [{
+                'content_type': 'package',
+                'object_id': 1,
+                'quantity': 2,
+            }, {
                 'content_type': 'timeslot',
                 'object_id': 1,
                 'quantity': 1,
@@ -507,12 +574,19 @@ class OrderTests(APITestCase):
         content = {
             'id': 3,
             'order_lines': [{
-                'content_type': 'timeslot',
+                'content_type': 'package',
                 'id': 2,
+                'object_id': 1,
+                'quantity': 2,
+                'url': 'http://testserver/order_lines/2',
+                'order': 'http://testserver/orders/3',
+            }, {
+                'content_type': 'timeslot',
+                'id': 3,
                 'object_id': 1,
                 'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2'
+                'url': 'http://testserver/order_lines/3'
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/1',
@@ -525,8 +599,7 @@ class OrderTests(APITestCase):
 
         user = self.user
         user.refresh_from_db()
-
-        self.assertEqual(user.tickets, 0)
+        self.assertEqual(user.tickets, self.package.reservations * 2)
         user.tickets = 1
         user.save()
 

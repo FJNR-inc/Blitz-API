@@ -193,7 +193,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     single_use_token = serializers.CharField(
         write_only=True,
         required=False,
-        allow_blank=True
+        allow_blank=True,
+        allow_null=True,
     )
 
     def create(self, validated_data):
@@ -247,8 +248,10 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             reservation_orderlines = order.order_lines.filter(
                 content_type__model="timeslot"
             )
+            need_transaction = False
 
             if membership_orderlines:
+                need_transaction = True
                 if user.membership and user.membership_end > timezone.now():
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
@@ -260,6 +263,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     timezone.now() + user.membership.duration
                 )
             if package_orderlines:
+                need_transaction = True
                 for package_orderline in package_orderlines:
                     user.tickets += (
                         package_orderline.content_object.reservations *
@@ -298,7 +302,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                             )]
                         })
 
-            if payment_token:
+            if need_transaction and payment_token:
                 # Charge the order with the external payment API
                 try:
                     charge_response = charge_payment(
@@ -311,7 +315,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         'message': err
                     })
 
-            elif single_use_token:
+            elif need_transaction and single_use_token:
                 # Add card to the external profile & charge user
                 try:
                     card_create_response = create_external_card(
@@ -327,7 +331,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     raise serializers.ValidationError({
                         'message': err
                     })
-            else:
+            elif membership_orderlines or package_orderlines:
                 raise serializers.ValidationError({
                     'non_field_errors': [_(
                         "A payment_token or single_use_token is required to "
@@ -335,61 +339,64 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     )]
                 })
 
-            charge_res_content = charge_response.json()
-            order.authorization_id = charge_res_content['id']
-            order.settlement_id = charge_res_content['settlements'][0]['id']
-            order.save()
+            if need_transaction:
+                charge_res_content = charge_response.json()
+                order.authorization_id = charge_res_content['id']
+                order.settlement_id = charge_res_content['settlements'][0][
+                    'id'
+                ]
+                order.save()
+
+                TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
+
+                orderlines = order.order_lines.filter(
+                    models.Q(content_type__model='membership') |
+                    models.Q(content_type__model='package')
+                )
+
+                items = [
+                    {
+                        'price': orderline.content_object.price,
+                        'name': "{0}: {1}".format(
+                            str(orderline.content_type),
+                            orderline.content_object.name
+                        )
+                    } for orderline in orderlines
+                ]
+
+                # Send order confirmation email
+                merge_data = {
+                    'STATUS': "APPROUVÉE",
+                    'CARD_NUMBER': charge_res_content['card']['lastDigits'],
+                    'CARD_TYPE': PAYSAFE_CARD_TYPE[
+                        charge_res_content['card']['type']
+                    ],
+                    'DATETIME': timezone.localtime().strftime("%x %X"),
+                    'ORDER_ID': order.id,
+                    'CUSTOMER_NAME': user.first_name + " " + user.last_name,
+                    'CUSTOMER_EMAIL': user.email,
+                    'CUSTOMER_NUMBER': user.id,
+                    'AUTHORIZATION': order.authorization_id,
+                    'TYPE': "Achat",
+                    'ITEM_LIST': items,
+                    'TAX': round(decimal.Decimal(float(
+                        sum(item['price'] for item in items)
+                    ) * TAX_RATE), 2),
+                    'COST': order.total_cost,
+                }
+
+                plain_msg = render_to_string("invoice.txt", merge_data)
+                msg_html = render_to_string("invoice.html", merge_data)
+
+                send_mail(
+                    "Confirmation d'achat",
+                    plain_msg,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [order.user.email],
+                    html_message=msg_html,
+                )
 
             user.save()
-
-            TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
-
-            orderlines = order.order_lines.filter(
-                models.Q(content_type__model='membership') |
-                models.Q(content_type__model='package')
-            )
-
-            items = [
-                {
-                    'price': orderline.content_object.price,
-                    'name': "{0}: {1}".format(
-                        str(orderline.content_type),
-                        orderline.content_object.name
-                    )
-                } for orderline in orderlines
-            ]
-
-            # Send order confirmation email
-            merge_data = {
-                'STATUS': "APPROUVÉE",
-                'CARD_NUMBER': charge_res_content['card']['lastDigits'],
-                'CARD_TYPE': PAYSAFE_CARD_TYPE[
-                    charge_res_content['card']['type']
-                ],
-                'DATETIME': timezone.localtime().strftime("%x %X"),
-                'ORDER_ID': order.id,
-                'CUSTOMER_NAME': user.first_name + " " + user.last_name,
-                'CUSTOMER_EMAIL': user.email,
-                'CUSTOMER_NUMBER': user.id,
-                'AUTHORIZATION': order.authorization_id,
-                'TYPE': "Achat",
-                'ITEM_LIST': items,
-                'TAX': round(decimal.Decimal(float(
-                    sum(item['price'] for item in items)
-                ) * TAX_RATE), 2),
-                'COST': order.total_cost,
-            }
-
-            plain_msg = render_to_string("invoice.txt", merge_data)
-            msg_html = render_to_string("invoice.html", merge_data)
-
-            send_mail(
-                "Confirmation d'achat",
-                plain_msg,
-                settings.DEFAULT_FROM_EMAIL,
-                [order.user.email],
-                html_message=msg_html,
-            )
 
             return order
 
