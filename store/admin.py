@@ -1,8 +1,17 @@
 from django.contrib import admin
+from django.utils.translation import ugettext_lazy as _
 
 from simple_history.admin import SimpleHistoryAdmin
 
 from .models import Membership, Package, Order, OrderLine, PaymentProfile
+
+
+class OrderLineInline(admin.StackedInline):
+    model = OrderLine
+    can_delete = True
+    verbose_name_plural = _('Orderlines')
+    fk_name = 'order'
+    extra = 0
 
 
 class MembershipAdmin(SimpleHistoryAdmin):
@@ -22,6 +31,7 @@ class PackageAdmin(SimpleHistoryAdmin):
 
 
 class OrderAdmin(SimpleHistoryAdmin):
+    inlines = (OrderLineInline, )
     list_display = (
         'authorization_id',
         'settlement_id',
