@@ -412,7 +412,7 @@ class UsersTests(APITestCase):
         }
 
         user = UserFactory()
-        user.email = data['email']
+        user.email = 'JOHN@mailinator.com'
         user.save()
 
         response = self.client.post(

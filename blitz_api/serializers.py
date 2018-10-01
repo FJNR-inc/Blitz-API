@@ -189,15 +189,6 @@ class UserSerializer(UserUpdateSerializer):
         label=_('Email address'),
         max_length=254,
         required=True,
-        validators=[
-            UniqueValidator(
-                queryset=User.objects.all(),
-                message=_(
-                    "An account for the specified email "
-                    "address already exists."
-                ),
-            ),
-        ],
     )
     university = OrganizationSerializer(required=False)
     academic_level = AcademicLevelSerializer(required=False)
@@ -205,6 +196,17 @@ class UserSerializer(UserUpdateSerializer):
     membership = MembershipSerializer(
         read_only=True,
     )
+
+    def validate_email(self, value):
+        """
+        Lowercase all email addresses.
+        """
+        if User.objects.filter(email__iexact=value):
+            raise serializers.ValidationError(_(
+                "An account for the specified email "
+                "address already exists."
+            ))
+        return value
 
     def validate_university(self, value):
         """
