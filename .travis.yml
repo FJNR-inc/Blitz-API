@@ -11,6 +11,8 @@ notifications:
   email:
     on_success: change
     on_failure: change
+before_install:
+- python3 -c 'import os,sys; os.set_blocking(sys.stdout.fileno(), True)'
 install:
 - pip install -r requirements.txt
 - pip install -r requirements-dev.txt
