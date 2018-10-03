@@ -252,7 +252,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
             if membership_orderlines:
                 need_transaction = True
-                if user.membership and user.membership_end > timezone.now():
+                today = timezone.now().date()
+                if user.membership and user.membership_end > today:
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
                             "You already have an active membership."
@@ -260,7 +261,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     })
                 user.membership = membership_orderlines[0].content_object
                 user.membership_end = (
-                    timezone.now() + user.membership.duration
+                    timezone.now().date() + user.membership.duration
                 )
             if package_orderlines:
                 need_transaction = True
