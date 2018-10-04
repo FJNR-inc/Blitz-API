@@ -310,6 +310,7 @@ class Address(models.Model):
     )
     address_line2 = models.CharField(
         max_length=45,
+        blank=True,
         null=True,
         verbose_name=_("Address line 2"),
     )
