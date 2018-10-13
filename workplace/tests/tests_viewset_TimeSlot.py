@@ -130,6 +130,8 @@ class TimeSlotTests(APITestCase):
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
             'places_remaining': 0,
+            'reservations': [],
+            'reservations_canceled': [],
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/3',
             'period': 'http://testserver/periods/3',
@@ -165,6 +167,8 @@ class TimeSlotTests(APITestCase):
             'end_time': data['end_time'].isoformat(),
             'price': '3.00',
             'places_remaining': 40,
+            'reservations': [],
+            'reservations_canceled': [],
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/3',
             'period': 'http://testserver/periods/1',
@@ -449,6 +453,8 @@ class TimeSlotTests(APITestCase):
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
             'places_remaining': 40,
+            'reservations': [],
+            'reservations_canceled': [],
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/2',
             'period': 'http://testserver/periods/1',
@@ -514,6 +520,11 @@ class TimeSlotTests(APITestCase):
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
             'places_remaining': 40,
+            'reservations': [],
+            'reservations_canceled': [
+                'http://testserver/reservations/1',
+                'http://testserver/reservations/2'
+            ],
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/1',
             'period': 'http://testserver/periods/1',
@@ -585,6 +596,11 @@ class TimeSlotTests(APITestCase):
             'end_time': response_data['end_time'],
             'price': '1000.00',
             'places_remaining': 38,
+            'reservations': [
+                'http://testserver/reservations/1',
+                'http://testserver/reservations/2'
+            ],
+            'reservations_canceled': [],
             'start_time': response_data['start_time'],
             'url': 'http://testserver/time_slots/1',
             'period': 'http://testserver/periods/1',
@@ -738,6 +754,11 @@ class TimeSlotTests(APITestCase):
             'end_time': response_data['end_time'],
             'price': '1000.00',
             'places_remaining': 40,
+            'reservations': [],
+            'reservations_canceled': [
+                'http://testserver/reservations/1',
+                'http://testserver/reservations/2'
+            ],
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/1',
             'period': 'http://testserver/periods/1',
@@ -816,6 +837,11 @@ class TimeSlotTests(APITestCase):
             'end_time': response_data['end_time'],
             'price': '1000.00',
             'places_remaining': 40,
+            'reservations': [],
+            'reservations_canceled': [
+                'http://testserver/reservations/1',
+                'http://testserver/reservations/2'
+            ],
             'start_time': data['start_time'].isoformat(),
             'url': 'http://testserver/time_slots/1',
             'period': 'http://testserver/periods/1',
@@ -894,6 +920,8 @@ class TimeSlotTests(APITestCase):
                 'end_time': data['results'][0]['end_time'],
                 'price': '3.00',
                 'places_remaining': 40,
+                'reservations': [],
+                'reservations_canceled': [],
                 'start_time': data['results'][0]['start_time'],
                 'url': 'http://testserver/time_slots/2',
                 'period': 'http://testserver/periods/2',
@@ -945,6 +973,11 @@ class TimeSlotTests(APITestCase):
                 'period': 'http://testserver/periods/1',
                 'price': '3.00',
                 'places_remaining': 38,
+                'reservations': [
+                    'http://testserver/reservations/1',
+                    'http://testserver/reservations/2'
+                ],
+                'reservations_canceled': [],
                 'start_time': data['results'][0]['start_time'],
                 'url': 'http://testserver/time_slots/1',
                 'users': [
@@ -973,6 +1006,8 @@ class TimeSlotTests(APITestCase):
                 'end_time': data['results'][1]['end_time'],
                 'price': '3.00',
                 'places_remaining': 40,
+                'reservations': [],
+                'reservations_canceled': [],
                 'start_time': data['results'][1]['start_time'],
                 'url': 'http://testserver/time_slots/2',
                 'period': 'http://testserver/periods/2',
@@ -1023,6 +1058,11 @@ class TimeSlotTests(APITestCase):
                 'end_time': data['results'][0]['end_time'],
                 'period': 'http://testserver/periods/1',
                 'places_remaining': 38,
+                'reservations': [
+                    'http://testserver/reservations/1',
+                    'http://testserver/reservations/2'
+                ],
+                'reservations_canceled': [],
                 'price': '3.00',
                 'start_time': data['results'][0]['start_time'],
                 'url': 'http://testserver/time_slots/1',
@@ -1099,6 +1139,8 @@ class TimeSlotTests(APITestCase):
             'end_time': data['end_time'],
             'price': '3.00',
             'places_remaining': 40,
+            'reservations': [],
+            'reservations_canceled': [],
             'start_time': data['start_time'],
             'url': 'http://testserver/time_slots/2',
             'period': 'http://testserver/periods/2',
@@ -1164,6 +1206,11 @@ class TimeSlotTests(APITestCase):
             'period': 'http://testserver/periods/1',
             'price': '3.00',
             'places_remaining': 38,
+            'reservations': [
+                'http://testserver/reservations/1',
+                'http://testserver/reservations/2'
+            ],
+            'reservations_canceled': [],
             'start_time': data['start_time'],
             'url': 'http://testserver/time_slots/1',
             'users': [{

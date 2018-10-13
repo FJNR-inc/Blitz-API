@@ -1,4 +1,5 @@
 from rest_framework import serializers, status
+from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueValidator
 
 from django.contrib.auth import get_user_model
@@ -169,7 +170,8 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
 class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     places_remaining = serializers.SerializerMethodField()
-    # users = serializers.SerializerMethodField()
+    reservations = serializers.SerializerMethodField()
+    reservations_canceled = serializers.SerializerMethodField()
     workplace = WorkplaceSerializer(
         read_only=True,
         source='period.workplace',
@@ -183,6 +185,32 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         write_only=True,
         max_length=1000,
     )
+
+    def get_reservations(self, obj):
+        reservation_ids = Reservation.objects.filter(
+            is_active=True,
+            timeslot=obj,
+        ).values_list('id', flat=True)
+        return [
+            reverse(
+                'reservation-detail',
+                args=[id],
+                request=self.context['request']
+            ) for id in reservation_ids
+        ]
+
+    def get_reservations_canceled(self, obj):
+        reservation_ids = Reservation.objects.filter(
+            is_active=False,
+            timeslot=obj,
+        ).values_list('id', flat=True)
+        return [
+            reverse(
+                'reservation-detail',
+                args=[id],
+                request=self.context['request']
+            ) for id in reservation_ids
+        ]
 
     def get_places_remaining(self, obj):
         if not obj.period.workplace:

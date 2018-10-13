@@ -146,6 +146,8 @@ class ReservationTests(APITestCase):
                 'id': 1,
                 'period': 'http://testserver/periods/1',
                 'places_remaining': 39,
+                'reservations': ['http://testserver/reservations/3'],
+                'reservations_canceled': [],
                 'price': '3.00',
                 'start_time': '2130-01-15T08:00:00-05:00',
                 'url': 'http://testserver/time_slots/1',
@@ -292,6 +294,12 @@ class ReservationTests(APITestCase):
                 'id': 2,
                 'period': 'http://testserver/periods/2',
                 'places_remaining': -2,
+                'reservations': [
+                    'http://testserver/reservations/1',
+                    'http://testserver/reservations/2',
+                    'http://testserver/reservations/3'
+                ],
+                'reservations_canceled': [],
                 'price': '3.00',
                 'start_time': '2130-01-15T18:00:00-05:00',
                 'url': 'http://testserver/time_slots/2',
