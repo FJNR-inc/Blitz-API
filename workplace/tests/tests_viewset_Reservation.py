@@ -129,15 +129,68 @@ class ReservationTests(APITestCase):
             format='json',
         )
 
+        response_data = json.loads(response.content)
+        del response_data['user_details']["first_name"]
+        del response_data['user_details']["last_name"]
+        del response_data['user_details']["email"]
+        del response_data['user_details']['date_joined']
+
         content = {
             'id': 3,
             'is_active': True,
             'timeslot': 'http://testserver/time_slots/1',
             'url': 'http://testserver/reservations/3',
-            'user': 'http://testserver/users/1'
+            'user': 'http://testserver/users/1',
+            'timeslot_details': {
+                'end_time': '2130-01-15T12:00:00-05:00',
+                'id': 1,
+                'period': 'http://testserver/periods/1',
+                'places_remaining': 39,
+                'price': '3.00',
+                'start_time': '2130-01-15T08:00:00-05:00',
+                'url': 'http://testserver/time_slots/1',
+                'users': ['http://testserver/users/1'],
+                'workplace': {
+                    'address_line1': '123 random street',
+                    'address_line2': None,
+                    'city': '',
+                    'country': 'Random country',
+                    'details': 'short_description',
+                    'id': 1,
+                    'latitude': None,
+                    'longitude': None,
+                    'name': 'Blitz',
+                    'pictures': [],
+                    'postal_code': '123 456',
+                    'seats': 40,
+                    'state_province': 'Random state',
+                    'timezone': None,
+                    'url': 'http://testserver/workplaces/1'
+                }
+            },
+            'user_details': {
+                'academic_field': None,
+                'academic_level': None,
+                'birthdate': None,
+                'gender': None,
+                'groups': [],
+                'id': 1,
+                'is_active': True,
+                'is_staff': False,
+                'is_superuser': False,
+                'last_login': None,
+                'membership': None,
+                'membership_end': None,
+                'other_phone': None,
+                'phone': None,
+                'tickets': 1,
+                'university': None,
+                'url': 'http://testserver/users/1',
+                'user_permissions': []
+            }
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -222,15 +275,72 @@ class ReservationTests(APITestCase):
             format='json',
         )
 
+        response_data = json.loads(response.content)
+        del response_data['user_details']["first_name"]
+        del response_data['user_details']["last_name"]
+        del response_data['user_details']["email"]
+        del response_data['user_details']['date_joined']
+
         content = {
             'id': 3,
             'is_active': True,
             'timeslot': 'http://testserver/time_slots/2',
             'url': 'http://testserver/reservations/3',
-            'user': 'http://testserver/users/1'
+            'user': 'http://testserver/users/1',
+            'timeslot_details': {
+                'end_time': '2130-01-15T22:00:00-05:00',
+                'id': 2,
+                'period': 'http://testserver/periods/2',
+                'places_remaining': -2,
+                'price': '3.00',
+                'start_time': '2130-01-15T18:00:00-05:00',
+                'url': 'http://testserver/time_slots/2',
+                'users': [
+                    'http://testserver/users/1',
+                    'http://testserver/users/2',
+                    'http://testserver/users/1'
+                ],
+                'workplace': {
+                    'address_line1': '123 random street',
+                    'address_line2': None,
+                    'city': '',
+                    'country': 'Random country',
+                    'details': 'short_description',
+                    'id': 2,
+                    'latitude': None,
+                    'longitude': None,
+                    'name': 'Blitz2',
+                    'pictures': [],
+                    'postal_code': '123 456',
+                    'seats': 1,
+                    'state_province': 'Random state',
+                    'timezone': None,
+                    'url': 'http://testserver/workplaces/2'
+                }
+            },
+            'user_details': {
+                'academic_field': None,
+                'academic_level': None,
+                'birthdate': None,
+                'gender': None,
+                'groups': [],
+                'id': 1,
+                'is_active': True,
+                'is_staff': False,
+                'is_superuser': False,
+                'last_login': None,
+                'membership': None,
+                'membership_end': None,
+                'other_phone': None,
+                'phone': None,
+                'tickets': 1,
+                'university': None,
+                'url': 'http://testserver/users/1',
+                'user_permissions': []
+            }
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -396,6 +506,11 @@ class ReservationTests(APITestCase):
             format='json',
         )
 
+        response_data = json.loads(response.content)
+
+        del response_data['user_details']
+        del response_data['timeslot_details']
+
         content = {
             'id': 1,
             'is_active': False,
@@ -404,7 +519,7 @@ class ReservationTests(APITestCase):
             'user': 'http://testserver/users/1'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -427,6 +542,11 @@ class ReservationTests(APITestCase):
             format='json',
         )
 
+        response_data = json.loads(response.content)
+
+        del response_data['user_details']
+        del response_data['timeslot_details']
+
         content = {
             'id': 1,
             'is_active': False,
@@ -435,7 +555,7 @@ class ReservationTests(APITestCase):
             'user': 'http://testserver/users/1'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -468,6 +588,11 @@ class ReservationTests(APITestCase):
 
         data = json.loads(response.content)
 
+        del data['results'][0]['user_details']
+        del data['results'][0]['timeslot_details']
+        del data['results'][1]['user_details']
+        del data['results'][1]['timeslot_details']
+
         content = {
             'count': 2,
             'next': None,
@@ -494,6 +619,8 @@ class ReservationTests(APITestCase):
     def test_list_as_non_admin(self):
         """
         Ensure that a user can list its reservations.
+        Be wary: a user can see the list of user ID that are associated with
+                 the reservation's timeslot.
         """
         self.client.force_authenticate(user=self.user)
 
@@ -504,6 +631,9 @@ class ReservationTests(APITestCase):
 
         data = json.loads(response.content)
 
+        del data['results'][0]['user_details']
+        del data['results'][0]['timeslot_details']
+
         content = {
             'count': 1,
             'next': None,
@@ -513,7 +643,7 @@ class ReservationTests(APITestCase):
                 'is_active': True,
                 'timeslot': 'http://testserver/time_slots/2',
                 'url': 'http://testserver/reservations/1',
-                'user': 'http://testserver/users/1'
+                'user': 'http://testserver/users/1',
             }]
         }
 
@@ -525,7 +655,7 @@ class ReservationTests(APITestCase):
         """
         Ensure that a user can read one of his reservations.
         """
-        self.client.force_authenticate(user=self.user)
+        self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
             reverse(
@@ -533,6 +663,11 @@ class ReservationTests(APITestCase):
                 kwargs={'pk': 1},
             ),
         )
+
+        response_data = json.loads(response.content)
+
+        del response_data['user_details']
+        del response_data['timeslot_details']
 
         content = {
             'id': 1,
@@ -542,7 +677,7 @@ class ReservationTests(APITestCase):
             'user': 'http://testserver/users/1'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

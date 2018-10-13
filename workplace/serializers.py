@@ -296,7 +296,8 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         return super().create(validated_data)
 
     def to_representation(self, instance):
-        if self.context['view'].action == 'retrieve':
+        is_staff = self.context['request'].user.is_staff
+        if self.context['view'].action == 'retrieve' and is_staff:
             self.fields['users'] = UserSerializer(many=True)
         return super(TimeSlotSerializer, self).to_representation(instance)
 
@@ -329,6 +330,17 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
 
 class ReservationSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
+    # Custom names are needed to overcome an issue with DRF:
+    # https://github.com/encode/django-rest-framework/issues/2719
+    # I
+    timeslot_details = TimeSlotSerializer(
+        read_only=True,
+        source='timeslot',
+    )
+    user_details = UserSerializer(
+        read_only=True,
+        source='user',
+    )
 
     def validate(self, attrs):
         """Prevents overlapping and no-workplace reservations."""
