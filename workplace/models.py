@@ -180,6 +180,13 @@ class TimeSlot(models.Model):
 
 class Reservation(models.Model):
     """Represents a user registration to a TimeSlot"""
+
+    CANCELATION_REASON = (
+        ('U', _("User canceled")),
+        ('TD', _("Timeslot deleted")),
+        ('TM', _("Timeslot modified")),
+    )
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -194,6 +201,18 @@ class Reservation(models.Model):
     )
     is_active = models.BooleanField(
         verbose_name=_("Active")
+    )
+    cancelation_reason = models.CharField(
+        blank=True,
+        null=True,
+        max_length=100,
+        choices=CANCELATION_REASON,
+        verbose_name=_("Cancelation reason"),
+    )
+    cancelation_date = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Cancelation date"),
     )
 
     history = HistoricalRecords()

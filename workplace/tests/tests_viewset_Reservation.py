@@ -11,6 +11,8 @@ from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
+from unittest import mock
+
 from blitz_api.factories import UserFactory, AdminFactory
 
 from ..models import Period, TimeSlot, Workplace, Reservation
@@ -141,6 +143,8 @@ class ReservationTests(APITestCase):
             'timeslot': 'http://testserver/time_slots/1',
             'url': 'http://testserver/reservations/3',
             'user': 'http://testserver/users/1',
+            'cancelation_date': None,
+            'cancelation_reason': None,
             'timeslot_details': {
                 'end_time': '2130-01-15T12:00:00-05:00',
                 'id': 1,
@@ -289,6 +293,8 @@ class ReservationTests(APITestCase):
             'timeslot': 'http://testserver/time_slots/2',
             'url': 'http://testserver/reservations/3',
             'user': 'http://testserver/users/1',
+            'cancelation_date': None,
+            'cancelation_reason': None,
             'timeslot_details': {
                 'end_time': '2130-01-15T22:00:00-05:00',
                 'id': 2,
@@ -524,7 +530,9 @@ class ReservationTests(APITestCase):
             'is_active': False,
             'timeslot': 'http://testserver/time_slots/1',
             'url': 'http://testserver/reservations/1',
-            'user': 'http://testserver/users/1'
+            'user': 'http://testserver/users/1',
+            'cancelation_date': None,
+            'cancelation_reason': None
         }
 
         self.assertEqual(response_data, content)
@@ -560,28 +568,14 @@ class ReservationTests(APITestCase):
             'is_active': False,
             'timeslot': 'http://testserver/time_slots/2',
             'url': 'http://testserver/reservations/1',
-            'user': 'http://testserver/users/1'
+            'user': 'http://testserver/users/1',
+            'cancelation_date': None,
+            'cancelation_reason': None
         }
 
         self.assertEqual(response_data, content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_delete(self):
-        """
-        Ensure we can't delete a reservation.
-        Reservation should be updated to inactive.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        response = self.client.delete(
-            reverse(
-                'reservation-detail',
-                kwargs={'pk': 1},
-            ),
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_501_NOT_IMPLEMENTED)
 
     def test_list(self):
         """
@@ -610,13 +604,17 @@ class ReservationTests(APITestCase):
                 'is_active': True,
                 'timeslot': 'http://testserver/time_slots/2',
                 'url': 'http://testserver/reservations/1',
-                'user': 'http://testserver/users/1'
+                'user': 'http://testserver/users/1',
+                'cancelation_date': None,
+                'cancelation_reason': None
             }, {
                 'id': 2,
                 'is_active': True,
                 'timeslot': 'http://testserver/time_slots/2',
                 'url': 'http://testserver/reservations/2',
-                'user': 'http://testserver/users/2'
+                'user': 'http://testserver/users/2',
+                'cancelation_date': None,
+                'cancelation_reason': None
             }]
         }
 
@@ -652,6 +650,8 @@ class ReservationTests(APITestCase):
                 'timeslot': 'http://testserver/time_slots/2',
                 'url': 'http://testserver/reservations/1',
                 'user': 'http://testserver/users/1',
+                'cancelation_date': None,
+                'cancelation_reason': None
             }]
         }
 
@@ -663,7 +663,7 @@ class ReservationTests(APITestCase):
         """
         Ensure that a user can read one of his reservations.
         """
-        self.client.force_authenticate(user=self.admin)
+        self.client.force_authenticate(user=self.user)
 
         response = self.client.get(
             reverse(
@@ -682,7 +682,9 @@ class ReservationTests(APITestCase):
             'is_active': True,
             'timeslot': 'http://testserver/time_slots/2',
             'url': 'http://testserver/reservations/1',
-            'user': 'http://testserver/users/1'
+            'user': 'http://testserver/users/1',
+            'cancelation_date': None,
+            'cancelation_reason': None
         }
 
         self.assertEqual(response_data, content)
@@ -726,3 +728,112 @@ class ReservationTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete(self):
+        """
+        Ensure that a user can delete one of his reservations.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        with mock.patch(
+                'workplace.views.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'reservation-detail',
+                    kwargs={'pk': 1},
+                ),
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.reservation.refresh_from_db()
+
+        self.assertFalse(self.reservation.is_active)
+        self.assertEqual(self.reservation.cancelation_reason, 'U')
+        self.assertEqual(self.reservation.cancelation_date, FIXED_TIME)
+
+        self.reservation.is_active = True
+        self.reservation.cancelation_date = None
+        self.reservation.cancelation_reason = None
+
+    def test_delete_as_admin(self):
+        """
+        Ensure that an admin can delete any reservations.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        with mock.patch(
+                'workplace.views.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'reservation-detail',
+                    kwargs={'pk': 1},
+                ),
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.reservation.refresh_from_db()
+
+        self.assertFalse(self.reservation.is_active)
+        self.assertEqual(self.reservation.cancelation_reason, 'U')
+        self.assertEqual(self.reservation.cancelation_date, FIXED_TIME)
+
+        self.reservation.is_active = True
+        self.reservation.cancelation_date = None
+        self.reservation.cancelation_reason = None
+
+    def test_delete_not_owner(self):
+        """
+        Ensure that a user can't delete a reservation that he doesn't own.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.delete(
+            reverse(
+                'reservation-detail',
+                kwargs={'pk': self.reservation_admin.id},
+            ),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_twice(self):
+        """
+        Ensure that a user can delete one of his reservations.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        with mock.patch(
+                'workplace.views.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'reservation-detail',
+                    kwargs={'pk': 1},
+                ),
+            )
+
+        response = self.client.delete(
+            reverse(
+                'reservation-detail',
+                kwargs={'pk': 1},
+            ),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.reservation.refresh_from_db()
+
+        self.assertFalse(self.reservation.is_active)
+        self.assertEqual(self.reservation.cancelation_reason, 'U')
+        self.assertEqual(self.reservation.cancelation_date, FIXED_TIME)
+
+        self.reservation.is_active = True
+        self.reservation.cancelation_date = None
+        self.reservation.cancelation_reason = None

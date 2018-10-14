@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from blitz_api.exceptions import MailServiceError
@@ -165,7 +166,6 @@ class ReservationViewSet(viewsets.ModelViewSet):
     """
     serializer_class = serializers.ReservationSerializer
     queryset = Reservation.objects.all()
-    permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
     filter_fields = '__all__'
 
     def get_queryset(self):
@@ -177,5 +177,33 @@ class ReservationViewSet(viewsets.ModelViewSet):
             return Reservation.objects.all()
         return Reservation.objects.filter(user=self.request.user)
 
+    def get_permissions(self):
+        """
+        Returns the list of permissions that this view requires.
+        """
+        if self.action == 'destroy':
+            permission_classes = [
+                permissions.IsOwner,
+                IsAuthenticated,
+            ]
+        else:
+            permission_classes = [
+                permissions.IsAdminOrReadOnly,
+                IsAuthenticated,
+            ]
+        return [permission() for permission in permission_classes]
+
     def destroy(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
+        """
+        A user can cancel his reservation by "deleting" it. It will return an
+        empty response as if it was deleted, but will instead modify specific
+        fields to keep a track of events. Subsequent delete request won't do
+        anything, but will return a success.
+        """
+        instance = self.get_object()
+        if instance.is_active:
+            instance.is_active = False
+            instance.cancelation_reason = 'U'
+            instance.cancelation_date = timezone.now()
+            instance.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
