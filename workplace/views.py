@@ -167,6 +167,13 @@ class ReservationViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ReservationSerializer
     queryset = Reservation.objects.all()
     filter_fields = '__all__'
+    ordering_fields = (
+        'is_active',
+        'cancelation_date',
+        'cancelation_reason',
+        'timeslot__start_time',
+        'timeslot__end_time',
+    )
 
     def get_queryset(self):
         """
