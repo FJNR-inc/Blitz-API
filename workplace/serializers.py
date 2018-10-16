@@ -238,6 +238,23 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         # Will always be None if request method is not "update"
         instance_id = getattr(self.instance, 'id', None)
 
+        # Make sure that start_time & end_time are within the period's
+        # start_date & end_date
+        if start < period.start_date or start > period.end_date:
+            raise serializers.ValidationError({
+                'start_time': [_(
+                    "Start time must be set within the period's start_date "
+                    "and end_date."
+                )],
+            })
+        if end < period.start_date or end > period.end_date:
+            raise serializers.ValidationError({
+                'end_time': [_(
+                    "End time must be set within the period's start_date "
+                    "and end_date."
+                )],
+            })
+
         # Make sure both DateTimes refer to the same day
         if start.date() != end.date():
             raise serializers.ValidationError({
@@ -318,6 +335,8 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         """
         Uses period's price if no price is provided.
         """
+        # Make sure that force_data isn't passed on to the DB
+        validated_data.pop("force_update", None)
         if 'price' not in validated_data:
             validated_data['price'] = validated_data['period'].price
 

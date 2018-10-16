@@ -57,23 +57,23 @@ class TimeSlotTests(APITestCase):
         cls.period = Period.objects.create(
             name="random_period",
             workplace=cls.workplace,
-            start_date=timezone.now(),
-            end_date=timezone.now() + timedelta(weeks=4),
+            start_date=LOCAL_TIMEZONE.localize(datetime(2130, 1, 1, 1)),
+            end_date=LOCAL_TIMEZONE.localize(datetime(2130, 12, 12, 12)),
             price=3,
             is_active=False,
         )
         cls.period_active = Period.objects.create(
             name="random_period_active",
             workplace=cls.workplace2,
-            start_date=timezone.now(),
-            end_date=timezone.now() + timedelta(weeks=4),
+            start_date=LOCAL_TIMEZONE.localize(datetime(2130, 1, 1, 1)),
+            end_date=LOCAL_TIMEZONE.localize(datetime(2130, 12, 12, 12)),
             price=3,
             is_active=True,
         )
         cls.period_no_workplace = Period.objects.create(
             name="random_period_active",
-            start_date=timezone.now(),
-            end_date=timezone.now() + timedelta(weeks=4),
+            start_date=LOCAL_TIMEZONE.localize(datetime(2130, 1, 1, 1)),
+            end_date=LOCAL_TIMEZONE.localize(datetime(2130, 12, 12, 12)),
             price=3,
             is_active=True,
         )
@@ -275,6 +275,56 @@ class TimeSlotTests(APITestCase):
         content = {
             'end_time': ['End time must be later than start_time.'],
             'start_time': ['Start time must be earlier than end_time.']
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_not_within_period(self):
+        """
+        Ensure we can't create timeslots with start_time or end_time that are
+        not with the period's start_date and end_date.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'period': reverse('period-detail', args=[self.period.id]),
+            'price': '10.00',  # Will use Period's price if not provided
+            'start_time': LOCAL_TIMEZONE.localize(datetime(3000, 1, 16, 8)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(3000, 1, 16, 12)),
+        }
+
+        response = self.client.post(
+            reverse('timeslot-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'start_time': [
+                "Start time must be set within the period's start_date and "
+                "end_date."
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        data['start_time'] = self.period.start_date
+
+        response = self.client.post(
+            reverse('timeslot-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'end_time': [
+                "End time must be set within the period's start_date and "
+                "end_date."
+            ]
         }
 
         self.assertEqual(json.loads(response.content), content)
