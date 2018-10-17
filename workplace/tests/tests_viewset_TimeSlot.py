@@ -136,7 +136,7 @@ class TimeSlotTests(APITestCase):
             'url': 'http://testserver/time_slots/3',
             'period': 'http://testserver/periods/3',
             'users': [],
-            "workplace": None
+            'workplace': None
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -173,22 +173,22 @@ class TimeSlotTests(APITestCase):
             'url': 'http://testserver/time_slots/3',
             'period': 'http://testserver/periods/1',
             'users': [],
-            "workplace": {
-                "address_line1": "123 random street",
-                "address_line2": None,
-                "city": "",
-                "country": "Random country",
-                "details": "short_description",
-                "id": 1,
-                "latitude": None,
-                "longitude": None,
-                "name": "Blitz",
-                "pictures": [],
-                "postal_code": "123 456",
-                "seats": 40,
-                "state_province": "Random state",
-                "timezone": None,
-                "url": "http://testserver/workplaces/1"
+            'workplace': {
+                'address_line1': '123 random street',
+                'address_line2': None,
+                'city': '',
+                'country': 'Random country',
+                'details': 'short_description',
+                'id': 1,
+                'latitude': None,
+                'longitude': None,
+                'name': 'Blitz',
+                'pictures': [],
+                'postal_code': '123 456',
+                'seats': 40,
+                'state_province': 'Random state',
+                'timezone': None,
+                'url': 'http://testserver/workplaces/1',
             }
         }
 
@@ -603,10 +603,17 @@ class TimeSlotTests(APITestCase):
 
         self.assertEqual(json.loads(response.content), content)
 
-        reservation = self.reservation
-        reservation.refresh_from_db()
+        self.reservation.refresh_from_db()
 
-        self.assertFalse(reservation.is_active)
+        self.assertFalse(self.reservation.is_active)
+        self.assertEqual(self.reservation.cancelation_reason, 'TM')
+        self.assertTrue(self.reservation.cancelation_date)
+
+        self.reservation.is_active = True
+        self.reservation.cancelation_date = None
+        self.reservation.cancelation_reason = None
+        self.reservation.save()
+        self.reservation.refresh_from_db()
 
         user = self.user
         user.refresh_from_db()
@@ -615,10 +622,11 @@ class TimeSlotTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Test that two message was sent:
+        # Test that two messages were sent:
         self.assertEqual(len(mail.outbox), 2)
 
-    def test_update_safe(self):
+    @mock.patch('blitz_api.services.EmailMessage.send', return_value=0)
+    def test_update_safe(self, send):
         """
         Ensure we can partially update a timeslot with registered users if
         start_time and end_time are not modified.
@@ -679,60 +687,63 @@ class TimeSlotTests(APITestCase):
 
         self.assertEqual(json.loads(response.content), content)
 
-        reservation = self.reservation
-        reservation.refresh_from_db()
-
-        self.assertTrue(reservation.is_active)
+        self.reservation.refresh_from_db()
+        self.assertTrue(self.reservation.is_active)
+        self.assertFalse(self.reservation.cancelation_reason)
+        self.assertFalse(self.reservation.cancelation_date)
 
         user = self.user
         user.refresh_from_db()
 
         self.assertEqual(user.tickets, 0)
 
+        # Test that no message was sent:
+        self.assertEqual(len(mail.outbox), 0)
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    @override_settings(
-        LOCAL_SETTINGS={
-            "EMAIL_SERVICE": False,
-            "FRONTEND_INTEGRATION": {
-                "FORGOT_PASSWORD_URL": "fake_url",
-            }
-        }
-    )
-    def test_update_email_disabled(self):
-        """
-        Ensure we can't update a timeslot start_time or end_time if email
-        service is disabled.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        data = {
-            'period': reverse('period-detail', args=[self.period.id]),
-            'price': '10.00',  # Will use Period's price if not provided
-            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
-            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
-            'force_update': True,
-        }
-
-        response = self.client.put(
-            reverse(
-                'timeslot-detail',
-                kwargs={'pk': 1},
-            ),
-            data,
-            format='json',
-        )
-
-        content = {
-            'detail': 'Email service is disabled.'
-        }
-
-        self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+    # @override_settings(
+    #     LOCAL_SETTINGS={
+    #         "EMAIL_SERVICE": False,
+    #         "FRONTEND_INTEGRATION": {
+    #             "FORGOT_PASSWORD_URL": "fake_url",
+    #         }
+    #     }
+    # )
+    # def test_update_email_disabled(self):
+    #     """
+    #     Ensure we can't update a timeslot start_time or end_time if email
+    #     service is disabled.
+    #     """
+    #     self.client.force_authenticate(user=self.admin)
+    #
+    #     data = {
+    #         'period': reverse('period-detail', args=[self.period.id]),
+    #         'price': '10.00',  # Will use Period's price if not provided
+    #         'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+    #         'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 16)),
+    #         'force_update': True,
+    #     }
+    #
+    #     response = self.client.put(
+    #         reverse(
+    #             'timeslot-detail',
+    #             kwargs={'pk': 1},
+    #         ),
+    #         data,
+    #         format='json',
+    #     )
+    #
+    #     content = {
+    #         'detail': 'Email service is disabled.'
+    #     }
+    #
+    #     self.assertEqual(json.loads(response.content), content)
+    #
+    #     self.assertEqual(
+    #         response.status_code,
+    #         status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #     )
 
     def test_update_not_force(self):
         """
@@ -837,10 +848,16 @@ class TimeSlotTests(APITestCase):
 
         self.assertEqual(json.loads(response.content), content)
 
-        reservation = self.reservation
-        reservation.refresh_from_db()
+        self.reservation.refresh_from_db()
+        self.assertFalse(self.reservation.is_active)
+        self.assertEqual(self.reservation.cancelation_reason, 'TM')
+        self.assertTrue(self.reservation.cancelation_date)
 
-        self.assertFalse(reservation.is_active)
+        self.reservation.is_active = True
+        self.reservation.cancelation_date = None
+        self.reservation.cancelation_reason = None
+        self.reservation.save()
+        self.reservation.refresh_from_db()
 
         user = self.user
         user.refresh_from_db()
@@ -920,10 +937,10 @@ class TimeSlotTests(APITestCase):
 
         self.assertEqual(json.loads(response.content), content)
 
-        reservation = self.reservation
-        reservation.refresh_from_db()
-
-        self.assertFalse(reservation.is_active)
+        self.reservation.refresh_from_db()
+        self.assertFalse(self.reservation.is_active)
+        self.assertEqual(self.reservation.cancelation_reason, 'TM')
+        self.assertTrue(self.reservation.cancelation_date)
 
         user = self.user
         user.refresh_from_db()
@@ -974,8 +991,9 @@ class TimeSlotTests(APITestCase):
         self.reservation.refresh_from_db()
 
         self.assertFalse(self.reservation.is_active)
-        self.assertEqual(self.reservation.cancelation_reason, 'TU')
+        self.assertEqual(self.reservation.cancelation_reason, 'TD')
         self.assertTrue(self.reservation.cancelation_date)
+        self.assertEqual(len(mail.outbox), 2)
 
         self.reservation.is_active = True
         self.reservation.cancelation_date = None

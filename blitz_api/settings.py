@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'anymail',
     'simple_history',
     'rest_framework_filters',
+    'safedelete',
 ]
 
 MIDDLEWARE = [
@@ -284,6 +285,7 @@ EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 # Email addresses to notify in case of error
 ADMINS = config('ADMINS', default="", cast=lambda v: literal_eval("["+v+"]"))
 SERVER_EMAIL = config('SERVER_EMAIL', default='example@gmail.com')
+SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='admin@fjnr.ca')
 
 
 # User specific settings

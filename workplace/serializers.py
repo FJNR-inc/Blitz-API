@@ -1,10 +1,15 @@
+from copy import copy
+
 from rest_framework import serializers, status
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueValidator
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models import F
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
@@ -40,7 +45,7 @@ class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Workplace
-        fields = '__all__'
+        exclude = ('deleted',)
         extra_kwargs = {
             'details': {'help_text': _("Description of the workplace.")},
             'name': {
@@ -141,7 +146,7 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Period
-        fields = '__all__'
+        exclude = ('deleted',)
         extra_kwargs = {
             'workplace': {
                 'required': True,
@@ -321,6 +326,7 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         if instance.reservations.filter(is_active=True).exists():
             if (validated_data.get('start_time') or
                     validated_data.get('end_time')):
+                custom_message = validated_data.get('custom_message')
                 reservation_cancel = instance.reservations.filter(
                     is_active=True
                 )
@@ -329,17 +335,36 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
                     id__in=affected_users_id,
                 )
 
-                # Order is important here because the Queryset are dynamically
-                # changing when doing update(). If the `reservation_cancel`
-                # queryset objects are updated first, the queryset will become
-                # empty since it was filtered using "is_active=True". That
-                # would lead to an empty `affected_users` queryset.
+                reservations_cancel_copy = copy(reservation_cancel)
+
                 affected_users.update(tickets=F('tickets') + 1)
                 reservation_cancel.update(
                     is_active=False,
-                    cancelation_reason='TU', # TimeSlot updated
+                    cancelation_reason='TM',  # TimeSlot modified
                     cancelation_date=timezone.now(),
                 )
+
+                for reservation in reservations_cancel_copy:
+                    merge_data = {
+                        'TIMESLOT_LIST': [instance],
+                        'SUPPORT_EMAIL': settings.SUPPORT_EMAIL,
+                        'CUSTOM_MESSAGE': custom_message,
+                    }
+                    plain_msg = render_to_string(
+                        "cancelation.txt",
+                        merge_data
+                    )
+                    msg_html = render_to_string(
+                        "cancelation.html",
+                        merge_data
+                    )
+                    send_mail(
+                        "Annulation d'un bloc de rédaction",
+                        plain_msg,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [reservation.user.email],
+                        html_message=msg_html,
+                    )
 
         return super(TimeSlotSerializer, self).update(
             instance,
@@ -363,7 +388,7 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = TimeSlot
-        exclude = ('name', )
+        exclude = ('name', 'deleted',)
         extra_kwargs = {
             'period': {
                 'required': True,
@@ -435,7 +460,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Reservation
-        fields = '__all__'
+        exclude = ('deleted',)
         extra_kwargs = {
             'is_active': {
                 'required': True,

@@ -40,7 +40,6 @@
         margin: auto;
       }
 
-
       .email__content__title {
         font-size: 24px;
         font-weight: 900;
@@ -54,10 +53,6 @@
       .email__content__summary__item {
         line-height: 15px;
         margin: 5px 0;
-      }
-
-      .email__content__summary__item--total {
-        font-weight: bold;
       }
 
       .email__content__summary__item__spacer {
@@ -80,63 +75,62 @@
       </div>
       <div class="email__content">
         <h1 class="email__content__title">
-          Confirmation d'achat
+          Annulation d'un bloc de rédaction
         </h1>
         <p>
-          Ceci est un reçu pour votre achat. Merci d'en garder une copie.
+          Nous sommes désolés de vous informer qu'un des blocs de rédaction
+          auquel vous êtes inscrits a été annulé.
+          Le bloc prépayé vous a été retourné afin que vous puissiez en réserver
+          un nouveau.
+          <br>
+          <br>
+          Nous comprenons que la fermeture de l'espace peut affecter
+          votre horaire et nous restons donc à votre disposition
+          à l'addresse courriel {{SUPPORT_EMAIL}} au cas où vous auriez besoin
+          de discuter avec quelqu'un de notre équipe.
         </p>
 
-        <ul>
-          <li><b>Nom: </b>{{CUSTOMER_NAME}}</li>
-          <li><b>Courriel: </b>{{CUSTOMER_EMAIL}}</li>
-        </ul>
-
-        <ul>
-          <li><b>NUMÉRO DE MEMBRE: </b>{{CUSTOMER_NUMBER}}</li>
-        </ul>
-
-        <ul>
-          <li><b>Numéro de commande: </b>{{ORDER_ID}}</li>
-          <li><b>Date: </b>{{DATETIME}}</li>
-          <li><b>Numéro de carte: </b>**** **** **** {{CARD_NUMBER}}</li>
-          <li><b>Autorisation: </b>{{AUTHORIZATION}}</li>
-          <li><b>Total: </b>{{COST}}$ CAD</li>
-        </ul>
+        {% if CUSTOM_MESSAGE %}
+        <h2 class="email__content__subtitle">
+          Informations additionnels
+        </h2>
+        <p>
+          {{CUSTOM_MESSAGE}}
+        </p>
+        {% endif %}
 
         <h2 class="email__content__subtitle">
-          Sommaire de la commande
+          Bloc de rédaction annulé
         </h2>
         <div class="email__content__summary">
           <!--Repeat the item section in function of the list of items on the order received by the API -->
-          {%for item in ITEM_LIST%}
+          {%for item in TIMESLOT_LIST%}
           <div class="email__content__summary__item">
             <div class="email__content__summary__item__price">
-              {{item.price}}$ CAD
+               {{item.start_time|date:"l j F Y"|capfirst}}
             </div>
             <div class="email__content__summary__item__name">
-              {{item.name}}
+              Date:
+            </div>
+          </div>
+          <div class="email__content__summary__item">
+            <div class="email__content__summary__item__price">
+              {{item.start_time|date:"G"}}h{{item.start_time|date:"i"}}
+            </div>
+            <div class="email__content__summary__item__name">
+              Heure de début:
+            </div>
+          </div>
+          <div class="email__content__summary__item">
+            <div class="email__content__summary__item__price">
+              {{item.end_time|date:"G"}}h{{item.end_time|date:"i"}}
+            </div>
+            <div class="email__content__summary__item__name">
+              Heure de fin:
             </div>
           </div>
           {% endfor %}
           <br/>
-          <!--Repeat the item section in function of the list of taxes you have -->
-          <div class="email__content__summary__item">
-            <div class="email__content__summary__item__price">
-              {{TAX}}$ CAD
-            </div>
-            <div class="email__content__summary__item__name">
-              TPS/TVQ
-            </div>
-          </div>
-          <br/>
-          <div class="email__content__summary__item email__content__summary__item--total">
-            <div class="email__content__summary__item__price">
-              {{COST}}$ CAD
-            </div>
-            <div class="email__content__summary__item__name">
-              Total
-            </div>
-          </div>
         </div>
         <h2 class="email__content__subtitle">
           L'équipe Thèsez-vous

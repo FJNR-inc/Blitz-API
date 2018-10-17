@@ -1,11 +1,16 @@
+from copy import copy
+
 import rest_framework
 from rest_framework import viewsets, status, exceptions
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.mail import send_mail as django_send_mail
 from django.db import transaction
 from django.db.models import F
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
@@ -124,36 +129,6 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
             return queryset
         return queryset.filter(period__is_active=True)
 
-    def perform_update(self, serializer):
-        validated_data = serializer.validated_data
-        instance = self.get_object()
-        try:
-            if (instance.users.exists() and
-                    (validated_data.get('start_time') or
-                     validated_data.get('end_time'))):
-                with transaction.atomic():
-                    new_instance = serializer.save()
-                    context = {
-                        "custom_message": validated_data.get('custom_message'),
-                    }
-                    reservation_cancel = Reservation.objects.filter(
-                        timeslot=instance
-                    )
-                    affected_users_id = reservation_cancel.values_list('user')
-                    affected_users = User.objects.filter(
-                        id__in=affected_users_id,
-                    )
-                    # Failed emails are not sent back in the response yet
-                    failed_emails = send_mail(
-                        affected_users,
-                        context,
-                        "RESERVATION_CANCELLED",
-                    )
-                    return new_instance
-        except MailServiceError as err:
-            raise exceptions.APIException(err)
-        return serializer.save()
-
     def destroy(self, request, *args, **kwargs):
         """
         An admin can soft-delete a TimeSlot instance. From an API user
@@ -181,6 +156,8 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
                     )]
                 })
 
+        custom_message = serializer.validated_data.get('custom_message')
+
         reservation_cancel = instance.reservations.filter(
             is_active=True
         )
@@ -190,6 +167,8 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
         )
 
         with transaction.atomic():
+            reservations_cancel_copy = copy(reservation_cancel)
+
             # The sequence is important here because the Queryset are
             # dynamically changing when doing update(). If the
             # `reservation_cancel` queryset objects are updated first, the
@@ -199,10 +178,32 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
             affected_users.update(tickets=F('tickets') + 1)
             reservation_cancel.update(
                 is_active=False,
-                cancelation_reason='TD', # TimeSlot deleted
+                cancelation_reason='TD',  # TimeSlot deleted
                 cancelation_date=timezone.now(),
             )
             instance.delete()
+
+            for reservation in reservations_cancel_copy:
+                merge_data = {
+                    'TIMESLOT_LIST': [instance],
+                    'SUPPORT_EMAIL': settings.SUPPORT_EMAIL,
+                    'CUSTOM_MESSAGE': custom_message,
+                }
+                plain_msg = render_to_string(
+                    "cancelation.txt",
+                    merge_data
+                )
+                msg_html = render_to_string(
+                    "cancelation.html",
+                    merge_data
+                )
+                django_send_mail(
+                    "Annulation d'un bloc de rédaction",
+                    plain_msg,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [reservation.user.email],
+                    html_message=msg_html,
+                )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

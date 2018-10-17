@@ -1,0 +1,42 @@
+
+
+{% load static %}
+
+ 
+** ANNULATION D'UN BLOC DE RÉDACTION
+------------------------------------------------------------
+
+Nous sommes désolés de vous informer qu'un des blocs de rédaction auquel vous êtes inscrits a été annulé. Le bloc prépayé vous a été retourné afin que vous puissiez en réserver un nouveau.
+
+Nous comprenons que la fermeture de l'espace peut affecter votre horaire et nous restons donc à votre disposition à l'addresse courriel {{SUPPORT_EMAIL}} au cas où vous auriez besoin de discuter avec quelqu'un de notre équipe.
+{% if CUSTOM_MESSAGE %}
+
+ 
+** INFORMATIONS ADDITIONNELS
+------------------------------------------------------------
+
+{{CUSTOM_MESSAGE}}
+{% endif %}
+
+ 
+** BLOC DE RÉDACTION ANNULÉ
+------------------------------------------------------------
+
+{%for item in TIMESLOT_LIST%}
+
+{{item.start_time|date:"l j F Y"|capfirst}}
+Date:
+
+{{item.start_time|date:"G"}}h{{item.start_time|date:"i"}}
+Heure de début:
+
+{{item.end_time|date:"G"}}h{{item.end_time|date:"i"}}
+Heure de fin: {% endfor %}
+
+ 
+** L'ÉQUIPE THÈSEZ-VOUS
+------------------------------------------------------------
+
+Thèsez-vous n'autorise pas d'échanges ou de remboursements.
+Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2
+info@thesez-vous.com, www.thesez-vous.com

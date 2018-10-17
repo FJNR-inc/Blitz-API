@@ -3,6 +3,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.html import format_html
 from django.contrib.auth import get_user_model
 
+from safedelete.models import SafeDeleteModel, SOFT_DELETE_CASCADE
+
 from simple_history.models import HistoricalRecords
 
 from blitz_api.models import Address
@@ -10,7 +12,7 @@ from blitz_api.models import Address
 User = get_user_model()
 
 
-class Workplace(Address):
+class Workplace(Address, SafeDeleteModel):
     """Represents physical places."""
 
     class Meta:
@@ -79,7 +81,7 @@ class Picture(models.Model):
         return self.name
 
 
-class Period(models.Model):
+class Period(SafeDeleteModel):
     """Represents periods of time that has certain attributes"""
 
     class Meta:
@@ -127,7 +129,7 @@ class Period(models.Model):
         return self.name
 
 
-class TimeSlot(models.Model):
+class TimeSlot(SafeDeleteModel):
     """Represents time slots in a day"""
 
     class Meta:
@@ -178,7 +180,7 @@ class TimeSlot(models.Model):
         return str(self.start_time) + " - " + str(self.end_time)
 
 
-class Reservation(models.Model):
+class Reservation(SafeDeleteModel):
     """Represents a user registration to a TimeSlot"""
 
     CANCELATION_REASON = (
