@@ -5,6 +5,7 @@ from rest_framework.validators import UniqueValidator
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import F
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from blitz_api.serializers import UserSerializer
@@ -180,6 +181,10 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         required=False,
         write_only=True,
     )
+    force_delete = serializers.BooleanField(
+        required=False,
+        write_only=True,
+    )
     custom_message = serializers.CharField(
         required=False,
         write_only=True,
@@ -237,6 +242,19 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         )
         # Will always be None if request method is not "update"
         instance_id = getattr(self.instance, 'id', None)
+
+        # Make sure that force_update is provided for update operations
+        action = self.context['view'].action
+        if action in ['update', 'partial_update']:
+            if self.instance.reservations.filter(is_active=True).exists():
+                if not attrs.get('force_update'):
+                    raise serializers.ValidationError({
+                        "non_field_errors": [_(
+                            "Trying to push an update that affects users "
+                            "without providing `force_update` field."
+                        )]
+                    })
+        attrs.pop('force_update', None)
 
         # Make sure that start_time & end_time are within the period's
         # start_date & end_date
@@ -303,13 +321,6 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         if instance.reservations.filter(is_active=True).exists():
             if (validated_data.get('start_time') or
                     validated_data.get('end_time')):
-                if not validated_data.get('force_update'):
-                    raise serializers.ValidationError({
-                        "non_field_errors": [_(
-                            "Trying to push an update that affects users "
-                            "without providing `force_update` field."
-                        )]
-                    })
                 reservation_cancel = instance.reservations.filter(
                     is_active=True
                 )
@@ -324,7 +335,11 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
                 # empty since it was filtered using "is_active=True". That
                 # would lead to an empty `affected_users` queryset.
                 affected_users.update(tickets=F('tickets') + 1)
-                reservation_cancel.update(is_active=False)
+                reservation_cancel.update(
+                    is_active=False,
+                    cancelation_reason='TU', # TimeSlot updated
+                    cancelation_date=timezone.now(),
+                )
 
         return super(TimeSlotSerializer, self).update(
             instance,
@@ -335,8 +350,6 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         """
         Uses period's price if no price is provided.
         """
-        # Make sure that force_data isn't passed on to the DB
-        validated_data.pop("force_update", None)
         if 'price' not in validated_data:
             validated_data['price'] = validated_data['period'].price
 

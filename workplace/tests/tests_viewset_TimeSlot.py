@@ -937,18 +937,111 @@ class TimeSlotTests(APITestCase):
 
     def test_delete(self):
         """
-        Ensure we can delete a timeslot.
+        Ensure we can delete a timeslot that has no reservations.
         """
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.delete(
             reverse(
                 'timeslot-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': 2},
             ),
         )
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_with_reservations(self):
+        """
+        Ensure we can delete a timeslot that has reservations.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'force_delete': True,
+        }
+
+        response = self.client.delete(
+            reverse(
+                'timeslot-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.reservation.refresh_from_db()
+
+        self.assertFalse(self.reservation.is_active)
+        self.assertEqual(self.reservation.cancelation_reason, 'TU')
+        self.assertTrue(self.reservation.cancelation_date)
+
+        self.reservation.is_active = True
+        self.reservation.cancelation_date = None
+        self.reservation.cancelation_reason = None
+        self.reservation.save()
+        self.reservation.refresh_from_db()
+
+    def test_delete_with_reservations_no_force(self):
+        """
+        Ensure we can't delete a timeslot that has reservations if the
+        force_delete field is not provided and set to True.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            # 'force_delete': True,
+        }
+
+        response = self.client.delete(
+            reverse(
+                'timeslot-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            "non_field_errors": [
+                "Trying to do a TimeSlot deletion that affects "
+                "users without providing `force_delete` field set to True."
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_with_reservations_invalid_force_delete(self):
+        """
+        Ensure we can't delete a timeslot that has reservations if the
+        force_delete field is not provided and set to True.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'force_delete': "invalid",
+        }
+
+        response = self.client.delete(
+            reverse(
+                'timeslot-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'force_delete': [
+                '"invalid" is not a valid boolean.'
+            ]
+        }
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json.loads(response.content), content)
 
     def test_list(self):
         """
