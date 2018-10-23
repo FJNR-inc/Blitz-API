@@ -90,6 +90,93 @@ class PeriodViewSet(viewsets.ModelViewSet):
             return Period.objects.all()
         return Period.objects.filter(is_active=True)
 
+    def destroy(self, request, *args, **kwargs):
+        """
+        An admin can soft-delete a Period instance. From an API user
+        perspective, this is no different from a normal delete.
+        The deletion will automatically soft-delete associated timeslots,
+        cancel those timeslots' reservations and  refund used tickets to the
+        registered users.
+        """
+        instance = self.get_object()
+
+        data = request.data
+        serializer = serializers.PeriodSerializer(data=data)
+        serializer.is_valid()
+        if 'force_delete' in serializer.errors:
+            raise rest_framework.serializers.ValidationError({
+                'force_delete': serializer.errors['force_delete']
+            })
+
+        if instance.time_slots.filter(reservations__is_active=True).exists():
+            if not data.get('force_delete'):
+                raise rest_framework.serializers.ValidationError({
+                    "non_field_errors": [_(
+                        "Trying to do a Period deletion that affects "
+                        "users without providing `force_delete` field set "
+                        "to True."
+                    )]
+                })
+
+        custom_message = data.get('custom_message')
+
+        reservation_cancel = Reservation.objects.filter(
+            timeslot__period=instance, is_active=True
+        )
+        affected_users = User.objects.filter(
+            reservations__in=reservation_cancel
+        )
+
+        with transaction.atomic():
+            reservations_cancel_copy = copy(reservation_cancel)
+
+            # The sequence is important here because the Queryset are
+            # dynamically changing when doing update(). If the
+            # `reservation_cancel` queryset objects are updated first, the
+            # queryset will become empty since it was filtered using
+            # "is_active=True". That would lead to an empty `affected_users`
+            # queryset.
+            #
+            # For-loop required to handle duplicates (if user has multiple
+            # reservations that must be canceled).
+            # user.update(tickets=F('tickets') + 1)
+            for user in affected_users:
+                User.objects.filter(
+                    email=user.email
+                ).update(tickets=F('tickets') + 1)  # Increment tickets
+            reservation_cancel.update(
+                is_active=False,
+                cancelation_reason='TD',  # Period deleted
+                cancelation_date=timezone.now(),
+            )
+            instance.delete()
+
+            for reservation in reservations_cancel_copy:
+                merge_data = {
+                    'TIMESLOT_LIST': [reservation.timeslot],
+                    'SUPPORT_EMAIL': settings.SUPPORT_EMAIL,
+                    'CUSTOM_MESSAGE': custom_message,
+                }
+                plain_msg = render_to_string(
+                    "cancelation.txt",
+                    merge_data
+                )
+                msg_html = render_to_string(
+                    "cancelation.html",
+                    merge_data
+                )
+                django_send_mail(
+                    "Annulation d'un bloc de rédaction",
+                    plain_msg,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [reservation.user.email],
+                    html_message=msg_html,
+                )
+
+            instance.time_slots.all().delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class TimeSlotViewSet(viewsets.ModelViewSet):
     """
@@ -161,9 +248,8 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
         reservation_cancel = instance.reservations.filter(
             is_active=True
         )
-        affected_users_id = reservation_cancel.values_list('user')
         affected_users = User.objects.filter(
-            id__in=affected_users_id,
+            reservations__in=reservation_cancel
         )
 
         with transaction.atomic():
@@ -175,7 +261,15 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
             # queryset will become empty since it was filtered using
             # "is_active=True". That would lead to an empty `affected_users`
             # queryset.
-            affected_users.update(tickets=F('tickets') + 1)
+            #
+            # For-loop required to handle duplicates (if user has multiple
+            # reservations that must be canceled).
+            # user.update(tickets=F('tickets') + 1)
+            for user in affected_users:
+                User.objects.filter(
+                    email=user.email
+                ).update(tickets=F('tickets') + 1)  # Increment tickets
+
             reservation_cancel.update(
                 is_active=False,
                 cancelation_reason='TD',  # TimeSlot deleted

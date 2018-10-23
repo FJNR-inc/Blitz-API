@@ -9,7 +9,9 @@ from rest_framework.test import APIClient, APITestCase
 from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
+from django.core import mail
 from django.contrib.auth import get_user_model
+from django.test.utils import override_settings
 
 from blitz_api.factories import UserFactory, AdminFactory
 
@@ -513,7 +515,7 @@ class PeriodTests(APITestCase):
 
     def test_delete(self):
         """
-        Ensure we can delete a period.
+        Ensure we can delete a period that has no reservations.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -525,6 +527,121 @@ class PeriodTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_with_reservations(self):
+        """
+        Ensure we can delete a period that has reservations.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        reservation_2 = Reservation.objects.create(
+            user=self.user,
+            timeslot=self.time_slot_active,
+            is_active=True,
+        )
+
+        data = {
+            'force_delete': True,
+        }
+
+        response = self.client.delete(
+            reverse(
+                'period-detail',
+                kwargs={'pk': 2},
+            ),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.reservation.refresh_from_db()
+        self.user.refresh_from_db()
+        self.admin.refresh_from_db()
+
+        # Make sure the timeslot was deleted (cascade)
+        self.assertFalse(
+            TimeSlot.objects.filter(
+                name="evening_time_slot_active"
+            ).exists()
+        )
+        self.assertFalse(self.reservation.is_active)
+        self.assertEqual(self.reservation.cancelation_reason, 'TD')
+        self.assertTrue(self.reservation.cancelation_date)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(self.user.tickets, 3)
+        self.assertEqual(self.admin.tickets, 1)
+
+        self.reservation.is_active = True
+        self.reservation.cancelation_date = None
+        self.reservation.cancelation_reason = None
+        self.reservation.save()
+        self.reservation.refresh_from_db()
+        reservation_2.delete()
+        self.user.tickets = 0
+        self.user.save()
+        self.admin.tickets = 0
+        self.admin.save()
+
+    def test_delete_with_reservations_no_force(self):
+        """
+        Ensure we can't delete a period that has reservations if the
+        force_delete field is not provided and set to True.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            # 'force_delete': True,
+        }
+
+        response = self.client.delete(
+            reverse(
+                'period-detail',
+                kwargs={'pk': 2},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            "non_field_errors": [
+                "Trying to do a Period deletion that affects "
+                "users without providing `force_delete` field set to True."
+            ]
+        }
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.assertEqual(json.loads(response.content), content)
+
+    def test_delete_with_reservations_invalid_force_delete(self):
+        """
+        Ensure we can't delete a timeslot that has reservations if the
+        force_delete field is not provided and set to True.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'force_delete': "invalid",
+        }
+
+        response = self.client.delete(
+            reverse(
+                'period-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'force_delete': [
+                '"invalid" is not a valid boolean.'
+            ]
+        }
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json.loads(response.content), content)
 
     def test_list(self):
         """

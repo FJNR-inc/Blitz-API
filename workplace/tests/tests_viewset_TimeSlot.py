@@ -31,11 +31,7 @@ class TimeSlotTests(APITestCase):
         super(TimeSlotTests, cls).setUpClass()
         cls.client = APIClient()
         cls.user = UserFactory()
-        cls.user.tickets = 0
-        cls.user.save()
         cls.admin = AdminFactory()
-        cls.admin.tickets = 0
-        cls.admin.save()
         cls.workplace = Workplace.objects.create(
             name="Blitz",
             seats=40,
@@ -618,7 +614,7 @@ class TimeSlotTests(APITestCase):
         user = self.user
         user.refresh_from_db()
 
-        self.assertEqual(user.tickets, 1)
+        self.assertEqual(user.tickets, 2)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -695,7 +691,7 @@ class TimeSlotTests(APITestCase):
         user = self.user
         user.refresh_from_db()
 
-        self.assertEqual(user.tickets, 0)
+        self.assertEqual(user.tickets, 1)
 
         # Test that no message was sent:
         self.assertEqual(len(mail.outbox), 0)
@@ -787,7 +783,7 @@ class TimeSlotTests(APITestCase):
             "EMAIL_SERVICE": True,
         }
     )
-    def test_update_timeslot(self):
+    def test_update_timeslot_with_registered_users_partial(self):
         """
         Ensure we can partially update a timeslot.
         """
@@ -862,7 +858,7 @@ class TimeSlotTests(APITestCase):
         user = self.user
         user.refresh_from_db()
 
-        self.assertEqual(user.tickets, 1)
+        self.assertEqual(user.tickets, 2)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -945,7 +941,7 @@ class TimeSlotTests(APITestCase):
         user = self.user
         user.refresh_from_db()
 
-        self.assertEqual(user.tickets, 1)
+        self.assertEqual(user.tickets, 2)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -973,6 +969,12 @@ class TimeSlotTests(APITestCase):
         """
         self.client.force_authenticate(user=self.admin)
 
+        reservation_2 = Reservation.objects.create(
+            user=self.user,
+            timeslot=self.time_slot,
+            is_active=True,
+        )
+
         data = {
             'force_delete': True,
         }
@@ -989,17 +991,26 @@ class TimeSlotTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         self.reservation.refresh_from_db()
+        self.user.refresh_from_db()
+        self.admin.refresh_from_db()
 
         self.assertFalse(self.reservation.is_active)
         self.assertEqual(self.reservation.cancelation_reason, 'TD')
         self.assertTrue(self.reservation.cancelation_date)
-        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(len(mail.outbox), 3)
+        self.assertEqual(self.user.tickets, 3)
+        self.assertEqual(self.admin.tickets, 2)
 
         self.reservation.is_active = True
         self.reservation.cancelation_date = None
         self.reservation.cancelation_reason = None
         self.reservation.save()
         self.reservation.refresh_from_db()
+        reservation_2.delete()
+        self.user.tickets = 1
+        self.user.save()
+        self.admin.tickets = 1
+        self.admin.save()
 
     def test_delete_with_reservations_no_force(self):
         """
@@ -1393,7 +1404,7 @@ class TimeSlotTests(APITestCase):
                 "membership_end": None,
                 "other_phone": None,
                 "phone": None,
-                "tickets": 0,
+                "tickets": 1,
                 "university": None,
                 "url": "http://testserver/users/1",
                 "user_permissions": []

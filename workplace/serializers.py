@@ -79,6 +79,15 @@ class PictureSerializer(serializers.HyperlinkedModelSerializer):
 
 class PeriodSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
+    force_delete = serializers.BooleanField(
+        required=False,
+        write_only=True,
+    )
+    custom_message = serializers.CharField(
+        required=False,
+        write_only=True,
+        max_length=1000,
+    )
 
     def validate(self, attrs):
         """Prevents overlapping active periods and invalid start/end date"""
@@ -330,9 +339,8 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
                 reservation_cancel = instance.reservations.filter(
                     is_active=True
                 )
-                affected_users_id = reservation_cancel.values_list('user')
                 affected_users = User.objects.filter(
-                    id__in=affected_users_id,
+                    reservations__in=reservation_cancel
                 )
 
                 reservations_cancel_copy = copy(reservation_cancel)
