@@ -43,7 +43,8 @@
             "EMAIL_HOST_USER": "admin@fjnr.ca",
             "ADMINS": "('Francis Jeanneau', 'francis.jeanneau@fjnr.ca'), ('Noël Rignon', 'noel.rignon@fjnr.ca')",
             "SERVER_EMAIL": "admin@fjnr.ca",
-            "EMAIL_HOST": "smtp.zoho.com"
+            "EMAIL_HOST": "smtp.zoho.com",
+            "SUPPORT_EMAIL": "support@thesez-vous.org"
         },
         "vpc_config" : {
             "SubnetIds": [ "subnet-0bd158ff494029446","subnet-087e1408264ff9358" ],
