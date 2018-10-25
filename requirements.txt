@@ -17,3 +17,4 @@ zappa==0.46.2
 psycopg2==2.7.5
 django-safedelete==0.5.1
 -e git+https://github.com/Rhumbix/django-request-logging.git@9342ee6064e678fd162418b142d781550d23101c#egg=django_request_logging
+-e git+https://github.com/deschler/django-modeltranslation.git@c8bda494a8cd36b393811552aeee71faf86d7438#egg=django-modeltranslation

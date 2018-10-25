@@ -16,6 +16,7 @@ from pathlib import Path
 import sys
 
 from decouple import config, Csv
+from django.utils.translation import ugettext_lazy as _
 from dj_database_url import parse as db_url
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -35,6 +36,7 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost', cast=Csv())
 # Application definition
 
 INSTALLED_APPS = [
+    'modeltranslation',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -185,6 +187,11 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+LANGUAGES = [
+    ('fr', _('French')),
+    ('en', _('English')),
+]
 
 
 # AWS Deployment configuration (with Zappa)

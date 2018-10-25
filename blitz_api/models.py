@@ -210,7 +210,8 @@ class Organization(models.Model):
         max_length=100,
     )
 
-    history = HistoricalRecords()
+    # History is registered in translation.py
+    # history = HistoricalRecords()
 
     def __str__(self):
         return self.name
@@ -262,7 +263,8 @@ class AcademicLevel(models.Model):
         max_length=100,
     )
 
-    history = HistoricalRecords()
+    # History is registered in translation.py
+    # history = HistoricalRecords()
 
     def __str__(self):
         return self.name
@@ -280,7 +282,8 @@ class AcademicField(models.Model):
         max_length=100,
     )
 
-    history = HistoricalRecords()
+    # History is registered in translation.py
+    # history = HistoricalRecords()
 
     def __str__(self):
         return self.name

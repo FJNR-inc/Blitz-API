@@ -1,3 +1,5 @@
+import re
+
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.utils.translation import ugettext_lazy as _
@@ -33,3 +35,18 @@ def send_mail(users, context, template):
             failed_emails.append(user.email)
 
     return failed_emails
+
+
+def remove_translation_fields(data_dict):
+    """
+    Used to removed translation fields.
+    It matches ANYTHING followed by "_" and a 2 letter code.
+    ie:
+        name_fr (matches)
+        reservation_date (doesn't match)
+    """
+    language_field = re.compile('[a-z]+_[a-z]{2}$')
+    data = {
+        k: v for k, v in data_dict.items() if not language_field.match(k)
+    }
+    return data

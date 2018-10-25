@@ -11,6 +11,7 @@ from django.db.models.base import ObjectDoesNotExist
 from .models import (
     Domain, Organization, ActionToken, AcademicField, AcademicLevel,
 )
+from .services import remove_translation_fields
 from store.serializers import MembershipSerializer
 
 User = get_user_model()
@@ -43,6 +44,10 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
     )
     domains = DomainSerializer(many=True, read_only=True)
 
+    def to_representation(self, instance):
+        data = super(OrganizationSerializer, self).to_representation(instance)
+        return remove_translation_fields(data)
+
     class Meta:
         model = Organization
         fields = '__all__'
@@ -55,6 +60,10 @@ class AcademicLevelSerializer(serializers.HyperlinkedModelSerializer):
         required=True,
     )
 
+    def to_representation(self, instance):
+        data = super(AcademicLevelSerializer, self).to_representation(instance)
+        return remove_translation_fields(data)
+
     class Meta:
         model = AcademicLevel
         fields = '__all__'
@@ -66,6 +75,10 @@ class AcademicFieldSerializer(serializers.HyperlinkedModelSerializer):
         max_length=100,
         required=True,
     )
+
+    def to_representation(self, instance):
+        data = super(AcademicFieldSerializer, self).to_representation(instance)
+        return remove_translation_fields(data)
 
     class Meta:
         model = AcademicField
