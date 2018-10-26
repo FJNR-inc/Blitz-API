@@ -138,8 +138,6 @@ class BaseProduct(models.Model):
 
     order_lines = GenericRelation(OrderLine)
 
-    history = HistoricalRecords()
-
     class Meta:
         abstract = True
 
@@ -160,7 +158,8 @@ class Membership(BaseProduct):
         related_name='memberships',
     )
 
-    history = HistoricalRecords()
+    # History is registered in translation.py
+    # history = HistoricalRecords()
 
     def __str__(self):
         return self.name
@@ -184,7 +183,8 @@ class Package(BaseProduct):
         related_name='packages',
     )
 
-    history = HistoricalRecords()
+    # History is registered in translation.py
+    # history = HistoricalRecords()
 
     def __str__(self):
         return self.name

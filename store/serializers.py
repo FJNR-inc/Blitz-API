@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
+from blitz_api.services import remove_translation_fields
 from workplace.models import Reservation
 
 from .exceptions import PaymentAPIError
@@ -41,7 +42,7 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
         data = super(BaseProductSerializer, self).to_representation(instance)
         if not user.is_staff:
             data.pop("order_lines")
-        return data
+        return remove_translation_fields(data)
 
     class Meta:
         model = BaseProduct
