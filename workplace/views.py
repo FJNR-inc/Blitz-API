@@ -107,6 +107,10 @@ class PeriodViewSet(viewsets.ModelViewSet):
             raise rest_framework.serializers.ValidationError({
                 'force_delete': serializer.errors['force_delete']
             })
+        if 'custom_message' in serializer.errors:
+            raise rest_framework.serializers.ValidationError({
+                'custom_message': serializer.errors['custom_message']
+            })
 
         if instance.time_slots.filter(reservations__is_active=True).exists():
             if not data.get('force_delete'):
@@ -232,6 +236,10 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
             raise rest_framework.serializers.ValidationError({
                 'force_delete': serializer.errors['force_delete']
             })
+        if 'custom_message' in serializer.errors:
+            raise rest_framework.serializers.ValidationError({
+                'custom_message': serializer.errors['custom_message']
+            })
 
         if instance.reservations.filter(is_active=True).exists():
             if not data.get('force_delete'):
@@ -243,7 +251,7 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
                     )]
                 })
 
-        custom_message = serializer.validated_data.get('custom_message')
+        custom_message = data.get('custom_message')
 
         reservation_cancel = instance.reservations.filter(
             is_active=True
