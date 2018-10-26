@@ -70,6 +70,11 @@ class ActionTokenAdmin(admin.ModelAdmin):
     search_fields = ('type', 'user__email',)
 
 
+class TemporaryTokenAdmin(SimpleHistoryAdmin):
+    list_display = ('key', 'user',)
+    search_fields = ('user__email',)
+
+
 class AcademicFieldAdmin(SimpleHistoryAdmin, TranslationAdmin):
     pass
 
@@ -82,6 +87,6 @@ admin.site.register(User, CustomUserAdmin)
 admin.site.register(Organization, CustomOrganizationAdmin)
 admin.site.register(Domain, SimpleHistoryAdmin)
 admin.site.register(ActionToken, ActionTokenAdmin)
-admin.site.register(TemporaryToken, SimpleHistoryAdmin)
+admin.site.register(TemporaryToken, TemporaryTokenAdmin)
 admin.site.register(AcademicField, AcademicFieldAdmin)
 admin.site.register(AcademicLevel, AcademicLevelAdmin)
