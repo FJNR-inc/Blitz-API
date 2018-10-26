@@ -33,7 +33,8 @@ class Workplace(Address, SafeDeleteModel):
         verbose_name=_("Seats"),
     )
 
-    history = HistoricalRecords()
+    # History is registered in translation.py
+    # history = HistoricalRecords()
 
     def __str__(self):
         return self.name
@@ -75,7 +76,8 @@ class Picture(models.Model):
     picture_tag.allow_tags = True
     picture_tag.short_description = 'Picture'
 
-    history = HistoricalRecords()
+    # History is registered in translation.py
+    # history = HistoricalRecords()
 
     def __str__(self):
         return self.name
@@ -131,7 +133,8 @@ class Period(SafeDeleteModel):
         ).count()
         return reservations
 
-    history = HistoricalRecords()
+    # History is registered in translation.py
+    # history = HistoricalRecords()
 
     def __str__(self):
         return self.name
@@ -182,7 +185,8 @@ class TimeSlot(SafeDeleteModel):
         verbose_name=_("End time"),
     )
 
-    history = HistoricalRecords()
+    # History is registered in translation.py
+    # history = HistoricalRecords()
 
     def __str__(self):
         return str(self.start_time) + " - " + str(self.end_time)

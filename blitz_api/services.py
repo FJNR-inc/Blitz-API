@@ -45,7 +45,7 @@ def remove_translation_fields(data_dict):
         name_fr (matches)
         reservation_date (doesn't match)
     """
-    language_field = re.compile('[a-z]+_[a-z]{2}$')
+    language_field = re.compile('[a-z0-9_]+_[a-z]{2}$')
     data = {
         k: v for k, v in data_dict.items() if not language_field.match(k)
     }

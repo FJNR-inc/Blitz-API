@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from blitz_api.serializers import UserSerializer
+from blitz_api.services import remove_translation_fields
 
 from .models import Workplace, Picture, Period, TimeSlot, Reservation
 from .fields import TimezoneField
@@ -43,6 +44,10 @@ class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
         ]
         return [request.build_absolute_uri(url) for url in picture_urls]
 
+    def to_representation(self, instance):
+        data = super(WorkplaceSerializer, self).to_representation(instance)
+        return remove_translation_fields(data)
+
     class Meta:
         model = Workplace
         exclude = ('deleted',)
@@ -60,6 +65,10 @@ class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
 
 class PictureSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
+
+    def to_representation(self, instance):
+        data = super(PictureSerializer, self).to_representation(instance)
+        return remove_translation_fields(data)
 
     class Meta:
         model = Picture
@@ -153,6 +162,10 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
                     )
 
         return attrs
+
+    def to_representation(self, instance):
+        data = super(PeriodSerializer, self).to_representation(instance)
+        return remove_translation_fields(data)
 
     class Meta:
         model = Period
@@ -393,7 +406,8 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         is_staff = self.context['request'].user.is_staff
         if self.context['view'].action == 'retrieve' and is_staff:
             self.fields['users'] = UserSerializer(many=True)
-        return super(TimeSlotSerializer, self).to_representation(instance)
+        data = super(TimeSlotSerializer, self).to_representation(instance)
+        return remove_translation_fields(data)
 
     class Meta:
         model = TimeSlot

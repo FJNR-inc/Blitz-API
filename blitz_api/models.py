@@ -338,7 +338,5 @@ class Address(models.Model):
         verbose_name=_("Timezone"),
     )
 
-    history = HistoricalRecords()
-
     class Meta:
         abstract = True
