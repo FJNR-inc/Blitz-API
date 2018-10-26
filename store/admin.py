@@ -1,9 +1,9 @@
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
-
+from modeltranslation.admin import TranslationAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from .models import Membership, Package, Order, OrderLine, PaymentProfile
+from .models import Membership, Order, OrderLine, Package, PaymentProfile
 
 
 class OrderLineInline(admin.StackedInline):
@@ -14,7 +14,7 @@ class OrderLineInline(admin.StackedInline):
     extra = 0
 
 
-class MembershipAdmin(SimpleHistoryAdmin):
+class MembershipAdmin(SimpleHistoryAdmin, TranslationAdmin):
     list_display = (
         'name',
         'price',
@@ -22,7 +22,7 @@ class MembershipAdmin(SimpleHistoryAdmin):
     )
 
 
-class PackageAdmin(SimpleHistoryAdmin):
+class PackageAdmin(SimpleHistoryAdmin, TranslationAdmin):
     list_display = (
         'name',
         'price',

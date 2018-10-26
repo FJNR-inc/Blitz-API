@@ -1,11 +1,10 @@
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
-
+from modeltranslation.admin import TranslationAdmin
 from safedelete.admin import SafeDeleteAdmin, highlight_deleted
-
 from simple_history.admin import SimpleHistoryAdmin
 
-from .models import Workplace, Picture, Period, TimeSlot, Reservation
+from .models import Period, Picture, Reservation, TimeSlot, Workplace
 
 
 class PictureAdminInline(admin.TabularInline):
@@ -13,7 +12,7 @@ class PictureAdminInline(admin.TabularInline):
     readonly_fields = ('picture_tag',)
 
 
-class WorkplaceAdmin(SimpleHistoryAdmin, SafeDeleteAdmin):
+class WorkplaceAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin):
     inlines = (PictureAdminInline,)
     list_display = (
         'name',
@@ -26,11 +25,11 @@ class WorkplaceAdmin(SimpleHistoryAdmin, SafeDeleteAdmin):
     ) + SafeDeleteAdmin.list_filter
 
 
-class PictureAdmin(SimpleHistoryAdmin):
+class PictureAdmin(SimpleHistoryAdmin, TranslationAdmin):
     list_display = ('name', 'workplace', 'picture_tag',)
 
 
-class PeriodAdmin(SimpleHistoryAdmin, SafeDeleteAdmin):
+class PeriodAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin):
     list_display = (
         'name',
         'workplace',
@@ -50,7 +49,7 @@ class PeriodAdmin(SimpleHistoryAdmin, SafeDeleteAdmin):
     ) + SafeDeleteAdmin.list_filter
 
 
-class TimeSlotAdmin(SimpleHistoryAdmin, SafeDeleteAdmin):
+class TimeSlotAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin):
     list_display = (
         'start_time',
         'end_time',
