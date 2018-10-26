@@ -355,7 +355,7 @@ class CustomAuthTokenSerializer(AuthTokenSerializer):
         password = attrs.get('password')
 
         try:
-            user_obj = User.objects.get(email=username)
+            user_obj = User.objects.get(email__iexact=username)
             username = user_obj.username
         except User.DoesNotExist:
             pass
