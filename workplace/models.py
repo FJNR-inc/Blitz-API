@@ -123,6 +123,14 @@ class Period(SafeDeleteModel):
         default=False,
     )
 
+    @property
+    def total_reservations(self):
+        reservations = Reservation.objects.filter(
+            timeslot__period=self,
+            is_active=True,
+        ).count()
+        return reservations
+
     history = HistoricalRecords()
 
     def __str__(self):

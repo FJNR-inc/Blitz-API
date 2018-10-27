@@ -88,6 +88,7 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
         write_only=True,
         max_length=1000,
     )
+    total_reservations = serializers.ReadOnlyField()
 
     def validate(self, attrs):
         """Prevents overlapping active periods and invalid start/end date"""

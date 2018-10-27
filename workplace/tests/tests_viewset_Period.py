@@ -94,6 +94,7 @@ class PeriodTests(APITestCase):
             'is_active': True,
             'name': 'random_period',
             'price': '3.00',
+            'total_reservations': 0,
             'start_date': data['start_date'].astimezone().isoformat(),
             'url': 'http://testserver/periods/3',
             'workplace': 'http://testserver/workplaces/1'
@@ -360,6 +361,7 @@ class PeriodTests(APITestCase):
             'is_active': True,
             'name': 'new_period',
             'price': '3.00',
+            'total_reservations': 0,
             'start_date': data['start_date'].astimezone().isoformat(),
             'url': 'http://testserver/periods/1',
             'workplace': 'http://testserver/workplaces/1'
@@ -432,6 +434,7 @@ class PeriodTests(APITestCase):
             'is_active': False,
             'name': 'updated_period',
             'price': '2000.00',
+            'total_reservations': 0,
             'end_date': response_data['end_date'],
             'start_date': data['start_date'].astimezone().isoformat(),
             'url': 'http://testserver/periods/1',
@@ -665,6 +668,7 @@ class PeriodTests(APITestCase):
                 'is_active': True,
                 'name': 'random_period_active',
                 'price': '3.00',
+                'total_reservations': 1,
                 'start_date': data['results'][0]['start_date'],
                 'url': 'http://testserver/periods/2',
                 'workplace': 'http://testserver/workplaces/1'
@@ -698,6 +702,7 @@ class PeriodTests(APITestCase):
                 'is_active': False,
                 'name': 'random_period',
                 'price': '3.00',
+                'total_reservations': 0,
                 'start_date': data['results'][0]['start_date'],
                 'url': 'http://testserver/periods/1',
                 'workplace': 'http://testserver/workplaces/1'
@@ -707,6 +712,7 @@ class PeriodTests(APITestCase):
                 'is_active': True,
                 'name': 'random_period_active',
                 'price': '3.00',
+                'total_reservations': 1,
                 'start_date': data['results'][1]['start_date'],
                 'url': 'http://testserver/periods/2',
                 'workplace': 'http://testserver/workplaces/1'
@@ -737,6 +743,7 @@ class PeriodTests(APITestCase):
             'is_active': True,
             'name': 'random_period_active',
             'price': '3.00',
+            'total_reservations': 1,
             'start_date': data['start_date'],
             'url': 'http://testserver/periods/2',
             'workplace': 'http://testserver/workplaces/1'
@@ -767,6 +774,7 @@ class PeriodTests(APITestCase):
             'is_active': False,
             'name': 'random_period',
             'price': '3.00',
+            'total_reservations': 0,
             'start_date': data['start_date'],
             'url': 'http://testserver/periods/1',
             'workplace': 'http://testserver/workplaces/1'
