@@ -38,6 +38,14 @@ class OrderAdmin(SimpleHistoryAdmin):
         'transaction_date',
         'user',
     )
+    list_filter = (
+        ('user', admin.RelatedOnlyFieldListFilter),
+        'transaction_date',
+    )
+    search_fields = (
+        'user__email',
+        'user__username',
+    )
 
 
 class OrderLineAdmin(SimpleHistoryAdmin):
@@ -46,7 +54,23 @@ class OrderLineAdmin(SimpleHistoryAdmin):
         'content_object',
         'quantity',
         'order',
+        'owner',
     )
+    list_filter = (
+        ('content_type', admin.RelatedOnlyFieldListFilter),
+        'quantity',
+        ('order__user', admin.RelatedOnlyFieldListFilter),
+    )
+    search_fields = (
+        'order__email',
+        'order__username',
+    )
+
+    def owner(self, instance):
+        return instance.order.user
+
+    owner.short_description = _('User')
+    owner.admin_order_field = 'order__user'
 
 
 class PaymentProfileAdmin(SimpleHistoryAdmin):
@@ -55,7 +79,13 @@ class PaymentProfileAdmin(SimpleHistoryAdmin):
         'owner',
         'external_api_id',
         'external_api_url',
-
+    )
+    list_filter = (
+        ('owner', admin.RelatedOnlyFieldListFilter),
+    )
+    search_fields = (
+        'owner__email',
+        'owner__username',
     )
 
 
