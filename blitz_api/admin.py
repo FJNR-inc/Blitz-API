@@ -69,7 +69,7 @@ class CustomOrganizationAdmin(SimpleHistoryAdmin):
 
 class ActionTokenAdmin(admin.ModelAdmin):
     list_display = ('key', 'type', 'user',)
-    search_fields = ('type', 'user',)
+    search_fields = ('type', 'user__email',)
 
 
 admin.site.register(User, CustomUserAdmin)
