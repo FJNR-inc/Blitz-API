@@ -14,6 +14,6 @@ python-decouple==3.1
 django-storages==1.7.1
 dj_database_url==0.5.0
 zappa==0.46.2
-psycopg2==2.7.5
+psycopg2==2.7.6
 django-safedelete==0.5.1
 -e git+https://github.com/Rhumbix/django-request-logging.git@9342ee6064e678fd162418b142d781550d23101c#egg=django_request_logging
