@@ -1,0 +1,11 @@
+Bienvenue sur la plateforme Thesez-vous?
+
+Voici vos informations de connexion pour vous connectez a la plateforme:
+
+Nom d'utilisateur: {{EMAIL}}
+Mot de passe: {{PASSWORD}}
+
+L'équipe Thèsez-vous
+
+Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2
+info@thesez-vous.com, www.thesez-vous.com
