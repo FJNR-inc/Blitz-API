@@ -16,6 +16,7 @@ from django.core import mail
 from django.test.utils import override_settings
 
 from blitz_api.factories import UserFactory, AdminFactory
+from blitz_api.services import remove_translation_fields
 
 from ..models import Period, TimeSlot, Workplace, Reservation
 
@@ -135,7 +136,10 @@ class TimeSlotTests(APITestCase):
             'workplace': None
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -156,6 +160,11 @@ class TimeSlotTests(APITestCase):
             reverse('timeslot-list'),
             data,
             format='json',
+        )
+
+        response_data = remove_translation_fields(json.loads(response.content))
+        response_data['workplace'] = remove_translation_fields(
+            response_data['workplace']
         )
 
         content = {
@@ -188,7 +197,7 @@ class TimeSlotTests(APITestCase):
             }
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -493,6 +502,10 @@ class TimeSlotTests(APITestCase):
             data,
             format='json',
         )
+        response_data = json.loads(response.content)
+        response_data['workplace'] = remove_translation_fields(
+            response_data['workplace']
+        )
 
         content = {
             'id': 2,
@@ -524,7 +537,7 @@ class TimeSlotTests(APITestCase):
             }
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -559,6 +572,11 @@ class TimeSlotTests(APITestCase):
             ),
             data,
             format='json',
+        )
+
+        response_data = json.loads(response.content)
+        response_data['workplace'] = remove_translation_fields(
+            response_data['workplace']
         )
 
         content = {
@@ -597,7 +615,7 @@ class TimeSlotTests(APITestCase):
             }
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         self.reservation.refresh_from_db()
 
@@ -644,6 +662,9 @@ class TimeSlotTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        response_data['workplace'] = remove_translation_fields(
+            response_data['workplace']
+        )
 
         content = {
             'id': 1,
@@ -681,7 +702,7 @@ class TimeSlotTests(APITestCase):
             }
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         self.reservation.refresh_from_db()
         self.assertTrue(self.reservation.is_active)
@@ -805,6 +826,9 @@ class TimeSlotTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        response_data['workplace'] = remove_translation_fields(
+            response_data['workplace']
+        )
 
         content = {
             'id': 1,
@@ -842,7 +866,7 @@ class TimeSlotTests(APITestCase):
             }
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         self.reservation.refresh_from_db()
         self.assertFalse(self.reservation.is_active)
@@ -894,6 +918,9 @@ class TimeSlotTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        response_data['workplace'] = remove_translation_fields(
+            response_data['workplace']
+        )
 
         content = {
             'id': 1,
@@ -931,7 +958,7 @@ class TimeSlotTests(APITestCase):
             }
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         self.reservation.refresh_from_db()
         self.assertFalse(self.reservation.is_active)
@@ -1082,6 +1109,10 @@ class TimeSlotTests(APITestCase):
         )
 
         data = json.loads(response.content)
+        for idx, obj in enumerate(data['results']):
+            data['results'][idx]['workplace'] = remove_translation_fields(
+                obj['workplace']
+            )
 
         content = {
             'count': 1,
@@ -1134,6 +1165,10 @@ class TimeSlotTests(APITestCase):
         )
 
         data = json.loads(response.content)
+        for idx, obj in enumerate(data['results']):
+            data['results'][idx]['workplace'] = remove_translation_fields(
+                obj['workplace']
+            )
 
         content = {
             'count': 2,
@@ -1220,6 +1255,10 @@ class TimeSlotTests(APITestCase):
         )
 
         data = json.loads(response.content)
+        for idx, obj in enumerate(data['results']):
+            data['results'][idx]['workplace'] = remove_translation_fields(
+                obj['workplace']
+            )
 
         content = {
             'count': 1,
@@ -1372,6 +1411,13 @@ class TimeSlotTests(APITestCase):
         )
 
         data = json.loads(response.content)
+        data['workplace'] = remove_translation_fields(
+            data['workplace']
+        )
+        data['users'] = [
+            remove_translation_fields(u) for u in data['users']
+        ]
+
         content = {
             'id': 1,
             'end_time': data['end_time'],
@@ -1429,7 +1475,7 @@ class TimeSlotTests(APITestCase):
             }
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(data, content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

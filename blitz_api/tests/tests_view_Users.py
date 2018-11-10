@@ -14,6 +14,7 @@ from django.test.utils import override_settings
 from ..factories import UserFactory, AdminFactory
 from ..models import (ActionToken, Organization, Domain,
                       AcademicField, AcademicLevel)
+from ..services import remove_translation_fields
 from store.models import Membership
 
 User = get_user_model()
@@ -621,7 +622,10 @@ class UsersTests(APITestCase):
             'academic_levels': ['http://testserver/academic_levels/1']
         }
 
-        self.assertEqual(second_user['membership'], membership)
+        self.assertEqual(
+            remove_translation_fields(second_user['membership']),
+            membership
+        )
 
         # Check the system doesn't return attributes not expected
         attributes = [

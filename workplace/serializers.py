@@ -413,8 +413,6 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         if self.context['view'].action == 'retrieve' and is_staff:
             self.fields['users'] = UserSerializer(many=True)
         data = super(TimeSlotSerializer, self).to_representation(instance)
-        if is_staff:
-            return data
         return remove_translation_fields(data)
 
     class Meta:

@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 
 from blitz_api.factories import UserFactory, AdminFactory
+from blitz_api.services import remove_translation_fields
 
 from ..models import Workplace
 
@@ -78,7 +79,10 @@ class WorkplaceTests(APITestCase):
             'url': 'http://testserver/workplaces/2'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -259,7 +263,10 @@ class WorkplaceTests(APITestCase):
             'url': 'http://testserver/workplaces/1'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

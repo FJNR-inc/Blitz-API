@@ -14,6 +14,7 @@ from django.contrib.auth import get_user_model
 from unittest import mock
 
 from blitz_api.factories import UserFactory, AdminFactory
+from blitz_api.services import remove_translation_fields
 
 from ..models import Period, TimeSlot, Workplace, Reservation
 
@@ -132,6 +133,16 @@ class ReservationTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        response_data['timeslot_details'] = remove_translation_fields(
+            response_data['timeslot_details']
+        )
+        response_data['timeslot_details'][
+            'workplace'] = remove_translation_fields(
+                response_data['timeslot_details']['workplace']
+            )
+        response_data['user_details'] = remove_translation_fields(
+            response_data['user_details']
+        )
         del response_data['user_details']["first_name"]
         del response_data['user_details']["last_name"]
         del response_data['user_details']["email"]
@@ -282,6 +293,16 @@ class ReservationTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        response_data['timeslot_details'] = remove_translation_fields(
+            response_data['timeslot_details']
+        )
+        response_data['timeslot_details'][
+            'workplace'] = remove_translation_fields(
+                response_data['timeslot_details']['workplace']
+            )
+        response_data['user_details'] = remove_translation_fields(
+            response_data['user_details']
+        )
         del response_data['user_details']["first_name"]
         del response_data['user_details']["last_name"]
         del response_data['user_details']["email"]

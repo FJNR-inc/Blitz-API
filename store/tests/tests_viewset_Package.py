@@ -11,8 +11,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 
 from blitz_api.factories import UserFactory, AdminFactory
-
 from blitz_api.models import AcademicLevel
+from blitz_api.services import remove_translation_fields
+
 from ..models import Package, Order, OrderLine, Membership
 
 User = get_user_model()
@@ -100,7 +101,10 @@ class PackageTests(APITestCase):
             'url': 'http://testserver/packages/3'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -289,7 +293,10 @@ class PackageTests(APITestCase):
             'url': 'http://testserver/packages/1'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -325,7 +332,10 @@ class PackageTests(APITestCase):
             'url': 'http://testserver/packages/1'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -425,7 +435,10 @@ class PackageTests(APITestCase):
             format='json',
         )
 
-        data = json.loads(response.content)
+        data = remove_translation_fields(json.loads(response.content))
+        data['results'] = [
+            remove_translation_fields(m) for m in data['results']
+        ]
 
         content = {
             'count': 2,
@@ -510,7 +523,10 @@ class PackageTests(APITestCase):
             'url': 'http://testserver/packages/1'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

@@ -14,6 +14,7 @@ from django.contrib.auth import get_user_model
 from django.test.utils import override_settings
 
 from blitz_api.factories import UserFactory, AdminFactory
+from blitz_api.services import remove_translation_fields
 
 from ..models import Workplace, Period, TimeSlot, Reservation
 
@@ -100,7 +101,10 @@ class PeriodTests(APITestCase):
             'workplace': 'http://testserver/workplaces/1'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -367,7 +371,10 @@ class PeriodTests(APITestCase):
             'workplace': 'http://testserver/workplaces/1'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -441,7 +448,10 @@ class PeriodTests(APITestCase):
             'workplace': 'http://testserver/workplaces/1'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -657,6 +667,9 @@ class PeriodTests(APITestCase):
         )
 
         data = json.loads(response.content)
+        data['results'] = [
+            remove_translation_fields(m) for m in data['results']
+        ]
 
         content = {
             'count': 1,
@@ -691,6 +704,9 @@ class PeriodTests(APITestCase):
         )
 
         data = json.loads(response.content)
+        data['results'] = [
+            remove_translation_fields(m) for m in data['results']
+        ]
 
         content = {
             'count': 2,
@@ -753,9 +769,9 @@ class PeriodTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_read_inactive_non_admin(self):
+    def test_read_inactive(self):
         """
-        Ensure we can't read a period as non_admin if it is inactive.
+        Ensure we can read a period as admin if it is inactive.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -780,13 +796,16 @@ class PeriodTests(APITestCase):
             'workplace': 'http://testserver/workplaces/1'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_read_inactive(self):
+    def test_read_inactive_non_admin(self):
         """
-        Ensure we can read a period as admin if it is inactive.
+        Ensure we can't read a period as non_admin if it is inactive.
         """
 
         response = self.client.get(

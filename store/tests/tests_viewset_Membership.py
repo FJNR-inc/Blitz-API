@@ -10,6 +10,7 @@ from django.contrib.auth import get_user_model
 
 from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.models import AcademicLevel
+from blitz_api.services import remove_translation_fields
 
 from ..models import Membership
 
@@ -79,7 +80,10 @@ class MembershipTests(APITestCase):
             'academic_levels': ['http://testserver/academic_levels/1']
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -241,7 +245,10 @@ class MembershipTests(APITestCase):
             'academic_levels': ['http://testserver/academic_levels/1']
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -341,7 +348,10 @@ class MembershipTests(APITestCase):
             format='json',
         )
 
-        data = json.loads(response.content)
+        data = remove_translation_fields(json.loads(response.content))
+        data['results'] = [
+            remove_translation_fields(m) for m in data['results']
+        ]
 
         content = {
             'count': 2,
@@ -426,7 +436,10 @@ class MembershipTests(APITestCase):
             'academic_levels': ['http://testserver/academic_levels/1']
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

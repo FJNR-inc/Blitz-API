@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django.test import override_settings
 
 from blitz_api.factories import UserFactory, AdminFactory
+from blitz_api.services import remove_translation_fields
 
 from ..models import Workplace, Picture
 
@@ -88,7 +89,10 @@ class PictureTests(APITestCase):
             'workplace': 'http://testserver/workplaces/1'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -216,6 +220,8 @@ class PictureTests(APITestCase):
         content = {
             'id': 1,
             'name': 'new_picture',
+            'name_en': 'new_picture',
+            'name_fr': None,
             'picture': 'http://testserver/media/workplaces/' + fname,
             'url': 'http://testserver/pictures/1',
             'workplace': 'http://testserver/workplaces/1'

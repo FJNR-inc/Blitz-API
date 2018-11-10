@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 
 from ..factories import UserFactory, AdminFactory
 from ..models import Organization
+from ..services import remove_translation_fields
 
 User = get_user_model()
 
@@ -45,7 +46,10 @@ class OrganizationTests(APITestCase):
             'url': 'http://testserver/organizations/2'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            remove_translation_fields(json.loads(response.content)),
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
