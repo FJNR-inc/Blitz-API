@@ -1,10 +1,13 @@
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
+from import_export.admin import ExportActionModelAdmin
 from modeltranslation.admin import TranslationAdmin
 from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 from simple_history.admin import SimpleHistoryAdmin
 
 from .models import Period, Picture, Reservation, TimeSlot, Workplace
+from .resources import (PeriodResource, ReservationResource, TimeSlotResource,
+                        WorkplaceResource)
 
 
 class PictureAdminInline(admin.TabularInline):
@@ -12,7 +15,9 @@ class PictureAdminInline(admin.TabularInline):
     readonly_fields = ('picture_tag',)
 
 
-class WorkplaceAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin):
+class WorkplaceAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
+                     ExportActionModelAdmin):
+    resource_class = WorkplaceResource
     inlines = (PictureAdminInline,)
     list_display = (
         'name',
@@ -29,7 +34,9 @@ class PictureAdmin(SimpleHistoryAdmin, TranslationAdmin):
     list_display = ('name', 'workplace', 'picture_tag',)
 
 
-class PeriodAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin):
+class PeriodAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
+                  ExportActionModelAdmin):
+    resource_class = PeriodResource
     list_display = (
         'name',
         'workplace',
@@ -49,7 +56,9 @@ class PeriodAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin):
     ) + SafeDeleteAdmin.list_filter
 
 
-class TimeSlotAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin):
+class TimeSlotAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
+                    ExportActionModelAdmin):
+    resource_class = TimeSlotResource
     list_display = (
         'start_time',
         'end_time',
@@ -66,7 +75,9 @@ class TimeSlotAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin):
     ) + SafeDeleteAdmin.list_filter
 
 
-class ReservationAdmin(SimpleHistoryAdmin, SafeDeleteAdmin):
+class ReservationAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
+                       ExportActionModelAdmin):
+    resource_class = ReservationResource
     list_display = (
         'user',
         'timeslot',

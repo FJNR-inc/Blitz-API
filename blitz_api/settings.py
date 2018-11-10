@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'simple_history',
     'rest_framework_filters',
     'safedelete',
+    'import_export',
 ]
 
 MIDDLEWARE = [
@@ -318,3 +319,7 @@ PAYSAFE = {
     'VAULT_URL': config('PAYSAFE_VAULT_URL', default='customervault/v1/'),
     'CARD_URL': config('PAYSAFE_CARD_URL', default='cardpayments/v1/'),
 }
+
+# django-import-export
+
+IMPORT_EXPORT_USE_TRANSACTIONS = True

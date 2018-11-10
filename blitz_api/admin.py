@@ -4,11 +4,14 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.contrib.auth.models import AbstractUser, Permission
 from django.utils.translation import ugettext_lazy as _
+from import_export.admin import ExportActionModelAdmin
 from modeltranslation.admin import TranslationAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from .models import (AcademicField, AcademicLevel, ActionToken, Domain,
                      Organization, TemporaryToken, User)
+from .resources import (AcademicFieldResource, AcademicLevelResource,
+                        OrganizationResource, UserResource)
 
 
 class CustomUserChangeForm(UserChangeForm):
@@ -31,8 +34,9 @@ class CustomUserCreationForm(UserCreationForm):
         raise forms.ValidationError(self.error_messages['duplicate_username'])
 
 
-class CustomUserAdmin(UserAdmin, SimpleHistoryAdmin):
+class CustomUserAdmin(UserAdmin, SimpleHistoryAdmin, ExportActionModelAdmin):
     """ Required to display extra fields of users in Django Admin """
+    resource_class = UserResource
     form = CustomUserChangeForm
 
     def __init__(self, *args, **kwargs):
@@ -61,7 +65,9 @@ class DomainInline(admin.StackedInline):
     extra = 0  # No one extra blank field in the admin representation
 
 
-class CustomOrganizationAdmin(SimpleHistoryAdmin, TranslationAdmin):
+class CustomOrganizationAdmin(SimpleHistoryAdmin, TranslationAdmin,
+                              ExportActionModelAdmin):
+    resource_class = OrganizationResource
     inlines = (DomainInline, )
 
 
@@ -75,12 +81,14 @@ class TemporaryTokenAdmin(SimpleHistoryAdmin):
     search_fields = ('user__email',)
 
 
-class AcademicFieldAdmin(SimpleHistoryAdmin, TranslationAdmin):
-    pass
+class AcademicFieldAdmin(SimpleHistoryAdmin, TranslationAdmin,
+                         ExportActionModelAdmin):
+    resource_class = AcademicFieldResource
 
 
-class AcademicLevelAdmin(SimpleHistoryAdmin, TranslationAdmin):
-    pass
+class AcademicLevelAdmin(SimpleHistoryAdmin, TranslationAdmin,
+                         ExportActionModelAdmin):
+    resource_class = AcademicLevelResource
 
 
 admin.site.register(User, CustomUserAdmin)

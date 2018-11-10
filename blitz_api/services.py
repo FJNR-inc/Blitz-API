@@ -1,5 +1,6 @@
 import re
 
+from django.apps import apps
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.utils.translation import ugettext_lazy as _
@@ -50,3 +51,19 @@ def remove_translation_fields(data_dict):
         k: v for k, v in data_dict.items() if not language_field.match(k)
     }
     return data
+
+
+def get_model_from_name(model_name):
+    """
+    Used to get a model instance when you only have its name.
+    """
+    app_labels = [a.label for a in apps.app_configs.values()]
+    app_number = len(app_labels)
+    for idx, app in enumerate(app_labels):
+        try:
+            model = apps.get_model(app, model_name)
+            return model
+        except LookupError as err:
+            if idx == (app_number - 1):
+                raise err
+            continue

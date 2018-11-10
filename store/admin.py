@@ -1,9 +1,12 @@
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
+from import_export.admin import ExportActionModelAdmin
 from modeltranslation.admin import TranslationAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from .models import Membership, Order, OrderLine, Package, PaymentProfile
+from .resources import (MembershipResource, OrderResource, OrderLineResource,
+                        PackageResource)
 
 
 class OrderLineInline(admin.StackedInline):
@@ -14,7 +17,9 @@ class OrderLineInline(admin.StackedInline):
     extra = 0
 
 
-class MembershipAdmin(SimpleHistoryAdmin, TranslationAdmin):
+class MembershipAdmin(SimpleHistoryAdmin, TranslationAdmin,
+                      ExportActionModelAdmin):
+    resource_class = MembershipResource
     list_display = (
         'name',
         'price',
@@ -22,7 +27,9 @@ class MembershipAdmin(SimpleHistoryAdmin, TranslationAdmin):
     )
 
 
-class PackageAdmin(SimpleHistoryAdmin, TranslationAdmin):
+class PackageAdmin(SimpleHistoryAdmin, TranslationAdmin,
+                   ExportActionModelAdmin):
+    resource_class = PackageResource
     list_display = (
         'name',
         'price',
@@ -30,7 +37,8 @@ class PackageAdmin(SimpleHistoryAdmin, TranslationAdmin):
     )
 
 
-class OrderAdmin(SimpleHistoryAdmin):
+class OrderAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
+    resource_class = OrderResource
     inlines = (OrderLineInline, )
     list_display = (
         'authorization_id',
@@ -48,7 +56,8 @@ class OrderAdmin(SimpleHistoryAdmin):
     )
 
 
-class OrderLineAdmin(SimpleHistoryAdmin):
+class OrderLineAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
+    resource_class = OrderLineResource
     list_display = (
         'content_type',
         'content_object',
