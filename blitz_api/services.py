@@ -4,8 +4,10 @@ from django.apps import apps
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.utils.translation import ugettext_lazy as _
+from django.template.loader import render_to_string
 
 from .exceptions import MailServiceError
+from django.core.mail import send_mail as django_send_mail
 
 
 def send_mail(users, context, template):
@@ -67,3 +69,30 @@ def get_model_from_name(model_name):
             if idx == (app_number - 1):
                 raise err
             continue
+
+
+def notify_user_of_new_account(email, password):
+    if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is False:
+        raise MailServiceError(_("Email service is disabled."))
+    else:
+        merge_data = {
+            'EMAIL': email,
+            'PASSWORD': password,
+        }
+
+        plain_msg = render_to_string(
+            "notify_user_of_new_account.txt",
+            merge_data
+        )
+        msg_html = render_to_string(
+            "notify_user_of_new_account.html",
+            merge_data
+        )
+
+        return django_send_mail(
+            _("Welcome to Thesez-Vous!"),
+            plain_msg,
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            html_message=msg_html,
+        )
