@@ -42,7 +42,8 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
         data = super(BaseProductSerializer, self).to_representation(instance)
         if not user.is_staff:
             data.pop("order_lines")
-        return remove_translation_fields(data)
+            data = remove_translation_fields(data)
+        return data
 
     class Meta:
         model = BaseProduct

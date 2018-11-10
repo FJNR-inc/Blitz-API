@@ -46,6 +46,8 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
 
     def to_representation(self, instance):
         data = super(OrganizationSerializer, self).to_representation(instance)
+        if self.context['request'].user.is_staff:
+            return data
         return remove_translation_fields(data)
 
     class Meta:
@@ -62,6 +64,8 @@ class AcademicLevelSerializer(serializers.HyperlinkedModelSerializer):
 
     def to_representation(self, instance):
         data = super(AcademicLevelSerializer, self).to_representation(instance)
+        if self.context['request'].user.is_staff:
+            return data
         return remove_translation_fields(data)
 
     class Meta:
@@ -78,6 +82,8 @@ class AcademicFieldSerializer(serializers.HyperlinkedModelSerializer):
 
     def to_representation(self, instance):
         data = super(AcademicFieldSerializer, self).to_representation(instance)
+        if self.context['request'].user.is_staff:
+            return data
         return remove_translation_fields(data)
 
     class Meta:

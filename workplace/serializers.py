@@ -46,6 +46,8 @@ class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
 
     def to_representation(self, instance):
         data = super(WorkplaceSerializer, self).to_representation(instance)
+        if self.context['request'].user.is_staff:
+            return data
         return remove_translation_fields(data)
 
     class Meta:
@@ -68,6 +70,8 @@ class PictureSerializer(serializers.HyperlinkedModelSerializer):
 
     def to_representation(self, instance):
         data = super(PictureSerializer, self).to_representation(instance)
+        if self.context['request'].user.is_staff:
+            return data
         return remove_translation_fields(data)
 
     class Meta:
@@ -165,6 +169,8 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
 
     def to_representation(self, instance):
         data = super(PeriodSerializer, self).to_representation(instance)
+        if self.context['request'].user.is_staff:
+            return data
         return remove_translation_fields(data)
 
     class Meta:
@@ -407,6 +413,8 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         if self.context['view'].action == 'retrieve' and is_staff:
             self.fields['users'] = UserSerializer(many=True)
         data = super(TimeSlotSerializer, self).to_representation(instance)
+        if is_staff:
+            return data
         return remove_translation_fields(data)
 
     class Meta:
