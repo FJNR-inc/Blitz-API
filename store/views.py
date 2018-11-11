@@ -1,12 +1,23 @@
-from django.http import Http404
+import pytz
+
+from datetime import datetime
+
+from django.conf import settings
+from django.http import Http404, HttpResponse
 
 from rest_framework import viewsets, status, mixins
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
 from .models import (Package, Membership, Order, OrderLine, PaymentProfile,)
+from .resources import (MembershipResource, PackageResource, OrderResource,
+                        OrderLineResource)
 
 from . import serializers, permissions
+
+
+LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
 class MembershipViewSet(viewsets.ModelViewSet):
@@ -32,6 +43,20 @@ class MembershipViewSet(viewsets.ModelViewSet):
         'price': ['exact', 'gte', 'lte'],
     }
     ordering = ('name',)
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = MembershipResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="Membership-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
 
     def get_queryset(self):
         """
@@ -75,6 +100,20 @@ class PackageViewSet(viewsets.ModelViewSet):
         'price': ['exact', 'gte', 'lte'],
     }
     ordering = ('name',)
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = PackageResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="Package-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
 
     def get_queryset(self):
         """
@@ -136,6 +175,20 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     permission_classes = (permissions.IsAdminOrCreateReadOnly, IsAuthenticated)
 
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = OrderResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="Order-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
+
     def get_queryset(self):
         """
         This viewset should return owned orders except if
@@ -160,6 +213,20 @@ class OrderLineViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.OrderLineSerializer
     queryset = OrderLine.objects.all()
     permission_classes = (IsAuthenticated,)
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = OrderLineResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="OrderLine-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
 
     def get_queryset(self):
         """

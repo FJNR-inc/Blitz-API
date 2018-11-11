@@ -1,15 +1,21 @@
+import pytz
+
 from copy import copy
+
+from datetime import datetime
 
 import rest_framework
 from rest_framework import viewsets, status, exceptions
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail as django_send_mail
 from django.db import transaction
 from django.db.models import F
+from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -18,10 +24,14 @@ from blitz_api.exceptions import MailServiceError
 from blitz_api.services import send_mail
 
 from .models import Workplace, Picture, Period, TimeSlot, Reservation
+from .resources import (WorkplaceResource, PeriodResource, TimeSlotResource,
+                        ReservationResource)
 
 from . import serializers, permissions
 
 User = get_user_model()
+
+LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
 class WorkplaceViewSet(viewsets.ModelViewSet):
@@ -40,6 +50,20 @@ class WorkplaceViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_fields = '__all__'
     ordering = ('name',)
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = WorkplaceResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="Workplace-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
 
 
 class PictureViewSet(viewsets.ModelViewSet):
@@ -80,6 +104,20 @@ class PeriodViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_fields = '__all__'
     ordering = ('name',)
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = PeriodResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="Period-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
 
     def get_queryset(self):
         """
@@ -210,6 +248,20 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
         'end_time': ['exact', 'gte', 'lte'],
     }
 
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = TimeSlotResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="TimeSlot-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
+
     def filter_queryset(self, queryset):
         """
         This viewset should return active timeslots except if
@@ -331,6 +383,21 @@ class ReservationViewSet(viewsets.ModelViewSet):
         'timeslot__start_time',
         'timeslot__end_time',
     )
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = ReservationResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="Reservation-',
+            LOCAL_TIMEZONE.localize(
+                datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
 
     def get_queryset(self):
         """

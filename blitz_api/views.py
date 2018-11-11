@@ -1,11 +1,16 @@
+import pytz
+
+from datetime import datetime
+
 from django.contrib.auth import get_user_model, password_validation
 from django.conf import settings
 from django.utils import timezone
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
 from rest_framework import status, viewsets, mixins
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -16,10 +21,14 @@ from .models import (
     TemporaryToken, ActionToken, Domain, Organization, AcademicLevel,
     AcademicField,
 )
+from .resources import (AcademicFieldResource, AcademicLevelResource,
+                        OrganizationResource, UserResource)
 
 from . import serializers, permissions, services
 
 User = get_user_model()
+
+LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -61,6 +70,20 @@ class UserViewSet(viewsets.ModelViewSet):
         'user_permissions': '__all__'
     }
     ordering = ('email',)
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = UserResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="User-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
 
     def get_serializer_class(self):
         if (self.action == 'update') | (self.action == 'partial_update'):
@@ -383,6 +406,20 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrReadOnly,)
     ordering = ('name',)
 
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = OrganizationResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="Organization-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
+
 
 class ObtainTemporaryAuthToken(ObtainAuthToken):
     """
@@ -453,6 +490,20 @@ class AcademicLevelViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrReadOnly,)
     ordering = ('name',)
 
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = AcademicLevelResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="AcademicLevel-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
+
 
 class AcademicFieldViewSet(viewsets.ModelViewSet):
     """
@@ -469,3 +520,17 @@ class AcademicFieldViewSet(viewsets.ModelViewSet):
     queryset = AcademicField.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
     ordering = ('name',)
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = AcademicFieldResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="AcademicField-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
