@@ -90,7 +90,7 @@ def notify_user_of_new_account(email, password):
         )
 
         return django_send_mail(
-            _("Welcome to Thesez-Vous!"),
+            "Bienvenue à Thèsez-vous?",
             plain_msg,
             settings.DEFAULT_FROM_EMAIL,
             [email],

@@ -1,6 +1,6 @@
-Bienvenue sur la plateforme Thesez-vous?
+Bienvenue sur la plateforme Thèsez-vous
 
-Voici vos informations de connexion pour vous connectez a la plateforme:
+Voici vos informations de connexion pour vous connecter à la plateforme:
 
 Nom d'utilisateur: {{EMAIL}}
 Mot de passe: {{PASSWORD}}
