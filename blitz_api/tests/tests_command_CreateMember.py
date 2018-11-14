@@ -42,16 +42,16 @@ class CreateMemberTest(TestCase):
 
         call_command(
             'create_member',
-            'John',
-            'Doe',
-            '1980-12-23',
-            'A',
-            1,
-            1,
-            1,
-            'test@test.ca',
-            'test',  # No security on password
-            1,
+            '--first_name=John',
+            '--last_name=Doe',
+            '--birthdate=1980-12-23',
+            '--gender=A',
+            '--university=1',
+            '--academic_level=1',
+            '--academic_field=1',
+            '--email=test@test.ca',
+            '--password=test',  # No security on password
+            '--membership=1',
             stdout=out
         )
         self.assertIn(
@@ -76,16 +76,16 @@ class CreateMemberTest(TestCase):
         with self.assertRaises(CommandError) as e:
             call_command(
                 'create_member',
-                'John',
-                'Doe',
-                '1980-12-23',
-                'A',
-                1,
-                1,
-                999,
-                'test@test.ca',
-                'test',  # No security on password
-                1,
+                '--first_name=John',
+                '--last_name=Doe',
+                '--birthdate=1980-12-23',
+                '--gender=A',
+                '--university=1',
+                '--academic_level=1',
+                '--academic_field=999',
+                '--email=test@test.ca',
+                '--password=test',  # No security on password
+                '--membership=1',
                 stdout=out
             )
 
@@ -105,16 +105,16 @@ class CreateMemberTest(TestCase):
         with self.assertRaises(CommandError) as e:
             call_command(
                 'create_member',
-                'John',
-                'Doe',
-                '1980-12-23',
-                'A',
-                1,
-                999,
-                1,
-                'test@test.ca',
-                'test',  # No security on password
-                1,
+                '--first_name=John',
+                '--last_name=Doe',
+                '--birthdate=1980-12-23',
+                '--gender=A',
+                '--university=1',
+                '--academic_level=999',
+                '--academic_field=1',
+                '--email=test@test.ca',
+                '--password=test',  # No security on password
+                '--membership=1',
                 stdout=out
             )
 
@@ -134,16 +134,16 @@ class CreateMemberTest(TestCase):
         with self.assertRaises(CommandError) as e:
             call_command(
                 'create_member',
-                'John',
-                'Doe',
-                '1980-12-23',
-                'A',
-                999,
-                1,
-                1,
-                'test@test.ca',
-                'test',  # No security on password
-                1,
+                '--first_name=John',
+                '--last_name=Doe',
+                '--birthdate=1980-12-23',
+                '--gender=A',
+                '--university=999',
+                '--academic_level=1',
+                '--academic_field=1',
+                '--email=test@test.ca',
+                '--password=test',  # No security on password
+                '--membership=1',
                 stdout=out
             )
 
@@ -163,16 +163,16 @@ class CreateMemberTest(TestCase):
         with self.assertRaises(CommandError) as e:
             call_command(
                 'create_member',
-                'John',
-                'Doe',
-                '1980-12-23',
-                'A',
-                1,
-                1,
-                1,
-                'test@test.ca',
-                'test',  # No security on password
-                999,
+                '--first_name=John',
+                '--last_name=Doe',
+                '--birthdate=1980-12-23',
+                '--gender=A',
+                '--university=1',
+                '--academic_level=1',
+                '--academic_field=1',
+                '--email=test@test.ca',
+                '--password=test',  # No security on password
+                '--membership=999',
                 stdout=out
             )
 
@@ -192,9 +192,16 @@ class CreateMemberTest(TestCase):
         with self.assertRaises(CommandError) as e:
             call_command(
                 'create_member',
-                'test',
-                'CrXMSs7z!',
-                1,
+                '--first_name=John',
+                '--last_name=Doe',
+                '--birthdate=1980-12-23',
+                '--gender=A',
+                '--university=1',
+                '--academic_level=1',
+                '--academic_field=1',
+                '--email=test',
+                '--password=CrXMSs7z!',
+                '--membership=1',
                 stdout=out
             )
 
@@ -218,16 +225,16 @@ class CreateMemberTest(TestCase):
 
         call_command(
             'create_member',
-            'John',
-            'Doe',
-            '1980-12-23',
-            'A',
-            1,
-            1,
-            1,
-            'test@test.ca',
-            'CrXMSs7z!',
-            1,
+            '--first_name=John',
+            '--last_name=Doe',
+            '--birthdate=1980-12-23',
+            '--gender=A',
+            '--university=1',
+            '--academic_level=1',
+            '--academic_field=1',
+            '--email=test@test.ca',
+            '--password=test',  # No security on password
+            '--membership=1',
             '--notify',
             stdout=out
         )
@@ -253,9 +260,16 @@ class CreateMemberTest(TestCase):
         with self.assertRaises(CommandError) as e:
             call_command(
                 'create_member',
-                'test',
-                'CrXMSs7z!',
-                1,
+                '--first_name=John',
+                '--last_name=Doe',
+                '--birthdate=1980-12-23',
+                '--gender=A',
+                '--university=1',
+                '--academic_level=1',
+                '--academic_field=1',
+                '--email=test@test.ca',
+                '--password=test',  # No security on password
+                '--membership=1',
                 '--notify',
                 stdout=out
             )
