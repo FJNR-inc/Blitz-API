@@ -669,6 +669,61 @@ class UsersTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_list_users_with_search(self):
+        """
+        Ensure we can list all users.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.get(reverse('user-list') + '?search=chuck')
+        self.assertEqual(json.loads(response.content)['count'], 1)
+
+        # Users are ordered alphabetically by email
+        first_user = json.loads(response.content)['results'][0]
+        self.assertEqual(first_user['email'], self.admin.email)
+
+        # Check the system doesn't return attributes not expected
+        attributes = [
+            'id',
+            'url',
+            'email',
+            'first_name',
+            'last_name',
+            'is_active',
+            'phone',
+            'other_phone',
+            'is_superuser',
+            'is_staff',
+            'university',
+            'last_login',
+            'date_joined',
+            'academic_level',
+            'academic_field',
+            'gender',
+            'birthdate',
+            'groups',
+            'user_permissions',
+            'tickets',
+            'membership',
+            'membership_end',
+        ]
+        for key in first_user.keys():
+            self.assertTrue(
+                key in attributes,
+                'Attribute "{0}" is not expected but is '
+                'returned by the system.'.format(key)
+            )
+            attributes.remove(key)
+
+        # Ensure the system returns all expected attributes
+        self.assertTrue(
+            len(attributes) == 0,
+            'The system failed to return some '
+            'attributes : {0}'.format(attributes)
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_list_users_without_authenticate(self):
         """
         Ensure we can't list users without authentication.

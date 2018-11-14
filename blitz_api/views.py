@@ -9,7 +9,7 @@ from django.http import Http404, HttpResponse
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from rest_framework import status, viewsets, mixins
+from rest_framework import status, viewsets, mixins, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
@@ -69,6 +69,7 @@ class UserViewSet(viewsets.ModelViewSet):
         'groups': '__all__',
         'user_permissions': '__all__'
     }
+    search_fields = ('first_name', 'last_name', 'email')
     ordering = ('email',)
 
     @action(detail=False, permission_classes=[IsAdminUser])
