@@ -150,9 +150,9 @@ class PackageTests(APITestCase):
         )
 
         content = {
-            'name': ['This field is required.'],
             'price': ['This field is required.'],
-            'reservations': ['This field is required.']
+            'reservations': ['This field is required.'],
+            'available': ['This field is required.'],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -171,6 +171,7 @@ class PackageTests(APITestCase):
             'price': None,
             'reservations': None,
             'exclusive_memberships': None,
+            'available': None,
         }
 
         response = self.client.post(
@@ -183,7 +184,8 @@ class PackageTests(APITestCase):
             'exclusive_memberships': ['This field may not be null.'],
             'name': ['This field may not be null.'],
             'price': ['This field may not be null.'],
-            'reservations': ['This field may not be null.']
+            'reservations': ['This field may not be null.'],
+            'available': ['This field may not be null.'],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -202,6 +204,7 @@ class PackageTests(APITestCase):
             'price': "",
             'reservations': "",
             'exclusive_memberships': (1,),
+            'available': (1,),
         }
 
         response = self.client.post(
@@ -217,7 +220,8 @@ class PackageTests(APITestCase):
             ],
             'name': ['Not a valid string.'],
             'price': ['A valid number is required.'],
-            'reservations': ['A valid integer is required.']
+            'reservations': ['A valid integer is required.'],
+            'available': ['"[1]" is not a valid boolean.'],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -238,6 +242,7 @@ class PackageTests(APITestCase):
             'exclusive_memberships': [
                 reverse('membership-detail', args=[self.membership.id]),
             ],
+            'available': True,
         }
 
         response = self.client.post(
@@ -270,6 +275,7 @@ class PackageTests(APITestCase):
             'details': "999 reservations package",
             'price': 1,
             'reservations': 999,
+            'available': True,
         }
 
         response = self.client.put(

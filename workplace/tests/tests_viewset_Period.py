@@ -243,7 +243,6 @@ class PeriodTests(APITestCase):
         content = {
             'end_date': ['This field is required.'],
             'is_active': ['This field is required.'],
-            'name': ['This field is required.'],
             'price': ['This field is required.'],
             'start_date': ['This field is required.'],
             'workplace': ['This field is required.']

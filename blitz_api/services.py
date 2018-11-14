@@ -55,6 +55,24 @@ def remove_translation_fields(data_dict):
     return data
 
 
+def check_if_translated_field(field_name, data_dict):
+    """
+    Used to check if a field or one of its translated version is present in a
+    dictionnary.
+    ie:
+        name or name_fr or name_en
+    Returns:
+        True: one or more occurences
+        False: no occurence
+    """
+    if data_dict.get(field_name):
+        return True
+    for lang in settings.LANGUAGES:
+        if data_dict.get(''.join([field_name, "_", lang[0]])):
+            return True
+    return False
+
+
 def get_model_from_name(model_name):
     """
     Used to get a model instance when you only have its name.

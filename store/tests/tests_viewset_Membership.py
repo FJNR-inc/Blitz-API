@@ -133,8 +133,8 @@ class MembershipTests(APITestCase):
 
         content = {
             'duration': ['This field is required.'],
-            'name': ['This field is required.'],
-            'price': ['This field is required.']
+            'price': ['This field is required.'],
+            'available': ['This field is required.'],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -152,6 +152,7 @@ class MembershipTests(APITestCase):
             'details': None,
             'price': None,
             'duration': None,
+            'available': None,
         }
 
         response = self.client.post(
@@ -163,7 +164,8 @@ class MembershipTests(APITestCase):
         content = {
             'duration': ['This field may not be null.'],
             'name': ['This field may not be null.'],
-            'price': ['This field may not be null.']
+            'price': ['This field may not be null.'],
+            'available': ['This field may not be null.'],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -182,6 +184,7 @@ class MembershipTests(APITestCase):
             'price': "",
             'duration': "invalid",
             'academic_levels': "invalid",
+            'available': "invalid",
         }
 
         response = self.client.post(
@@ -199,7 +202,8 @@ class MembershipTests(APITestCase):
                 '[DD] [HH:[MM:]]ss[.uuuuuu].'
             ],
             'name': ['This field may not be blank.'],
-            'price': ['A valid number is required.']
+            'price': ['A valid number is required.'],
+            'available': ['"invalid" is not a valid boolean.'],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -217,6 +221,7 @@ class MembershipTests(APITestCase):
             'details': "1-Year student membership",
             'price': 10,
             'duration': timedelta(days=365),
+            'available': True,
             # ManytoMany relationship not required for some reasons.
             # Needs investigtion.
             # 'academic_levels': [reverse(

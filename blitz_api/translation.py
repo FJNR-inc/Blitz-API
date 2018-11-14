@@ -10,7 +10,7 @@ class AcademicLevelTranslationOptions(TranslationOptions):
 
 
 @register(models.AcademicField)
-class AcademicLevelTranslationOptions(TranslationOptions):
+class AcademicFieldTranslationOptions(TranslationOptions):
     fields = ('name', )
 
 

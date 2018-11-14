@@ -11,7 +11,8 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
-from blitz_api.services import remove_translation_fields
+from blitz_api.services import (remove_translation_fields,
+                                check_if_translated_field,)
 from workplace.models import Reservation
 
 from .exceptions import PaymentAPIError
@@ -36,6 +37,20 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
         decimal_places=2,
         min_value=0.1,
     )
+    available = serializers.BooleanField(
+        required=True,
+    )
+    name = serializers.CharField(
+        required=False,
+    )
+    name_fr = serializers.CharField(
+        required=False,
+        allow_null=True,
+    )
+    name_en = serializers.CharField(
+        required=False,
+        allow_null=True,
+    )
 
     def to_representation(self, instance):
         user = self.context['request'].user
@@ -52,6 +67,16 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class MembershipSerializer(BaseProductSerializer):
+
+    def validate(self, attr):
+        action = self.context['request'].parser_context['view'].action
+        if action != 'partial_update':
+            if not check_if_translated_field('name', attr):
+                raise serializers.ValidationError({
+                    'name': _("This field is required.")
+                })
+        return super(MembershipSerializer, self).validate(attr)
+
     class Meta:
         model = Membership
         fields = '__all__'
@@ -69,6 +94,15 @@ class PackageSerializer(BaseProductSerializer):
     reservations = serializers.IntegerField(
         min_value=1,
     )
+
+    def validate(self, attr):
+        action = self.context['request'].parser_context['view'].action
+        if action != 'partial_update':
+            if not check_if_translated_field('name', attr):
+                raise serializers.ValidationError({
+                    'name': _("This field is required.")
+                })
+        return super(PackageSerializer, self).validate(attr)
 
     class Meta:
         model = Package

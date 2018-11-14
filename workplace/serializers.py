@@ -14,7 +14,8 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from blitz_api.serializers import UserSerializer
-from blitz_api.services import remove_translation_fields
+from blitz_api.services import (remove_translation_fields,
+                                check_if_translated_field,)
 
 from .models import Workplace, Picture, Period, TimeSlot, Reservation
 from .fields import TimezoneField
@@ -25,8 +26,37 @@ User = get_user_model()
 class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     timezone = TimezoneField(
-        required=True,
+        required=False,
         help_text=_("Timezone of the workplace."),
+    )
+    name = serializers.CharField(
+        required=False,
+        validators=[UniqueValidator(queryset=Workplace.objects.all())]
+    )
+    name_fr = serializers.CharField(
+        required=False,
+        allow_null=True,
+        validators=[UniqueValidator(queryset=Workplace.objects.all())]
+    )
+    name_en = serializers.CharField(
+        required=False,
+        allow_null=True,
+        validators=[UniqueValidator(queryset=Workplace.objects.all())]
+    )
+    details = serializers.CharField(
+        required=False,
+    )
+    country = serializers.CharField(
+        required=False,
+    )
+    state_province = serializers.CharField(
+        required=False,
+    )
+    city = serializers.CharField(
+        required=False,
+    )
+    address_line1 = serializers.CharField(
+        required=False,
     )
 
     # June 7th 2018
@@ -43,6 +73,30 @@ class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
             picture.picture.url for picture in obj.pictures.all()
         ]
         return [request.build_absolute_uri(url) for url in picture_urls]
+
+    def validate(self, attr):
+        err = {}
+        if not check_if_translated_field('name', attr):
+            err['name'] = _("This field is required.")
+        if not check_if_translated_field('details', attr):
+            err['details'] = _("This field is required.")
+        if not check_if_translated_field('country', attr):
+            err['country'] = _("This field is required.")
+        if not check_if_translated_field('state_province', attr):
+            err['state_province'] = _("This field is required.")
+        if not check_if_translated_field('city', attr):
+            err['city'] = _("This field is required.")
+        if not check_if_translated_field('address_line1', attr):
+            err['address_line1'] = _("This field is required.")
+        if not check_if_translated_field('timezone', attr):
+            err['timezone'] = _("This field is required.")
+        if not check_if_translated_field('postal_code', attr):
+            err['postal_code'] = _("This field is required.")
+        if not check_if_translated_field('seats', attr):
+            err['seats'] = _("This field is required.")
+        if err:
+            raise serializers.ValidationError(err)
+        return super(WorkplaceSerializer, self).validate(attr)
 
     def to_representation(self, instance):
         data = super(WorkplaceSerializer, self).to_representation(instance)
@@ -61,7 +115,13 @@ class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
                     UniqueValidator(queryset=Workplace.objects.all())
                 ],
             },
-            'seats': {'help_text': _("Number of available seats.")},
+            'seats': {
+                'required': False,
+                'help_text': _("Number of available seats.")
+            },
+            'postal_code': {
+                'required': False,
+            },
         }
 
 
@@ -102,9 +162,24 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
         max_length=1000,
     )
     total_reservations = serializers.ReadOnlyField()
+    name = serializers.CharField(
+        required=False,
+    )
+    name_fr = serializers.CharField(
+        required=False,
+        allow_null=True,
+    )
+    name_fr = serializers.CharField(
+        required=False,
+        allow_null=True,
+    )
 
     def validate(self, attrs):
         """Prevents overlapping active periods and invalid start/end date"""
+        if not check_if_translated_field('name', attrs):
+            raise serializers.ValidationError({
+                'name': _("This field is required.")
+            })
         # Forbid Period full updates if users have reserved timeslots
         action = self.context['view'].action
         if action == 'update' or action == 'partial_update':
@@ -180,10 +255,6 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
             'workplace': {
                 'required': True,
                 'help_text': _("Workplaces to which this period applies.")
-            },
-            'name': {
-                'required': True,
-                'help_text': _("Name of the period."),
             },
             'price': {
                 'required': True,

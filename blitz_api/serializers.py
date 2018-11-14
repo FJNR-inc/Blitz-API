@@ -11,7 +11,7 @@ from django.db.models.base import ObjectDoesNotExist
 from .models import (
     Domain, Organization, ActionToken, AcademicField, AcademicLevel,
 )
-from .services import remove_translation_fields
+from .services import remove_translation_fields, check_if_translated_field
 from store.serializers import MembershipSerializer
 
 User = get_user_model()
@@ -40,9 +40,24 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     name = serializers.CharField(
         max_length=100,
-        required=True,
+        required=False,
+    )
+    name_fr = serializers.CharField(
+        required=False,
+        allow_null=True,
+    )
+    name_en = serializers.CharField(
+        required=False,
+        allow_null=True,
     )
     domains = DomainSerializer(many=True, read_only=True)
+
+    def validate(self, attr):
+        if not check_if_translated_field('name', attr):
+            raise serializers.ValidationError({
+                'name': _("This field is required.")
+            })
+        return super(OrganizationSerializer, self).validate(attr)
 
     def to_representation(self, instance):
         data = super(OrganizationSerializer, self).to_representation(instance)
@@ -59,8 +74,23 @@ class AcademicLevelSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     name = serializers.CharField(
         max_length=100,
-        required=True,
+        required=False,
     )
+    name_fr = serializers.CharField(
+        required=False,
+        allow_null=True,
+    )
+    name_en = serializers.CharField(
+        required=False,
+        allow_null=True,
+    )
+
+    def validate(self, attr):
+        if not check_if_translated_field('name', attr):
+            raise serializers.ValidationError({
+                'name': _("This field is required.")
+            })
+        return super(AcademicLevelSerializer, self).validate(attr)
 
     def to_representation(self, instance):
         data = super(AcademicLevelSerializer, self).to_representation(instance)
@@ -77,8 +107,23 @@ class AcademicFieldSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     name = serializers.CharField(
         max_length=100,
-        required=True,
+        required=False,
     )
+    name_fr = serializers.CharField(
+        required=False,
+        allow_null=True,
+    )
+    name_en = serializers.CharField(
+        required=False,
+        allow_null=True,
+    )
+
+    def validate(self, attr):
+        if not check_if_translated_field('name', attr):
+            raise serializers.ValidationError({
+                'name': _("This field is required.")
+            })
+        return super(AcademicFieldSerializer, self).validate(attr)
 
     def to_representation(self, instance):
         data = super(AcademicFieldSerializer, self).to_representation(instance)
