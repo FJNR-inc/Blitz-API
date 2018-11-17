@@ -79,6 +79,7 @@ class ReservationResource(resources.ModelResource):
             'cancelation_date',
             'cancelation_reason',
             'is_active',
+            'is_present',
         )
         export_order = (
             'id',
@@ -89,6 +90,7 @@ class ReservationResource(resources.ModelResource):
             'cancelation_date',
             'cancelation_reason',
             'is_active',
+            'is_present',
         )
 
 

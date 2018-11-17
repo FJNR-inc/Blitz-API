@@ -372,12 +372,16 @@ class ReservationViewSet(viewsets.ModelViewSet):
 
     create:
     Create a new reservation instance.
+
+    partial_update:
+    Modify a reservation instance (ie: mark user as present).
     """
     serializer_class = serializers.ReservationSerializer
     queryset = Reservation.objects.all()
     filter_fields = '__all__'
     ordering_fields = (
         'is_active',
+        'is_present',
         'cancelation_date',
         'cancelation_reason',
         'timeslot__start_time',
@@ -423,6 +427,11 @@ class ReservationViewSet(viewsets.ModelViewSet):
                 IsAuthenticated,
             ]
         return [permission() for permission in permission_classes]
+
+    def update(self, request, *args, **kwargs):
+        if self.action == "update":
+            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return super(ReservationViewSet, self).update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         """

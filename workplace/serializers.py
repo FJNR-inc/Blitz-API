@@ -530,6 +530,21 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
     def validate(self, attrs):
         """Prevents overlapping and no-workplace reservations."""
         validated_data = super(ReservationSerializer, self).validate(attrs)
+
+        action = self.context['view'].action
+
+        if action == 'partial_update':
+            # Only allow modification of is_present field.
+            is_present = validated_data.get('is_present')
+            if is_present is None or len(validated_data) > 1:
+                raise serializers.ValidationError({
+                    'is_present': _(
+                        "Only is_present can be updated. To change other "
+                        "fields, delete this reservation and create a new one."
+                    ),
+                })
+            return attrs
+
         if 'timeslot' in attrs:
             if not attrs['timeslot'].period.workplace:
                 raise serializers.ValidationError(

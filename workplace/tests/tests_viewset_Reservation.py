@@ -151,6 +151,7 @@ class ReservationTests(APITestCase):
         content = {
             'id': 3,
             'is_active': True,
+            'is_present': False,
             'timeslot': 'http://testserver/time_slots/1',
             'url': 'http://testserver/reservations/3',
             'user': 'http://testserver/users/1',
@@ -311,6 +312,7 @@ class ReservationTests(APITestCase):
         content = {
             'id': 3,
             'is_active': True,
+            'is_present': False,
             'timeslot': 'http://testserver/time_slots/2',
             'url': 'http://testserver/reservations/3',
             'user': 'http://testserver/users/1',
@@ -520,7 +522,7 @@ class ReservationTests(APITestCase):
 
     def test_update(self):
         """
-        Ensure we can update a reservation.
+        Ensure we can't update a reservation.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -541,33 +543,19 @@ class ReservationTests(APITestCase):
             format='json',
         )
 
-        response_data = json.loads(response.content)
-
-        del response_data['user_details']
-        del response_data['timeslot_details']
-
-        content = {
-            'id': 1,
-            'is_active': False,
-            'timeslot': 'http://testserver/time_slots/1',
-            'url': 'http://testserver/reservations/1',
-            'user': 'http://testserver/users/1',
-            'cancelation_date': None,
-            'cancelation_reason': None
-        }
-
-        self.assertEqual(response_data, content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_405_METHOD_NOT_ALLOWED
+        )
 
     def test_update_partial(self):
         """
-        Ensure we can partially update a reservation.
+        Ensure we can partially update a reservation (is_present field only).
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'is_active': False,
+            'is_present': True,
         }
 
         response = self.client.patch(
@@ -586,7 +574,8 @@ class ReservationTests(APITestCase):
 
         content = {
             'id': 1,
-            'is_active': False,
+            'is_active': True,
+            'is_present': True,
             'timeslot': 'http://testserver/time_slots/2',
             'url': 'http://testserver/reservations/1',
             'user': 'http://testserver/users/1',
@@ -597,6 +586,73 @@ class ReservationTests(APITestCase):
         self.assertEqual(response_data, content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_update_partial_without_is_pesent(self):
+        """
+        Ensure we can't partially update a reservation (other fields).
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'is_active': False,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'reservation-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'is_present': [
+                "Only is_present can be updated. To change other "
+                "fields, delete this reservation and create a new "
+                "one."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_update_partial_with_forbidden_fields(self):
+        """
+        Ensure we can't partially update a reservation (other fields).
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'is_active': False,
+            'is_present': True,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'reservation-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'is_present': [
+                "Only is_present can be updated. To change other "
+                "fields, delete this reservation and create a new "
+                "one."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_list(self):
         """
@@ -623,6 +679,7 @@ class ReservationTests(APITestCase):
             'results': [{
                 'id': 1,
                 'is_active': True,
+                'is_present': False,
                 'timeslot': 'http://testserver/time_slots/2',
                 'url': 'http://testserver/reservations/1',
                 'user': 'http://testserver/users/1',
@@ -631,6 +688,7 @@ class ReservationTests(APITestCase):
             }, {
                 'id': 2,
                 'is_active': True,
+                'is_present': False,
                 'timeslot': 'http://testserver/time_slots/2',
                 'url': 'http://testserver/reservations/2',
                 'user': 'http://testserver/users/2',
@@ -668,6 +726,7 @@ class ReservationTests(APITestCase):
             'results': [{
                 'id': 1,
                 'is_active': True,
+                'is_present': False,
                 'timeslot': 'http://testserver/time_slots/2',
                 'url': 'http://testserver/reservations/1',
                 'user': 'http://testserver/users/1',
@@ -701,6 +760,7 @@ class ReservationTests(APITestCase):
         content = {
             'id': 1,
             'is_active': True,
+            'is_present': False,
             'timeslot': 'http://testserver/time_slots/2',
             'url': 'http://testserver/reservations/1',
             'user': 'http://testserver/users/1',

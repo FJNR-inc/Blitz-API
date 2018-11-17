@@ -228,6 +228,10 @@ class Reservation(SafeDeleteModel):
         null=True,
         verbose_name=_("Cancelation date"),
     )
+    is_present = models.BooleanField(
+        verbose_name=_("Present"),
+        default=False,
+    )
 
     history = HistoricalRecords()
 
