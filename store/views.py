@@ -10,9 +10,11 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
+from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, PaymentProfile,)
 from .resources import (MembershipResource, PackageResource, OrderResource,
                         OrderLineResource)
+from .services import delete_external_card
 
 from . import serializers, permissions
 
@@ -149,6 +151,25 @@ class PaymentProfileViewSet(
     queryset = PaymentProfile.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
     filter_fields = '__all__'
+
+    def cards(self, request, *args, **kwargs):
+        """
+        This custom action is manually routed in urls.py
+        """
+        payment_profile = self.get_object()
+        card_id = kwargs['card_id']
+        try:
+            delete_external_card(
+                payment_profile.external_api_id,
+                card_id,
+            )
+        except PaymentAPIError as err:
+            return Response(
+                {'message': str(err)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def get_queryset(self):
         """

@@ -33,6 +33,7 @@ PAYSAFE_EXCEPTION = {
         _("An error occured while processing the payment: "),
         _("invalid payment or single-use token.")
     ),
+    '5269': _("Not found."),
     '5270': "{0}{1}".format(
         _("An error occured while processing the payment: "),
         _("permission denied.")
@@ -319,6 +320,38 @@ def get_external_card(card_id):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
+        err_code = json.loads(err.response.content)['error']['code']
+        if err_code in PAYSAFE_EXCEPTION:
+            raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
+        raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
+
+    return r
+
+
+def delete_external_card(profile_id, card_id):
+    """
+    This method is used to delete an existing card of a payment profile from an
+    external payment API.
+    This is tigthly coupled with Paysafe for now, but this should be made
+    generic in the future to ease migrations to another payment patform.
+
+    card_id:   External card ID
+    """
+    delete_card_url = '{0}{1}{2}{3}'.format(
+        settings.PAYSAFE['BASE_URL'],
+        settings.PAYSAFE['VAULT_URL'],
+        "profiles/" + profile_id,
+        "/cards/" + card_id,
+    )
+
+    try:
+        r = requests.delete(
+            delete_card_url,
+            auth=(settings.PAYSAFE['USER'], settings.PAYSAFE['PASSWORD']),
+        )
+        r.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        print(json.loads(err.response.content))
         err_code = json.loads(err.response.content)['error']['code']
         if err_code in PAYSAFE_EXCEPTION:
             raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])

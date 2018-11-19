@@ -19,6 +19,7 @@ from ..services import (charge_payment,
                         get_external_payment_profile,
                         create_external_payment_profile,
                         update_external_card,
+                        delete_external_card,
                         create_external_card,)
 
 User = get_user_model()
@@ -105,6 +106,24 @@ class ServicesTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json.loads(response.content), SAMPLE_PROFILE_RESPONSE)
+
+    @responses.activate
+    def test_delete_external_card(self):
+        """
+        Ensure we can delete a user's card.
+        """
+        responses.add(
+            responses.DELETE,
+            "http://example.com/customervault/v1/profiles/123/cards/456",
+            json='',
+            status=204
+        )
+        response = delete_external_card(
+            self.payment_profile.external_api_id,
+            SAMPLE_PROFILE_RESPONSE['cards'][0]['id'],
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     @responses.activate
     def test_create_external_card(self):
