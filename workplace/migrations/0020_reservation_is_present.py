@@ -14,12 +14,10 @@ class Migration(migrations.Migration):
             model_name='historicalreservation',
             name='is_present',
             field=models.BooleanField(default=False, verbose_name='Present'),
-            preserve_default=False,
         ),
         migrations.AddField(
             model_name='reservation',
             name='is_present',
-            field=models.BooleanField(default=True, verbose_name='Present'),
-            preserve_default=False,
+            field=models.BooleanField(default=False, verbose_name='Present'),
         ),
     ]
