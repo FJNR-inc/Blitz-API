@@ -4,9 +4,10 @@ from import_export.admin import ExportActionModelAdmin
 from modeltranslation.admin import TranslationAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from .models import Membership, Order, OrderLine, Package, PaymentProfile
+from .models import (Membership, Order, OrderLine, Package, PaymentProfile,
+                     CustomPayment,)
 from .resources import (MembershipResource, OrderResource, OrderLineResource,
-                        PackageResource)
+                        PackageResource, CustomPaymentResource,)
 
 
 class OrderLineInline(admin.StackedInline):
@@ -34,6 +35,24 @@ class PackageAdmin(SimpleHistoryAdmin, TranslationAdmin,
         'name',
         'price',
         'reservations',
+    )
+
+
+class CustomPaymentAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
+    resource_class = CustomPaymentResource
+    list_display = (
+        'user',
+        'name',
+        'price',
+    )
+    list_filter = (
+        ('user', admin.RelatedOnlyFieldListFilter),
+        'transaction_date',
+    )
+    search_fields = (
+        'user__email',
+        'user__username',
+        'name',
     )
 
 
@@ -100,6 +119,7 @@ class PaymentProfileAdmin(SimpleHistoryAdmin):
 
 admin.site.register(Membership, MembershipAdmin)
 admin.site.register(Package, PackageAdmin)
+admin.site.register(CustomPayment, CustomPaymentAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderLine, OrderLineAdmin)
 admin.site.register(PaymentProfile, PaymentProfileAdmin)

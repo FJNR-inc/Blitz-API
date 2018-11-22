@@ -2,12 +2,13 @@ from django.apps import apps
 from django.contrib.auth import get_user_model
 
 from import_export import fields, resources
-from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
+from import_export.widgets import (ForeignKeyWidget, ManyToManyWidget,
+                                   DateTimeWidget)
 
 from blitz_api.models import AcademicLevel
 from blitz_api.services import get_model_from_name
 
-from .models import Membership, Order, OrderLine, Package
+from .models import Membership, Order, OrderLine, Package, CustomPayment
 
 
 User = get_user_model()
@@ -145,4 +146,36 @@ class PackageResource(resources.ModelResource):
             'reservations',
             'memberships',
             'available',
+        )
+
+
+class CustomPaymentResource(resources.ModelResource):
+
+    user = fields.Field(
+        column_name='user',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'email'),
+    )
+
+    class Meta:
+        model = CustomPayment
+        fields = (
+            'id',
+            'name',
+            'details',
+            'price',
+            'user',
+            'transaction_date',
+            'authorization_id',
+            'settlement_id',
+        )
+        export_order = (
+            'id',
+            'name',
+            'details',
+            'price',
+            'user',
+            'transaction_date',
+            'authorization_id',
+            'settlement_id',
         )

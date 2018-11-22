@@ -190,6 +190,61 @@ class Package(BaseProduct):
         return self.name
 
 
+class CustomPayment(models.Model):
+    """
+    Represents a custom payment that is not directly related to a product.
+    Used for manual custom transactions.
+    """
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_("User"),
+        related_name='custom_payments',
+    )
+
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=253,
+    )
+
+    price = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        verbose_name=_("Price"),
+    )
+
+    details = models.TextField(
+        verbose_name=_("Details"),
+        max_length=1000,
+        null=True,
+        blank=True,
+    )
+
+    transaction_date = models.DateTimeField(
+        verbose_name=_("Transaction date"),
+    )
+
+    authorization_id = models.CharField(
+        verbose_name=_("Authorization ID"),
+        max_length=253,
+    )
+
+    settlement_id = models.CharField(
+        verbose_name=_("Settlement ID"),
+        max_length=253,
+    )
+
+    class Meta:
+        verbose_name = _("Custom payment")
+        verbose_name_plural = _("Custom payments")
+
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return self.name
+
+
 class PaymentProfile(models.Model):
     """Represents a payment profile linked to an external payment API."""
 

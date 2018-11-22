@@ -11,9 +11,10 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
 from .exceptions import PaymentAPIError
-from .models import (Package, Membership, Order, OrderLine, PaymentProfile,)
+from .models import (Package, Membership, Order, OrderLine, PaymentProfile,
+                     CustomPayment,)
 from .resources import (MembershipResource, PackageResource, OrderResource,
-                        OrderLineResource)
+                        OrderLineResource, CustomPaymentResource,)
 from .services import delete_external_card
 
 from . import serializers, permissions
@@ -257,3 +258,46 @@ class OrderLineViewSet(viewsets.ModelViewSet):
         if self.request.user.is_staff:
             return OrderLine.objects.all()
         return OrderLine.objects.filter(order__user=self.request.user)
+
+
+class CustomPaymentViewSet(viewsets.ModelViewSet):
+    """
+    retrieve:
+    Return the given custom payment.
+
+    list:
+    Return a list of all the existing custom payments.
+
+    create:
+    Create a new custom payment instance.
+    """
+    serializer_class = serializers.CustomPaymentSerializer
+    queryset = CustomPayment.objects.all()
+    permission_classes = (IsAuthenticated, permissions.IsAdminOrReadOnly)
+    filter_fields = '__all__'
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = CustomPaymentResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="CustomPayment-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
+
+    def get_queryset(self):
+        """
+        This viewset should return owned custom payments except if
+        the currently authenticated user is an admin (is_staff).
+        """
+        if self.request.user.is_staff:
+            return CustomPayment.objects.all()
+        return CustomPayment.objects.filter(user=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

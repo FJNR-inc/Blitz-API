@@ -5,6 +5,7 @@ import decimal
 
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction, models
 from django.conf import settings
@@ -17,12 +18,14 @@ from workplace.models import Reservation
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
-                     PaymentProfile,)
+                     PaymentProfile, CustomPayment,)
 from .services import (charge_payment,
                        create_external_payment_profile,
                        create_external_card,
                        get_external_cards,
                        PAYSAFE_CARD_TYPE,)
+
+User = get_user_model()
 
 
 class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
@@ -117,6 +120,106 @@ class PackageSerializer(BaseProductSerializer):
         }
 
 
+class CustomPaymentSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+    authorization_id = serializers.ReadOnlyField()
+    settlement_id = serializers.ReadOnlyField()
+    single_use_token = serializers.CharField(
+        write_only=True,
+        required=True,
+    )
+
+    def create(self, validated_data):
+        """
+        Create a custom payment and charge the user.
+        """
+        user = validated_data['user']
+        single_use_token = validated_data.pop('single_use_token')
+        # Temporary IDs until the external profile is created.
+        validated_data['authorization_id'] = "0"
+        validated_data['settlement_id'] = "0"
+        validated_data['transaction_date'] = timezone.now()
+
+        with transaction.atomic():
+            custom_payment = CustomPayment.objects.create(**validated_data)
+            amount = int(round(custom_payment.price*100))
+
+            # Charge the order with the external payment API
+            try:
+                charge_response = charge_payment(
+                    amount,
+                    single_use_token,
+                    str(custom_payment.id)
+                )
+            except PaymentAPIError as err:
+                raise serializers.ValidationError({
+                    'message': err
+                })
+
+            charge_res_content = charge_response.json()
+            custom_payment.authorization_id = charge_res_content['id']
+            custom_payment.settlement_id = charge_res_content[
+                'settlements'
+            ][0]['id']
+            custom_payment.save()
+
+            # TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
+
+            items = [
+                {
+                    'price': custom_payment.price,
+                    'name': custom_payment.name,
+                }
+            ]
+
+            # Send custom_payment confirmation email
+            merge_data = {
+                'STATUS': "APPROUVÉE",
+                'CARD_NUMBER': charge_res_content['card']['lastDigits'],
+                'CARD_TYPE': PAYSAFE_CARD_TYPE[
+                    charge_res_content['card']['type']
+                ],
+                'DATETIME': timezone.localtime().strftime("%x %X"),
+                'ORDER_ID': custom_payment.id,
+                'CUSTOMER_NAME': user.first_name + " " + user.last_name,
+                'CUSTOMER_EMAIL': user.email,
+                'CUSTOMER_NUMBER': user.id,
+                'AUTHORIZATION': custom_payment.authorization_id,
+                'TYPE': "Achat",
+                'ITEM_LIST': items,
+                # No tax applied on custom payments.
+                'TAX': "0.00",
+                'COST': custom_payment.price,
+            }
+
+            plain_msg = render_to_string("invoice.txt", merge_data)
+            msg_html = render_to_string("invoice.html", merge_data)
+
+            send_mail(
+                "Confirmation d'achat",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [custom_payment.user.email],
+                html_message=msg_html,
+            )
+
+            user.save()
+
+            return custom_payment
+
+    class Meta:
+        model = CustomPayment
+        fields = '__all__'
+        extra_kwargs = {
+            'name': {
+                'help_text': _("Name of the product."),
+            },
+            'transaction_date': {
+                'read_only': True,
+            },
+        }
+
+
 class PaymentProfileSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     cards = serializers.SerializerMethodField()
@@ -153,8 +256,10 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
         """Limits packages according to request user membership"""
         validated_data = super().validate(attrs)
 
-        user_membership = self.context['request'].user.membership
-        user_academic_level = self.context['request'].user.academic_level
+        user = self.context['request'].user
+
+        user_membership = user.membership
+        user_academic_level = user.academic_level
 
         content_type = validated_data.get(
             'content_type',
@@ -173,7 +278,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
                 ],
             })
 
-        if (not self.context['request'].user.is_staff and
+        if (not user.is_staff and
                 content_type.model == 'package' and
                 obj.exclusive_memberships.all() and
                 user_membership not in obj.exclusive_memberships.all()):
@@ -185,7 +290,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
                     )
                 ],
             })
-        if (not self.context['request'].user.is_staff and
+        if (not user.is_staff and
                 content_type.model == 'membership' and
                 obj.academic_levels.all() and
                 user_academic_level not in obj.academic_levels.all()):
@@ -232,12 +337,34 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         allow_blank=True,
         allow_null=True,
     )
+    # target_user = serializers.HyperlinkedRelatedField(
+    #     many=False,
+    #     write_only=True,
+    #     view_name='user-detail',
+    #     required=False,
+    #     allow_null=True,
+    #     queryset=User.objects.all(),
+    # )
+    # save_card = serializers.NullBooleanField(
+    #     write_only=True,
+    #     required=False,
+    # )
 
     def create(self, validated_data):
         """
         Create an Order and charge the user.
         """
         user = self.context['request'].user
+        # if validated_data.get('target_user', None):
+        #     if user.is_staff:
+        #         user = validated_data.pop('target_user')
+        #     else:
+        #         raise serializers.ValidationError({
+        #             'non_field_errors': [_(
+        #                "You cannot create an order for another user without "
+        #                 "admin rights."
+        #             )]
+        #         })
         orderlines_data = validated_data.pop('order_lines')
         payment_token = validated_data.pop('payment_token', None)
         single_use_token = validated_data.pop('single_use_token', None)
@@ -368,7 +495,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     raise serializers.ValidationError({
                         'message': err
                     })
-            elif membership_orderlines or package_orderlines:
+            elif (membership_orderlines or package_orderlines):
                 raise serializers.ValidationError({
                     'non_field_errors': [_(
                         "A payment_token or single_use_token is required to "
