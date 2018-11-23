@@ -70,6 +70,13 @@
       .email__content__summary__item__price {
         float: right;
       }
+
+      .email__content__summary__item__details {
+        margin: 12px 12px;
+        font-size: 12px;
+        color: #142823;
+      }
+
     </style>
   </head>
   <body>
@@ -103,6 +110,15 @@
           <li><b>Total: </b>{{COST}}$ CAD</li>
         </ul>
 
+        {% if CUSTOM_MESSAGE %}
+        <h2 class="email__content__subtitle">
+          Informations additionnels
+        </h2>
+        <p>
+          {{CUSTOM_MESSAGE}}
+        </p>
+        {% endif %}
+
         <h2 class="email__content__subtitle">
           Sommaire de la commande
         </h2>
@@ -116,6 +132,11 @@
             <div class="email__content__summary__item__name">
               {{item.name}}
             </div>
+            {% if item.details %}
+            <div class="email__content__summary__item__details">
+              {{item.details}}
+            </div>
+            {% endif %}
           </div>
           {% endfor %}
           <br/>

@@ -23,6 +23,7 @@ from django.conf.urls.static import static
 
 from workplace.urls import router as workplace_router
 from store.urls import router as store_router
+from retirement.urls import router as retirement_router
 
 from . import views
 
@@ -38,8 +39,12 @@ class OptionalSlashDefaultRouter(DefaultRouter):
 router = OptionalSlashDefaultRouter()
 
 # External workplace application
+# Their urls are directly appended to the main router
+# The retirement app is not included here because we needed a url prefix, thus
+#   it is included separately at the bottom of this file.
 router.registry.extend(workplace_router.registry)
 router.registry.extend(store_router.registry)
+# router.registry.extend(retirement_router.registry)
 
 router.register('users', views.UserViewSet)
 router.register('domains', views.DomainViewSet)
@@ -95,4 +100,10 @@ urlpatterns = [
     ),
     path('api-auth/', include('rest_framework.urls')),
     path('', include(router.urls)),  # includes router generated URL
+    # The retirement app must be namespaced due to conflicting resources names
+    #   (reservations & pictures)
+    path(
+        'retirement/',
+        include((retirement_router.urls, 'retirement'), namespace='retirement')
+    ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

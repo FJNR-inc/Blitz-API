@@ -15,6 +15,7 @@ from django.template.loader import render_to_string
 from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,)
 from workplace.models import Reservation
+from retirement.models import Reservation as RetirementReservation
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
@@ -278,10 +279,11 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
                 ],
             })
 
-        if (not user.is_staff and
-                content_type.model == 'package' and
-                obj.exclusive_memberships.all() and
-                user_membership not in obj.exclusive_memberships.all()):
+        if (not user.is_staff
+                and (content_type.model == 'package'
+                     or content_type.model == 'retirement')
+                and obj.exclusive_memberships.all()
+                and user_membership not in obj.exclusive_memberships.all()):
             raise serializers.ValidationError({
                 'object_id': [
                     _(
@@ -411,6 +413,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             reservation_orderlines = order.order_lines.filter(
                 content_type__model="timeslot"
             )
+            retirement_orderlines = order.order_lines.filter(
+                content_type__model="retirement"
+            )
             need_transaction = False
 
             if membership_orderlines:
@@ -465,6 +470,26 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                                 "timeslot."
                             )]
                         })
+            if retirement_orderlines:
+                need_transaction = True
+                for retirement_orderline in retirement_orderlines:
+                    retirement = retirement_orderline.content_object
+                    reserved = (
+                        retirement.reservations.filter(is_active=True).count()
+                    )
+                    if (retirement.seats - retirement.total_reservations) > 0:
+                        RetirementReservation.objects.create(
+                            user=user,
+                            retirement=retirement,
+                            is_active=True
+                        )
+                    else:
+                        raise serializers.ValidationError({
+                            'non_field_errors': [_(
+                                "There are no places left in the requested "
+                                "retirement."
+                            )]
+                        })
 
             if need_transaction and payment_token:
                 # Charge the order with the external payment API
@@ -495,7 +520,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     raise serializers.ValidationError({
                         'message': err
                     })
-            elif (membership_orderlines or package_orderlines):
+            elif (membership_orderlines
+                  or package_orderlines
+                  or retirement_orderlines):
                 raise serializers.ValidationError({
                     'non_field_errors': [_(
                         "A payment_token or single_use_token is required to "
@@ -515,16 +542,26 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
                 orderlines = order.order_lines.filter(
                     models.Q(content_type__model='membership') |
-                    models.Q(content_type__model='package')
+                    models.Q(content_type__model='package') |
+                    models.Q(content_type__model='retirement')
                 )
 
+                # Here, the 'details' key is used to provide details of the
+                #  item to the email template.
+                # As of now, only 'retirement' objects have the 'email_content'
+                #  key that is used here. There is surely a better way to
+                #  to handle that logic that will be more generic.
                 items = [
                     {
                         'price': orderline.content_object.price,
                         'name': "{0}: {1}".format(
                             str(orderline.content_type),
                             orderline.content_object.name
-                        )
+                        ),
+                        'details':
+                            orderline.content_object.email_content if hasattr(
+                                orderline.content_object, 'email_content'
+                            ) else ""
                     } for orderline in orderlines
                 ]
 

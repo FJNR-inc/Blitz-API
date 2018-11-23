@@ -6,6 +6,7 @@
         "route53_enabled": "false",
         "django_settings": "blitz_api.settings",
         "project_name": "task",
+        "memory_size": 1024,
         "runtime": "python3.6",
         "s3_bucket": "thesezvous-api",
         "aws_environment_variables": {

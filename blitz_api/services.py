@@ -65,7 +65,7 @@ def check_if_translated_field(field_name, data_dict):
         True: one or more occurences
         False: no occurence
     """
-    if data_dict.get(field_name):
+    if field_name in data_dict:
         return True
     for lang in settings.LANGUAGES:
         if data_dict.get(''.join([field_name, "_", lang[0]])):

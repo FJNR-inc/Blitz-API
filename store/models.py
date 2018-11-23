@@ -52,7 +52,8 @@ class Order(models.Model):
         cost = 0
         orderlines = self.order_lines.filter(
             models.Q(content_type__model='membership') |
-            models.Q(content_type__model='package')
+            models.Q(content_type__model='package') |
+            models.Q(content_type__model='retirement')
         )
         for orderline in orderlines:
             cost += orderline.content_object.price * orderline.quantity

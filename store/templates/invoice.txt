@@ -10,13 +10,23 @@ Ceci est un reçu pour votre achat. Merci d'en garder une copie.
 
  * Nom: {{CUSTOMER_NAME}}
  * Courriel: {{CUSTOMER_EMAIL}}
- * Numéro de membre: {{CUSTOMER_NUMBER}}
+
+ * NUMÉRO DE MEMBRE: {{CUSTOMER_NUMBER}}
 
  * Numéro de commande: {{ORDER_ID}}
  * Date: {{DATETIME}}
  * Numéro de carte: **** **** **** {{CARD_NUMBER}}
  * Autorisation: {{AUTHORIZATION}}
  * Total: {{COST}}$ CAD
+
+{% if CUSTOM_MESSAGE %}
+
+ 
+** INFORMATIONS ADDITIONNELS
+------------------------------------------------------------
+
+{{CUSTOM_MESSAGE}}
+{% endif %}
 
  
 ** SOMMAIRE DE LA COMMANDE
@@ -25,7 +35,8 @@ Ceci est un reçu pour votre achat. Merci d'en garder une copie.
 {%for item in ITEM_LIST%}
 
 {{item.price}}$ CAD
-{{item.name}} {% endfor %}
+{{item.name}} {% if item.details %}
+{{item.details}} {% endif %} {% endfor %}
 
 {{TAX}}$ CAD
 TPS/TVQ
@@ -34,7 +45,9 @@ TPS/TVQ
 Total
 
  
-** L'ÉQUIPE THÈSEZ-VOUS {{SELLER_COORDINATES}}
+** L'ÉQUIPE THÈSEZ-VOUS
 ------------------------------------------------------------
 
-Thèsez-vous n'autorise pas d'échanges ou de remboursements. Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2, info@thesez-vous.com, www.thesez-vous.com
+Thèsez-vous n'autorise pas d'échanges ou de remboursements.
+Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2
+info@thesez-vous.com, www.thesez-vous.com
