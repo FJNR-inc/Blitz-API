@@ -44,7 +44,9 @@
             "ADMINS": "('Francis Jeanneau', 'francis.jeanneau@fjnr.ca'), ('Noël Rignon', 'noel.rignon@fjnr.ca')",
             "SERVER_EMAIL": "admin@fjnr.ca",
             "EMAIL_HOST": "smtp.zoho.com",
-            "SUPPORT_EMAIL": "support@thesez-vous.org"
+            "SUPPORT_EMAIL": "support@thesez-vous.org",
+            "DATA_UPLOAD_MAX_MEMORY_SIZE": "5242880",
+            "FILE_UPLOAD_MAX_MEMORY_SIZE": "5242880"
         },
         "vpc_config" : {
             "SubnetIds": [ "subnet-0bd158ff494029446","subnet-087e1408264ff9358" ],

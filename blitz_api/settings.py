@@ -194,6 +194,10 @@ LANGUAGES = [
     ('en', _('English')),
 ]
 
+# File upload size
+DATA_UPLOAD_MAX_MEMORY_SIZE = config('DATA_UPLOAD_MAX_MEMORY_SIZE', default=2621440, cast=int)
+FILE_UPLOAD_MAX_MEMORY_SIZE = config('FILE_UPLOAD_MAX_MEMORY_SIZE', default=2621440, cast=int)
+
 
 # AWS Deployment configuration (with Zappa)
 AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='ca-central-1')
