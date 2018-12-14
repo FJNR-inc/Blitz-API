@@ -109,3 +109,75 @@ class RetirementResource(resources.ModelResource):
             'min_day_exchange',
             'refund_rate',
         )
+
+
+class WaitQueueResource(resources.ModelResource):
+
+    user = fields.Field(
+        column_name='user',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'email'),
+    )
+
+    retirement = fields.Field(
+        column_name='retirement',
+        attribute='retirement',
+        widget=ForeignKeyWidget(Retirement, 'name'),
+    )
+
+    created_at = fields.Field(
+        column_name='created_at',
+        attribute='created_at',
+        widget=DateTimeWidget(),
+    )
+
+    class Meta:
+        model = Retirement
+        fields = (
+            'id',
+            'user',
+            'retirement',
+            'created_at',
+        )
+        export_order = (
+            'id',
+            'user',
+            'retirement',
+            'created_at',
+        )
+
+
+class WaitQueueNotificationResource(resources.ModelResource):
+
+    user = fields.Field(
+        column_name='user',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'email'),
+    )
+
+    retirement = fields.Field(
+        column_name='retirement',
+        attribute='retirement',
+        widget=ForeignKeyWidget(Retirement, 'name'),
+    )
+
+    created_at = fields.Field(
+        column_name='created_at',
+        attribute='created_at',
+        widget=DateTimeWidget(),
+    )
+
+    class Meta:
+        model = Retirement
+        fields = (
+            'id',
+            'user',
+            'retirement',
+            'created_at',
+        )
+        export_order = (
+            'id',
+            'user',
+            'retirement',
+            'created_at',
+        )

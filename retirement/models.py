@@ -1,11 +1,12 @@
+from datetime import timedelta
+
+from blitz_api.models import Address
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
-
-from blitz_api.models import Address
 from store.models import Membership
 
 User = get_user_model()
@@ -35,6 +36,25 @@ class Retirement(Address, SafeDeleteModel):
     )
 
     seats = models.IntegerField(verbose_name=_("Seats"), )
+
+    reserved_seats = models.IntegerField(
+        verbose_name=_("Reserved seats"),
+        default=0,
+    )
+
+    next_user_notified = models.PositiveIntegerField(
+        verbose_name=_(
+            "Index of the user to be notified next for a resserved place."
+        ),
+        default=0,
+    )
+
+    notification_interval = models.DurationField(
+        verbose_name=_(
+            "Time between two reserved place notifications."
+        ),
+        default=timedelta(hours=24),
+    )
 
     activity_language = models.CharField(
         blank=True,
@@ -195,3 +215,74 @@ class Reservation(SafeDeleteModel):
 
     def __str__(self):
         return str(self.user)
+
+
+class WaitQueue(models.Model):
+    """
+    Represents element of a FIFO waiting queue to which users register
+    manually.
+    When the 'notify' action is called, first users of the queue of every
+    retirement will be notified by email if there is a place left in the
+    retirement.
+    """
+
+    class Meta:
+        verbose_name = _("Waiting queue")
+        verbose_name_plural = _("Waiting queues")
+        unique_together = ('user', 'retirement')
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_("User"),
+        related_name='wait_queues',
+    )
+
+    retirement = models.ForeignKey(
+        Retirement,
+        on_delete=models.CASCADE,
+        verbose_name=_("Retirement"),
+        related_name='wait_queue',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return ', '.join([str(self.retirement), str(self.user)])
+
+
+class WaitQueueNotification(models.Model):
+    """
+    Represents a notification instance for the retirement wait queues.
+    Each time a user is notified, we create an instance of this object as a
+    journal. Sent notifications can then be listed by admins.
+    """
+
+    class Meta:
+        verbose_name = _("Wait queue notification")
+        verbose_name_plural = _("Wait queue notification")
+
+    retirement = models.ForeignKey(
+        Retirement,
+        on_delete=models.CASCADE,
+        verbose_name=_("Retirement"),
+        related_name='wait_queue_notifications',
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_("User"),
+        related_name='wait_queue_notifications',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return ', '.join(
+            [str(self.retirement), str(self.user)]
+        )

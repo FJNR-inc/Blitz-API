@@ -35,6 +35,8 @@ router = OptionalSlashSimpleRouter()
 router.register('retirements', views.RetirementViewSet)
 router.register('pictures', views.PictureViewSet)
 router.register('reservations', views.ReservationViewSet)
+router.register('wait_queues', views.WaitQueueViewSet)
+router.register('wait_queue_notifications', views.WaitQueueNotificationViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),  # includes router generated URL

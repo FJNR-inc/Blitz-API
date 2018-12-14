@@ -1,5 +1,5 @@
 from copy import copy
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 
 import rest_framework
@@ -12,7 +12,7 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
-from rest_framework import exceptions, status, viewsets
+from rest_framework import exceptions, status, viewsets, mixins
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
@@ -21,8 +21,11 @@ from blitz_api.exceptions import MailServiceError
 from blitz_api.services import send_mail
 
 from . import permissions, serializers
-from .models import Picture, Reservation, Retirement
-from .resources import ReservationResource, RetirementResource
+from .models import (Picture, Reservation, Retirement, WaitQueue,
+                     WaitQueueNotification, )
+from .resources import (ReservationResource, RetirementResource,
+                        WaitQueueResource, WaitQueueNotificationResource)
+from .services import notify_reserved_retirement_seat
 
 User = get_user_model()
 
@@ -167,3 +170,158 @@ class ReservationViewSet(viewsets.ModelViewSet):
         #     instance.cancelation_date = timezone.now()
         #     instance.save()
         # return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class WaitQueueViewSet(viewsets.ModelViewSet):
+    """
+    retrieve:
+    Return the given wait_queue element.
+
+    list:
+    Return a list of all owned wait_queue elements.
+
+    create:
+    Create a new wait_queue element instance.
+
+    delete:
+    Delete an owned wait_queue element instance (unsubscribe user from mailing
+    list).
+    """
+    serializer_class = serializers.WaitQueueSerializer
+    queryset = WaitQueue.objects.all()
+    permission_classes = (IsAuthenticated, )
+    filter_fields = '__all__'
+    ordering_fields = (
+        'created_at',
+        'retirement__start_time',
+        'retirement__end_time',
+    )
+
+    def get_queryset(self):
+        """
+        This viewset should return the request user's wait_queue except if
+        the currently authenticated user is an admin (is_staff).
+        """
+        if self.request.user.is_staff:
+            return WaitQueue.objects.all()
+        return WaitQueue.objects.filter(user=self.request.user)
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = WaitQueueResource().export()
+        response = HttpResponse(
+            dataset.xls, content_type="application/vnd.ms-excel")
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="WaitQueue-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
+
+    def update(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def destroy(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class WaitQueueNotificationViewSet(mixins.ListModelMixin,
+                                   mixins.RetrieveModelMixin,
+                                   viewsets.GenericViewSet, ):
+    """
+    list:
+    Return a list of all owned notification.
+
+    read:
+    Return a single owned notification.
+    """
+    serializer_class = serializers.WaitQueueNotificationSerializer
+    queryset = WaitQueueNotification.objects.all()
+    permission_classes = (IsAdminUser, )
+    filter_fields = '__all__'
+    ordering_fields = (
+        'created_at',
+        'retirement__start_time',
+        'retirement__end_time',
+    )
+
+    def get_queryset(self):
+        """
+        The queryset contains all objects since the view is restricted to
+        admins.
+        """
+        return WaitQueueNotification.objects.all()
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def notify(self, request):
+        """
+        That custom action allows an admin (or automated task) to notify
+        users in wait queues of every retirement.
+        For each retirement, there will be as many users notified as there are
+        reserved seats.
+        At the same time, this clears older notification logs. That part should
+        be moved somewhere else.
+        """
+        response = Response(
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+        # Remove older notifications
+        remove_before = timezone.now() - timedelta(
+            days=settings.LOCAL_SETTINGS[
+                'RETIREMENT_NOTIFICATION_LIFETIME_DAYS'
+            ]
+        )
+        WaitQueueNotification.objects.filter(
+            created_at__lt=remove_before
+        ).delete()
+
+        # Get retirements that have reserved seats
+        retirements = Retirement.objects.filter(reserved_seats__gt=0)
+
+        for retirement in retirements:
+            # Get the wait queue with elements ordered by ascending date
+            wait_queue = retirement.wait_queue.all().order_by('created_at')
+            # Get number of waiting users
+            nb_waiting_users = wait_queue.count()
+            # If all users have already been notified, free all reserved seats
+            if retirement.next_user_notified >= nb_waiting_users:
+                retirement.reserved_seats = 0
+                retirement.next_user_notified = 0
+            # Else notify a user for every reserved seat
+            for seat in range(retirement.reserved_seats):
+                if retirement.next_user_notified >= nb_waiting_users:
+                    retirement.reserved_seats -= 1
+                else:
+                    user = wait_queue[retirement.next_user_notified].user
+                    notify_reserved_retirement_seat(
+                        user,
+                        retirement,
+                    )
+                    retirement.next_user_notified += 1
+                    WaitQueueNotification.objects.create(
+                        user=user,
+                        retirement=retirement,
+                    )
+
+            retirement.save()
+
+        if Retirement.objects.filter(reserved_seats__gt=0).count() == 0:
+            response.data = {
+                'detail': "No reserved seats."
+            }
+            response.status_code = status.HTTP_200_OK
+
+        return response
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = WaitQueueNotificationResource().export()
+        response = HttpResponse(
+            dataset.xls, content_type="application/vnd.ms-excel")
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="WaitQueueNotification-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response

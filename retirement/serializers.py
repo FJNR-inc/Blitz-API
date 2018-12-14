@@ -17,7 +17,8 @@ from blitz_api.services import (check_if_translated_field,
                                 remove_translation_fields)
 
 from .fields import TimezoneField
-from .models import Picture, Reservation, Retirement
+from .models import (Picture, Reservation, Retirement, WaitQueue,
+                     WaitQueueNotification, )
 
 User = get_user_model()
 
@@ -99,8 +100,9 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_places_remaining(self, obj):
         seats = obj.seats
+        reserved_seats = obj.reserved_seats
         reservations = obj.reservations.filter(is_active=True).count()
-        return seats - reservations
+        return seats - reservations - reserved_seats
 
     def validate(self, attr):
         err = {}
@@ -288,5 +290,49 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             },
             'url': {
                 'view_name': 'retirement:reservation-detail',
+            },
+        }
+
+
+class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+    created_at = serializers.ReadOnlyField()
+
+    def validate_user(self, obj):
+        """
+        Subscribe the authenticated user.
+        If the authenticated user is an admin (is_staff), use the user provided
+        in the request's 'user' field.
+        """
+        if self.context['request'].user.is_staff:
+            return obj
+        return self.context['request'].user
+
+    class Meta:
+        model = WaitQueue
+        fields = '__all__'
+        extra_kwargs = {
+            'retirement': {
+                'view_name': 'retirement:retirement-detail',
+            },
+            'url': {
+                'view_name': 'retirement:waitqueue-detail',
+            },
+        }
+
+
+class WaitQueueNotificationSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+    created_at = serializers.ReadOnlyField()
+
+    class Meta:
+        model = WaitQueue
+        fields = '__all__'
+        extra_kwargs = {
+            'retirement': {
+                'view_name': 'retirement:retirement-detail',
+            },
+            'url': {
+                'view_name': 'retirement:waitqueuenotification-detail',
             },
         }

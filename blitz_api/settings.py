@@ -313,6 +313,7 @@ LOCAL_SETTINGS = {
         'FORGOT_PASSWORD_URL': config('FORGOT_PASSWORD_URL', default='https://example.com/reset-password/{{token}}'),
     },
     'SELLING_TAX': 0.14975,
+    'RETIREMENT_NOTIFICATION_LIFETIME_DAYS': config('RETIREMENT_NOTIFICATION_LIFETIME_DAYS', default=30),
 }
 
 # Payment settings

@@ -20,6 +20,7 @@ from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.models import AcademicLevel
 
 from workplace.models import TimeSlot, Period, Workplace
+from retirement.models import Retirement
 
 from .paysafe_sample_responses import (SAMPLE_PROFILE_RESPONSE,
                                        SAMPLE_PAYMENT_RESPONSE,
@@ -142,6 +143,40 @@ class OrderTests(APITestCase):
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
+        cls.retirement = Retirement.objects.create(
+            name="mega_retirement",
+            seats=400,
+            details="This is a description of the mega retirement.",
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+            price=199,
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            is_active=True,
+            activity_language='FR',
+        )
+        cls.retirement_no_seats = Retirement.objects.create(
+            name="no_place_left_retirement",
+            seats=0,
+            details="This is a description of the full retirement.",
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+            price=199,
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            is_active=True,
+            activity_language='FR',
+        )
 
     @responses.activate
     def test_create_with_payment_token(self):
@@ -172,6 +207,10 @@ class OrderTests(APITestCase):
                 'quantity': 2,
             }, {
                 'content_type': 'timeslot',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'retirement',
                 'object_id': 1,
                 'quantity': 1,
             }],
@@ -210,6 +249,13 @@ class OrderTests(APITestCase):
                 'order': 'http://testserver/orders/3',
                 'quantity': 1,
                 'url': 'http://testserver/order_lines/4'
+            }, {
+                'content_type': 'retirement',
+                'id': 5,
+                'object_id': 1,
+                'order': 'http://testserver/orders/3',
+                'url': 'http://testserver/order_lines/5',
+                'quantity': 1
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/2',
@@ -399,6 +445,62 @@ class OrderTests(APITestCase):
         content = {
             'non_field_errors': [
                 "There are no places left in the requested timeslot."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        admin = self.admin
+        admin.refresh_from_db()
+
+        self.assertEqual(admin.tickets, 1)
+        self.assertEqual(admin.membership, None)
+
+    @responses.activate
+    def test_create_no_place_left_retirement(self):
+        """
+        Ensure we can't create an order with reservations if the requested
+        retirement has no place left.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'package',
+                'object_id': 1,
+                'quantity': 2,
+            }, {
+                'content_type': 'retirement',
+                'object_id': self.retirement_no_seats.id,
+                'quantity': 1,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                "There are no places left in the requested retirement."
             ]
         }
 

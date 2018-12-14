@@ -1,0 +1,19 @@
+
+
+{% load static %}
+
+ 
+** EXCLUSIVITÉ 24H
+------------------------------------------------------------
+
+Des places se sont libérées pour une retraite à laquelle vous êtes intéressés. Une place a été réservée pour vous pour les prochaines 24 heures. Faites vite!
+
+Vous pouvez accéder à cette place exclusive en vous connectant à la plateforme Thèsez-vous!
+
+ 
+** L'ÉQUIPE THÈSEZ-VOUS
+------------------------------------------------------------
+
+Thèsez-vous n'autorise pas d'échanges ou de remboursements.
+Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2
+info@thesez-vous.com, www.thesez-vous.com
