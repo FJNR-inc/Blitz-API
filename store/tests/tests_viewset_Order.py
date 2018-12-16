@@ -55,7 +55,13 @@ class OrderTests(APITestCase):
         super(OrderTests, cls).setUpClass()
         cls.client = APIClient()
         cls.user = UserFactory()
+        cls.user.city = "Current city"
+        cls.user.phone = "123-456-7890"
+        cls.user.save()
         cls.admin = AdminFactory()
+        cls.admin.city = "Current city"
+        cls.admin.phone = "123-456-7890"
+        cls.admin.save()
         cls.membership = Membership.objects.create(
             name="basic_membership",
             details="1-Year student membership",
@@ -513,6 +519,53 @@ class OrderTests(APITestCase):
 
         self.assertEqual(admin.tickets, 1)
         self.assertEqual(admin.membership, None)
+
+    @responses.activate
+    def test_create_retirement_missing_user_info(self):
+        """
+        Ensure we can't create an order with reservations if the requesting
+        user has an incomplete profile.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = None
+        self.user.save()
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'package',
+                'object_id': 1,
+                'quantity': 2,
+            }, {
+                'content_type': 'retirement',
+                'object_id': self.retirement_no_seats.id,
+                'quantity': 1,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                "Incomplete user profile. 'phone' and 'city' field must "
+                "be filled in the user profile to book a retirement."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     @responses.activate
     def test_create_not_enough_tickets(self):

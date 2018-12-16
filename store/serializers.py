@@ -472,6 +472,15 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         })
             if retirement_orderlines:
                 need_transaction = True
+                if not (user.phone and user.city):
+                    raise serializers.ValidationError({
+                        'non_field_errors': [_(
+                            "Incomplete user profile. 'phone' and 'city' "
+                            "field must be filled in the user profile to book "
+                            "a retirement."
+                        )]
+                    })
+
                 for retirement_orderline in retirement_orderlines:
                     retirement = retirement_orderline.content_object
                     reserved = (

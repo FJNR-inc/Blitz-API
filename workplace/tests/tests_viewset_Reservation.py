@@ -204,7 +204,9 @@ class ReservationTests(APITestCase):
                 'tickets': 1,
                 'university': None,
                 'url': 'http://testserver/users/1',
-                'user_permissions': []
+                'user_permissions': [],
+                'city': None,
+                'personnal_restrictions': None
             }
         }
 
@@ -373,7 +375,9 @@ class ReservationTests(APITestCase):
                 'tickets': 1,
                 'university': None,
                 'url': 'http://testserver/users/1',
-                'user_permissions': []
+                'user_permissions': [],
+                'city': None,
+                'personnal_restrictions': None
             }
         }
 

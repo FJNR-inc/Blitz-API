@@ -88,6 +88,17 @@ class User(AbstractUser):
         null=True,
         verbose_name=_("Tickets"),
     )
+    city = models.CharField(
+        verbose_name=_("City"),
+        blank=True,
+        null=True,
+        max_length=50,
+    )
+    personnal_restrictions = models.TextField(
+        verbose_name=_("Personnal restrictions"),
+        blank=True,
+        null=True,
+    )
     history = HistoricalRecords()
 
 

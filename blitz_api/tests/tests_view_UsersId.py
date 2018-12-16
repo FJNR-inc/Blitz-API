@@ -44,6 +44,8 @@ class UsersIdTests(APITestCase):
             'tickets',
             'membership',
             'membership_end',
+            'city',
+            'personnal_restrictions',
         ]
 
     def setUp(self):

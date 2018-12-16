@@ -651,6 +651,8 @@ class UsersTests(APITestCase):
             'tickets',
             'membership',
             'membership_end',
+            'city',
+            'personnal_restrictions',
         ]
         for key in first_user.keys():
             self.assertTrue(
@@ -706,6 +708,8 @@ class UsersTests(APITestCase):
             'tickets',
             'membership',
             'membership_end',
+            'city',
+            'personnal_restrictions',
         ]
         for key in first_user.keys():
             self.assertTrue(
