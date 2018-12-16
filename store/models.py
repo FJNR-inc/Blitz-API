@@ -45,6 +45,13 @@ class Order(models.Model):
         max_length=253,
     )
 
+    reference_number = models.CharField(
+        verbose_name=_("Reference number"),
+        max_length=253,
+        null=True,
+        blank=True,
+    )
+
     history = HistoricalRecords()
 
     @property
@@ -234,6 +241,13 @@ class CustomPayment(models.Model):
     settlement_id = models.CharField(
         verbose_name=_("Settlement ID"),
         max_length=253,
+    )
+
+    reference_number = models.CharField(
+        verbose_name=_("Reference number"),
+        max_length=253,
+        null=True,
+        blank=True,
     )
 
     class Meta:

@@ -82,12 +82,14 @@ class OrderTests(APITestCase):
             transaction_date=timezone.now(),
             authorization_id=1,
             settlement_id=1,
+            reference_number=751,
         )
         cls.order_admin = Order.objects.create(
             user=cls.admin,
             transaction_date=timezone.now(),
             authorization_id=2,
             settlement_id=2,
+            reference_number=751,
         )
         cls.order_line = OrderLine.objects.create(
             order=cls.order,
@@ -268,6 +270,7 @@ class OrderTests(APITestCase):
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
+            'reference_number': '751',
         }
 
         self.assertEqual(response_data, content)
@@ -336,6 +339,7 @@ class OrderTests(APITestCase):
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '0',
             'settlement_id': '0',
+            'reference_number': '0',
         }
 
         self.assertEqual(response_data, content)
@@ -748,6 +752,7 @@ class OrderTests(APITestCase):
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
+            'reference_number': '751',
         }
 
         self.assertEqual(response_data, content)
@@ -825,6 +830,7 @@ class OrderTests(APITestCase):
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
+            'reference_number': '751',
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -1077,6 +1083,7 @@ class OrderTests(APITestCase):
                 'url': 'http://testserver/order_lines/3'
             }],
             'settlement_id': '1',
+            'reference_number': '751',
             'transaction_date': response_data['transaction_date'],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/2'
@@ -1250,6 +1257,7 @@ class OrderTests(APITestCase):
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
+            'reference_number': '751',
             'order_lines': [{
                 'content_type': 'package',
                 'id': 1,
@@ -1318,6 +1326,7 @@ class OrderTests(APITestCase):
                 'transaction_date': data['results'][0]['transaction_date'],
                 'authorization_id': '1',
                 'settlement_id': '1',
+                'reference_number': '751',
                 'order_lines': [{
                     'content_type': 'package',
                     'id': 1,
@@ -1357,6 +1366,7 @@ class OrderTests(APITestCase):
                 'transaction_date': data['results'][0]['transaction_date'],
                 'authorization_id': '1',
                 'settlement_id': '1',
+                'reference_number': '751',
                 'order_lines': [{
                     'content_type': 'package',
                     'id': 1,
@@ -1372,6 +1382,7 @@ class OrderTests(APITestCase):
                 'transaction_date': data['results'][1]['transaction_date'],
                 'authorization_id': '2',
                 'settlement_id': '2',
+                'reference_number': '751',
                 'order_lines': [],
                 'url': 'http://testserver/orders/2',
                 'user': 'http://testserver/users/2'
@@ -1420,6 +1431,7 @@ class OrderTests(APITestCase):
             'transaction_date': data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
+            'reference_number': '751',
             'order_lines': [{
                 'content_type': 'package',
                 'id': 1,
@@ -1475,6 +1487,7 @@ class OrderTests(APITestCase):
             'transaction_date': data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
+            'reference_number': '751',
             'order_lines': [{
                 'content_type': 'package',
                 'id': 1,

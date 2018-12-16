@@ -162,6 +162,9 @@ class CustomPaymentSerializer(serializers.HyperlinkedModelSerializer):
             custom_payment.settlement_id = charge_res_content[
                 'settlements'
             ][0]['id']
+            custom_payment.reference_number = charge_res_content[
+                'merchantRefNum'
+            ]
             custom_payment.save()
 
             # TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
@@ -373,6 +376,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         # Temporary IDs until the external profile is created.
         validated_data['authorization_id'] = "0"
         validated_data['settlement_id'] = "0"
+        validated_data['reference_number'] = "0"
         validated_data['transaction_date'] = timezone.now()
         validated_data['user'] = user
         profile = PaymentProfile.objects.filter(owner=user).first()
@@ -545,6 +549,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 order.settlement_id = charge_res_content['settlements'][0][
                     'id'
                 ]
+                order.reference_number = charge_res_content['merchantRefNum']
                 order.save()
 
                 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
