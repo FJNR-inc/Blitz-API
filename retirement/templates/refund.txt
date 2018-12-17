@@ -1,0 +1,49 @@
+
+
+{% load static %}
+
+ 
+** CONFIRMATION DE REMBOURSEMENT
+------------------------------------------------------------
+
+Ceci est un reçu pour votre remboursement. Merci d'en garder une copie.
+
+ * Nom: {{CUSTOMER_NAME}}
+ * Courriel: {{CUSTOMER_EMAIL}}
+
+ * NUMÉRO DE MEMBRE: {{CUSTOMER_NUMBER}}
+
+ * Numéro de commande: {{ORDER_ID}}
+ * Date: {{DATETIME}}
+ * Numéro de carte: **** **** **** {{CARD_NUMBER}}
+ * Total: {{COST}}$ CAD
+
+{% if CUSTOM_MESSAGE %}
+
+ 
+** INFORMATIONS ADDITIONNELS
+------------------------------------------------------------
+
+{{CUSTOM_MESSAGE}}
+{% endif %}
+
+ 
+** SOMMAIRE DU REMBOURSEMENT
+------------------------------------------------------------
+
+{%for item in ITEM_LIST%}
+
+{{item.price}}$ CAD
+{{item.name}} {% if item.details %}
+{{item.details}} {% endif %} {% endfor %}
+
+{{COST}}$ CAD
+Total
+
+ 
+** L'ÉQUIPE THÈSEZ-VOUS
+------------------------------------------------------------
+
+Thèsez-vous n'autorise pas d'échanges ou de remboursements.
+Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2
+info@thesez-vous.com, www.thesez-vous.com

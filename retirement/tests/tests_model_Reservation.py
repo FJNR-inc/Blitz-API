@@ -2,10 +2,13 @@ from datetime import datetime, timedelta
 
 import pytz
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from blitz_api.factories import UserFactory
+
+from store.models import Order, OrderLine
 
 from ..models import Reservation, Retirement
 
@@ -17,6 +20,7 @@ class ReservationTests(APITestCase):
     def setUpClass(cls):
         super(ReservationTests, cls).setUpClass()
         cls.user = UserFactory()
+        cls.retirement_type = ContentType.objects.get_for_model(Retirement)
         cls.retirement = Retirement.objects.create(
             name="random_retirement",
             details="This is a description of the retirement.",
@@ -33,6 +37,18 @@ class ReservationTests(APITestCase):
             refund_rate=100,
             is_active=True,
         )
+        cls.order = Order.objects.create(
+            user=cls.user,
+            transaction_date=timezone.now(),
+            authorization_id=1,
+            settlement_id=1,
+        )
+        cls.order_line = OrderLine.objects.create(
+            order=cls.order,
+            quantity=999,
+            content_type=cls.retirement_type,
+            object_id=1,
+        )
 
     def test_create(self):
         """
@@ -41,6 +57,7 @@ class ReservationTests(APITestCase):
         reservation = Reservation.objects.create(
             user=self.user,
             retirement=self.retirement,
+            order_line=self.order_line,
             is_active=True,
         )
 

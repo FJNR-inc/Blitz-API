@@ -43,4 +43,5 @@ class IsOwner(permissions.BasePermission):
         # if a owner field exists and equals the user.
         return (request.user.is_staff or
                 obj == request.user or
-                (hasattr(obj, 'owner') and obj.owner == request.user))
+                (hasattr(obj, 'owner') and obj.owner == request.user),
+                (hasattr(obj, 'user') and obj.user == request.user))

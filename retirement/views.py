@@ -1,35 +1,44 @@
+import decimal
+import json
 from copy import copy
 from datetime import datetime, timedelta
-import pytz
 
+import requests
+
+import pytz
 import rest_framework
+from blitz_api.exceptions import MailServiceError
+from blitz_api.services import send_mail
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.mail import mail_admins
 from django.core.mail import send_mail as django_send_mail
 from django.db import transaction
 from django.db.models import F
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
-from rest_framework import exceptions, status, viewsets, mixins
+from rest_framework import exceptions, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
-
-from blitz_api.exceptions import MailServiceError
-from blitz_api.services import send_mail
+from store.exceptions import PaymentAPIError
+from store.services import refund_amount
 
 from . import permissions, serializers
 from .models import (Picture, Reservation, Retirement, WaitQueue,
-                     WaitQueueNotification, )
+                     WaitQueueNotification)
 from .resources import (ReservationResource, RetirementResource,
-                        WaitQueueResource, WaitQueueNotificationResource)
+                        WaitQueueNotificationResource, WaitQueueResource)
 from .services import notify_reserved_retirement_seat
 
 User = get_user_model()
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
+
+TAX = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
 class RetirementViewSet(viewsets.ModelViewSet):
@@ -136,16 +145,16 @@ class ReservationViewSet(viewsets.ModelViewSet):
         """
         Returns the list of permissions that this view requires.
         """
-        # if self.action == 'destroy':
-        #     permission_classes = [
-        #         permissions.IsOwner,
-        #         IsAuthenticated,
-        #     ]
-        # else:
-        permission_classes = [
-            permissions.IsAdminOrReadOnly,
-            IsAuthenticated,
-        ]
+        if self.action == 'destroy':
+            permission_classes = [
+                permissions.IsOwner,
+                IsAuthenticated,
+            ]
+        else:
+            permission_classes = [
+                permissions.IsAdminOrReadOnly,
+                IsAuthenticated,
+            ]
         return [permission() for permission in permission_classes]
 
     def update(self, request, *args, **kwargs):
@@ -161,15 +170,139 @@ class ReservationViewSet(viewsets.ModelViewSet):
         anything, but will return a success.
         User will be refund the retirement's "refund_rate" if we're at least
         "min_day_refund" days before the event.
+
+        By canceling 'min_day_refund' days or more before the event, the user
+         will be refunded 'refund_rate'% of the price paid.
+        The user will receive an email confirming the refund or inviting the
+         user to contact the support if his payment informations are no longer
+         valid.
+        If the user cancels less than 'min_day_refund' days before the event,
+         no refund is made.
+
+        Taxes are refunded proportionally to refund_rate.
         """
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        # instance = self.get_object()
-        # if instance.is_active:
-        #     instance.is_active = False
-        #     instance.cancelation_reason = 'U'
-        #     instance.cancelation_date = timezone.now()
-        #     instance.save()
-        # return Response(status=status.HTTP_204_NO_CONTENT)
+
+        instance = self.get_object()
+        retirement = instance.retirement
+        user = instance.user
+        order_line = instance.order_line
+        order = order_line.order
+
+        respects_minimum_days = (
+            (retirement.start_time - timezone.now()) >=
+            timedelta(days=retirement.min_day_refund))
+
+        if instance.is_active:
+            if respects_minimum_days:
+                try:
+                    amount_no_tax = float(
+                        retirement.price * retirement.refund_rate
+                    )
+                    amount_tax = TAX * amount_no_tax
+                    total_amount = round(decimal.Decimal(
+                        amount_no_tax + amount_tax
+                    ), 2)
+                    refund_response = refund_amount(
+                        order.settlement_id,
+                        int(total_amount)
+                    )
+                except PaymentAPIError as err:
+                    return Response(
+                        {'message': str(err)},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                instance.cancelation_action = 'R'
+            else:
+                instance.cancelation_action = 'N'
+
+            instance.is_active = False
+            instance.cancelation_reason = 'U'
+            instance.cancelation_date = timezone.now()
+            instance.save()
+
+            retirement.reserved_seats += 1
+            # Ask the external scheduler to start calling /notify if the
+            # reserved_seats count == 1. Otherwise, the scheduler should
+            # already be calling /notify at specified intervals.
+            if retirement.reserved_seats == 1:
+                scheduler_url = '{0}'.format(
+                    settings.EXTERNAL_SCHEDULER['URL'],
+                )
+
+                # interval = retirement.notification_interval.total_seconds()
+
+                data = {
+                    "hour": timezone.now().hour,
+                    "minute": (timezone.now().minute + 5) % 60,
+                    # This is a relative URL
+                    "url": '{0}{1}'.format(
+                        reverse('retirement:waitqueuenotification-list'),
+                        "/notify"
+                    ),
+                    # "initial_execution": True,
+                    "description": "Retirement wait queue notification"
+                }
+
+                try:
+                    r = requests.post(
+                        scheduler_url,
+                        auth=(
+                            settings.EXTERNAL_SCHEDULER['USER'],
+                            settings.EXTERNAL_SCHEDULER['PASSWORD'],
+                        ),
+                        json=data,
+                    )
+                    r.raise_for_status()
+                except (requests.exceptions.HTTPError,
+                        requests.exceptions.ConnectionError) as err:
+                    mail_admins(
+                        "Thèsez-vous: external scheduler error",
+                        str(err.__traceback__)
+                    )
+
+            retirement.save()
+
+            # Send an email if a refund has been issued
+            if instance.cancelation_action == 'R':
+                # Here, the 'details' key is used to provide details of the
+                #  item to the email template.
+                # As of now, only 'retirement' objects have the 'email_content'
+                #  key that is used here. There is surely a better way to
+                #  to handle that logic that will be more generic.
+                items = [{
+                    'price': retirement.price,
+                    'name': "{0}: {1}".format(
+                        _("Retirement"),
+                        retirement.name
+                    ),
+                    'details':
+                        retirement.email_content
+                }]
+
+                # Send order confirmation email
+                merge_data = {
+                    'DATETIME': timezone.localtime().strftime("%x %X"),
+                    'ORDER_ID': order.id,
+                    'CUSTOMER_NAME': user.first_name + " " + user.last_name,
+                    'CUSTOMER_EMAIL': user.email,
+                    'CUSTOMER_NUMBER': user.id,
+                    'TYPE': "Remboursement",
+                    'ITEM_LIST': items,
+                    'COST': round(total_amount/100, 2),
+                    'TAX': round(decimal.Decimal(amount_tax/100), 2),
+                }
+
+                plain_msg = render_to_string("refund.txt", merge_data)
+                msg_html = render_to_string("refund.html", merge_data)
+
+                django_send_mail(
+                    "Confirmation de remboursement",
+                    plain_msg,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    html_message=msg_html,
+                )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class WaitQueueViewSet(viewsets.ModelViewSet):
@@ -252,7 +385,7 @@ class WaitQueueNotificationViewSet(mixins.ListModelMixin,
         """
         return WaitQueueNotification.objects.all()
 
-    @action(detail=False, permission_classes=[IsAdminUser])
+    @action(detail=False, permission_classes=[])
     def notify(self, request):
         """
         That custom action allows an admin (or automated task) to notify
@@ -262,9 +395,20 @@ class WaitQueueNotificationViewSet(mixins.ListModelMixin,
         At the same time, this clears older notification logs. That part should
         be moved somewhere else.
         """
+        # Checks if lastest notification is older than 24h
+        # This is a hard-coded limitation to allow anonymous users to call
+        # the function.
         response = Response(
             status=status.HTTP_204_NO_CONTENT,
         )
+
+        time_limit = timezone.now() - timedelta(days=1)
+        if WaitQueueNotification.objects.filter(created_at__gt=time_limit):
+            response.data = {
+                'detail': "Last notification was sent less than 24h ago."
+            }
+            response.status_code = status.HTTP_200_OK
+            return response
 
         # Remove older notifications
         remove_before = timezone.now() - timedelta(

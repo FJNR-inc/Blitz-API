@@ -330,3 +330,11 @@ PAYSAFE = {
 # django-import-export
 
 IMPORT_EXPORT_USE_TRANSACTIONS = True
+
+
+# External scheduler
+EXTERNAL_SCHEDULER = {
+    'URL': config('EXTERNAL_SCHEDULER_URL', default='http://example.com'),
+    'USER': config('EXTERNAL_SCHEDULER_USER', default='user'),
+    'PASSWORD': config('EXTERNAL_SCHEDULER_PASSWORD', default='password'),
+}

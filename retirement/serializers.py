@@ -1,4 +1,5 @@
 from copy import copy
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -60,6 +61,13 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
     # picture urls. This works but is not as clean as it could be.
     # Note: this is a read-only field so it isn't used for Workplace creation.
     pictures = serializers.SerializerMethodField()
+
+    def validate_refund_rate(self, value):
+        if value > 100:
+            raise serializers.ValidationError(_(
+                "Refund rate must be between 0 and 100 (%)."
+            ))
+        return value
 
     def get_pictures(self, obj):
         request = self.context['request']
@@ -246,14 +254,21 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
 
         action = self.context['view'].action
 
+        # This validation is here instead of being in the 'update()' method
+        # because we need to stop validation if improper fields are passed in
+        # a partial update.
         if action == 'partial_update':
-            # Only allow modification of is_present field.
-            is_present = validated_data.get('is_present')
-            if is_present is None or len(validated_data) > 1:
+            # Only allow modification of is_present & retirement fields.
+            is_invalid = validated_data.copy()
+            is_invalid.pop('is_present', None)
+            is_invalid.pop('retirement', None)
+            if is_invalid:
                 raise serializers.ValidationError({
-                    'is_present':
-                    _("Only is_present can be updated. To change other "
-                      "fields, delete this reservation and create a new one."),
+                    'non_field_errors': [
+                        _("Only is_present and retirement can be updated. To "
+                          "change other fields, delete this reservation and "
+                          "create a new one.")
+                    ]
                 })
             return attrs
 
@@ -271,10 +286,93 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
 
         for retirements in active_reservations:
             if max(retirements[0], start) < min(retirements[1], end):
-                raise serializers.ValidationError(
-                    'This reservation overlaps with another active '
-                    'reservations for this user.')
+                raise serializers.ValidationError({
+                    'non_field_errors': [_(
+                        "This reservation overlaps with another active "
+                        "reservations for this user."
+                    )]
+                })
         return attrs
+
+    def update(self, instance, validated_data):
+        user = instance.user
+        if (self.context['view'].action == 'partial_update'
+                and validated_data.get('retirement')):
+            respects_minimum_days = (
+                (instance.retirement.start_time - timezone.now()) >=
+                timedelta(days=instance.retirement.min_day_exchange))
+            if instance.retirement.price < validated_data['retirement'].price:
+                raise serializers.ValidationError({
+                    'non_field_errors': [_(
+                        "The new retirement is more expensive than the "
+                        "current one."
+                    )]
+                })
+            if not respects_minimum_days:
+                raise serializers.ValidationError({
+                    'non_field_errors': [_(
+                        "Maximum exchange date exceeded."
+                    )]
+                })
+            # Generate a list of tuples containing start/end time of
+            # existing reservations.
+            start = validated_data['retirement'].start_time
+            end = validated_data['retirement'].end_time
+            active_reservations = Reservation.objects.filter(
+                user=user,
+                is_active=True,
+            ).exclude(**validated_data).values_list(
+                'retirement__start_time',
+                'retirement__end_time',
+            )
+
+            for retirements in active_reservations:
+                if max(retirements[0], start) < min(retirements[1], end):
+                    raise serializers.ValidationError({
+                        'non_field_errors': [_(
+                            "This reservation overlaps with another active "
+                            "reservations for this user."
+                        )]
+                    })
+
+        instance = super(ReservationSerializer, self).update(
+            instance,
+            validated_data,
+        )
+        if validated_data.get('retirement'):
+            retirement = instance.retirement
+            items = [{
+                'price': retirement.price,
+                'name': "{0}: {1}".format(
+                    _("Retirement"),
+                    retirement.name
+                ),
+                'details':
+                    retirement.email_content
+            }]
+
+            # Send order confirmation email
+            merge_data = {
+                'DATETIME': timezone.localtime().strftime("%x %X"),
+                'CUSTOMER_NAME': user.first_name + " " + user.last_name,
+                'CUSTOMER_EMAIL': user.email,
+                'CUSTOMER_NUMBER': user.id,
+                'TYPE': "Échange",
+                'ITEM_LIST': items,
+            }
+
+            plain_msg = render_to_string("exchange.txt", merge_data)
+            msg_html = render_to_string("exchange.html", merge_data)
+
+            send_mail(
+                "Confirmation d'échange",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                html_message=msg_html,
+            )
+
+        return instance
 
     class Meta:
         model = Reservation

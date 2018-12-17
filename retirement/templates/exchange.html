@@ -51,6 +51,32 @@
         margin-top: 50px;
       }
 
+      .email__content__summary__item {
+        line-height: 15px;
+        margin: 5px 0;
+      }
+
+      .email__content__summary__item--total {
+        font-weight: bold;
+      }
+
+      .email__content__summary__item__spacer {
+        border-bottom: 1px dotted #142823;
+        height: 12px;
+        float: right;
+
+      }
+
+      .email__content__summary__item__price {
+        float: right;
+      }
+
+      .email__content__summary__item__details {
+        margin: 12px 12px;
+        font-size: 12px;
+        color: #142823;
+      }
+
     </style>
   </head>
   <body>
@@ -61,21 +87,52 @@
       </div>
       <div class="email__content">
         <h1 class="email__content__title">
-          Exclusivité 24h
+          Confirmation d'échange
         </h1>
         <p>
-          Des places se sont libérées pour une retraite à laquelle
-          vous êtes intéressés. Une place a été réservée pour vous
-          pour les prochaines 24 heures. Faites vite!
-        </p>
-        <h3>
-          Retraite: {{RETIREMENT_NAME}}
-        </h3>
-        <p>
-          Vous pouvez accéder à cette place exclusive en vous connectant
-          à la plateforme Thèsez-vous!
+          Ceci est une confirmation d'échange. Merci d'en garder une copie.
         </p>
 
+        <ul>
+          <li><b>Nom: </b>{{CUSTOMER_NAME}}</li>
+          <li><b>Courriel: </b>{{CUSTOMER_EMAIL}}</li>
+        </ul>
+
+        <ul>
+          <li><b>NUMÉRO DE MEMBRE: </b>{{CUSTOMER_NUMBER}}</li>
+        </ul>
+
+        <ul>
+          <li><b>Date: </b>{{DATETIME}}</li>
+        </ul>
+
+        {% if CUSTOM_MESSAGE %}
+        <h2 class="email__content__subtitle">
+          Informations additionnels
+        </h2>
+        <p>
+          {{CUSTOM_MESSAGE}}
+        </p>
+        {% endif %}
+
+        <h2 class="email__content__subtitle">
+          Nouvelle retraite
+        </h2>
+        <div class="email__content__summary">
+          <!--Repeat the item section in function of the list of items on the order received by the API -->
+          {%for item in ITEM_LIST%}
+          <div class="email__content__summary__item">
+            <div class="email__content__summary__item__name">
+              {{item.name}}
+            </div>
+            {% if item.details %}
+            <div class="email__content__summary__item__details">
+              {{item.details}}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
         <h2 class="email__content__subtitle">
           L'équipe Thèsez-vous
         </h2>

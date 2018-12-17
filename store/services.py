@@ -25,6 +25,11 @@ PAYSAFE_EXCEPTION = {
         _("An error occured while processing the payment: "),
         _("The external processing gateway has rejected the transaction.")
     ),
+    '3406': "{0}{1}".format(
+        _("An error occured while processing the refund: "),
+        _("The settlement you are attempting to refund has not been batched "
+          "yet. There are no settled funds available to refund.")
+    ),
     '5031': "{0}{1}".format(
         _("An error occured while processing the payment: "),
         _("the transaction has already been processed.")
@@ -84,7 +89,7 @@ def charge_payment(amount, payment_token, reference_number):
     )
 
     data = {
-        "merchantRefNum": str(uuid.uuid4()),
+        "merchantRefNum": "charge-" + str(uuid.uuid4()),
         "amount": amount,
         "settleWithAuth": True,
         "card": {
@@ -95,6 +100,49 @@ def charge_payment(amount, payment_token, reference_number):
     try:
         r = requests.post(
             auth_url,
+            auth=(
+                settings.PAYSAFE['USER'],
+                settings.PAYSAFE['PASSWORD'],
+            ),
+            json=data,
+        )
+        r.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        print(json.loads(err.response.content))
+        err_code = json.loads(err.response.content)['error']['code']
+        if err_code in PAYSAFE_EXCEPTION:
+            raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
+        raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
+
+    return r
+
+
+def refund_amount(settlement_id, amount):
+    """
+    This method is used to refund an amount to the same card that was used for
+    buying the products contained in the order.
+    This is tigthly coupled with Paysafe for now, but this should be made
+    generic in the future to ease migrations to another payment patform.
+
+    settlement_id: ID for the Paysafe settlement
+    amount:        Positive number representing the amount to be refunded back
+    """
+    refund_url = '{0}{1}{2}{3}{4}'.format(
+        settings.PAYSAFE['BASE_URL'],
+        settings.PAYSAFE['CARD_URL'],
+        "accounts/" + settings.PAYSAFE['ACCOUNT_NUMBER'],
+        "/settlements/" + settlement_id,
+        "/refunds"
+    )
+
+    data = {
+        "merchantRefNum": "refund-" + str(uuid.uuid4()),
+        "amount": amount,
+    }
+
+    try:
+        r = requests.post(
+            refund_url,
             auth=(
                 settings.PAYSAFE['USER'],
                 settings.PAYSAFE['PASSWORD'],

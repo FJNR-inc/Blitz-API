@@ -7,13 +7,13 @@ from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
-from store.models import Membership
+from store.models import Membership, OrderLine
 
 User = get_user_model()
 
 
 class Retirement(Address, SafeDeleteModel):
-    """Represents physical places."""
+    """Represents a retirement physical place."""
 
     ACTIVITY_LANGUAGE = (
         ('EN', _("English")),
@@ -160,7 +160,7 @@ class Picture(models.Model):
 
 
 class Reservation(SafeDeleteModel):
-    """Represents a user registration to a TimeSlot"""
+    """Represents a user registration to a Retirement"""
 
     CANCELATION_REASON = (
         ('U', _("User canceled")),
@@ -209,6 +209,12 @@ class Reservation(SafeDeleteModel):
     is_present = models.BooleanField(
         verbose_name=_("Present"),
         default=False,
+    )
+    order_line = models.ForeignKey(
+        OrderLine,
+        on_delete=models.CASCADE,
+        verbose_name=_("Order line"),
+        related_name='retirement_reservations',
     )
 
     history = HistoricalRecords()

@@ -121,6 +121,48 @@ class RetirementTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+    def test_create_invalid_refund_rate(self):
+        """
+        Ensure we can't create a retirement if refund_rate is not between
+        0 and 100%.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': "random_retirement",
+            'seats': 40,
+            'details': "short_description",
+            'address_line1': 'random_address_1',
+            'city': 'random_city',
+            'country': 'Random_Country',
+            'postal_code': 'RAN_DOM',
+            'state_province': 'Random_State',
+            'timezone': "America/Montreal",
+            'price': '100.00',
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 16)),
+            'min_day_refund': 7,
+            'min_day_exchange': 7,
+            'refund_rate': 500,
+            'is_active': True,
+        }
+
+        response = self.client.post(
+            reverse('retirement:retirement-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'refund_rate': [
+                'Refund rate must be between 0 and 100 (%).'
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_create_without_permission(self):
         """
         Ensure we can't create a retirement if user has no permission.

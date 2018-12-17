@@ -8,6 +8,10 @@
 
 Des places se sont libérées pour une retraite à laquelle vous êtes intéressés. Une place a été réservée pour vous pour les prochaines 24 heures. Faites vite!
 
+ 
+** RETRAITE: {{RETIREMENT_NAME}}
+------------------------------------------------------------
+
 Vous pouvez accéder à cette place exclusive en vous connectant à la plateforme Thèsez-vous!
 
  

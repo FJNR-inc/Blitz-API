@@ -494,6 +494,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         RetirementReservation.objects.create(
                             user=user,
                             retirement=retirement,
+                            order_line=retirement_orderline,
                             is_active=True
                         )
                     else:

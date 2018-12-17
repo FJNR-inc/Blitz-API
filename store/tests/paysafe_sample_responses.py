@@ -98,6 +98,19 @@ SAMPLE_PAYMENT_RESPONSE = {
     }]
 }
 
+SAMPLE_REFUND_RESPONSE = {
+    "id": "d1fb46ee-2736-4ef5-a724-f263ace75374",
+    "merchantRefNum": "merchantRef_2016_04_11_05",
+    "amount": 5500,
+    "dupCheck": True,
+    "txnTime": "2017-02-14T15:12:18Z",
+    "status": "COMPLETED",
+    "links": [{
+        "rel": "self",
+        "href": "https://example/cardpayments/v1/accounts/123/refunds/d1fb46"
+    }]
+}
+
 SAMPLE_CARD_RESPONSE = {
     "status": "ACTIVE",
     "id": "424d2472-4afd-44a3-a678-8f4611e864a5",

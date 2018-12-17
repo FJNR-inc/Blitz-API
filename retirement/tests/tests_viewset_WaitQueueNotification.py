@@ -48,10 +48,14 @@ class WaitQueueNotificationTests(APITestCase):
             activity_language='FR',
             reserved_seats=4,
         )
-        self.wait_queue_notification = WaitQueueNotification.objects.create(
-            user=self.user2,
-            retirement=self.retirement,
-        )
+
+        FIXED_TIME = datetime(2000, 1, 10, tzinfo=LOCAL_TIMEZONE)
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            self.wait_queue_notif = WaitQueueNotification.objects.create(
+                user=self.user2,
+                retirement=self.retirement,
+            )
 
     def test_create(self):
         """
@@ -303,9 +307,9 @@ class WaitQueueNotificationTests(APITestCase):
 
     def test_notify(self):
         """
-        Ensure we can notify for reserved places. (admin only)
+        Ensure we can notify for reserved places.
         """
-        self.client.force_authenticate(user=self.admin)
+        # self.client.force_authenticate(user=self.admin)
 
         FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
 
@@ -355,10 +359,10 @@ class WaitQueueNotificationTests(APITestCase):
         )
 
         # Assert that 2 new notifications are created (2 users in wait_queue)
-        # Assert that 1 old notification has been deleted (too old)
+        # Assert that 2 old notification has been deleted (too old)
         self.assertEqual(
             WaitQueueNotification.objects.all().count(),
-            notification_count + 2 - 1,
+            notification_count + 2 - 2,
             "WaitQueueNotification count invalid"
         )
 
@@ -372,9 +376,9 @@ class WaitQueueNotificationTests(APITestCase):
     def test_notify_reached_end_of_wait_queue(self):
         """
         Ensure we get a proper response if no users remain in any
-        retirements' wait_queue. (admin only)
+        retirements' wait_queue.
         """
-        self.client.force_authenticate(user=self.admin)
+        # self.client.force_authenticate(user=self.admin)
 
         notification_count = WaitQueueNotification.objects.all().count()
 
@@ -404,9 +408,10 @@ class WaitQueueNotificationTests(APITestCase):
         )
 
         # Assert that 0 notification has been created
+        # The old one has been deleted
         self.assertEqual(
             WaitQueueNotification.objects.all().count(),
-            notification_count,
+            notification_count - 1,
             "WaitQueueNotification count invalid"
         )
 
@@ -427,9 +432,9 @@ class WaitQueueNotificationTests(APITestCase):
     def test_notify_no_reserved_seats(self):
         """
         Ensure we get a proper response if no reserved seats remain in any
-        retirement. (admin only)
+        retirement.
         """
-        self.client.force_authenticate(user=self.admin)
+        # self.client.force_authenticate(user=self.admin)
 
         self.retirement.reserved_seats = 0
         self.retirement.save()
@@ -450,5 +455,36 @@ class WaitQueueNotificationTests(APITestCase):
         response_data = json.loads(response.content)
 
         content = {'detail': 'No reserved seats.'}
+
+        self.assertEqual(response_data, content)
+
+    def test_notify_delay_not_elapsed(self):
+        """
+        Ensure we get a proper response if the last notification is not older
+        than 24h.
+        """
+        # self.client.force_authenticate(user=self.admin)
+
+        self.wait_queue_notif = WaitQueueNotification.objects.create(
+            user=self.user2,
+            retirement=self.retirement,
+        )
+
+        response = self.client.get(
+            '/'.join([
+                reverse('retirement:waitqueuenotification-list'),
+                'notify',
+            ])
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content,
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {'detail': 'Last notification was sent less than 24h ago.'}
 
         self.assertEqual(response_data, content)
