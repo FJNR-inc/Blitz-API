@@ -355,7 +355,17 @@ class WaitQueueViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def destroy(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        instance = self.get_object()
+        retirement = instance.retirement
+        wait_queue = retirement.wait_queue.all().order_by('created_at')
+        for index, item in enumerate(wait_queue):
+            if item == instance:
+                wait_queue_pos = index
+                break
+        if wait_queue_pos < retirement.next_user_notified:
+            retirement.next_user_notified -= 1
+            retirement.save()
+        return super(WaitQueueViewSet, self).destroy(request, *args, **kwargs)
 
 
 class WaitQueueNotificationViewSet(mixins.ListModelMixin,

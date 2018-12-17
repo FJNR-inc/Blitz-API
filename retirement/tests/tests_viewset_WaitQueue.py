@@ -45,6 +45,7 @@ class WaitQueueTests(APITestCase):
             refund_rate=50,
             is_active=True,
             activity_language='FR',
+            next_user_notified=3,
         )
         self.wait_queue_subscription = WaitQueue.objects.create(
             user=self.user2,
@@ -295,7 +296,8 @@ class WaitQueueTests(APITestCase):
 
     def test_delete(self):
         """
-        Ensure we can't delete a subscription to a retirement waitqueue.
+        Ensure we can delete a subscription to a retirement waitqueue.
+        The index determining the next user to be notified should be corrected.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -308,8 +310,12 @@ class WaitQueueTests(APITestCase):
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_405_METHOD_NOT_ALLOWED
+            status.HTTP_204_NO_CONTENT,
+            response.content
         )
+
+        self.retirement.refresh_from_db()
+        self.assertEqual(self.retirement.next_user_notified, 2)
 
     def test_list(self):
         """
