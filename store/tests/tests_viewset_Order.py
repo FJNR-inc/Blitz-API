@@ -8,6 +8,7 @@ from rest_framework.test import APIClient, APITestCase
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
+from django.core import mail
 from django.test.utils import override_settings
 from django.utils import timezone
 from django.urls import reverse
@@ -289,6 +290,10 @@ class OrderTests(APITestCase):
         admin.tickets = 1
         admin.membership = None
         admin.save()
+
+        # 1 email for the order details
+        # 1 email for the retirement informations
+        self.assertEqual(len(mail.outbox), 2)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -644,6 +649,10 @@ class OrderTests(APITestCase):
         }
 
         self.assertEqual(response_data, content)
+
+        # 1 email for the order details
+        # 1 email for the retirement informations
+        self.assertEqual(len(mail.outbox), 2)
 
     @responses.activate
     def test_create_retirement_missing_user_info(self):

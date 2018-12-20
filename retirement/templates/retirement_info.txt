@@ -1,0 +1,36 @@
+
+
+{% load static %}
+
+ 
+** CONFIRMATION D'INSCRIPTION À LA RETRAITE
+------------------------------------------------------------
+
+Nous sommes heureux de vous compter parmi nous à la retraite {{RETIREMENT.name}}.
+
+ * Date et heure de début: {{RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}
+ * Date et heure de fin: {{RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{RETIREMENT.end_time|date:"G"}}h{{RETIREMENT.end_time|date:"i"}}
+
+ 
+** CE QUE VOUS DEVEZ SAVOIR
+------------------------------------------------------------
+
+{{RETIREMENT.email_content}}
+
+ 
+** FORMULAIRE
+------------------------------------------------------------
+
+Veuillez remplir le formulaire suivant afin que nous puissions préparer votre arrivée!
+
+ 
+
+Formulaire ({{RETIREMENT.form_url}})
+
+ 
+** L'ÉQUIPE THÈSEZ-VOUS
+------------------------------------------------------------
+
+Thèsez-vous n'autorise pas d'échanges ou de remboursements.
+Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2
+info@thesez-vous.com, www.thesez-vous.com

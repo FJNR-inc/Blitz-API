@@ -382,6 +382,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         validated_data['user'] = user
         profile = PaymentProfile.objects.filter(owner=user).first()
 
+        retirement_reservations = list()
+
         if single_use_token and not profile:
             # Create external profile
             try:
@@ -497,11 +499,13 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                             or (retirement.reserved_seats
                                 and WaitQueueNotification.objects.filter(
                                     user=user, retirement=retirement))):
-                        RetirementReservation.objects.create(
-                            user=user,
-                            retirement=retirement,
-                            order_line=retirement_orderline,
-                            is_active=True
+                        retirement_reservations.append(
+                            RetirementReservation.objects.create(
+                                user=user,
+                                retirement=retirement,
+                                order_line=retirement_orderline,
+                                is_active=True
+                            )
                         )
                     else:
                         raise serializers.ValidationError({
@@ -581,10 +585,13 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                             str(orderline.content_type),
                             orderline.content_object.name
                         ),
-                        'details':
-                            orderline.content_object.email_content if hasattr(
-                                orderline.content_object, 'email_content'
-                            ) else ""
+                        # Removed details section because it was only used
+                        # for retirements. Retirements instead have another
+                        # unique email containing details of the event.
+                        # 'details':
+                        #    orderline.content_object.email_content if hasattr(
+                        #         orderline.content_object, 'email_content'
+                        #     ) else ""
                     } for orderline in orderlines
                 ]
 
@@ -617,6 +624,29 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     plain_msg,
                     settings.DEFAULT_FROM_EMAIL,
                     [order.user.email],
+                    html_message=msg_html,
+                )
+
+            for retirement_reservation in retirement_reservations:
+                # Send info email
+                merge_data = {
+                    'RETIREMENT': retirement_reservation.retirement,
+                }
+
+                plain_msg = render_to_string(
+                    "retirement_info.txt",
+                    merge_data
+                )
+                msg_html = render_to_string(
+                    "retirement_info.html",
+                    merge_data
+                )
+
+                send_mail(
+                    "Confirmation d'inscription à la retraite",
+                    plain_msg,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [retirement_reservation.user.email],
                     html_message=msg_html,
                 )
 
