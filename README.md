@@ -45,6 +45,8 @@ You need to ensure the virtual environment is active each time you want to launc
 
 ## Install all requirements
 
+Your OS will need SQLite3 (<3.26) for unit testing.
+
 Requirements of the project are stored in the `requirements.txt` file.
 Requirements for development related actions are stored in the `requirements-dev.txt` file.
 You can install them with:
