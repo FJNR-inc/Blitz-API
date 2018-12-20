@@ -224,6 +224,7 @@ class ReservationTests(APITestCase):
                 'is_active': False,
                 'accessibility': True,
                 'form_url': "example.com",
+                'place_name': '',
                 'url': 'http://testserver/retirement/retirements/2'
             },
             'user_details': {
@@ -405,6 +406,7 @@ class ReservationTests(APITestCase):
                 'is_active': False,
                 'accessibility': True,
                 'form_url': "example.com",
+                'place_name': '',
                 'url': 'http://testserver/retirement/retirements/2'
             },
             'user_details': {

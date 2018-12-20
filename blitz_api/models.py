@@ -302,6 +302,12 @@ class AcademicField(models.Model):
 
 class Address(models.Model):
     """Abstract model for address"""
+    place_name = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name=_("Place name"),
+    )
+
     country = models.CharField(
         max_length=45,
         blank=False,

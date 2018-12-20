@@ -183,6 +183,7 @@ class ReservationTests(APITestCase):
                     'seats': 40,
                     'state_province': 'Random state',
                     'timezone': None,
+                    'place_name': '',
                     'url': 'http://testserver/workplaces/1'
                 }
             },
@@ -354,6 +355,7 @@ class ReservationTests(APITestCase):
                     'seats': 1,
                     'state_province': 'Random state',
                     'timezone': None,
+                    'place_name': '',
                     'url': 'http://testserver/workplaces/2'
                 }
             },

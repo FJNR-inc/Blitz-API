@@ -118,6 +118,7 @@ class RetirementTests(APITestCase):
             'url': 'http://testserver/retirement/retirements/2',
             'accessibility': True,
             'form_url': "example.com",
+            'place_name': '',
         }
 
         self.assertEqual(
@@ -306,6 +307,7 @@ class RetirementTests(APITestCase):
             'refund_rate': (1,),
             'accessibility': "",
             'form_url': (1,),
+            'place_name': (1,),
         }
 
         response = self.client.post(
@@ -340,6 +342,7 @@ class RetirementTests(APITestCase):
             'refund_rate': ['A valid integer is required.'],
             'accessibility': ['"" is not a valid boolean.'],
             'form_url': ['Not a valid string.'],
+            'place_name': ['Not a valid string.'],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -416,6 +419,7 @@ class RetirementTests(APITestCase):
             'total_reservations': 0,
             'accessibility': True,
             'form_url': "example.com",
+            'place_name': '',
             'users': [],
             'url': 'http://testserver/retirement/retirements/1'
         }
@@ -490,6 +494,7 @@ class RetirementTests(APITestCase):
                 'total_reservations': 0,
                 'accessibility': True,
                 'form_url': "example.com",
+                'place_name': '',
                 'users': [],
                 'url': 'http://testserver/retirement/retirements/1'}]
         }
@@ -544,6 +549,7 @@ class RetirementTests(APITestCase):
             'total_reservations': 0,
             'accessibility': True,
             'form_url': "example.com",
+            'place_name': '',
             'users': [],
             'url': 'http://testserver/retirement/retirements/1'
         }
@@ -605,6 +611,7 @@ class RetirementTests(APITestCase):
             'total_reservations': 0,
             'accessibility': True,
             'form_url': "example.com",
+            'place_name': '',
             'users': [],
             'url': 'http://testserver/retirement/retirements/1'
         }

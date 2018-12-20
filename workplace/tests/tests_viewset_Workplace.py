@@ -76,6 +76,7 @@ class WorkplaceTests(APITestCase):
             'pictures': [],
             'seats': 40,
             'timezone': "America/Montreal",
+            'place_name': '',
             'url': 'http://testserver/workplaces/2'
         }
 
@@ -194,6 +195,7 @@ class WorkplaceTests(APITestCase):
             'country': (1,),
             'state_province': (1,),
             'timezone': ("invalid",),
+            'place_name': (1,),
         }
 
         response = self.client.post(
@@ -211,7 +213,8 @@ class WorkplaceTests(APITestCase):
             'state_province': ['Not a valid string.'],
             'country': ['Not a valid string.'],
             'seats': ['A valid integer is required.'],
-            'timezone': ['Unknown timezone']
+            'timezone': ['Unknown timezone'],
+            'place_name': ['Not a valid string.'],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -260,6 +263,7 @@ class WorkplaceTests(APITestCase):
             'pictures': [],
             'seats': 200,
             'timezone': 'America/Montreal',
+            'place_name': '',
             'url': 'http://testserver/workplaces/1'
         }
 
@@ -314,6 +318,7 @@ class WorkplaceTests(APITestCase):
                 'pictures': [],
                 'seats': 40,
                 'timezone': 'America/Montreal',
+                'place_name': '',
                 'url': 'http://testserver/workplaces/1'
             }]
         }
@@ -349,6 +354,7 @@ class WorkplaceTests(APITestCase):
             'name': 'Blitz',
             'pictures': [],
             'seats': 40,
+            'place_name': '',
             'timezone': 'America/Montreal',
             'url': 'http://testserver/workplaces/1'
         }
