@@ -292,6 +292,7 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
     )
     custom_message = serializers.CharField(
         required=False,
+        allow_blank=True,
         write_only=True,
         max_length=1000,
     )
