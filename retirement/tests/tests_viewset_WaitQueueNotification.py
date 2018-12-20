@@ -47,6 +47,8 @@ class WaitQueueNotificationTests(APITestCase):
             is_active=True,
             activity_language='FR',
             reserved_seats=4,
+            accessibility=True,
+            form_url="example.com",
         )
 
         FIXED_TIME = datetime(2000, 1, 10, tzinfo=LOCAL_TIMEZONE)

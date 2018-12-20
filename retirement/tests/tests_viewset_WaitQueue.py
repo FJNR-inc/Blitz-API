@@ -46,6 +46,8 @@ class WaitQueueTests(APITestCase):
             is_active=True,
             activity_language='FR',
             next_user_notified=3,
+            accessibility=True,
+            form_url="example.com",
         )
         self.wait_queue_subscription = WaitQueue.objects.create(
             user=self.user2,

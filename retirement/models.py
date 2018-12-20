@@ -106,6 +106,15 @@ class Retirement(Address, SafeDeleteModel):
         blank=True,
     )
 
+    accessibility = models.BooleanField(verbose_name=_("Accessibility"), )
+
+    form_url = models.CharField(
+        blank=True,
+        null=True,
+        max_length=2000,  # Max URL length supported by IE
+        verbose_name=_("Form URL"),
+    )
+
     # History is registered in translation.py
     # history = HistoricalRecords()
 

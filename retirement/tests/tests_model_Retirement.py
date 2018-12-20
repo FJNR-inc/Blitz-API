@@ -30,6 +30,8 @@ class RetirementTests(APITestCase):
             min_day_exchange=7,
             refund_rate=100,
             is_active=True,
+            accessibility=True,
+            form_url="example.com",
         )
 
         self.assertEqual(retirement.__str__(), "random_retirement")

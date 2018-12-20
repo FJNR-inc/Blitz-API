@@ -65,7 +65,9 @@ class ReservationTests(APITestCase):
             min_day_exchange=7,
             refund_rate=50,
             is_active=True,
-            reserved_seats=1
+            reserved_seats=1,
+            accessibility=True,
+            form_url="example.com",
         )
         cls.retirement2 = Retirement.objects.create(
             name="random_retirement",
@@ -82,6 +84,8 @@ class ReservationTests(APITestCase):
             min_day_exchange=7,
             refund_rate=100,
             is_active=False,
+            accessibility=True,
+            form_url="example.com",
         )
         cls.retirement_overlap = Retirement.objects.create(
             name="ultra_retirement",
@@ -98,6 +102,8 @@ class ReservationTests(APITestCase):
             min_day_exchange=7,
             refund_rate=50,
             is_active=True,
+            accessibility=True,
+            form_url="example.com",
         )
         cls.order = Order.objects.create(
             user=cls.user,
@@ -216,6 +222,8 @@ class ReservationTests(APITestCase):
                 'min_day_refund': 7,
                 'min_day_exchange': 7,
                 'is_active': False,
+                'accessibility': True,
+                'form_url': "example.com",
                 'url': 'http://testserver/retirement/retirements/2'
             },
             'user_details': {
@@ -395,6 +403,8 @@ class ReservationTests(APITestCase):
                 'min_day_refund': 7,
                 'min_day_exchange': 7,
                 'is_active': False,
+                'accessibility': True,
+                'form_url': "example.com",
                 'url': 'http://testserver/retirement/retirements/2'
             },
             'user_details': {

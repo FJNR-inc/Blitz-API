@@ -45,6 +45,8 @@ class RetirementTests(APITestCase):
             refund_rate=50,
             is_active=True,
             activity_language='FR',
+            accessibility=True,
+            form_url="example.com",
         )
 
     def test_create(self):
@@ -70,6 +72,8 @@ class RetirementTests(APITestCase):
             'min_day_exchange': 7,
             'refund_rate': 50,
             'is_active': True,
+            'accessibility': True,
+            'form_url': "example.com",
         }
 
         response = self.client.post(
@@ -111,7 +115,9 @@ class RetirementTests(APITestCase):
             'reservations_canceled': [],
             'total_reservations': 0,
             'users': [],
-            'url': 'http://testserver/retirement/retirements/2'
+            'url': 'http://testserver/retirement/retirements/2',
+            'accessibility': True,
+            'form_url': "example.com",
         }
 
         self.assertEqual(
@@ -145,6 +151,8 @@ class RetirementTests(APITestCase):
             'min_day_exchange': 7,
             'refund_rate': 500,
             'is_active': True,
+            'accessibility': True,
+            'form_url': "example.com",
         }
 
         response = self.client.post(
@@ -218,6 +226,8 @@ class RetirementTests(APITestCase):
             'min_day_exchange': 7,
             'refund_rate': 50,
             'is_active': True,
+            'accessibility': True,
+            'form_url': "example.com",
         }
 
         response = self.client.post(
@@ -262,7 +272,8 @@ class RetirementTests(APITestCase):
             "min_day_refund": ["This field is required."],
             "refund_rate": ["This field is required."],
             "min_day_exchange": ["This field is required."],
-            "is_active": ["This field is required."]
+            "is_active": ["This field is required."],
+            "accessibility": ["This field is required."],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -293,6 +304,8 @@ class RetirementTests(APITestCase):
             'min_day_exchange': (1,),
             'min_day_refund': (1,),
             'refund_rate': (1,),
+            'accessibility': "",
+            'form_url': (1,),
         }
 
         response = self.client.post(
@@ -325,6 +338,8 @@ class RetirementTests(APITestCase):
             'min_day_exchange': ['A valid integer is required.'],
             'min_day_refund': ['A valid integer is required.'],
             'refund_rate': ['A valid integer is required.'],
+            'accessibility': ['"" is not a valid boolean.'],
+            'form_url': ['Not a valid string.'],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -354,6 +369,8 @@ class RetirementTests(APITestCase):
             'min_day_exchange': 7,
             'refund_rate': 50,
             'is_active': False,
+            'accessibility': True,
+            'form_url': "example.com",
         }
 
         response = self.client.put(
@@ -397,6 +414,8 @@ class RetirementTests(APITestCase):
             'reservations': [],
             'reservations_canceled': [],
             'total_reservations': 0,
+            'accessibility': True,
+            'form_url': "example.com",
             'users': [],
             'url': 'http://testserver/retirement/retirements/1'
         }
@@ -469,6 +488,8 @@ class RetirementTests(APITestCase):
                 'reservations': [],
                 'reservations_canceled': [],
                 'total_reservations': 0,
+                'accessibility': True,
+                'form_url': "example.com",
                 'users': [],
                 'url': 'http://testserver/retirement/retirements/1'}]
         }
@@ -521,6 +542,8 @@ class RetirementTests(APITestCase):
             'reservations': [],
             'reservations_canceled': [],
             'total_reservations': 0,
+            'accessibility': True,
+            'form_url': "example.com",
             'users': [],
             'url': 'http://testserver/retirement/retirements/1'
         }
@@ -580,6 +603,8 @@ class RetirementTests(APITestCase):
             'reservations': [],
             'reservations_canceled': [],
             'total_reservations': 0,
+            'accessibility': True,
+            'form_url': "example.com",
             'users': [],
             'url': 'http://testserver/retirement/retirements/1'
         }

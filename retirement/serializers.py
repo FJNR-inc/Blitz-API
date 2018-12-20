@@ -146,6 +146,8 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
             err['min_day_exchange'] = _("This field is required.")
         if not check_if_translated_field('is_active', attr):
             err['is_active'] = _("This field is required.")
+        if not check_if_translated_field('accessibility', attr):
+            err['accessibility'] = _("This field is required.")
         if err:
             raise serializers.ValidationError(err)
         return super(RetirementSerializer, self).validate(attr)

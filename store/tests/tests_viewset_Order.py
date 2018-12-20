@@ -167,6 +167,7 @@ class OrderTests(APITestCase):
             refund_rate=50,
             is_active=True,
             activity_language='FR',
+            accessibility=True,
         )
         cls.retirement_no_seats = Retirement.objects.create(
             name="no_place_left_retirement",
@@ -184,6 +185,7 @@ class OrderTests(APITestCase):
             refund_rate=50,
             is_active=True,
             activity_language='FR',
+            accessibility=True,
         )
 
     @responses.activate
