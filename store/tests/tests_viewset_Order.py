@@ -20,7 +20,7 @@ from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.models import AcademicLevel
 
 from workplace.models import TimeSlot, Period, Workplace
-from retirement.models import Retirement
+from retirement.models import Retirement, WaitQueueNotification, WaitQueue
 
 from .paysafe_sample_responses import (SAMPLE_PROFILE_RESPONSE,
                                        SAMPLE_PAYMENT_RESPONSE,
@@ -525,6 +525,125 @@ class OrderTests(APITestCase):
 
         self.assertEqual(admin.tickets, 1)
         self.assertEqual(admin.membership, None)
+
+    @responses.activate
+    def test_create_reserved_retirement_not_authorized(self):
+        """
+        Ensure we can't create an order with reservations if the requested
+        retirement has only reserved seats and the user has not been notified
+        (not on the mailing list).
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.retirement_no_seats.reserved_seats = 1
+        self.retirement_no_seats.save()
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'retirement',
+                'object_id': self.retirement_no_seats.id,
+                'quantity': 1,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                "There are no places left in the requested retirement."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @responses.activate
+    def test_create_reserved_retirement(self):
+        """
+        Ensure we can't create an order with reservations if the requested
+        retirement has only reserved seats and the user has not been notified
+        (not on the mailing list).
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.retirement_no_seats.reserved_seats = 1
+        self.retirement_no_seats.save()
+        # The API checks if the user has been notified for a reserved seat in
+        # the specified retirement in the past.
+        WaitQueueNotification.objects.create(
+            user=self.user,
+            retirement=self.retirement_no_seats
+        )
+        # The API should unsubscribe the user from the mailing list.
+        WaitQueue.objects.create(
+            user=self.user,
+            retirement=self.retirement_no_seats,
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'retirement',
+                'object_id': self.retirement_no_seats.id,
+                'quantity': 1,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'id': 3,
+            'order_lines': [{
+                'content_type': 'retirement',
+                'id': 2,
+                'object_id': 2,
+                'order': 'http://testserver/orders/3',
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/2'
+            }],
+            'url': 'http://testserver/orders/3',
+            'user': 'http://testserver/users/1',
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '1',
+            'settlement_id': '1',
+            'reference_number': '751',
+        }
+
+        self.assertEqual(response_data, content)
 
     @responses.activate
     def test_create_retirement_missing_user_info(self):

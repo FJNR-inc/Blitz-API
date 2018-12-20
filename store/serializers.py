@@ -16,6 +16,7 @@ from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,)
 from workplace.models import Reservation
 from retirement.models import Reservation as RetirementReservation
+from retirement.models import WaitQueueNotification
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
@@ -487,10 +488,15 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
                 for retirement_orderline in retirement_orderlines:
                     retirement = retirement_orderline.content_object
+                    user_waiting = retirement.wait_queue.filter(user=user)
                     reserved = (
                         retirement.reservations.filter(is_active=True).count()
                     )
-                    if (retirement.seats - retirement.total_reservations) > 0:
+                    if (((retirement.seats - retirement.total_reservations -
+                          retirement.reserved_seats) > 0)
+                            or (retirement.reserved_seats
+                                and WaitQueueNotification.objects.filter(
+                                    user=user, retirement=retirement))):
                         RetirementReservation.objects.create(
                             user=user,
                             retirement=retirement,
@@ -504,6 +510,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                                 "retirement."
                             )]
                         })
+                    if user_waiting:
+                        user_waiting.delete()
 
             if need_transaction and payment_token:
                 # Charge the order with the external payment API
