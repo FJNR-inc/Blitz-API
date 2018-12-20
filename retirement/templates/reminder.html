@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <style>
+      @import url('https://fonts.googleapis.com/css?family=Nunito+Sans');
+
+      body {
+        margin: 0;
+        font-family: 'Nunito Sans', sans-serif;
+        color: #142823;
+      }
+
+      ul {
+        margin: 30px 0 0 0;
+        padding: 0;
+        list-style-type: none;
+      }
+
+      .email {
+        background-color: #F7EDD9;
+        height:auto;
+        padding: 20px;
+      }
+
+      .email__logo {
+        margin: 20px;
+        text-align: center;
+      }
+
+      .email__logo img {
+        height: 60px;
+        margin: auto;
+      }
+
+      .email__content {
+        background-color: #FCF7EF;
+        max-width: 600px;
+        padding: 20px;
+        margin: auto;
+      }
+
+      .email__content__title {
+        font-size: 24px;
+        font-weight: 900;
+      }
+
+      .email__content__subtitle {
+        font-size: 18px;
+        margin-top: 50px;
+      }
+
+      .email__content__summary__item {
+        line-height: 15px;
+        margin: 5px 0;
+      }
+
+      .email__content__summary__item__spacer {
+        border-bottom: 1px dotted #142823;
+        height: 12px;
+        float: right;
+
+      }
+
+      .email__content__summary__item__price {
+        float: right;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email">
+      <div class="email__logo">
+        {% load static %}
+        <img src="{% static 'images/logo_general.png'%}" alt="">
+      </div>
+      <div class="email__content">
+        <h1 class="email__content__title">
+          Plus qu'une semaine avant la retraite!
+        </h1>
+        <p>
+          Nous sommes heureux de vous compter parmi nous à la retraite {{RETIREMENT.name}}. Nous profitons de ce rappel pour vous recommuniquer les informations relatives à l'événement!
+        </p>
+
+        <ul>
+          <li><b>Date et heure de début: </b>{{RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}</li>
+          <li><b>Date et heure de fin: </b>{{RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{RETIREMENT.end_time|date:"G"}}h{{RETIREMENT.end_time|date:"i"}}</li>
+        </ul>
+
+        <h2 class="email__content__subtitle">
+          Ce que vous devez savoir
+        </h2>
+        <p>
+          {{RETIREMENT.email_content}}
+        </p>
+
+        <h2 class="email__content__subtitle">
+          Formulaire
+        </h2>
+        <div class="email__content__summary">
+          Si ce n'est pas déjà fait, veuillez remplir le formulaire suivant afin que nous puissions préparer votre arrivée!
+        </div>
+        <center>
+          <table width="100%">
+            <tr>
+              <td>
+                <table border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td height="20" width="100%" style="font-size: 20px; line-height: 20px;">
+                    &nbsp;
+                    </td>
+                  </tr>
+                </table>
+                <table border="0" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                  <tbody>
+                  <tr>
+                    <td align="center">
+                      <table border="0" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                        <tr>
+                          <td align="center" bgcolor="#142823" width="150" style="-moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px;">
+                            <a href={{RETIREMENT.form_url}} style="padding: 10px;width:150px;display: block;text-decoration: none;border:0;text-align: center;font-weight: bold;font-size: 15px;font-family: sans-serif;color: #F7EDD9;background: #142823;border: 1px solid #142823;-moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px;line-height:17px;" class="button_link">
+                              Formulaire
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </center>
+        <h2 class="email__content__subtitle">
+          L'équipe Thèsez-vous
+        </h2>
+        <p>
+          Thèsez-vous n'autorise pas d'échanges ou de remboursements.<br>
+          Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2<br>
+          info@thesez-vous.com, www.thesez-vous.com
+        </p>
+      </div>
+    </div>
+
+  </body>
+</html>

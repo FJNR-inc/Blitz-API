@@ -1,0 +1,17 @@
+
+
+{% load static %}
+
+ 
+** AU PLAISIR DE VOUS REVOIR BIENTÔT
+------------------------------------------------------------
+
+Nous sommes heureux de vous avoir compté parmi nous à la retraite {{RETIREMENT.name}}. Nous espérons que vous avez apprécié l'événement et avons hâte de vous revoir!
+
+ 
+** L'ÉQUIPE THÈSEZ-VOUS
+------------------------------------------------------------
+
+Thèsez-vous n'autorise pas d'échanges ou de remboursements.
+Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2
+info@thesez-vous.com, www.thesez-vous.com
