@@ -677,3 +677,11 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 'read_only': True,
             },
         }
+
+
+class CouponSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = PaymentProfile
+        fields = ('__all__')

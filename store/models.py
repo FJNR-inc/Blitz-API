@@ -8,6 +8,10 @@ from django.contrib.contenttypes.fields import (
 )
 from django.contrib.contenttypes.models import ContentType
 
+from gm2m import GM2MField
+
+from safedelete.models import SafeDeleteModel
+
 from simple_history.models import HistoricalRecords
 
 from blitz_api.models import AcademicLevel
@@ -293,3 +297,102 @@ class PaymentProfile(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Coupon(SafeDeleteModel):
+    """
+    Represents a coupon that provides a discount on various products.
+    The "owner" of the instance is the buyer of the coupon, but not necessarily
+    the one that will use it.
+    """
+    value = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        verbose_name=_("Price"),
+    )
+
+    # Code generator:
+    # ''.join(random.choices(string.ascii_uppercase.replace("O", "")
+    #                           + string.digits.replace("0", ""), k=8))
+    code = models.CharField(
+        verbose_name=_("Code"),
+        max_length=253,
+    )
+
+    start_time = models.DateTimeField(verbose_name=_("Start time"), )
+
+    end_time = models.DateTimeField(verbose_name=_("End time"), )
+
+    max_use = models.PositiveIntegerField()
+
+    max_use_per_user = models.PositiveIntegerField()
+
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_("User"),
+        related_name='coupons',
+    )
+
+    details = models.TextField(
+        verbose_name=_("Details"),
+        max_length=1000,
+        null=True,
+        blank=True,
+    )
+
+    # Models names are only used to create related relations. They are not
+    # a list of "authorized" models. Any object can still be referenced by this
+    # M2M field.
+    # They made tests fail so they are commented for now. They might be
+    # useful later.
+    applicable_products = GM2MField(
+        # 'Package',
+        # 'Membership',
+        # 'retirement.Retirement',
+        # 'workplace.TimeSlot',
+        related_name="applicable_coupons"
+    )
+
+    # This M2M field make a whole product family (ie: memberships) applicable
+    # to a coupon. This overrides specific products.
+    # For example, a coupon can be applied to "Membership 2", "Package 12" and
+    # all "Retirement".
+    applicable_product_types = models.ManyToManyField(
+        ContentType
+    )
+
+    users = models.ManyToManyField(
+        User,
+        blank=True,
+        verbose_name=_("Users"),
+        related_name='used_coupons',
+        through='CouponUser',
+    )
+
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return self.code
+
+
+class CouponUser(SafeDeleteModel):
+    """Contains uses of coupons by users."""
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_("User"),
+        related_name='coupon_users',
+    )
+    coupon = models.ForeignKey(
+        Coupon,
+        on_delete=models.CASCADE,
+        verbose_name=_("Coupon"),
+        related_name='coupon_users',
+    )
+    uses = models.PositiveIntegerField()
+
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return ', '.join([str(self.coupon), str(self.user)])

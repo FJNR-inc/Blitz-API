@@ -5,7 +5,7 @@ from modeltranslation.admin import TranslationAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from .models import (Membership, Order, OrderLine, Package, PaymentProfile,
-                     CustomPayment,)
+                     CustomPayment, Coupon, CouponUser, )
 from .resources import (MembershipResource, OrderResource, OrderLineResource,
                         PackageResource, CustomPaymentResource,)
 
@@ -117,9 +117,36 @@ class PaymentProfileAdmin(SimpleHistoryAdmin):
     )
 
 
+class CouponUserInline(admin.StackedInline):
+    model = CouponUser
+    can_delete = True
+    verbose_name_plural = _('Coupon users')
+    fk_name = 'coupon'
+    extra = 0
+
+
+class CouponAdmin(SimpleHistoryAdmin):
+    inlines = (CouponUserInline, )
+    list_display = (
+        'code',
+        'value',
+        'owner',
+        'details',
+    )
+    list_filter = (
+        ('owner', admin.RelatedOnlyFieldListFilter),
+    )
+    search_fields = (
+        'code',
+        'owner__email',
+        'owner__username',
+    )
+
+
 admin.site.register(Membership, MembershipAdmin)
 admin.site.register(Package, PackageAdmin)
 admin.site.register(CustomPayment, CustomPaymentAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderLine, OrderLineAdmin)
 admin.site.register(PaymentProfile, PaymentProfileAdmin)
+admin.site.register(Coupon, CouponAdmin)

@@ -12,7 +12,7 @@ from rest_framework.response import Response
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, PaymentProfile,
-                     CustomPayment,)
+                     CustomPayment, Coupon, )
 from .resources import (MembershipResource, PackageResource, OrderResource,
                         OrderLineResource, CustomPaymentResource,)
 from .services import delete_external_card
@@ -301,3 +301,43 @@ class CustomPaymentViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class CouponViewSet(viewsets.ModelViewSet):
+    """
+    retrieve:
+    Return the given coupon.
+
+    list:
+    Return a list of all the existing coupons.
+
+    create:
+    Create a new coupon instance.
+    """
+    serializer_class = serializers.CouponSerializer
+    queryset = Coupon.objects.all()
+    permission_classes = (IsAuthenticated, permissions.IsAdminOrReadOnly)
+    filter_fields = '__all__'
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = CouponResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="Coupon-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
+
+    def get_queryset(self):
+        """
+        This viewset should return owned coupons except if
+        the currently authenticated user is an admin (is_staff).
+        """
+        if self.request.user.is_staff:
+            return Coupon.objects.all()
+        return Coupon.objects.filter(owner=self.request.user)
