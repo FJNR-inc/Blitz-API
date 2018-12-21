@@ -179,3 +179,33 @@ class CustomPaymentResource(resources.ModelResource):
             'authorization_id',
             'settlement_id',
         )
+
+
+class CouponResource(resources.ModelResource):
+
+    owner = fields.Field(
+        column_name='owner',
+        attribute='owner',
+        widget=ForeignKeyWidget(User, 'email'),
+    )
+
+    class Meta:
+        model = CustomPayment
+        fields = (
+            'id',
+            'details',
+            'value',
+            'code',
+            'owner',
+            'start_time',
+            'end_time',
+        )
+        export_order = (
+            'id',
+            'details',
+            'value',
+            'code',
+            'owner',
+            'start_time',
+            'end_time',
+        )
