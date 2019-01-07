@@ -11,7 +11,6 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
 from .exceptions import PaymentAPIError
-from .filters import CouponFilter
 from .models import (Package, Membership, Order, OrderLine, PaymentProfile,
                      CustomPayment, Coupon, )
 from .resources import (MembershipResource, PackageResource, OrderResource,
@@ -319,8 +318,7 @@ class CouponViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.CouponSerializer
     queryset = Coupon.objects.all()
     permission_classes = (IsAuthenticated, permissions.IsAdminOrReadOnly)
-    # Use a custom filter to handle incompatible GM2MField
-    filterset_class = CouponFilter
+    filter_fields = '__all__'
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):

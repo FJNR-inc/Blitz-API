@@ -3,6 +3,7 @@ from rest_framework.validators import UniqueValidator
 
 import decimal
 
+from django.apps import apps
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth import get_user_model
@@ -16,11 +17,11 @@ from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,)
 from workplace.models import Reservation
 from retirement.models import Reservation as RetirementReservation
-from retirement.models import WaitQueueNotification
+from retirement.models import WaitQueueNotification, Retirement
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
-                     PaymentProfile, CustomPayment,)
+                     PaymentProfile, CustomPayment, Coupon, )
 from .services import (charge_payment,
                        create_external_payment_profile,
                        create_external_card,
@@ -681,7 +682,12 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
 class CouponSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
+    applicable_product_types = serializers.SlugRelatedField(
+        queryset=ContentType.objects.all(),
+        slug_field='model',
+        many=True,
+    )
 
     class Meta:
-        model = PaymentProfile
+        model = Coupon
         fields = ('__all__')

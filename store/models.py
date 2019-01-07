@@ -8,8 +8,6 @@ from django.contrib.contenttypes.fields import (
 )
 from django.contrib.contenttypes.models import ContentType
 
-from gm2m import GM2MField
-
 from safedelete.models import SafeDeleteModel
 
 from simple_history.models import HistoricalRecords
@@ -341,17 +339,28 @@ class Coupon(SafeDeleteModel):
         blank=True,
     )
 
-    # Models names are only used to create related relations. They are not
-    # a list of "authorized" models. Any object can still be referenced by this
-    # M2M field.
-    # They made tests fail so they are commented for now. They might be
-    # useful later.
-    applicable_products = GM2MField(
-        # 'Package',
-        # 'Membership',
-        # 'retirement.Retirement',
-        # 'workplace.TimeSlot',
-        related_name="applicable_coupons"
+    applicable_retirements = models.ManyToManyField(
+        'retirement.Retirement',
+        related_name="applicable_coupons",
+        verbose_name=_("Applicable retirements"),
+    )
+
+    applicable_timeslots = models.ManyToManyField(
+        'workplace.TimeSlot',
+        related_name="applicable_coupons",
+        verbose_name=_("Applicable timeslots"),
+    )
+
+    applicable_packages = models.ManyToManyField(
+        Package,
+        related_name="applicable_coupons",
+        verbose_name=_("Applicable packages"),
+    )
+
+    applicable_memberships = models.ManyToManyField(
+        Membership,
+        related_name="applicable_coupons",
+        verbose_name=_("Applicable memberships"),
     )
 
     # This M2M field make a whole product family (ie: memberships) applicable

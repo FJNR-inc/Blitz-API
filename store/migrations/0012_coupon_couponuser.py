@@ -3,7 +3,6 @@
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
-import gm2m.fields
 import simple_history.models
 
 
@@ -29,7 +28,6 @@ class Migration(migrations.Migration):
                 ('max_use_per_user', models.PositiveIntegerField()),
                 ('details', models.TextField(blank=True, max_length=1000, null=True, verbose_name='Details')),
                 ('applicable_product_types', models.ManyToManyField(to='contenttypes.ContentType')),
-                ('applicable_products', gm2m.fields.GM2MField(related_name='applicable_coupons', through_fields=('gm2m_src', 'gm2m_tgt', 'gm2m_ct', 'gm2m_pk'))),
                 ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='coupons', to=settings.AUTH_USER_MODEL, verbose_name='User')),
             ],
             options={
