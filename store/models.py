@@ -343,24 +343,28 @@ class Coupon(SafeDeleteModel):
         'retirement.Retirement',
         related_name="applicable_coupons",
         verbose_name=_("Applicable retirements"),
+        blank=True,
     )
 
     applicable_timeslots = models.ManyToManyField(
         'workplace.TimeSlot',
         related_name="applicable_coupons",
         verbose_name=_("Applicable timeslots"),
+        blank=True,
     )
 
     applicable_packages = models.ManyToManyField(
         Package,
         related_name="applicable_coupons",
         verbose_name=_("Applicable packages"),
+        blank=True,
     )
 
     applicable_memberships = models.ManyToManyField(
         Membership,
         related_name="applicable_coupons",
         verbose_name=_("Applicable memberships"),
+        blank=True,
     )
 
     # This M2M field make a whole product family (ie: memberships) applicable
@@ -368,7 +372,8 @@ class Coupon(SafeDeleteModel):
     # For example, a coupon can be applied to "Membership 2", "Package 12" and
     # all "Retirement".
     applicable_product_types = models.ManyToManyField(
-        ContentType
+        ContentType,
+        blank=True,
     )
 
     users = models.ManyToManyField(

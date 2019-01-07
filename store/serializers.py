@@ -2,6 +2,8 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 import decimal
+import random
+import string
 
 from django.apps import apps
 from django.utils import timezone
@@ -686,8 +688,58 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
         queryset=ContentType.objects.all(),
         slug_field='model',
         many=True,
+        required=False,
     )
+    code = serializers.ReadOnlyField()
+    value = serializers.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        min_value=0.1,
+    )
+    max_use = serializers.IntegerField(
+        min_value=1
+    )
+    max_use_per_user = serializers.IntegerField(
+        min_value=1
+    )
+
+    def create(self, validated_data):
+        """
+        Generate coupon's code and create the coupon.
+        """
+        code = ""
+        n = 0
+        used_code = Coupon.objects.all().values_list('code', flat=True)
+        while ((not code or code in used_code) and (n < 100)):
+            code = ''.join(
+                random.choices(
+                    string.ascii_uppercase.replace("O", "").replace("I", "") +
+                    string.digits.replace("0", ""),
+                    k=8))
+            n += 1
+        if n >= 100:
+            raise serializers.ValidationError({
+                'non_field_errors': [_(
+                    "Can't generate new unique codes. Delete old coupons."
+                )]
+            })
+        validated_data['code'] = code
+        return super(CouponSerializer, self).create(validated_data)
 
     class Meta:
         model = Coupon
-        fields = ('__all__')
+        exclude = ('deleted', )
+        extra_kwargs = {
+            'applicable_retirements': {
+                'required': False,
+            },
+            'applicable_timeslots': {
+                'required': False,
+            },
+            'applicable_packages': {
+                'required': False,
+            },
+            'applicable_memberships': {
+                'required': False,
+            },
+        }

@@ -342,3 +342,10 @@ class CouponViewSet(viewsets.ModelViewSet):
         if self.request.user.is_staff:
             return Coupon.objects.all()
         return Coupon.objects.filter(owner=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            super(CouponViewSet, self).destroy(request, *args, **kwargs)
+        except Http404:
+            pass
+        return Response(status=status.HTTP_204_NO_CONTENT)

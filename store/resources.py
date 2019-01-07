@@ -8,7 +8,8 @@ from import_export.widgets import (ForeignKeyWidget, ManyToManyWidget,
 from blitz_api.models import AcademicLevel
 from blitz_api.services import get_model_from_name
 
-from .models import Membership, Order, OrderLine, Package, CustomPayment
+from .models import (Membership, Order, OrderLine, Package, CustomPayment,
+                     Coupon, CouponUser, )
 
 
 User = get_user_model()
@@ -189,8 +190,14 @@ class CouponResource(resources.ModelResource):
         widget=ForeignKeyWidget(User, 'email'),
     )
 
+    total_use = fields.Field()
+
+    def dehydrate_total_use(self, coupon):
+        uses = CouponUser.objects.filter(coupon=coupon)
+        return sum(uses.values_list('uses', flat=True))
+
     class Meta:
-        model = CustomPayment
+        model = Coupon
         fields = (
             'id',
             'details',
@@ -199,6 +206,7 @@ class CouponResource(resources.ModelResource):
             'owner',
             'start_time',
             'end_time',
+            'total_use',
         )
         export_order = (
             'id',
@@ -208,4 +216,5 @@ class CouponResource(resources.ModelResource):
             'owner',
             'start_time',
             'end_time',
+            'total_use',
         )

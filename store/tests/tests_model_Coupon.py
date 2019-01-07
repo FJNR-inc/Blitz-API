@@ -1,66 +1,45 @@
-# from datetime import timedelta
-#
-# from django.utils import timezone
-# from django.contrib.contenttypes.models import ContentType
-#
-# from rest_framework.test import APITestCase
-#
-# from blitz_api.factories import UserFactory
-# from blitz_api.models import AcademicLevel
-#
-# from ..models import Package, Order, OrderLine
-#
-#
-# class PackageTests(APITestCase):
-#
-#     @classmethod
-#     def setUpClass(cls):
-#         super(PackageTests, cls).setUpClass()
-#         cls.package_type = ContentType.objects.get_for_model(Package)
-#         cls.user = UserFactory()
-#         cls.academic_level = AcademicLevel.objects.create(
-#             name="University"
-#         )
-#         cls.order = Order.objects.create(
-#             user=cls.user,
-#             transaction_date=timezone.now(),
-#             authorization_id=1,
-#             settlement_id=1,
-#         )
-#
-#     def test_create(self):
-#         """
-#         Ensure that we can create a package.
-#         """
-#         package = Package.objects.create(
-#             name="basic_package",
-#             details="10 reservations package",
-#             available=True,
-#             price=50,
-#             reservations=10,
-#         )
-#
-#         self.assertEqual(str(package), "basic_package")
-#
-#     def test_package_order_lines(self):
-#         """
-#         Ensure that we can get order lines for a specific package.
-#         """
-#         package = Package.objects.create(
-#             name="basic_package",
-#             details="10 reservations package",
-#             available=True,
-#             price=50,
-#             reservations=10,
-#         )
-#         OrderLine.objects.create(
-#             order=self.order,
-#             quantity=1,
-#             content_type=self.package_type,
-#             object_id=1,
-#         )
-#
-#         self.assertEqual(
-#             str(package.order_lines.all()[0]),
-#             "basic_package, qt:1"
-#         )
+from django.contrib.contenttypes.models import ContentType
+
+from rest_framework.test import APITestCase
+
+from blitz_api.factories import UserFactory
+
+from ..models import Package, Coupon
+
+
+class CouponTests(APITestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(CouponTests, cls).setUpClass()
+        cls.package_type = ContentType.objects.get_for_model(Package)
+        cls.user = UserFactory()
+        cls.coupon = Coupon.objects.create(
+            value=13,
+            code="ASD1234E",
+            start_time="2019-01-06T15:11:05-05:00",
+            end_time="2020-01-06T15:11:06-05:00",
+            max_use=100,
+            max_use_per_user=2,
+            details="Any package for fjeanneau clients",
+            owner=cls.user,
+        )
+        cls.coupon.applicable_product_types.add(cls.package_type)
+        cls.coupon.save()
+
+    def test_create(self):
+        """
+        Ensure that we can create a coupon.
+        """
+        coupon = Coupon.objects.create(
+            value=13,
+            code="12345678",
+            start_time="2019-01-06T15:11:05-05:00",
+            end_time="2020-01-06T15:11:06-05:00",
+            max_use=100,
+            max_use_per_user=2,
+            details="Any package for fjeanneau clients",
+            owner=self.user,
+        )
+
+        self.assertEqual(str(coupon), "12345678")

@@ -7,7 +7,8 @@ from simple_history.admin import SimpleHistoryAdmin
 from .models import (Membership, Order, OrderLine, Package, PaymentProfile,
                      CustomPayment, Coupon, CouponUser, )
 from .resources import (MembershipResource, OrderResource, OrderLineResource,
-                        PackageResource, CustomPaymentResource,)
+                        PackageResource, CustomPaymentResource, CouponResource,
+                        )
 
 
 class OrderLineInline(admin.StackedInline):
@@ -125,8 +126,9 @@ class CouponUserInline(admin.StackedInline):
     extra = 0
 
 
-class CouponAdmin(SimpleHistoryAdmin):
+class CouponAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
     inlines = (CouponUserInline, )
+    resource_class = CouponResource
     list_display = (
         'code',
         'value',
