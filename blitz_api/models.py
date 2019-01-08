@@ -57,6 +57,24 @@ class User(AbstractUser):
         on_delete=models.SET_NULL,
         verbose_name=_("Academic field"),
     )
+    academic_program_code = models.CharField(
+        verbose_name=_("Academic program code"),
+        blank=True,
+        null=True,
+        max_length=17,
+    )
+    faculty = models.CharField(
+        verbose_name=_("Faculty"),
+        blank=True,
+        null=True,
+        max_length=100,
+    )
+    student_number = models.CharField(
+        verbose_name=_("Student number"),
+        blank=True,
+        null=True,
+        max_length=17,
+    )
     birthdate = models.DateField(
         blank=True,
         null=True,

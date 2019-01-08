@@ -247,7 +247,10 @@ class ReservationTests(APITestCase):
                 'url': 'http://testserver/users/1',
                 'user_permissions': [],
                 'city': None,
-                'personnal_restrictions': None
+                'personnal_restrictions': None,
+                'academic_program_code': None,
+                'faculty': None,
+                'student_number': None,
             }
         }
 
@@ -429,7 +432,10 @@ class ReservationTests(APITestCase):
                 'url': 'http://testserver/users/1',
                 'user_permissions': [],
                 'city': None,
-                'personnal_restrictions': None
+                'personnal_restrictions': None,
+                'academic_program_code': None,
+                'faculty': None,
+                'student_number': None,
             }
         }
 

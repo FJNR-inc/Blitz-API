@@ -1466,7 +1466,10 @@ class TimeSlotTests(APITestCase):
                 "url": "http://testserver/users/1",
                 "user_permissions": [],
                 'city': None,
-                'personnal_restrictions': None
+                'personnal_restrictions': None,
+                'academic_program_code': None,
+                'faculty': None,
+                'student_number': None,
                 }, data['users'][1]
             ],
             "workplace": {

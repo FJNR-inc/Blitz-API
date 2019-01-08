@@ -362,13 +362,13 @@ class CouponTests(APITestCase):
 
         content = {
             "value": [
-                "Ensure this value is greater than or equal to 0.1."
+                "Ensure this value is greater than or equal to 0.0."
             ],
             "max_use": [
-                "Ensure this value is greater than or equal to 1."
+                "Ensure this value is greater than or equal to 0."
             ],
             "max_use_per_user": [
-                "Ensure this value is greater than or equal to 1."
+                "Ensure this value is greater than or equal to 0."
             ]
         }
 

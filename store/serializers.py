@@ -12,7 +12,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction, models
-from django.db.models import F, Q
+from django.db.models import Q
 from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -427,6 +427,26 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             amount = order.total_cost
             coupon = validated_data.get('coupon')
             if coupon:
+                if (coupon.start_time > timezone.now()
+                        or coupon.end_time < timezone.now()):
+                    raise serializers.ValidationError({
+                        'non_field_errors': [_(
+                            "This coupon is only valid between {0} and {1}."
+                            .format(
+                                coupon.start_time.date(),
+                                coupon.end_time.date()
+                            )
+                        )]
+                    })
+                if not (user.academic_program_code and user.faculty
+                        and user.student_number):
+                    raise serializers.ValidationError({
+                        'non_field_errors': [_(
+                            "Incomplete user profile. 'academic_program_code',"
+                            " 'faculty' and 'student_number' fields must be "
+                            "filled in the user profile to use a coupon."
+                        )]
+                    })
                 coupon_user, created = CouponUser.objects.get_or_create(
                     coupon=coupon,
                     user=user,
@@ -436,8 +456,11 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 total_coupon_uses = sum(
                     total_coupon_uses.values_list('uses', flat=True)
                 )
-            if (coupon and coupon_user.uses < coupon.max_use_per_user and
-                    total_coupon_uses < coupon.max_use):
+                valid_use = coupon_user.uses < coupon.max_use_per_user
+                valid_use = valid_use or not coupon.max_use_per_user
+                valid_use = valid_use and (total_coupon_uses < coupon.max_use
+                                           or not coupon.max_use)
+            if (coupon and valid_use):
                 applicable_orderlines = order.order_lines.filter(
                     Q(content_type__in=coupon.applicable_product_types.all())
                     | Q(content_type__model='package',
@@ -459,9 +482,16 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         product = orderline.content_object
                         if product.price > most_exp_product.price:
                             most_exp_product = product
-                    discount_amount = min(coupon.value, most_exp_product.price)
+                    if not coupon.value:
+                        discount_amount = most_exp_product.price
+                    else:
+                        discount_amount = min(
+                            coupon.value,
+                            most_exp_product.price
+                        )
                     amount -= discount_amount
-                    coupon_user.uses = F('uses') + 1
+                    coupon_user.uses = coupon_user.uses + 1
+                    coupon_user.save()
                 else:
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
@@ -772,13 +802,13 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
     value = serializers.DecimalField(
         max_digits=6,
         decimal_places=2,
-        min_value=0.1,
+        min_value=0.0,
     )
     max_use = serializers.IntegerField(
-        min_value=1
+        min_value=0
     )
     max_use_per_user = serializers.IntegerField(
-        min_value=1
+        min_value=0
     )
 
     def create(self, validated_data):

@@ -46,6 +46,9 @@ class UsersIdTests(APITestCase):
             'membership_end',
             'city',
             'personnal_restrictions',
+            'academic_program_code',
+            'faculty',
+            'student_number',
         ]
 
     def setUp(self):
