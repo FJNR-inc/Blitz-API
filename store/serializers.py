@@ -1,9 +1,10 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-import decimal
+from decimal import Decimal
 import random
 import string
+import uuid
 
 from django.apps import apps
 from django.utils import timezone
@@ -11,6 +12,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction, models
+from django.db.models import F, Q
 from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -23,7 +25,7 @@ from retirement.models import WaitQueueNotification, Retirement
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
-                     PaymentProfile, CustomPayment, Coupon, )
+                     PaymentProfile, CustomPayment, Coupon, CouponUser, )
 from .services import (charge_payment,
                        create_external_payment_profile,
                        create_external_card,
@@ -31,6 +33,8 @@ from .services import (charge_payment,
                        PAYSAFE_CARD_TYPE,)
 
 User = get_user_model()
+
+TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
 class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
@@ -346,6 +350,12 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         allow_blank=True,
         allow_null=True,
     )
+    coupon = serializers.SlugRelatedField(
+        slug_field='code',
+        queryset=Coupon.objects.all(),
+        allow_null=True,
+        required=False,
+    )
     # target_user = serializers.HyperlinkedRelatedField(
     #     many=False,
     #     write_only=True,
@@ -410,9 +420,65 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
         with transaction.atomic():
             order = Order.objects.create(**validated_data)
+            charge_response = None
+            discount_amount = 0
             for orderline_data in orderlines_data:
                 OrderLine.objects.create(order=order, **orderline_data)
-            amount = int(round(order.total_cost*100))
+            amount = order.total_cost
+            coupon = validated_data.get('coupon')
+            if coupon:
+                coupon_user, created = CouponUser.objects.get_or_create(
+                    coupon=coupon,
+                    user=user,
+                    defaults={'uses': 0},
+                )
+                total_coupon_uses = CouponUser.objects.filter(coupon=coupon)
+                total_coupon_uses = sum(
+                    total_coupon_uses.values_list('uses', flat=True)
+                )
+            if (coupon and coupon_user.uses < coupon.max_use_per_user and
+                    total_coupon_uses < coupon.max_use):
+                applicable_orderlines = order.order_lines.filter(
+                    Q(content_type__in=coupon.applicable_product_types.all())
+                    | Q(content_type__model='package',
+                        object_id__in=coupon.applicable_packages.all().
+                        values_list('id', flat=True))
+                    | Q(content_type__model='timeslot',
+                        object_id__in=coupon.applicable_timeslots.all().
+                        values_list('id', flat=True))
+                    | Q(content_type__model='membership',
+                        object_id__in=coupon.applicable_memberships.all().
+                        values_list('id', flat=True))
+                    | Q(content_type__model='retirement',
+                        object_id__in=coupon.applicable_retirements.all().
+                        values_list('id', flat=True))
+                )
+                if applicable_orderlines:
+                    most_exp_product = applicable_orderlines[0].content_object
+                    for orderline in applicable_orderlines:
+                        product = orderline.content_object
+                        if product.price > most_exp_product.price:
+                            most_exp_product = product
+                    discount_amount = min(coupon.value, most_exp_product.price)
+                    amount -= discount_amount
+                    coupon_user.uses = F('uses') + 1
+                else:
+                    raise serializers.ValidationError({
+                        'non_field_errors': [_(
+                            "This coupon does not apply to any product."
+                        )]
+                    })
+            # If coupon was provided but cannot be applied
+            elif coupon:
+                raise serializers.ValidationError({
+                    'non_field_errors': [_(
+                        "Maximum number of uses exceeded for this coupon."
+                    )]
+                })
+
+            tax = round(amount * Decimal(TAX_RATE), 2)
+            amount *= Decimal(TAX_RATE + 1)
+            amount = round(amount * 100, 2)
 
             membership_orderlines = order.order_lines.filter(
                 content_type__model="membership"
@@ -520,11 +586,11 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     if user_waiting:
                         user_waiting.delete()
 
-            if need_transaction and payment_token:
+            if need_transaction and payment_token and int(amount):
                 # Charge the order with the external payment API
                 try:
                     charge_response = charge_payment(
-                        amount,
+                        int(amount),
                         payment_token,
                         str(order.id)
                     )
@@ -533,7 +599,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         'message': err
                     })
 
-            elif need_transaction and single_use_token:
+            elif need_transaction and single_use_token and int(amount):
                 # Add card to the external profile & charge user
                 try:
                     card_create_response = create_external_card(
@@ -541,7 +607,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         single_use_token
                     )
                     charge_response = charge_payment(
-                        amount,
+                        int(amount),
                         card_create_response.json()['paymentToken'],
                         str(order.id)
                     )
@@ -551,7 +617,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     })
             elif (membership_orderlines
                   or package_orderlines
-                  or retirement_orderlines):
+                  or retirement_orderlines) and int(amount):
                 raise serializers.ValidationError({
                     'non_field_errors': [_(
                         "A payment_token or single_use_token is required to "
@@ -560,15 +626,26 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 })
 
             if need_transaction:
-                charge_res_content = charge_response.json()
-                order.authorization_id = charge_res_content['id']
-                order.settlement_id = charge_res_content['settlements'][0][
-                    'id'
-                ]
-                order.reference_number = charge_res_content['merchantRefNum']
+                if charge_response:
+                    charge_res_content = charge_response.json()
+                    order.authorization_id = charge_res_content['id']
+                    order.settlement_id = charge_res_content['settlements'][0][
+                        'id'
+                    ]
+                    order.reference_number = charge_res_content[
+                        'merchantRefNum'
+                    ]
+                else:
+                    charge_res_content = {
+                        'card': {
+                            'lastDigits': None,
+                            'type': "NONE"
+                        }
+                    }
+                    order.authorization_id = 0
+                    order.settlement_id = 0
+                    order.reference_number = "charge-" + str(uuid.uuid4())
                 order.save()
-
-                TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
                 orderlines = order.order_lines.filter(
                     models.Q(content_type__model='membership') |
@@ -613,10 +690,11 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     'AUTHORIZATION': order.authorization_id,
                     'TYPE': "Achat",
                     'ITEM_LIST': items,
-                    'TAX': round(decimal.Decimal(float(
-                        sum(item['price'] for item in items)
-                    ) * TAX_RATE), 2),
-                    'COST': order.total_cost,
+                    'TAX': tax,
+                    'DISCOUNT': discount_amount,
+                    'COUPON': coupon,
+                    'SUBTOTAL': round(amount / 100 - tax, 2),
+                    'COST': round(Decimal(amount) / 100, 2),
                 }
 
                 plain_msg = render_to_string("invoice.txt", merge_data)

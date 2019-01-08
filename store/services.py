@@ -68,6 +68,7 @@ PAYSAFE_CARD_TYPE = {
     'VI': "Visa",
     'VD': "Visa Debit",
     'VE': "Visa Electron",
+    'NONE': None,
 }
 
 

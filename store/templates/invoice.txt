@@ -36,7 +36,13 @@ Ceci est un reçu pour votre achat. Merci d'en garder une copie.
 
 {{item.price}}$ CAD
 {{item.name}} {% if item.details %}
-{{item.details}} {% endif %} {% endfor %}
+{{item.details}} {% endif %} {% endfor %} {% if COUPON %}
+
+-{{DISCOUNT}}$ CAD
+Coupon: {{COUPON.code}} {% endif %}
+
+{{SUBTOTAL}}$ CAD
+Subtotal
 
 {{TAX}}$ CAD
 TPS/TVQ

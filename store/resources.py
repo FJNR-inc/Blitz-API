@@ -55,6 +55,12 @@ class OrderResource(resources.ModelResource):
         widget=ForeignKeyWidget(User, 'email'),
     )
 
+    coupon = fields.Field(
+        column_name='coupon',
+        attribute='coupon',
+        widget=ForeignKeyWidget(Coupon, 'code'),
+    )
+
     class Meta:
         model = Order
         fields = (
@@ -63,6 +69,7 @@ class OrderResource(resources.ModelResource):
             'transaction_date',
             'authorization_id',
             'settlement_id',
+            'coupon',
         )
         export_order = (
             'id',
@@ -70,6 +77,7 @@ class OrderResource(resources.ModelResource):
             'transaction_date',
             'authorization_id',
             'settlement_id',
+            'coupon',
         )
 
 

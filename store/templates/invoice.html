@@ -139,7 +139,29 @@
             {% endif %}
           </div>
           {% endfor %}
+          {% if COUPON %}
+          <div class="email__content__summary__item">
+            <div class="email__content__summary__item__price">
+              -{{DISCOUNT}}$ CAD
+            </div>
+            <div class="email__content__summary__item__name">
+              Coupon: {{COUPON.code}}
+            </div>
+          </div>
+          {% endif %}
           <br/>
+
+          <!-- SUBTOTAL HERE -->
+          <div class="email__content__summary__item email__content__summary__item--total">
+            <div class="email__content__summary__item__price">
+              {{SUBTOTAL}}$ CAD
+            </div>
+            <div class="email__content__summary__item__name">
+              Subtotal
+            </div>
+          </div>
+          <br/>
+
           <!--Repeat the item section in function of the list of taxes you have -->
           <div class="email__content__summary__item">
             <div class="email__content__summary__item__price">

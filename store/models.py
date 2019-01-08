@@ -16,8 +16,6 @@ from blitz_api.models import AcademicLevel
 
 User = get_user_model()
 
-TAX = settings.LOCAL_SETTINGS['SELLING_TAX']
-
 
 class Order(models.Model):
     """Represents a transaction."""
@@ -31,6 +29,14 @@ class Order(models.Model):
         on_delete=models.CASCADE,
         verbose_name=_("User"),
         related_name='orders',
+    )
+
+    coupon = models.ForeignKey(
+        'Coupon',
+        on_delete=models.CASCADE,
+        verbose_name=_("Applied coupon"),
+        related_name='orders',
+        null=True,
     )
 
     transaction_date = models.DateTimeField(
@@ -66,7 +72,7 @@ class Order(models.Model):
         )
         for orderline in orderlines:
             cost += orderline.content_object.price * orderline.quantity
-        return round(decimal.Decimal(float(cost) + TAX * float(cost)), 2)
+        return cost
 
     @property
     def total_ticket(self):
@@ -306,7 +312,7 @@ class Coupon(SafeDeleteModel):
     value = models.DecimalField(
         max_digits=6,
         decimal_places=2,
-        verbose_name=_("Price"),
+        verbose_name=_("Value"),
     )
 
     # Code generator:
