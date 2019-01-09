@@ -4,9 +4,18 @@ import requests
 import uuid
 
 from django.conf import settings
+from django.db.models import Q
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from .exceptions import PaymentAPIError
+from .models import CouponUser
+
+
+###############################################################################
+#                         PAYSAFE RELATED SERVICES                            #
+###############################################################################
+
 
 PAYSAFE_EXCEPTION = {
     '3004': "{0}{1}".format(
@@ -407,3 +416,120 @@ def delete_external_card(profile_id, card_id):
         raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
 
     return r
+
+
+###############################################################################
+#                               OTHER SERVICES                                #
+###############################################################################
+
+
+def validate_coupon_for_order(coupon, order):
+    """
+    coupon: Coupon model instance
+    order: Order model instance
+
+    THIS DOES NOT RECORD COUPON USE. Linked CouponUser instance needs to be
+    updated outside of this function!
+
+    Returns a dict containing informations concerning the coupon use.
+    """
+    now = timezone.now()
+    user = order.user
+    coupon_info = {
+        'valid_use': False,
+        'error': None,
+        'value': None,
+        'orderline': None,
+    }
+
+    # Check if the ocupon is active
+    if (coupon.start_time > now or coupon.end_time < now):
+        coupon_info['error'] = {
+            'non_field_errors': [_(
+                "This coupon is only valid between {0} and {1}."
+                .format(
+                    coupon.start_time.date(),
+                    coupon.end_time.date()
+                )
+            )]
+        }
+        return coupon_info
+
+    # Check if the user's profile is complete
+    if not (user.academic_program_code and
+            user.faculty and user.student_number):
+        coupon_info['error'] = {
+            'non_field_errors': [_(
+                "Incomplete user profile. 'academic_program_code',"
+                " 'faculty' and 'student_number' fields must be "
+                "filled in the user profile to use a coupon."
+            )]
+        }
+        return coupon_info
+
+    # Check if the maximum number of use for this coupon is exceeded
+    coupon_user, created = CouponUser.objects.get_or_create(
+        coupon=coupon,
+        user=user,
+        defaults={'uses': 0},
+    )
+    total_coupon_uses = CouponUser.objects.filter(coupon=coupon)
+    total_coupon_uses = sum(
+        total_coupon_uses.values_list('uses', flat=True)
+    )
+    valid_use = coupon_user.uses < coupon.max_use_per_user
+    valid_use = valid_use or not coupon.max_use_per_user
+    valid_use = valid_use and (total_coupon_uses < coupon.max_use
+                               or not coupon.max_use)
+    if not valid_use:
+        coupon_info['error'] = {
+            'non_field_errors': [_(
+                "Maximum number of uses exceeded for this coupon."
+            )]
+        }
+        return coupon_info
+
+    # Check if the coupon can be applied to a product in the order
+    applicable_orderlines = order.order_lines.filter(
+        Q(content_type__in=coupon.applicable_product_types.all())
+        | Q(content_type__model='package',
+            object_id__in=coupon.applicable_packages.all().
+            values_list('id', flat=True))
+        | Q(content_type__model='timeslot',
+            object_id__in=coupon.applicable_timeslots.all().
+            values_list('id', flat=True))
+        | Q(content_type__model='membership',
+            object_id__in=coupon.applicable_memberships.all().
+            values_list('id', flat=True))
+        | Q(content_type__model='retirement',
+            object_id__in=coupon.applicable_retirements.all().
+            values_list('id', flat=True))
+    )
+    if not applicable_orderlines:
+        coupon_info['error'] = {
+            'non_field_errors': [_(
+                "This coupon does not apply to any product."
+            )]
+        }
+        return coupon_info
+
+    # The coupon is valid and can be used.
+    # We find the product to which it applies.
+    # We calculate the official amount to be discounted.
+    coupon_info['valid_use'] = True
+    most_exp_product = applicable_orderlines[0].content_object
+    for orderline in applicable_orderlines:
+        product = orderline.content_object
+        if product.price > most_exp_product.price:
+            most_exp_product = product
+            coupon_info['orderline'] = orderline
+    if not coupon.value:
+        discount_amount = most_exp_product.price
+    else:
+        discount_amount = min(
+            coupon.value,
+            most_exp_product.price
+        )
+    coupon_info['amount'] = discount_amount
+
+    return coupon_info

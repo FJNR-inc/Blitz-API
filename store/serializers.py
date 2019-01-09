@@ -31,7 +31,8 @@ from .services import (charge_payment,
                        create_external_payment_profile,
                        create_external_card,
                        get_external_cards,
-                       PAYSAFE_CARD_TYPE,)
+                       PAYSAFE_CARD_TYPE,
+                       validate_coupon_for_order, )
 
 User = get_user_model()
 
@@ -426,86 +427,21 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             for orderline_data in orderlines_data:
                 OrderLine.objects.create(order=order, **orderline_data)
             amount = order.total_cost
+
             coupon = validated_data.get('coupon')
             if coupon:
-                if (coupon.start_time > timezone.now()
-                        or coupon.end_time < timezone.now()):
-                    raise serializers.ValidationError({
-                        'non_field_errors': [_(
-                            "This coupon is only valid between {0} and {1}."
-                            .format(
-                                coupon.start_time.date(),
-                                coupon.end_time.date()
-                            )
-                        )]
-                    })
-                if not (user.academic_program_code and user.faculty
-                        and user.student_number):
-                    raise serializers.ValidationError({
-                        'non_field_errors': [_(
-                            "Incomplete user profile. 'academic_program_code',"
-                            " 'faculty' and 'student_number' fields must be "
-                            "filled in the user profile to use a coupon."
-                        )]
-                    })
-                coupon_user, created = CouponUser.objects.get_or_create(
-                    coupon=coupon,
-                    user=user,
-                    defaults={'uses': 0},
-                )
-                total_coupon_uses = CouponUser.objects.filter(coupon=coupon)
-                total_coupon_uses = sum(
-                    total_coupon_uses.values_list('uses', flat=True)
-                )
-                valid_use = coupon_user.uses < coupon.max_use_per_user
-                valid_use = valid_use or not coupon.max_use_per_user
-                valid_use = valid_use and (total_coupon_uses < coupon.max_use
-                                           or not coupon.max_use)
-            if (coupon and valid_use):
-                applicable_orderlines = order.order_lines.filter(
-                    Q(content_type__in=coupon.applicable_product_types.all())
-                    | Q(content_type__model='package',
-                        object_id__in=coupon.applicable_packages.all().
-                        values_list('id', flat=True))
-                    | Q(content_type__model='timeslot',
-                        object_id__in=coupon.applicable_timeslots.all().
-                        values_list('id', flat=True))
-                    | Q(content_type__model='membership',
-                        object_id__in=coupon.applicable_memberships.all().
-                        values_list('id', flat=True))
-                    | Q(content_type__model='retirement',
-                        object_id__in=coupon.applicable_retirements.all().
-                        values_list('id', flat=True))
-                )
-                if applicable_orderlines:
-                    most_exp_product = applicable_orderlines[0].content_object
-                    for orderline in applicable_orderlines:
-                        product = orderline.content_object
-                        if product.price > most_exp_product.price:
-                            most_exp_product = product
-                    if not coupon.value:
-                        discount_amount = most_exp_product.price
-                    else:
-                        discount_amount = min(
-                            coupon.value,
-                            most_exp_product.price
-                        )
+                coupon_info = validate_coupon_for_order(coupon, order)
+                if coupon_info['valid_use']:
+                    coupon_user = CouponUser.objects.get(
+                        user=user,
+                        coupon=coupon,
+                    )
+                    discount_amount = coupon_info['amount']
                     amount -= discount_amount
                     coupon_user.uses = coupon_user.uses + 1
                     coupon_user.save()
                 else:
-                    raise serializers.ValidationError({
-                        'non_field_errors': [_(
-                            "This coupon does not apply to any product."
-                        )]
-                    })
-            # If coupon was provided but cannot be applied
-            elif coupon:
-                raise serializers.ValidationError({
-                    'non_field_errors': [_(
-                        "Maximum number of uses exceeded for this coupon."
-                    )]
-                })
+                    raise serializers.ValidationError(coupon_info['error'])
 
             tax = round(amount * Decimal(TAX_RATE), 2)
             amount *= Decimal(TAX_RATE + 1)
