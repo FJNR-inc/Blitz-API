@@ -37,6 +37,7 @@ class Order(models.Model):
         verbose_name=_("Applied coupon"),
         related_name='orders',
         null=True,
+        blank=True,
     )
 
     transaction_date = models.DateTimeField(
@@ -125,6 +126,46 @@ class OrderLine(models.Model):
 
     def __str__(self):
         return str(self.content_object) + ', qt:' + str(self.quantity)
+
+
+class Refund(SafeDeleteModel):
+    """
+    Represents a refund. It is always linked to an orderline and it can refund
+    it fully or partially.
+    """
+
+    class Meta:
+        verbose_name = _("Refund")
+        verbose_name_plural = _("Refunds")
+
+    orderline = models.ForeignKey(
+        OrderLine,
+        on_delete=models.CASCADE,
+        verbose_name=_("Orderline"),
+        related_name='refunds',
+    )
+
+    amount = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        verbose_name=_("Amount"),
+    )
+
+    details = models.TextField(
+        verbose_name=_("Details"),
+        max_length=1000,
+        null=True,
+        blank=True,
+    )
+
+    refund_date = models.DateTimeField(
+        verbose_name=_("Refund date"),
+    )
+
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return str(self.orderline) + ', ' + str(self.amount) + "$"
 
 
 class BaseProduct(models.Model):

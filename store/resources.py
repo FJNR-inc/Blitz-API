@@ -9,7 +9,7 @@ from blitz_api.models import AcademicLevel
 from blitz_api.services import get_model_from_name
 
 from .models import (Membership, Order, OrderLine, Package, CustomPayment,
-                     Coupon, CouponUser, )
+                     Coupon, CouponUser, Refund, )
 
 
 User = get_user_model()
@@ -225,4 +225,38 @@ class CouponResource(resources.ModelResource):
             'start_time',
             'end_time',
             'total_use',
+        )
+
+
+class RefundResource(resources.ModelResource):
+
+    orderline = fields.Field(
+        column_name='orderline',
+        attribute='orderline',
+        widget=ForeignKeyWidget(OrderLine, 'content_type__model'),
+    )
+
+    product_name = fields.Field(
+        column_name='product_name',
+        attribute='orderline',
+        widget=ForeignKeyWidget(OrderLine, 'content_object__name'),
+    )
+
+    class Meta:
+        model = Refund
+        fields = (
+            'id',
+            'orderline',
+            'product_name',
+            'amount',
+            'details',
+            'refund_date',
+        )
+        export_order = (
+            'id',
+            'orderline',
+            'product_name',
+            'amount',
+            'details',
+            'refund_date',
         )

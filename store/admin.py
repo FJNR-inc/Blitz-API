@@ -5,10 +5,10 @@ from modeltranslation.admin import TranslationAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from .models import (Membership, Order, OrderLine, Package, PaymentProfile,
-                     CustomPayment, Coupon, CouponUser, )
+                     CustomPayment, Coupon, CouponUser, Refund, )
 from .resources import (MembershipResource, OrderResource, OrderLineResource,
                         PackageResource, CustomPaymentResource, CouponResource,
-                        )
+                        RefundResource, )
 
 
 class OrderLineInline(admin.StackedInline):
@@ -17,6 +17,23 @@ class OrderLineInline(admin.StackedInline):
     verbose_name_plural = _('Orderlines')
     fk_name = 'order'
     extra = 0
+
+
+class RefundAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
+    resource_class = RefundResource
+    list_display = (
+        'orderline',
+        'amount',
+        'refund_date',
+    )
+    list_filter = (
+        'refund_date',
+    )
+    search_fields = (
+        'orderline__order__user__email',
+        'orderline__order__user__username',
+        'amount',
+    )
 
 
 class MembershipAdmin(SimpleHistoryAdmin, TranslationAdmin,
@@ -152,3 +169,4 @@ admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderLine, OrderLineAdmin)
 admin.site.register(PaymentProfile, PaymentProfileAdmin)
 admin.site.register(Coupon, CouponAdmin)
+admin.site.register(Refund, RefundAdmin)
