@@ -25,7 +25,8 @@ from retirement.models import WaitQueueNotification, Retirement
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
-                     PaymentProfile, CustomPayment, Coupon, CouponUser, )
+                     PaymentProfile, CustomPayment, Coupon, CouponUser, Refund,
+                     )
 from .services import (charge_payment,
                        create_external_payment_profile,
                        create_external_card,
@@ -851,3 +852,11 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
                 'required': False,
             },
         }
+
+
+class RefundSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Refund
+        exclude = ('deleted', )

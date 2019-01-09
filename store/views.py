@@ -12,10 +12,10 @@ from rest_framework.response import Response
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, PaymentProfile,
-                     CustomPayment, Coupon, )
+                     CustomPayment, Coupon, Refund, )
 from .resources import (MembershipResource, PackageResource, OrderResource,
                         OrderLineResource, CustomPaymentResource,
-                        CouponResource, )
+                        CouponResource, RefundResource, )
 from .services import delete_external_card
 
 from . import serializers, permissions
@@ -349,3 +349,43 @@ class CouponViewSet(viewsets.ModelViewSet):
         except Http404:
             pass
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class RefundViewSet(viewsets.GenericViewSet,
+                    mixins.ListModelMixin,
+                    mixins.RetrieveModelMixin, ):
+    """
+    retrieve:
+    Return the given refund.
+
+    list:
+    Return a list of all the existing refunds.
+    """
+    serializer_class = serializers.RefundSerializer
+    queryset = Refund.objects.all()
+    permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
+    filter_fields = '__all__'
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        dataset = RefundResource().export()
+        response = HttpResponse(
+            dataset.xls,
+            content_type="application/vnd.ms-excel"
+        )
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="Refund-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
+
+    def get_queryset(self):
+        """
+        This viewset should return a user's refunds except if he's admin.
+        """
+        if self.request.user.is_staff:
+            return Refund.objects.all()
+        return Refund.objects.filter(
+            orderline__order__user=self.request.user
+        )
