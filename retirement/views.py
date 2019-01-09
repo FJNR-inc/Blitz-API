@@ -408,17 +408,12 @@ class WaitQueueNotificationViewSet(mixins.ListModelMixin,
         # Checks if lastest notification is older than 24h
         # This is a hard-coded limitation to allow anonymous users to call
         # the function.
-        response = Response(
-            status=status.HTTP_204_NO_CONTENT,
-        )
-
         time_limit = timezone.now() - timedelta(days=1)
         if WaitQueueNotification.objects.filter(created_at__gt=time_limit):
-            response.data = {
+            response_data = {
                 'detail': "Last notification was sent less than 24h ago."
             }
-            response.status_code = status.HTTP_200_OK
-            return response
+            return Response(response_data, status=status.HTTP_200_OK)
 
         # Remove older notifications
         remove_before = timezone.now() - timedelta(
@@ -461,12 +456,13 @@ class WaitQueueNotificationViewSet(mixins.ListModelMixin,
             retirement.save()
 
         if Retirement.objects.filter(reserved_seats__gt=0).count() == 0:
-            response.data = {
-                'detail': "No reserved seats."
+            response_data = {
+                'detail': "No reserved seats.",
+                'stop': True,
             }
-            response.status_code = status.HTTP_200_OK
+            return Response(response_data, status=status.HTTP_200_OK)
 
-        return response
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):

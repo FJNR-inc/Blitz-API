@@ -425,7 +425,10 @@ class WaitQueueNotificationTests(APITestCase):
 
         response_data = json.loads(response.content)
 
-        content = {'detail': 'No reserved seats.'}
+        content = {
+            'detail': 'No reserved seats.',
+            'stop': True
+        }
 
         self.assertEqual(response_data, content)
 
@@ -456,7 +459,10 @@ class WaitQueueNotificationTests(APITestCase):
 
         response_data = json.loads(response.content)
 
-        content = {'detail': 'No reserved seats.'}
+        content = {
+            'detail': 'No reserved seats.',
+            'stop': True
+        }
 
         self.assertEqual(response_data, content)
 
@@ -487,6 +493,8 @@ class WaitQueueNotificationTests(APITestCase):
 
         response_data = json.loads(response.content)
 
-        content = {'detail': 'Last notification was sent less than 24h ago.'}
+        content = {
+            'detail': 'Last notification was sent less than 24h ago.'
+        }
 
         self.assertEqual(response_data, content)
