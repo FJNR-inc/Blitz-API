@@ -49,6 +49,26 @@ class RetirementTests(APITestCase):
             form_url="example.com",
         )
 
+        self.second_retirement = Retirement.objects.create(
+            name="ultra_retirement",
+            details="This is a description of the ultra retirement.",
+            seats=400,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+            price=199,
+            start_time=LOCAL_TIMEZONE.localize(datetime(2140, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2140, 1, 17, 12)),
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            is_active=True,
+            activity_language='FR',
+            accessibility=True,
+            form_url="example.com",
+        )
+
     def test_create(self):
         """
         Ensure we can create a retirement if user has permission.
@@ -457,14 +477,115 @@ class RetirementTests(APITestCase):
         )
 
         content = {
+            'count': 2,
+            'next': None,
+            'previous': None,
+            'results': [
+                {
+                    'activity_language': 'FR',
+                    'details': 'This is a description of the mega retirement.',
+                    'email_content': None,
+                    'id': 1,
+                    'address_line1': '123 random street',
+                    'address_line2': None,
+                    'city': '',
+                    'country': 'Random country',
+                    'postal_code': '123 456',
+                    'state_province': 'Random state',
+                    'latitude': None,
+                    'longitude': None,
+                    'name': 'mega_retirement',
+                    'pictures': [],
+                    'start_time': '2130-01-15T08:00:00-05:00',
+                    'end_time': '2130-01-17T12:00:00-05:00',
+                    'seats': 400,
+                    'reserved_seats': 0,
+                    'next_user_notified': 0,
+                    'notification_interval': '1 00:00:00',
+                    'price': '199.00',
+                    'exclusive_memberships': [],
+                    'timezone': None,
+                    'is_active': True,
+                    'places_remaining': 400,
+                    'min_day_exchange': 7,
+                    'min_day_refund': 7,
+                    'refund_rate': 50,
+                    'reservations': [],
+                    'reservations_canceled': [],
+                    'total_reservations': 0,
+                    'accessibility': True,
+                    'form_url': "example.com",
+                    'place_name': '',
+                    'users': [],
+                    'url': 'http://testserver/retirement/retirements/1'
+                },
+                {
+                    'activity_language': 'FR',
+                    'details': 'This is a description of'
+                               ' the ultra retirement.',
+                    'email_content': None,
+                    'id': 2,
+                    'address_line1': '123 random street',
+                    'address_line2': None,
+                    'city': '',
+                    'country': 'Random country',
+                    'postal_code': '123 456',
+                    'state_province': 'Random state',
+                    'latitude': None,
+                    'longitude': None,
+                    'name': 'ultra_retirement',
+                    'pictures': [],
+                    'start_time': '2140-01-15T08:00:00-05:00',
+                    'end_time': '2140-01-17T12:00:00-05:00',
+                    'seats': 400,
+                    'reserved_seats': 0,
+                    'next_user_notified': 0,
+                    'notification_interval': '1 00:00:00',
+                    'price': '199.00',
+                    'exclusive_memberships': [],
+                    'timezone': None,
+                    'is_active': True,
+                    'places_remaining': 400,
+                    'min_day_exchange': 7,
+                    'min_day_refund': 7,
+                    'refund_rate': 50,
+                    'reservations': [],
+                    'reservations_canceled': [],
+                    'total_reservations': 0,
+                    'accessibility': True,
+                    'form_url': "example.com",
+                    'place_name': '',
+                    'users': [],
+                    'url': 'http://testserver/retirement/retirements/2'
+                }
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_filtered_by_end_time_gte(self):
+        """
+        Ensure we can list retirements filtered by end_time greater
+        than a given date.
+        """
+
+        response = self.client.get(
+            reverse('retirement:retirement-list') +
+            "?end_time__gte='2039-01-01 00:00:00'",
+            format='json',
+        )
+
+        content = {
             'count': 1,
             'next': None,
             'previous': None,
             'results': [{
                 'activity_language': 'FR',
-                'details': 'This is a description of the mega retirement.',
+                'details': 'This is a description of the ultra retirement.',
                 'email_content': None,
-                'id': 1,
+                'id': 2,
                 'address_line1': '123 random street',
                 'address_line2': None,
                 'city': '',
@@ -473,10 +594,10 @@ class RetirementTests(APITestCase):
                 'state_province': 'Random state',
                 'latitude': None,
                 'longitude': None,
-                'name': 'mega_retirement',
+                'name': 'ultra_retirement',
                 'pictures': [],
-                'start_time': '2130-01-15T08:00:00-05:00',
-                'end_time': '2130-01-17T12:00:00-05:00',
+                'start_time': '2140-01-15T08:00:00-05:00',
+                'end_time': '2140-01-17T12:00:00-05:00',
                 'seats': 400,
                 'reserved_seats': 0,
                 'next_user_notified': 0,
@@ -496,7 +617,7 @@ class RetirementTests(APITestCase):
                 'form_url': "example.com",
                 'place_name': '',
                 'users': [],
-                'url': 'http://testserver/retirement/retirements/1'}]
+                'url': 'http://testserver/retirement/retirements/2'}]
         }
 
         self.assertEqual(json.loads(response.content), content)
