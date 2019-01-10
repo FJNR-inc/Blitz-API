@@ -55,7 +55,10 @@ class RetirementViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.RetirementSerializer
     queryset = Retirement.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly, )
-    filter_fields = '__all__'
+    filter_fields = {
+        'start_time': ['exact', 'gte', 'lte'],
+        'end_time': ['exact', 'gte', 'lte'],
+    }
     ordering = ('name', 'start_time', 'end_time')
 
     @action(detail=False, permission_classes=[IsAdminUser])
