@@ -118,10 +118,13 @@ def charge_payment(amount, payment_token, reference_number):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        print(json.loads(err.response.content))
-        err_code = json.loads(err.response.content)['error']['code']
-        if err_code in PAYSAFE_EXCEPTION:
-            raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
+        try:
+            print(json.loads(err.response.content))
+            err_code = json.loads(err.response.content)['error']['code']
+            if err_code in PAYSAFE_EXCEPTION:
+                raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
+        except json.decoder.JSONDecodeError as err:
+            print(err.response)
         raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
 
     return r
