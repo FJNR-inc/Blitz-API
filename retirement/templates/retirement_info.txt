@@ -15,7 +15,7 @@ Nous sommes heureux de vous compter parmi nous à la retraite {{RETIREMENT.name}
 ** CE QUE VOUS DEVEZ SAVOIR
 ------------------------------------------------------------
 
-{{RETIREMENT.email_content}}
+{{RETIREMENT.email_content|linebreaks}}
 
  
 ** FORMULAIRE
