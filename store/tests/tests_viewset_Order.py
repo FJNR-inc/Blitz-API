@@ -82,6 +82,13 @@ class OrderTests(APITestCase):
             price=400,
             reservations=100,
         )
+        cls.package2 = Package.objects.create(
+            name="extreme_package2",
+            details="1000 reservations package",
+            available=True,
+            price=4000,
+            reservations=1000,
+        )
         cls.order = Order.objects.create(
             user=cls.user,
             transaction_date=timezone.now(),
@@ -636,7 +643,7 @@ class OrderTests(APITestCase):
         admin = self.admin
         admin.refresh_from_db()
 
-        self.coupon.max_use = 0
+        self.coupon.max_use_per_user = 0
         self.coupon.save()
 
         old_uses = self.coupon_user.uses
@@ -686,6 +693,9 @@ class OrderTests(APITestCase):
         self.assertEqual(response_data, content)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.admin.faculty = "Random faculty"
+        self.admin.save()
 
         admin = self.admin
         admin.refresh_from_db()
@@ -1989,3 +1999,379 @@ class OrderTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_validate_coupon(self):
+        """
+        Ensure that we can validate a coupon before creating an order.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'package',
+                'object_id': 1,
+                'quantity': 2,
+            }, {
+                'content_type': 'timeslot',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'retirement',
+                'object_id': 1,
+                'quantity': 1,
+            }],
+            'coupon': "ABCD1234",
+        }
+
+        response = self.client.post(
+            reverse('order-validate-coupon'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content,
+        )
+
+        content = {
+            'orderline': {
+                'content_type': 'package',
+                'object_id': 1,
+                'quantity': 2
+            },
+            'value': 10.0
+        }
+
+        self.assertEqual(response_data, content)
+
+    def test_validate_coupon_infinite_value(self):
+        """
+        Ensure that we can validate a coupon with infinite value.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        self.coupon.value = 0
+        self.coupon.save()
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'package',
+                'object_id': 1,
+                'quantity': 2,
+            }, {
+                'content_type': 'timeslot',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'retirement',
+                'object_id': 1,
+                'quantity': 1,
+            }, {
+                'content_type': 'package',
+                'object_id': 2,
+                'quantity': 1,
+            }],
+            'coupon': "ABCD1234",
+        }
+
+        response = self.client.post(
+            reverse('order-validate-coupon'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content,
+        )
+
+        content = {
+            'orderline': {
+                'content_type': 'package',
+                'object_id': 2,
+                'quantity': 1
+            },
+            'value': 4000.0
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.coupon.value = 10.0
+        self.coupon.save()
+
+    def test_validate_coupon_invalid(self):
+        """
+        Ensure we can't validate a coupon with an invalid coupon.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }],
+            'coupon': "INVALID",
+        }
+
+        response = self.client.post(
+            reverse('order-validate-coupon'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'coupon': ['Object with code=INVALID does not exist.']
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_validate_coupon_missing(self):
+        """
+        Ensure we can't validate a coupon with a missing coupon.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-validate-coupon'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'coupon': ['This field is required.']
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_validate_coupon_max_use_exceeded(self):
+        """
+        Ensure we can't validate a coupon with a coupon already used maximum
+        times.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        self.coupon.max_use = 1
+        self.coupon.save()
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }],
+            'coupon': "ABCD1234",
+        }
+
+        response = self.client.post(
+            reverse('order-validate-coupon'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                'Maximum number of uses exceeded for this coupon.'
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.coupon.max_use = 0
+        self.coupon.save()
+
+    def test_validate_coupon_max_user_use_exceeded(self):
+        """
+        Ensure we can't validate a coupon with a coupon already used maximum
+        times by a specific user.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        self.coupon.max_use_per_user = 1
+        self.coupon.save()
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }],
+            'coupon': "ABCD1234",
+        }
+
+        response = self.client.post(
+            reverse('order-validate-coupon'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                'Maximum number of uses exceeded for this coupon.'
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.coupon.max_use_per_user = 0
+        self.coupon.save()
+
+    def test_validate_coupon_incomplete_user_profile(self):
+        """
+        Ensure we can't validate a coupon with a coupon when the user doesn't
+        have a complete profile.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        self.admin.faculty = None
+        self.admin.save()
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }],
+            'coupon': "ABCD1234",
+        }
+
+        response = self.client.post(
+            reverse('order-validate-coupon'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                "Incomplete user profile. 'academic_program_code',"
+                " 'faculty' and 'student_number' fields must be "
+                "filled in the user profile to use a coupon."
+            ]
+        }
+
+        self.admin.faculty = "Random faculty"
+        self.admin.save()
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_validate_coupon_not_active(self):
+        """
+        Ensure we can't validate a coupon with a coupon that is not active.
+        """
+        FIXED_TIME = datetime(1999, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }],
+            'coupon': "ABCD1234",
+        }
+
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-validate-coupon'),
+                data,
+                format='json',
+            )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                'This coupon is only valid between 2000-01-15 and 2130-01-15.'
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_validate_coupon_not_applicable(self):
+        """
+        Ensure we can't validate a coupon with a coupon that is not applicable.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': 1,
+                'quantity': 1,
+            }],
+            'coupon': "ABCD1234",
+        }
+
+        response = self.client.post(
+            reverse('order-validate-coupon'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                'This coupon does not apply to any product.'
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -436,7 +436,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         user=user,
                         coupon=coupon,
                     )
-                    discount_amount = coupon_info['amount']
+                    discount_amount = coupon_info['value']
                     amount -= discount_amount
                     coupon_user.uses = coupon_user.uses + 1
                     coupon_user.save()

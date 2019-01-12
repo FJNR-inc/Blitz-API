@@ -518,6 +518,7 @@ def validate_coupon_for_order(coupon, order):
     # We calculate the official amount to be discounted.
     coupon_info['valid_use'] = True
     most_exp_product = applicable_orderlines[0].content_object
+    coupon_info['orderline'] = applicable_orderlines[0]
     for orderline in applicable_orderlines:
         product = orderline.content_object
         if product.price > most_exp_product.price:
@@ -530,6 +531,6 @@ def validate_coupon_for_order(coupon, order):
             coupon.value,
             most_exp_product.price
         )
-    coupon_info['amount'] = discount_amount
+    coupon_info['value'] = discount_amount
 
     return coupon_info

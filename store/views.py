@@ -4,6 +4,8 @@ from datetime import datetime
 
 from django.conf import settings
 from django.http import Http404, HttpResponse
+from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _
 
 from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
@@ -13,10 +15,11 @@ from rest_framework.response import Response
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, PaymentProfile,
                      CustomPayment, Coupon, Refund, )
+from .permissions import IsOwner
 from .resources import (MembershipResource, PackageResource, OrderResource,
                         OrderLineResource, CustomPaymentResource,
                         CouponResource, RefundResource, )
-from .services import delete_external_card
+from .services import delete_external_card, validate_coupon_for_order
 
 from . import serializers, permissions
 
@@ -211,6 +214,65 @@ class OrderViewSet(viewsets.ModelViewSet):
             '".xls'
         ])
         return response
+
+    @action(
+        methods=['post'], detail=False, permission_classes=[IsAuthenticated])
+    def validate_coupon(self, request, pk=None):
+        """
+        This validates if a coupon can be used in an order.
+        It has to create temporary objects to be able to use querysets.
+        Temporary objects are then deleted.
+
+        This is not the best way to do it and it could be improved.
+        """
+        serializer = serializers.OrderSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        # Coupon is necessary for this view
+        if not serializer.validated_data.get('coupon'):
+            error = {
+                'coupon': [_("This field is required.")]
+            }
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        orderlines = serializer.validated_data.pop('order_lines', None)
+        serializer.validated_data.pop('order_lines', None)
+        serializer.validated_data.pop('payment_token', None)
+        serializer.validated_data.pop('single_use_token', None)
+        order = Order(
+            **serializer.validated_data,
+            transaction_date=timezone.now(),
+            user=request.user,
+        )
+        order.save()
+
+        orderline_list = []
+        for idx, orderline in enumerate(orderlines):
+            orderline_list.append(
+                OrderLine(
+                    **orderline,
+                    order=order,
+                )
+            )
+            orderline_list[idx].save()
+
+        response = validate_coupon_for_order(order.coupon, order)
+        response['orderline'] = serializers.OrderLineSerializerNoOrder(
+            response['orderline'],
+            context={'request': request}
+        ).data
+        response['orderline'].pop('url', None)
+        response['orderline'].pop('id', None)
+        response['orderline'].pop('order', None)
+        order.delete()
+        for orderline in orderline_list:
+            orderline.delete()
+        if response['valid_use']:
+            response.pop('valid_use', None)
+            response.pop('error', None)
+            return Response(response)
+        return Response(response['error'], status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
         """
