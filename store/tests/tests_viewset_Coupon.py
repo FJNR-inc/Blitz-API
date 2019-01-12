@@ -7,6 +7,7 @@ from rest_framework.test import APIClient, APITestCase
 
 from unittest import mock
 
+from django.core import mail
 from django.utils import timezone
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -124,6 +125,213 @@ class CouponTests(APITestCase):
             json.loads(response.content),
             content
         )
+
+    def test_notify_email_for_coupon(self):
+        """
+        Ensure that an admin can notify a list of emails.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "email_list": [
+                "fake@fake.com",
+                "whatever@whatever.com",
+            ]
+        }
+
+        response = self.client.post(
+            reverse(
+                'coupon-notify',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content,
+        )
+
+        self.assertEqual(len(mail.outbox), 2)
+
+    def test_notify_email_for_coupon_owner(self):
+        """
+        Ensure that a coupon owner can notify a list of emails.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            "email_list": [
+                "fake@fake.com",
+                "whatever@whatever.com",
+            ]
+        }
+
+        response = self.client.post(
+            reverse(
+                'coupon-notify',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content,
+        )
+
+        self.assertEqual(len(mail.outbox), 2)
+
+    def test_notify_email_for_coupon_random_user(self):
+        """
+        Ensure that a random authenticated user can't notify for coupon.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            "email_list": [
+                "fake@fake.com",
+                "whatever@whatever.com",
+            ]
+        }
+
+        response = self.client.post(
+            reverse(
+                'coupon-notify',
+                kwargs={'pk': 2},
+            ),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            "detail": "Not found."
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_404_NOT_FOUND,
+            response.content,
+        )
+
+        self.assertEqual(content, response_data)
+
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_notify_email_for_coupon_missing_field(self):
+        """
+        Ensure that an admin can't notify a list of emails if the list is
+        missing.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {}
+
+        response = self.client.post(
+            reverse(
+                'coupon-notify',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            "email_list": "This field is required."
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        self.assertEqual(content, response_data)
+
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_notify_email_for_coupon_invalid_email(self):
+        """
+        Ensure that an admin can't notify a list of emails if the list contains
+        invalid email addresses.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "email_list": [
+                "invalid",
+                "fake@fake.com"
+            ]
+        }
+
+        response = self.client.post(
+            reverse(
+                'coupon-notify',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            "email_list": ["Enter a valid email address."]
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        self.assertEqual(content, response_data)
+
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_notify_email_for_coupon_invalid_field(self):
+        """
+        Ensure that an admin can't notify a list of emails if the email_list
+        field is invalid.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "email_list": "invalid"
+        }
+
+        response = self.client.post(
+            reverse(
+                'coupon-notify',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            "email_list": ['Expected a list of items but got type "str".']
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        self.assertEqual(content, response_data)
+
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_create_too_many(self):
         """

@@ -4,7 +4,9 @@ import requests
 import uuid
 
 from django.conf import settings
+from django.core.mail import send_mail
 from django.db.models import Q
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
@@ -537,3 +539,23 @@ def validate_coupon_for_order(coupon, order):
     coupon_info['value'] = discount_amount
 
     return coupon_info
+
+
+def notify_for_coupon(email, coupon):
+    """
+    This function sends an email to notify a user that he has access to a
+    coupon code for his next purchase.
+    """
+
+    merge_data = {'COUPON': coupon}
+
+    plain_msg = render_to_string("coupon_code.txt", merge_data)
+    msg_html = render_to_string("coupon_code.html", merge_data)
+
+    return send_mail(
+        "Coupon rabais",
+        plain_msg,
+        settings.DEFAULT_FROM_EMAIL,
+        [email],
+        html_message=msg_html,
+    )

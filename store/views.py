@@ -7,7 +7,8 @@ from django.http import Http404, HttpResponse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
-from rest_framework import viewsets, status, mixins
+from rest_framework import viewsets, status, mixins, exceptions
+from rest_framework import serializers as drf_serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
@@ -19,7 +20,8 @@ from .permissions import IsOwner
 from .resources import (MembershipResource, PackageResource, OrderResource,
                         OrderLineResource, CustomPaymentResource,
                         CouponResource, RefundResource, )
-from .services import delete_external_card, validate_coupon_for_order
+from .services import (delete_external_card, validate_coupon_for_order,
+                       notify_for_coupon, )
 
 from . import serializers, permissions
 
@@ -395,6 +397,50 @@ class CouponViewSet(viewsets.ModelViewSet):
             '".xls'
         ])
         return response
+
+    @action(methods=['post'], detail=True, permission_classes=[IsOwner])
+    def notify(self, request, pk=None):
+        """
+        That custom action allows a coupon owner to notify users with the
+        coupon code.
+
+        We're using a DRF serializer field on-the-fly here to validate the
+        email list.
+        """
+        email_list_data = request.data.get('email_list', None)
+
+        serializer = drf_serializers.ListField(
+            child=drf_serializers.EmailField(
+                label=_('Email address'),
+                max_length=254,
+                required=True,
+            )
+        )
+
+        if not email_list_data:
+            raise exceptions.ValidationError({
+                "email_list": _("This field is required.")
+            })
+        try:
+            email_list = serializer.to_internal_value(email_list_data)
+        except exceptions.ValidationError as err:
+            if isinstance(err.detail, dict):
+                if err.detail.get(0):
+                    raise exceptions.ValidationError({
+                        "email_list": [str(msg) for msg in err.detail.get(0)]
+                    })
+            raise exceptions.ValidationError({
+                "email_list": [str(msg) for msg in err.detail]
+            })
+
+        for email in email_list:
+            # Notify every user in the list
+            notify_for_coupon(
+                email,
+                self.get_object(),
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def get_queryset(self):
         """
