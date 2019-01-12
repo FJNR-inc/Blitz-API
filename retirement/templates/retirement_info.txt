@@ -31,6 +31,5 @@ Formulaire ({{RETIREMENT.form_url}})
 ** L'ÉQUIPE THÈSEZ-VOUS
 ------------------------------------------------------------
 
-Thèsez-vous n'autorise pas d'échanges ou de remboursements.
 Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2
 info@thesez-vous.com, www.thesez-vous.com
