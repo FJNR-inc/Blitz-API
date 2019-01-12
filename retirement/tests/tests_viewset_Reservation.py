@@ -22,6 +22,7 @@ from blitz_api.services import remove_translation_fields
 
 from store.models import Order, OrderLine
 from store.tests.paysafe_sample_responses import (SAMPLE_REFUND_RESPONSE,
+                                                  SAMPLE_NO_AMOUNT_TO_REFUND,
                                                   UNKNOWN_EXCEPTION, )
 
 from ..models import Retirement, Reservation
@@ -1208,6 +1209,59 @@ class ReservationTests(APITestCase):
         self.reservation.cancelation_reason = None
 
         self.assertEqual(len(mail.outbox), 1)
+
+    @responses.activate
+    def test_delete_refund_too_fast(self):
+        """
+        Ensure that a user can't get a refund if the order payment has not been
+        processed completely.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/"
+            "settlements/1/refunds",
+            json=SAMPLE_NO_AMOUNT_TO_REFUND,
+            status=400
+        )
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'retirement:reservation-detail',
+                    kwargs={'pk': 1},
+                ),
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+        content = {
+            'non_field_errors': "The order has not been charged yet. Try "
+                                "again later."
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.reservation.refresh_from_db()
+
+        self.assertTrue(self.reservation.is_active)
+        self.assertEqual(self.reservation.cancelation_reason, None)
+        self.assertEqual(self.reservation.cancelation_action, None)
+        self.assertEqual(self.reservation.cancelation_date, None)
+
+        self.reservation.is_active = True
+        self.reservation.cancelation_date = None
+        self.reservation.cancelation_reason = None
+
+        self.assertEqual(len(mail.outbox), 0)
 
     @responses.activate
     def test_delete_refund_error(self):

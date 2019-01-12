@@ -167,6 +167,16 @@ SAMPLE_CARD_REFUSED = {
     },
 }
 
+SAMPLE_NO_AMOUNT_TO_REFUND = {
+    "id": "179c4cd9-65de-477b-aec9-00e6ef7da0b8",
+    "error": {
+        "code": "3406",
+        "message": "The settlement you are attempting to refund has not been "
+                   "batched yet. There are no settled funds available to "
+                   "refund."
+    }
+}
+
 UNKNOWN_EXCEPTION = {
     "error": {
         "code": "9999",

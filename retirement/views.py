@@ -25,7 +25,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from store.exceptions import PaymentAPIError
-from store.services import refund_amount
+from store.services import refund_amount, PAYSAFE_EXCEPTION
 
 from . import permissions, serializers
 from .models import (Picture, Reservation, Retirement, WaitQueue,
@@ -207,6 +207,13 @@ class ReservationViewSet(viewsets.ModelViewSet):
                         int(total_amount)
                     )
                 except PaymentAPIError as err:
+                    if str(err) == PAYSAFE_EXCEPTION['3406']:
+                        return Response(
+                            {'non_field_errors': _("The order has not been "
+                                                   "charged yet. Try again "
+                                                   "later.")},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
                     return Response(
                         {'message': str(err)},
                         status=status.HTTP_400_BAD_REQUEST,
