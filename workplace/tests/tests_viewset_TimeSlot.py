@@ -987,11 +987,17 @@ class TimeSlotTests(APITestCase):
         """
         self.client.force_authenticate(user=self.admin)
 
+        data = {
+            'custom_message': None
+        }
+
         response = self.client.delete(
             reverse(
                 'timeslot-detail',
                 kwargs={'pk': 2},
             ),
+            data,
+            format='json'
         )
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
