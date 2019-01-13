@@ -116,22 +116,35 @@
         {% endif %}
 
         <h2 class="email__content__subtitle">
+          Ancienne retraite
+        </h2>
+        <div class="email__content__summary">
+          <!--Repeat the item section in function of the list of items on the order received by the API -->
+          <div class="email__content__summary__item">
+            <div class="email__content__summary__item__name">
+              {{OLD_RETIREMENT.name}}
+            </div>
+            <ul>
+              <li><b>Date et heure de début: </b>{{OLD_RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{OLD_RETIREMENT.start_time|date:"G"}}h{{OLD_RETIREMENT.start_time|date:"i"}}</li>
+              <li><b>Date et heure de fin: </b>{{OLD_RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{OLD_RETIREMENT.end_time|date:"G"}}h{{OLD_RETIREMENT.end_time|date:"i"}}</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2 class="email__content__subtitle">
           Nouvelle retraite
         </h2>
         <div class="email__content__summary">
           <!--Repeat the item section in function of the list of items on the order received by the API -->
-          {%for item in ITEM_LIST%}
           <div class="email__content__summary__item">
             <div class="email__content__summary__item__name">
-              {{item.name}}
+              {{NEW_RETIREMENT.name}}
             </div>
-            {% if item.details %}
-            <div class="email__content__summary__item__details">
-              {{item.details}}
-            </div>
-            {% endif %}
+            <ul>
+              <li><b>Date et heure de début: </b>{{NEW_RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{NEW_RETIREMENT.start_time|date:"G"}}h{{NEW_RETIREMENT.start_time|date:"i"}}</li>
+              <li><b>Date et heure de fin: </b>{{NEW_RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{NEW_RETIREMENT.end_time|date:"G"}}h{{NEW_RETIREMENT.end_time|date:"i"}}</li>
+            </ul>
           </div>
-          {% endfor %}
         </div>
         <h2 class="email__content__subtitle">
           L'équipe Thèsez-vous

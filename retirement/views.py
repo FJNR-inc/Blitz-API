@@ -148,7 +148,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
         """
         Returns the list of permissions that this view requires.
         """
-        if self.action == 'destroy':
+        if self.action == 'destroy' or self.action == 'partial_update':
             permission_classes = [
                 permissions.IsOwner,
                 IsAuthenticated,

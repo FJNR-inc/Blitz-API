@@ -36,6 +36,10 @@ PAYSAFE_EXCEPTION = {
         _("An error occured while processing the payment: "),
         _("The external processing gateway has rejected the transaction.")
     ),
+    '3404': "{0}{1}".format(
+        _("An error occured while processing the refund: "),
+        _("The settlement has already been fully refunded.")
+    ),
     '3406': "{0}{1}".format(
         _("An error occured while processing the refund: "),
         _("The settlement you are attempting to refund has not been batched "
@@ -166,10 +170,13 @@ def refund_amount(settlement_id, amount):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        print(json.loads(err.response.content))
-        err_code = json.loads(err.response.content)['error']['code']
-        if err_code in PAYSAFE_EXCEPTION:
-            raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
+        try:
+            print(json.loads(err.response.content))
+            err_code = json.loads(err.response.content)['error']['code']
+            if err_code in PAYSAFE_EXCEPTION:
+                raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
+        except json.decoder.JSONDecodeError as err:
+            print(err.response)
         raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
 
     return r

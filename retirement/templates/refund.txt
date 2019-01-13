@@ -15,7 +15,6 @@ Ceci est un reçu pour votre remboursement. Merci d'en garder une copie.
 
  * Numéro de commande: {{ORDER_ID}}
  * Date: {{DATETIME}}
- * Numéro de carte: **** **** **** {{CARD_NUMBER}}
  * Total: {{COST}}$ CAD
 
 {% if CUSTOM_MESSAGE %}
@@ -31,11 +30,17 @@ Ceci est un reçu pour votre remboursement. Merci d'en garder une copie.
 ** SOMMAIRE DU REMBOURSEMENT
 ------------------------------------------------------------
 
-{%for item in ITEM_LIST%}
+{{OLD_RETIREMENT.price}}$ CAD
+{{OLD_RETIREMENT.name}}
 
-{{item.price}}$ CAD
-{{item.name}} {% if item.details %}
-{{item.details}} {% endif %} {% endfor %}
+-{{NEW_RETIREMENT.price}}$ CAD
+{{NEW_RETIREMENT.name}}
+
+{{SUBTOTAL}}$ CAD
+Subtotal
+
+{{TAX}}$ CAD
+TPS/TVQ
 
 {{COST}}$ CAD
 Total

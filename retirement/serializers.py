@@ -1,8 +1,10 @@
 from copy import copy
 from datetime import timedelta
+from decimal import Decimal, DecimalException
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models import F
@@ -16,12 +18,23 @@ from rest_framework.validators import UniqueValidator
 from blitz_api.serializers import UserSerializer
 from blitz_api.services import (check_if_translated_field,
                                 remove_translation_fields)
+from store.exceptions import PaymentAPIError
+from store.models import Order, OrderLine, PaymentProfile, Refund
+from store.services import (charge_payment,
+                            create_external_payment_profile,
+                            create_external_card,
+                            get_external_cards,
+                            PAYSAFE_CARD_TYPE,
+                            PAYSAFE_EXCEPTION,
+                            refund_amount, )
 
 from .fields import TimezoneField
 from .models import (Picture, Reservation, Retirement, WaitQueue,
                      WaitQueueNotification, )
 
 User = get_user_model()
+
+TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
 class RetirementSerializer(serializers.HyperlinkedModelSerializer):
@@ -249,6 +262,18 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         read_only=True,
         source='user',
     )
+    payment_token = serializers.CharField(
+        write_only=True,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+    single_use_token = serializers.CharField(
+        write_only=True,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
     def validate(self, attrs):
         """Prevents overlapping reservations."""
@@ -264,6 +289,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             is_invalid = validated_data.copy()
             is_invalid.pop('is_present', None)
             is_invalid.pop('retirement', None)
+            is_invalid.pop('payment_token', None)
+            is_invalid.pop('single_use_token', None)
             if is_invalid:
                 raise serializers.ValidationError({
                     'non_field_errors': [
@@ -296,18 +323,55 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 })
         return attrs
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         user = instance.user
+        payment_token = validated_data.pop('payment_token', None)
+        single_use_token = validated_data.pop('single_use_token', None)
+        need_transaction = False
+        need_refund = False
+        amount = 0
+        profile = PaymentProfile.objects.filter(owner=user).first()
+        instance_pk = instance.pk
+        current_retirement = instance.retirement
+
+        if not self.context['request'].user.is_staff:
+            validated_data.pop('is_present', None)
+
         if (self.context['view'].action == 'partial_update'
                 and validated_data.get('retirement')):
+            if instance.order_line.quantity > 1:
+                raise serializers.ValidationError({
+                    'non_field_errors': [_(
+                        "The order containing this reservation has a quantity "
+                        "bigger than 1. Please contact the support team."
+                    )]
+                })
             respects_minimum_days = (
                 (instance.retirement.start_time - timezone.now()) >=
                 timedelta(days=instance.retirement.min_day_exchange))
             if instance.retirement.price < validated_data['retirement'].price:
+                need_transaction = True
+                amount = validated_data[
+                    'retirement'
+                ].price - instance.retirement.price
+                if not (payment_token or single_use_token):
+                    raise serializers.ValidationError({
+                        'non_field_errors': [_(
+                            "The new retirement is more expensive than the "
+                            "current one. Provide a payment_token or "
+                            "single_use_token to charge the balance."
+                        )]
+                    })
+            if instance.retirement.price > validated_data['retirement'].price:
+                need_refund = True
+                amount = instance.retirement.price - validated_data[
+                    'retirement'
+                ].price
+            if instance.retirement == validated_data['retirement']:
                 raise serializers.ValidationError({
-                    'non_field_errors': [_(
-                        "The new retirement is more expensive than the "
-                        "current one."
+                    'retirement': [_(
+                        "That retirement is already assigned to this object."
                     )]
                 })
             if not respects_minimum_days:
@@ -316,6 +380,27 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         "Maximum exchange date exceeded."
                     )]
                 })
+            if need_transaction:
+                if single_use_token and not profile:
+                    # Create external profile
+                    try:
+                        create_profile_res = create_external_payment_profile(
+                            user
+                        )
+                    except PaymentAPIError as err:
+                        raise serializers.ValidationError({
+                            'message': err
+                        })
+                    # Create local profile
+                    profile = PaymentProfile.objects.create(
+                        name="Paysafe",
+                        owner=user,
+                        external_api_id=create_profile_res.json()['id'],
+                        external_api_url='{0}{1}'.format(
+                            create_profile_res.url,
+                            create_profile_res.json()['id']
+                        )
+                    )
             # Generate a list of tuples containing start/end time of
             # existing reservations.
             start = validated_data['retirement'].start_time
@@ -323,7 +408,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             active_reservations = Reservation.objects.filter(
                 user=user,
                 is_active=True,
-            ).exclude(**validated_data).values_list(
+            ).exclude(pk=instance.pk).values_list(
                 'retirement__start_time',
                 'retirement__end_time',
             )
@@ -336,31 +421,249 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                             "reservations for this user."
                         )]
                     })
+            with transaction.atomic():
+                if need_transaction:
+                    order = Order.objects.create(
+                        user=user,
+                        transaction_date=timezone.now(),
+                        authorization_id=1,
+                        settlement_id=1,
+                    )
+                    orderline = OrderLine.objects.create(
+                        order=order,
+                        quantity=1,
+                        content_type=ContentType.objects.get_for_model(
+                            Retirement
+                        ),
+                        object_id=validated_data['retirement'].id
+                    )
+                    refund_value = instance.retirement.price * (Decimal(
+                        TAX_RATE) + 1)
+                    refund_instance = Refund.objects.create(
+                        orderline=instance.order_line,
+                        refund_date=timezone.now(),
+                        amount=refund_value,
+                        details="Exchange retirement {0} for "
+                                "retirement {1}".format(
+                                    str(instance.retirement),
+                                    str(validated_data['retirement'])
+                                ),
+                    )
+                    tax = round(amount * Decimal(TAX_RATE), 2)
+                    amount *= Decimal(TAX_RATE + 1)
+                    amount = round(amount * 100, 2)
+                    retirement = validated_data['retirement']
+                    user_waiting = retirement.wait_queue.filter(user=user)
+                    if not (((retirement.seats - retirement.total_reservations
+                              - retirement.reserved_seats) > 0) or
+                            (retirement.reserved_seats
+                             and WaitQueueNotification.objects.filter(
+                                 user=user, retirement=retirement))):
+                        raise serializers.ValidationError({
+                            'non_field_errors': [_(
+                                "There are no places left in the requested "
+                                "retirement."
+                            )]
+                        })
+                    if user_waiting:
+                        user_waiting.delete()
+
+                    if need_transaction and payment_token and int(amount):
+                        # Charge the order with the external payment API
+                        try:
+                            charge_response = charge_payment(
+                                int(amount),
+                                payment_token,
+                                str(order.id)
+                            )
+                        except PaymentAPIError as err:
+                            raise serializers.ValidationError({
+                                'message': err
+                            })
+
+                    elif need_transaction and single_use_token and int(amount):
+                        # Add card to the external profile & charge user
+                        try:
+                            card_create_response = create_external_card(
+                                profile.external_api_id,
+                                single_use_token
+                            )
+                            charge_response = charge_payment(
+                                int(amount),
+                                card_create_response.json()['paymentToken'],
+                                str(order.id)
+                            )
+                        except PaymentAPIError as err:
+                            raise serializers.ValidationError({
+                                'message': err
+                            })
+                    charge_res_content = charge_response.json()
+                    order.authorization_id = charge_res_content['id']
+                    order.settlement_id = charge_res_content['settlements'][0][
+                        'id'
+                    ]
+                    order.reference_number = charge_res_content[
+                        'merchantRefNum'
+                    ]
+                    order.save()
+                    validated_data['order_line'] = orderline
+
+                    # Here, the 'details' key is used to provide details of the
+                    #  item to the email template.
+                    # As of now, only 'retirement' objects have the
+                    # 'email_content' key that is used here. There is surely a
+                    # better way to handle that logic that will be more
+                    # generic.
+                    items = [
+                        {
+                            'price': orderline.content_object.price,
+                            'name': "{0}: {1}".format(
+                                str(orderline.content_type),
+                                orderline.content_object.name
+                            ),
+                        }
+                    ]
+
+                    # Send order confirmation email
+                    merge_data = {
+                        'STATUS': "APPROUVÉE",
+                        'CARD_NUMBER':
+                        charge_res_content['card']['lastDigits'],
+                        'CARD_TYPE': PAYSAFE_CARD_TYPE[
+                            charge_res_content['card']['type']
+                        ],
+                        'DATETIME': timezone.localtime().strftime("%x %X"),
+                        'ORDER_ID': order.id,
+                        'CUSTOMER_NAME':
+                            user.first_name + " " + user.last_name,
+                        'CUSTOMER_EMAIL': user.email,
+                        'CUSTOMER_NUMBER': user.id,
+                        'AUTHORIZATION': order.authorization_id,
+                        'TYPE': "Achat",
+                        'ITEM_LIST': items,
+                        'TAX': tax,
+                        'DISCOUNT': instance.retirement.price,
+                        'COUPON': {'code': _("Échange")},
+                        'SUBTOTAL': round(amount / 100 - tax, 2),
+                        'COST': round(Decimal(amount) / 100, 2),
+                    }
+
+                    plain_msg = render_to_string("invoice.txt", merge_data)
+                    msg_html = render_to_string("invoice.html", merge_data)
+
+                    send_mail(
+                        "Confirmation d'achat",
+                        plain_msg,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [order.user.email],
+                        html_message=msg_html,
+                    )
+                if need_refund:
+                    tax = round(amount * Decimal(TAX_RATE), 2)
+                    amount *= Decimal(TAX_RATE + 1)
+                    amount = round(amount * 100, 2)
+                    retirement = validated_data['retirement']
+                    user_waiting = retirement.wait_queue.filter(user=user)
+                    if not (((retirement.seats - retirement.total_reservations
+                              - retirement.reserved_seats) > 0) or
+                            (retirement.reserved_seats
+                             and WaitQueueNotification.objects.filter(
+                                 user=user, retirement=retirement))):
+                        raise serializers.ValidationError({
+                            'non_field_errors': [_(
+                                "There are no places left in the requested "
+                                "retirement."
+                            )]
+                        })
+                    if user_waiting:
+                        user_waiting.delete()
+
+                    try:
+                        refund_response = refund_amount(
+                            instance.order_line.order.settlement_id,
+                            int(amount)
+                        )
+                    except PaymentAPIError as err:
+                        if str(err) == PAYSAFE_EXCEPTION['3406']:
+                            raise serializers.ValidationError({
+                                'non_field_errors': _(
+                                    "The order has not been charged yet. "
+                                    "Try again later."
+                                )
+                            })
+                        raise serializers.ValidationError({
+                            'message': str(err)
+                        })
+
+                    refund_instance = Refund.objects.create(
+                        orderline=instance.order_line,
+                        refund_date=timezone.now(),
+                        amount=amount/100,
+                        details="Exchange retirement {0} for "
+                                "retirement {1}".format(
+                                    str(instance.retirement),
+                                    str(validated_data['retirement'])
+                                ),
+                    )
+
+                    # Send the refund email
+                    new_retirement = retirement
+                    old_retirement = current_retirement
+
+                    # Send refund confirmation email
+                    merge_data = {
+                        'DATETIME': timezone.localtime().strftime("%x %X"),
+                        'ORDER_ID': instance.order_line.order.id,
+                        'CUSTOMER_NAME':
+                        user.first_name + " " + user.last_name,
+                        'CUSTOMER_EMAIL': user.email,
+                        'CUSTOMER_NUMBER': user.id,
+                        'TYPE': "Remboursement",
+                        'NEW_RETIREMENT': new_retirement,
+                        'OLD_RETIREMENT': old_retirement,
+                        'SUBTOTAL':
+                        old_retirement.price - new_retirement.price,
+                        'COST': round(amount/100, 2),
+                        'TAX': round(Decimal(tax), 2),
+                    }
+
+                    plain_msg = render_to_string("refund.txt", merge_data)
+                    msg_html = render_to_string("refund.html", merge_data)
+
+                    send_mail(
+                        "Confirmation de remboursement",
+                        plain_msg,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [user.email],
+                        html_message=msg_html,
+                    )
+
+                canceled_reservation = instance
+                canceled_reservation.pk = None
+                canceled_reservation.save()
+                instance = Reservation.objects.get(id=instance_pk)
+
+            # End of atomic transaction
 
         instance = super(ReservationSerializer, self).update(
             instance,
             validated_data,
         )
+
         if validated_data.get('retirement'):
             retirement = instance.retirement
-            items = [{
-                'price': retirement.price,
-                'name': "{0}: {1}".format(
-                    _("Retirement"),
-                    retirement.name
-                ),
-                'details':
-                    retirement.email_content
-            }]
+            new_retirement = retirement
+            old_retirement = current_retirement
 
-            # Send order confirmation email
+            # Send exchange confirmation email
             merge_data = {
                 'DATETIME': timezone.localtime().strftime("%x %X"),
                 'CUSTOMER_NAME': user.first_name + " " + user.last_name,
                 'CUSTOMER_EMAIL': user.email,
                 'CUSTOMER_NUMBER': user.id,
                 'TYPE': "Échange",
-                'ITEM_LIST': items,
+                'NEW_RETIREMENT': new_retirement,
+                'OLD_RETIREMENT': old_retirement,
             }
 
             plain_msg = render_to_string("exchange.txt", merge_data)
@@ -374,7 +677,36 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 html_message=msg_html,
             )
 
-        return instance
+            # Create a copy of the reservation. This copy keeps track of
+            # the exchange.
+            canceled_reservation.is_active = False
+            canceled_reservation.cancelation_reason = 'U'
+            canceled_reservation.cancelation_action = 'E'
+            canceled_reservation.cancelation_date = timezone.now()
+            canceled_reservation.save()
+
+            merge_data = {
+                'RETIREMENT': retirement,
+            }
+
+            plain_msg = render_to_string(
+                "retirement_info.txt",
+                merge_data
+            )
+            msg_html = render_to_string(
+                "retirement_info.html",
+                merge_data
+            )
+
+            send_mail(
+                "Confirmation d'inscription à la retraite",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [instance.user.email],
+                html_message=msg_html,
+            )
+
+        return Reservation.objects.get(id=instance_pk)
 
     class Meta:
         model = Reservation

@@ -122,22 +122,35 @@
         </h2>
         <div class="email__content__summary">
           <!--Repeat the item section in function of the list of items on the order received by the API -->
-          {%for item in ITEM_LIST%}
           <div class="email__content__summary__item">
             <div class="email__content__summary__item__price">
-              {{item.price}}$ CAD
+              {{OLD_RETIREMENT.price}}$ CAD
             </div>
             <div class="email__content__summary__item__name">
-              {{item.name}}
+              {{OLD_RETIREMENT.name}}
             </div>
-            {% if item.details %}
-            <div class="email__content__summary__item__details">
-              {{item.details}}
-            </div>
-            {% endif %}
           </div>
-          {% endfor %}
+          <div class="email__content__summary__item">
+            <div class="email__content__summary__item__price">
+              -{{NEW_RETIREMENT.price}}$ CAD
+            </div>
+            <div class="email__content__summary__item__name">
+              {{NEW_RETIREMENT.name}}
+            </div>
+          </div>
           <br/>
+
+          <!-- SUBTOTAL HERE -->
+          <div class="email__content__summary__item email__content__summary__item--total">
+            <div class="email__content__summary__item__price">
+              {{SUBTOTAL}}$ CAD
+            </div>
+            <div class="email__content__summary__item__name">
+              Subtotal
+            </div>
+          </div>
+          <br/>
+
           <!--Repeat the item section in function of the list of taxes you have -->
           <div class="email__content__summary__item">
             <div class="email__content__summary__item__price">

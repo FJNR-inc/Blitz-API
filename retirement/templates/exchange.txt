@@ -25,13 +25,22 @@ Ceci est une confirmation d'échange. Merci d'en garder une copie.
 {% endif %}
 
  
+** ANCIENNE RETRAITE
+------------------------------------------------------------
+
+{{OLD_RETIREMENT.name}}
+
+ * Date et heure de début: {{OLD_RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{OLD_RETIREMENT.start_time|date:"G"}}h{{OLD_RETIREMENT.start_time|date:"i"}}
+ * Date et heure de fin: {{OLD_RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{OLD_RETIREMENT.end_time|date:"G"}}h{{OLD_RETIREMENT.end_time|date:"i"}}
+
+ 
 ** NOUVELLE RETRAITE
 ------------------------------------------------------------
 
-{%for item in ITEM_LIST%}
+{{NEW_RETIREMENT.name}}
 
-{{item.name}} {% if item.details %}
-{{item.details}} {% endif %} {% endfor %}
+ * Date et heure de début: {{NEW_RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{NEW_RETIREMENT.start_time|date:"G"}}h{{NEW_RETIREMENT.start_time|date:"i"}}
+ * Date et heure de fin: {{NEW_RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{NEW_RETIREMENT.end_time|date:"G"}}h{{NEW_RETIREMENT.end_time|date:"i"}}
 
  
 ** L'ÉQUIPE THÈSEZ-VOUS
