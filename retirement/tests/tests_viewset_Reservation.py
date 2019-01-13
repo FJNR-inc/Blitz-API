@@ -1039,6 +1039,14 @@ class ReservationTests(APITestCase):
             status=200
         )
 
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/"
+            "settlements/1/refunds",
+            json=SAMPLE_REFUND_RESPONSE,
+            status=200
+        )
+
         FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
 
         data = {
@@ -1163,6 +1171,14 @@ class ReservationTests(APITestCase):
             responses.POST,
             "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
             json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/"
+            "settlements/1/refunds",
+            json=SAMPLE_REFUND_RESPONSE,
             status=200
         )
 
@@ -1654,6 +1670,9 @@ class ReservationTests(APITestCase):
         """
         self.client.force_authenticate(user=self.admin)
 
+        self.retirement2.seats = self.retirement2.total_reservations
+        self.retirement2.save()
+
         responses.add(
             responses.POST,
             "http://example.com/cardpayments/v1/accounts/0123456789/"
@@ -1699,6 +1718,9 @@ class ReservationTests(APITestCase):
         # 1 mail for the refund
         # X mails to every admin
         self.assertTrue(len(mail.outbox) > 1, "Invalid sent mail count")
+
+        self.retirement2.seats = 400
+        self.retirement2.save()
 
     def test_delete_not_owner(self):
         """

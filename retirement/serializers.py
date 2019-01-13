@@ -31,6 +31,7 @@ from store.services import (charge_payment,
 from .fields import TimezoneField
 from .models import (Picture, Reservation, Retirement, WaitQueue,
                      WaitQueueNotification, )
+from .services import refund_retirement
 
 User = get_user_model()
 
@@ -352,9 +353,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 timedelta(days=instance.retirement.min_day_exchange))
             if instance.retirement.price < validated_data['retirement'].price:
                 need_transaction = True
-                amount = validated_data[
-                    'retirement'
-                ].price - instance.retirement.price
+                amount = validated_data['retirement'].price
                 if not (payment_token or single_use_token):
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
@@ -437,22 +436,33 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         ),
                         object_id=validated_data['retirement'].id
                     )
-                    refund_value = instance.retirement.price * (Decimal(
-                        TAX_RATE) + 1)
-                    refund_instance = Refund.objects.create(
-                        orderline=instance.order_line,
-                        refund_date=timezone.now(),
-                        amount=refund_value,
-                        details="Exchange retirement {0} for "
-                                "retirement {1}".format(
-                                    str(instance.retirement),
-                                    str(validated_data['retirement'])
-                                ),
-                    )
                     tax = round(amount * Decimal(TAX_RATE), 2)
                     amount *= Decimal(TAX_RATE + 1)
                     amount = round(amount * 100, 2)
                     retirement = validated_data['retirement']
+
+                    # Do a complete refund of the previous retirement
+                    try:
+                        refund_instance = refund_retirement(
+                            instance,
+                            100,
+                            "Exchange retirement {0} for retirement "
+                            "{1}".format(
+                                str(instance.retirement),
+                                str(validated_data['retirement'])
+                            )
+                        )
+                    except PaymentAPIError as err:
+                        if str(err) == PAYSAFE_EXCEPTION['3406']:
+                            raise serializers.ValidationError({
+                                'non_field_errors': _(
+                                    "The order has not been charged yet. "
+                                    "Try again later."
+                                )
+                            })
+                        raise serializers.ValidationError({
+                            'message': str(err)
+                        })
 
                     if need_transaction and payment_token and int(amount):
                         # Charge the order with the external payment API

@@ -30,14 +30,18 @@ Ceci est un reçu pour votre remboursement. Merci d'en garder une copie.
 ** SOMMAIRE DU REMBOURSEMENT
 ------------------------------------------------------------
 
+{% if OLD_RETIREMENT %}
+
 {{OLD_RETIREMENT.price}}$ CAD
-{{OLD_RETIREMENT.name}}
+{{OLD_RETIREMENT.name}} {% endif %} {% if NEW_RETIREMENT %}
 
 -{{NEW_RETIREMENT.price}}$ CAD
-{{NEW_RETIREMENT.name}}
+{{NEW_RETIREMENT.name}} {% endif %}
+{% if SUBTOTAL %}
 
 {{SUBTOTAL}}$ CAD
 Subtotal
+{% endif %}
 
 {{TAX}}$ CAD
 TPS/TVQ

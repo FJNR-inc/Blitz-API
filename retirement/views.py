@@ -1,4 +1,4 @@
-import decimal
+from decimal import Decimal
 import json
 from copy import copy
 from datetime import datetime, timedelta
@@ -198,11 +198,12 @@ class ReservationViewSet(viewsets.ModelViewSet):
         if instance.is_active:
             if respects_minimum_days:
                 try:
-                    amount_no_tax = float(
+                    # The refund_rate converts in cents at the same time
+                    amount_no_tax = Decimal(
                         retirement.price * retirement.refund_rate
                     )
-                    amount_tax = TAX * amount_no_tax
-                    total_amount = round(decimal.Decimal(
+                    amount_tax = Decimal(TAX) * amount_no_tax
+                    total_amount = round(Decimal(
                         amount_no_tax + amount_tax
                     ), 2)
                     refund_response = refund_amount(
@@ -230,7 +231,9 @@ class ReservationViewSet(viewsets.ModelViewSet):
             instance.cancelation_date = timezone.now()
             instance.save()
 
-            retirement.reserved_seats += 1
+            free_seats = retirement.seats - retirement.total_reservations
+            if (retirement.reserved_seats or free_seats == 1):
+                retirement.reserved_seats += 1
             # Ask the external scheduler to start calling /notify if the
             # reserved_seats count == 1. Otherwise, the scheduler should
             # already be calling /notify at specified intervals.
@@ -279,15 +282,15 @@ class ReservationViewSet(viewsets.ModelViewSet):
                 # As of now, only 'retirement' objects have the 'email_content'
                 #  key that is used here. There is surely a better way to
                 #  to handle that logic that will be more generic.
-                items = [{
-                    'price': retirement.price,
+                old_retirement = {
+                    'price': retirement.price * retirement.refund_rate,
                     'name': "{0}: {1}".format(
                         _("Retirement"),
                         retirement.name
                     ),
                     'details':
                         retirement.email_content
-                }]
+                }
 
                 # Send order confirmation email
                 merge_data = {
@@ -297,9 +300,9 @@ class ReservationViewSet(viewsets.ModelViewSet):
                     'CUSTOMER_EMAIL': user.email,
                     'CUSTOMER_NUMBER': user.id,
                     'TYPE': "Remboursement",
-                    'ITEM_LIST': items,
+                    'OLD_RETIREMENT': old_retirement,
                     'COST': round(total_amount/100, 2),
-                    'TAX': round(decimal.Decimal(amount_tax/100), 2),
+                    'TAX': round(Decimal(amount_tax/100), 2),
                 }
 
                 plain_msg = render_to_string("refund.txt", merge_data)
