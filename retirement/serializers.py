@@ -453,20 +453,6 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     amount *= Decimal(TAX_RATE + 1)
                     amount = round(amount * 100, 2)
                     retirement = validated_data['retirement']
-                    user_waiting = retirement.wait_queue.filter(user=user)
-                    if not (((retirement.seats - retirement.total_reservations
-                              - retirement.reserved_seats) > 0) or
-                            (retirement.reserved_seats
-                             and WaitQueueNotification.objects.filter(
-                                 user=user, retirement=retirement))):
-                        raise serializers.ValidationError({
-                            'non_field_errors': [_(
-                                "There are no places left in the requested "
-                                "retirement."
-                            )]
-                        })
-                    if user_waiting:
-                        user_waiting.delete()
 
                     if need_transaction and payment_token and int(amount):
                         # Charge the order with the external payment API
@@ -563,20 +549,6 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     amount *= Decimal(TAX_RATE + 1)
                     amount = round(amount * 100, 2)
                     retirement = validated_data['retirement']
-                    user_waiting = retirement.wait_queue.filter(user=user)
-                    if not (((retirement.seats - retirement.total_reservations
-                              - retirement.reserved_seats) > 0) or
-                            (retirement.reserved_seats
-                             and WaitQueueNotification.objects.filter(
-                                 user=user, retirement=retirement))):
-                        raise serializers.ValidationError({
-                            'non_field_errors': [_(
-                                "There are no places left in the requested "
-                                "retirement."
-                            )]
-                        })
-                    if user_waiting:
-                        user_waiting.delete()
 
                     try:
                         refund_response = refund_amount(
@@ -654,6 +626,21 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             retirement = instance.retirement
             new_retirement = retirement
             old_retirement = current_retirement
+
+            user_waiting = retirement.wait_queue.filter(user=user)
+            if not (((new_retirement.seats - new_retirement.total_reservations
+                      - new_retirement.reserved_seats) > 0) or
+                    (new_retirement.reserved_seats
+                     and WaitQueueNotification.objects.filter(
+                         user=user, retirement=new_retirement))):
+                raise serializers.ValidationError({
+                    'non_field_errors': [_(
+                        "There are no places left in the requested "
+                        "retirement."
+                    )]
+                })
+            if user_waiting:
+                user_waiting.delete()
 
             # Send exchange confirmation email
             merge_data = {

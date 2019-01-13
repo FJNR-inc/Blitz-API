@@ -25,6 +25,8 @@ from store.models import Order, OrderLine, Refund
 from store.tests.paysafe_sample_responses import (SAMPLE_REFUND_RESPONSE,
                                                   SAMPLE_NO_AMOUNT_TO_REFUND,
                                                   SAMPLE_PAYMENT_RESPONSE,
+                                                  SAMPLE_PROFILE_RESPONSE,
+                                                  SAMPLE_CARD_RESPONSE,
                                                   UNKNOWN_EXCEPTION, )
 
 from ..models import Retirement, Reservation
@@ -760,6 +762,97 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(response_data, content)
 
+    def test_update_partial_no_place_left(self):
+        """
+        Ensure we can't update a reservation if the new retirement has no free
+        place left.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        self.retirement2.seats = 0
+        self.retirement2.save()
+
+        FIXED_TIME = datetime(2030, 1, 10, tzinfo=LOCAL_TIMEZONE)
+
+        data = {
+            'is_present': True,
+            'retirement': reverse(
+                'retirement:retirement-detail',
+                kwargs={'pk': 2},
+            ),
+        }
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.patch(
+                reverse(
+                    'retirement:reservation-detail',
+                    kwargs={'pk': 1},
+                ),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                "There are no places left in the requested retirement."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+    def test_update_partial_same_retirement(self):
+        """
+        Ensure we can't update a reservation if the new retirement has no free
+        place left.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        FIXED_TIME = datetime(2030, 1, 10, tzinfo=LOCAL_TIMEZONE)
+
+        data = {
+            'is_present': True,
+            'retirement': reverse(
+                'retirement:retirement-detail',
+                kwargs={'pk': 1},
+            ),
+        }
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.patch(
+                reverse(
+                    'retirement:reservation-detail',
+                    kwargs={'pk': 1},
+                ),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'retirement': [
+                "That retirement is already assigned to this object."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
     def test_update_partial_without_proper_fields(self):
         """
         Ensure we can't partially update a reservation (other fields).
@@ -954,6 +1047,133 @@ class ReservationTests(APITestCase):
                 kwargs={'pk': 2},
             ),
             'payment_token': "valid_token"
+        }
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.patch(
+                reverse(
+                    'retirement:reservation-detail',
+                    kwargs={'pk': 1},
+                ),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+
+        del response_data['user_details']
+        del response_data['retirement_details']
+
+        content = {
+            'id': 1,
+            'is_active': True,
+            'is_present': False,
+            'retirement': 'http://testserver/retirement/retirements/2',
+            'url': 'http://testserver/retirement/reservations/1',
+            'user': 'http://testserver/users/1',
+            'order_line': 'http://testserver/order_lines/2',
+            'cancelation_date': None,
+            'cancelation_action': None,
+            'cancelation_reason': None
+        }
+
+        self.assertEqual(response_data, content)
+
+        # Validate the new order
+        new_order = Order.objects.filter(transaction_date=FIXED_TIME)[0]
+
+        self.assertTrue(new_order)
+        self.assertEqual(new_order.transaction_date, FIXED_TIME)
+        self.assertEqual(new_order.user, self.user)
+
+        # Validate the new orderline
+        self.reservation.refresh_from_db()
+        new_orderline = self.reservation.order_line
+
+        self.assertFalse(self.order_line == new_orderline)
+        self.assertEqual(new_orderline.order, new_order)
+        self.assertEqual(new_orderline.object_id, self.retirement2.id)
+        self.assertEqual(new_orderline.content_type.model, "retirement")
+        self.assertEqual(new_orderline.quantity, 1)
+
+        # Validate the canceled reservation
+        canceled_reservation = Reservation.objects.filter(is_active=False)[0]
+
+        self.assertTrue(canceled_reservation)
+        self.assertEqual(canceled_reservation.cancelation_action, 'E')
+        self.assertEqual(canceled_reservation.cancelation_reason, 'U')
+        self.assertEqual(canceled_reservation.cancelation_date, FIXED_TIME)
+        self.assertEqual(canceled_reservation.retirement, self.retirement)
+        self.assertEqual(canceled_reservation.order_line, self.order_line)
+
+        # Validate the full refund on old orderline
+        refund = Refund.objects.filter(orderline=self.order_line)[0]
+
+        self.assertTrue(refund)
+
+        refund_amount = self.retirement.price * (Decimal(TAX_RATE) + 1)
+
+        self.assertEqual(
+            refund.amount,
+            refund_amount.quantize(Decimal('.01'), rounding=ROUND_HALF_UP)
+        )
+        self.assertEqual(refund.refund_date, FIXED_TIME)
+
+        # 1 mail confirming the exchange
+        # 1 mail confirming the participation to the new retirement
+        # 1 mail confirming the new order
+        self.assertEqual(len(mail.outbox), 3)
+
+        self.retirement2.price = 199
+        self.retirement2.save()
+
+    @responses.activate
+    def test_update_partial_more_expensive_retirement_single_use_token(self):
+        """
+        Ensure we can change retirement if the new one is more expensive and
+        a payment_token or single_use_token is provided.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.retirement2.price = 999
+        self.retirement2.save()
+
+        responses.add(
+            responses.POST,
+            "http://example.com/customervault/v1/profiles/",
+            json=SAMPLE_PROFILE_RESPONSE,
+            status=201
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/customervault/v1/profiles/123/cards/",
+            json=SAMPLE_CARD_RESPONSE,
+            status=201
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        data = {
+            'retirement': reverse(
+                'retirement:retirement-detail',
+                kwargs={'pk': 2},
+            ),
+            'single_use_token': "valid_token"
         }
 
         with mock.patch(
