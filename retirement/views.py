@@ -283,7 +283,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
                 #  key that is used here. There is surely a better way to
                 #  to handle that logic that will be more generic.
                 old_retirement = {
-                    'price': retirement.price * retirement.refund_rate,
+                    'price': (retirement.price * retirement.refund_rate) / 100,
                     'name': "{0}: {1}".format(
                         _("Retirement"),
                         retirement.name
