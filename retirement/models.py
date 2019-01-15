@@ -115,6 +115,20 @@ class Retirement(Address, SafeDeleteModel):
         verbose_name=_("Form URL"),
     )
 
+    carpool_url = models.CharField(
+        blank=True,
+        null=True,
+        max_length=2000,  # Max URL length supported by IE
+        verbose_name=_("Carpool URL"),
+    )
+
+    review_url = models.CharField(
+        blank=True,
+        null=True,
+        max_length=2000,  # Max URL length supported by IE
+        verbose_name=_("Review URL"),
+    )
+
     # History is registered in translation.py
     # history = HistoricalRecords()
 

@@ -32,6 +32,8 @@ class RetirementTests(APITestCase):
             is_active=True,
             accessibility=True,
             form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
         )
 
         self.assertEqual(retirement.__str__(), "random_retirement")

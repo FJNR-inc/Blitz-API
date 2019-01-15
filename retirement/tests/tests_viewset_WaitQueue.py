@@ -48,6 +48,8 @@ class WaitQueueTests(APITestCase):
             next_user_notified=3,
             accessibility=True,
             form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
         )
         self.wait_queue_subscription = WaitQueue.objects.create(
             user=self.user2,
