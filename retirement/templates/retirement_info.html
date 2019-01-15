@@ -1,145 +1,427 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
+{% load static %}
+<head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <style>
-      @import url('https://fonts.googleapis.com/css?family=Nunito+Sans');
-
-      body {
-        margin: 0;
-        font-family: 'Nunito Sans', sans-serif;
-        color: #142823;
-      }
-
-      ul {
-        margin: 30px 0 0 0;
-        padding: 0;
-        list-style-type: none;
-      }
-
-      .email {
-        background-color: #F7EDD9;
-        height:auto;
-        padding: 20px;
-      }
-
-      .email__logo {
-        margin: 20px;
-        text-align: center;
-      }
-
-      .email__logo img {
-        height: 60px;
-        margin: auto;
-      }
-
-      .email__content {
-        background-color: #FCF7EF;
-        max-width: 600px;
-        padding: 20px;
-        margin: auto;
-      }
-
-      .email__content__title {
-        font-size: 24px;
-        font-weight: 900;
-      }
-
-      .email__content__subtitle {
-        font-size: 18px;
-        margin-top: 50px;
-      }
-
-      .email__content__summary__item {
-        line-height: 15px;
-        margin: 5px 0;
-      }
-
-      .email__content__summary__item__spacer {
-        border-bottom: 1px dotted #142823;
-        height: 12px;
-        float: right;
-
-      }
-
-      .email__content__summary__item__price {
-        float: right;
-      }
+        @import url('https://fonts.googleapis.com/css?family=Nunito+Sans');
+        body {
+            margin: 0;
+            font-family: 'Nunito Sans', sans-serif;
+            background-color: #fcf7ef;
+        }
+        h4 {
+            font-size: 25px;
+            font-weight: 900;
+        }
+        .button {
+            background-color: #142823;
+            color: white;
+            padding: 15px 30px;
+            border: 1px solid #142823;
+            text-decoration: none;
+            display: inline-block;
+            text-transform: uppercase;
+            font-weight: bold;
+            transition: all cubic-bezier(0.445, 0.05, 0.55, 0.95) 300ms;
+            line-height: 15pt;
+            text-align: center;
+            font-size: 11pt;
+            min-width: 170px;
+            font-family: 'Nunito Sans', sans-serif;
+        }
+        .button:hover {
+            color: #142823;
+            background-color: transparent;
+            cursor: pointer;
+        }
+        .email {
+            padding: 20px;
+        }
+        .email__header {
+            text-align: center;
+        }
+        .email__header__logo {
+            height: 70px;
+            margin: 50px 0;
+        }
+        .email__content {
+            background-color: white;
+            max-width: 900px;
+            padding: 40px;
+            margin: auto;
+        }
+        .email__content__details {
+            display: flex;
+            margin-top: 60px;
+        }
+        .email__content__details__picture {
+            flex: 1;
+            background-image: url("{% static 'images/THES_retraite_40e.JPG' %}");
+            background-size: cover;
+            margin-right: 20px;
+        }
+        .email__content__details__text {
+            flex: 1;
+            margin-left: 20px;
+        }
+        .email__content__details__text__info {
+            margin-bottom: 10px;
+        }
+        .email__content__details__text__info__label {
+            font-weight: 900;
+        }
+        .email__content__boxs {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 60px;
+        }
+        .email__content__boxs__box {
+            width: 50%;
+            text-align: center;
+            flex: 1 0 35%;
+            padding: 40px;
+        }
+        .email__content__boxs__box__icon {
+            width: 75%;
+            display: block;
+            margin: auto;
+        }
+        .email__content__boxs__box--1 {
+            background-color: #ffe6bc;
+        }
+        .email__content__boxs__box--2 {
+            background-color: #4d9374;
+        }
+        .email__content__boxs__box--3 {
+            background-color: #0f2822;
+            color: white;
+        }
+        .email__content__boxs__box--4 {
+            background-color: #e3925c;
+        }
+        .email__content__footer {
+            margin-top: 60px;
+        }
+        .email__content__footer__name {
+            font-weight: 900;
+        }
+        .email__content__separator {
+            border-top: 1px solid #0f2822;
+            margin-top: 60px;
+        }
+        .email__content__title {
+            text-transform: uppercase;
+            font-weight: 900;
+            padding-top: 60px;
+            margin-bottom: 10px;
+        }
+        .email__content__button {
+            padding-top: 60px;
+        }
+        .email__footer {
+            text-align: center;
+        }
+        @media only screen and (max-width: 800px) {
+            .email__content__details {
+                display: block;
+            }
+            .email__content__details__picture {
+                height: 300px;
+            }
+        }
     </style>
-  </head>
-  <body>
-    <div class="email">
-      <div class="email__logo">
-        {% load static %}
-        <img src="{% static 'images/logo_general.png'%}" alt="">
-      </div>
-      <div class="email__content">
-        <h1 class="email__content__title">
-          Confirmation d'inscription à la retraite
-        </h1>
+</head>
+<body>
+  <div class="email">
+    <div class="email__header">
+        <img class="email__header__logo" src="{% static 'images/logo_general.svg' %}" alt="">
         <p>
-          Nous sommes heureux de vous compter parmi nous à la retraite {{RETIREMENT.name}}.
+            English will follow
         </p>
+    </div>
+    <div class="email__content">
+        <h4 class="email__content__title">
+            Bonjour {{USER.first_name}},
+        </h4>
+        <h4>
+            Voici quelques informations essentielles pour profiter de la {{RETIREMENT.name}} des retraites de rédaction Thèsez-vous.
+        </h4>
 
-        <ul>
-          <li><b>Date et heure de début: </b>{{RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}</li>
-          <li><b>Date et heure de fin: </b>{{RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{RETIREMENT.end_time|date:"G"}}h{{RETIREMENT.end_time|date:"i"}}</li>
-        </ul>
+        <div class="email__content__details">
+            <div class="email__content__details__picture">
+            </div>
+            <div class="email__content__details__text">
+                <h4>{{RETIREMENT.name}}</h4>
 
-        <h2 class="email__content__subtitle">
-          Ce que vous devez savoir
-        </h2>
-        <p>
-          {{RETIREMENT.email_content|linebreaks}}
-        </p>
+                <div class="email__content__details__text__info">
+                    <span class="email__content__details__text__info__label">
+                        Lieu:
+                    </span>
+                    <span class="email__content__details__text__info__value">
+                        {{RETIREMENT.place_name}}
+                    </span>
+                </div>
 
-        <h2 class="email__content__subtitle">
-          Formulaire
-        </h2>
-        <div class="email__content__summary">
-          Veuillez remplir le formulaire suivant afin que nous puissions préparer votre arrivée!
+                <div class="email__content__details__text__info">
+                    <span class="email__content__details__text__info__label">
+                        Début:
+                    </span>
+                    <span class="email__content__details__text__info__value">
+                        {{RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}
+                    </span>
+                </div>
+
+                <div class="email__content__details__text__info">
+                    <span class="email__content__details__text__info__label">
+                        Fin:
+                    </span>
+                    <span class="email__content__details__text__info__value">
+                        {{RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{RETIREMENT.end_time|date:"G"}}h{{RETIREMENT.end_time|date:"i"}}
+                    </span>
+                </div>
+
+                <div class="email__content__details__text__info">
+                    <span class="email__content__details__text__info__label">
+                        Animation:
+                    </span>
+                    <span class="email__content__details__text__info__value">
+                        {{RETIREMENT.animation}}
+                    </span>
+                </div>
+            </div>
         </div>
-        <center>
-          <table width="100%">
-            <tr>
-              <td>
-                <table border="0" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td height="20" width="100%" style="font-size: 20px; line-height: 20px;">
-                    &nbsp;
-                    </td>
-                  </tr>
-                </table>
-                <table border="0" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto;">
-                  <tbody>
-                  <tr>
-                    <td align="center">
-                      <table border="0" cellpadding="0" cellspacing="0" style="margin:0 auto;">
-                        <tr>
-                          <td align="center" bgcolor="#142823" width="150" style="-moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px;">
-                            <a href={{RETIREMENT.form_url}} style="padding: 10px;width:150px;display: block;text-decoration: none;border:0;text-align: center;font-weight: bold;font-size: 15px;font-family: sans-serif;color: #F7EDD9;background: #142823;border: 1px solid #142823;-moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px;line-height:17px;" class="button_link">
-                              Formulaire
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                  </tbody>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </center>
-        <h2 class="email__content__subtitle">
-          L'équipe Thèsez-vous
-        </h2>
+
+        <div class="email__content__separator"></div>
+
+        <div class="email__content__title">
+            Planifier votre retraite de rédaction
+        </div>
+        <div class="email__content__content">
+            Pour bien planifier votre retraite de rédaction, consultez la page <a href="">S'y préparer</a>.
+            Vous y trouverez l'horaire, le matériel à apporter, ainsi que de précieuses indications pour établir
+            des objectifs de rédaction réalistes. Si vous prenez le temps de bien préparer votre retraite et vos
+            objectifs de rédaction, vous en profiterez d'avantage!
+        </div>
+        <div class="email__content__button">
+            <a href="http://www.thesez-vous.com/sypreparer.html" class="button">
+                S'y préparer
+            </a>
+        </div>
+
+        <div class="email__content__separator"></div>
+
+        <div class="email__content__title">
+            C'est un rendez-vous!
+        </div>
+        <div class="email__content__content">
+            C'est donc un rendez-vous le {{RETIREMENT.start_time|date:"l j F Y "|capfirst}}, au {{RETIREMENT.place_name}}. L'atelier d'introduction
+            débutera à {{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}. Arrivez au moins 15 minutes à l'avance pour vous installer!
+        </div>
+
+        <div class="email__content__boxs">
+            <div class="email__content__boxs__box email__content__boxs__box--1">
+                <img class="email__content__boxs__box__icon" src="images/THES_illustration_serviette.svg">
+                La litterie et les serviettes sont fournies.
+            </div>
+            <div class="email__content__boxs__box email__content__boxs__box--2">
+                <img class="email__content__boxs__box__icon" src="images/THES_illustration_tapis_yoga.svg">
+                Pensez à apporter votre tapis pour prendre part au yoga.
+            </div>
+            <div class="email__content__boxs__box email__content__boxs__box--3">
+                <img class="email__content__boxs__box__icon" src="images/THES_illustration_mitaines.svg">
+                Prévoyez les vêtements nécessaires pour profiter des activités extérieures.
+            </div>
+            <div class="email__content__boxs__box email__content__boxs__box--4">
+                <img class="email__content__boxs__box__icon" src="images/THES_illustration_horloge.svg">
+                Arrivez au moins 15 minutes à l'avance pour vous installer!
+            </div>
+        </div>
+
+        <div class="email__content__title">
+            Covoiturage
+        </div>
+        <div class="email__content__content">
+            Nous vous encourageons à utiliser la page évènement Facebook pour planifier votre
+            covoiturage. Plusieurs l'ont déjà fait et c'est très efficace! Si vous n'êtes pas
+            un.e adepte de FB, il est aussi possible de remplir le document pour annoncer
+            votre offre/demande de covoiturage auprès des autres participant.e.s à la retraite.
+        </div>
+        <div class="email__content__button">
+            <a href="{{RETIREMENT.carpool_url}}" class="button">
+                Faire une annonce
+            </a>
+        </div>
+        <div class="email__content__separator"></div>
+
+        <div class="email__content__footer">
+            <p>
+                Si vous avez des questions, n'hésitez pas à nous contacter au <a href="mailto:info@thesez-vous.com">info@thesez-vous.com</a>.
+            </p>
+            <p>
+                Au plaisir de se retrouver et de rédiger tous ensemble!
+            </p>
+            <p class="email__content__footer__name">
+                Annie-Pier et toute l'équipe de Thèsez-vous
+            </p>
+        </div>
+    </div>
+    <div class="email__footer">
         <p>
-          Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2<br>
-          info@thesez-vous.com, www.thesez-vous.com
+            © 2019, Thèsez-vous.
         </p>
-      </div>
     </div>
 
-  </body>
+    <div class="email__header">
+        <p>
+            English version
+        </p>
+    </div>
+    <div class="email__content">
+        <h4 class="email__content__title">
+            Hello {{USER.first_name}},
+        </h4>
+        <h4>
+            The {{RETIREMENT.name}} of Thèsez-Vous? retreats arrives in a few days and we want to send you
+            important informations for the functioning of it.
+        </h4>
+
+        <div class="email__content__details">
+            <div class="email__content__details__picture">
+            </div>
+            <div class="email__content__details__text">
+                <h4>{{RETIREMENT.name}}</h4>
+
+                <div class="email__content__details__text__info">
+                    <span class="email__content__details__text__info__label">
+                        Place:
+                    </span>
+                    <span class="email__content__details__text__info__value">
+                        {{RETIREMENT.place_name}}
+                    </span>
+                </div>
+
+                <div class="email__content__details__text__info">
+                    <span class="email__content__details__text__info__label">
+                        Start:
+                    </span>
+                    <span class="email__content__details__text__info__value">
+                        {{RETIREMENT.start_time|date:"l j F Y "|capfirst}}
+                        {{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}
+                    </span>
+                </div>
+
+                <div class="email__content__details__text__info">
+                    <span class="email__content__details__text__info__label">
+                        End:
+                    </span>
+                    <span class="email__content__details__text__info__value">
+                        {{RETIREMENT.end_time|date:"l j F Y "|capfirst}}
+                        {{RETIREMENT.end_time|date:"G"}}h{{RETIREMENT.end_time|date:"i"}}
+                    </span>
+                </div>
+
+                <div class="email__content__details__text__info">
+                    <span class="email__content__details__text__info__label">
+                        Animation:
+                    </span>
+                    <span class="email__content__details__text__info__value">
+                        {{RETIREMENT.animation}}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="email__content__separator"></div>
+
+        <div class="email__content__title">
+            Plan your retreat
+        </div>
+        <div class="email__content__content">
+            <p>
+                The details of this Thèsez-Vous? Edition, including valuable tips for setting realistic writing goals,
+                based on the retirement schedule, as well as details of the material to be provided, are now
+                available via the link “s’y préparer”.
+            </p>
+            <p>
+                You will also find a preliminary schedule (slight modifications possible).
+            </p>
+            <p>
+                * Note: if you take the time to plan your retirement and your writing goals, you will benefit more!
+            </p>
+
+        </div>
+        <div class="email__content__button">
+            <a href="http://www.thesez-vous.com/gettingprepared.html" class="button">
+                Prepare for it
+            </a>
+        </div>
+
+        <div class="email__content__separator"></div>
+
+        <div class="email__content__title">
+            It's a "rendez-vous"!
+        </div>
+        <div class="email__content__content">
+            It is therefore a “rendez-vous” on  {{RETIREMENT.start_time|date:"l j F Y "|capfirst}},
+            from {{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}} at the
+            {{RETIREMENT.place_name}}.
+        </div>
+
+        <div class="email__content__boxs">
+            <div class="email__content__boxs__box email__content__boxs__box--1">
+                <img class="email__content__boxs__box__icon" src="images/THES_illustration_serviette.svg">
+                Bedding and towels are included
+            </div>
+            <div class="email__content__boxs__box email__content__boxs__box--2">
+                <img class="email__content__boxs__box__icon" src="images/THES_illustration_tapis_yoga.svg">
+                Remember to bring your yoga mat to take part in yoga.
+            </div>
+            <div class="email__content__boxs__box email__content__boxs__box--3">
+                <img class="email__content__boxs__box__icon" src="images/THES_illustration_mitaines.svg">
+                Bring the necessary clothing to enjoy outdoor activities.
+            </div>
+            <div class="email__content__boxs__box email__content__boxs__box--4">
+                <img class="email__content__boxs__box__icon" src="images/THES_illustration_horloge.svg">
+                Arrive at least 15 minutes in advance to settle!
+            </div>
+        </div>
+
+        <div class="email__content__title">
+            Carpooling
+        </div>
+        <div class="email__content__content">
+            <p>
+                We encourage you to use the Facebook event page to plan your carpool. Many have already
+                done so and it is very effective! If you are not a fan of FB, it is also possible to
+                fill this document to announce your carpool offer / request.
+            </p>
+        </div>
+        <div class="email__content__button">
+            <a href="{{RETIREMENT.carpool_url}}" class="button">
+                Create an announce
+            </a>
+        </div>
+        <div class="email__content__separator"></div>
+
+        <div class="email__content__footer">
+            <p>
+                If you have any question, do not hesitate to contact us at the following
+                address: <a href="mailto:info@thesez-vous.com">info@thesez-vous.com</a>.
+            </p>
+            <p>
+                With pleasure to write all together at this bilingual retreat!
+            </p>
+            <p class="email__content__footer__name">
+                Annie-Pier and the team of Thèsez-Vous?
+            </p>
+        </div>
+    </div>
+    <div class="email__footer">
+        <p>
+            © 2019, Thèsez-vous.
+        </p>
+    </div>
+</div>
+</body>
 </html>

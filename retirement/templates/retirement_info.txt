@@ -1,35 +1,131 @@
+===================================
+=== ENGLISH VERSION WILL FOLLOW ===
+===================================
+
+Bonjour {{USER.first_name}}
+
+Voici quelques informations essentielles pour profiter de la
+{{RETIREMENT.name}} des retraites de rédaction Thèsez-vous.
+
+=====================================
+Planifier votre retraite de rédaction
+=====================================
+
+Pour bien planifier votre retraite de rédaction, consultez la page S'y
+préparer. Vous y trouverez l’horaire, le matériel à apporter, ainsi que de
+précieuses indications pour établir des objectifs de rédaction réalistes. Si
+vous prenez le temps de bien préparer votre retraite et vos objectifs de
+rédaction, vous en profiterez davantage!
+
+Lien de la page:
+
+http://www.thesez-vous.com/sypreparer.html
 
 
-{% load static %}
+=====================
+C'est un rendez-vous!
+=====================
 
- 
-** CONFIRMATION D'INSCRIPTION À LA RETRAITE
-------------------------------------------------------------
+C'est donc un rendez-vous le
+{{RETIREMENT.start_time|date:"l j F Y "|capfirst}},
+au
+{{RETIREMENT.place_name}}.
 
-Nous sommes heureux de vous compter parmi nous à la retraite {{RETIREMENT.name}}.
+L'atelier d'introduction débutera à
+{{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}.
 
- * Date et heure de début: {{RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}
- * Date et heure de fin: {{RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{RETIREMENT.end_time|date:"G"}}h{{RETIREMENT.end_time|date:"i"}}
+* La literie et les serviettes sont fournies.
+* Pensez à apporter votre tapis pour prendre part au yoga
+* Prévoyez les vêtements nécessaires pour profiter des activités extérieures.
+* Arrivez au moins 15 minutes à l'avance pour vous installer!
 
- 
-** CE QUE VOUS DEVEZ SAVOIR
-------------------------------------------------------------
+===========
+Covoiturage
+===========
 
-{{RETIREMENT.email_content|linebreaks}}
+Nous vous encourageons à utiliser la page évènement Facebook pour planifier
+votre covoiturage. Plusieurs l'ont déjà fait et c'est très efficace! Si vous
+n'êtes pas un.e adepte de FB, il est aussi possible de remplir le document
+pour annoncer votre offre/demande de covoiturage auprès des autres
+participant.e.s à la retraite.Si vous avez des questions, n'hésitez pas à
+nous contacter à l'adresse suivante: info@thesez-vous.com.
 
- 
-** FORMULAIRE
-------------------------------------------------------------
+Faire une annonce :
 
-Veuillez remplir le formulaire suivant afin que nous puissions préparer votre arrivée!
+{{RETIREMENT.carpool_url}}
 
- 
+---
 
-Formulaire ({{RETIREMENT.form_url}})
+Au plaisir de se retrouver et de rédiger tous ensemble!
 
- 
-** L'ÉQUIPE THÈSEZ-VOUS
-------------------------------------------------------------
+Annie-Pier et toute l'équipe de Thèsez-Vous?
 
-Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2
-info@thesez-vous.com, www.thesez-vous.com
+© 2019, Thèsez-vous.
+
+
+=======================
+=== ENGLISH VERSION ===
+=======================
+
+Hello {{USER.first_name}},
+
+The {{RETIREMENT.name}} of Thèsez-Vous? retreats arrives in a few days and
+we want to send you important informations for the functioning of it.
+
+=================
+Plan your retreat
+=================
+
+The details of this Thèsez-Vous? Edition, including valuable tips for
+setting realistic writing goals, based on the retirement schedule, as well
+as details of the material to be provided, are now available via the link
+“s’y préparer”.
+
+You will also find a preliminary schedule (slight modifications possible).
+
+* Note: if you take the time to plan your retirement and your writing goals,
+you will benefit more!
+
+Link to the page:
+
+http://www.thesez-vous.com/sypreparer.html
+
+=====================
+It's a "rendez-vous"!
+=====================
+
+It is therefore a “rendez-vous” on
+{{RETIREMENT.start_time|date:"l j F Y "|capfirst}},
+from
+{{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}
+at the
+{{RETIREMENT.place_name}}.
+
+* Bedding and towels are included
+* Remember to bring your yoga mat to take part in yoga.
+* Bring the necessary clothing to enjoy outdoor activities.
+* Arrive at least 15 minutes in advance to settle!
+
+==========
+Carpooling
+==========
+
+We encourage you to use the Facebook event page to plan your carpool.
+Many have already done so and it is very effective! If you are not a
+fan of FB, it is also possible to fill this document to announce your
+carpool offer / request.
+
+Make an announcement:
+
+{{RETIREMENT.carpool_url}}
+
+---
+
+If you have any question, do not hesitate to contact us at the following
+address: info@thesez-vous.com.
+
+With pleasure to write all together at this bilingual retreat!
+
+Annie-Pier and the team of Thèsez-Vous?
+
+© 2019, Thèsez-vous.

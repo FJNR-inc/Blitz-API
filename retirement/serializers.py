@@ -790,6 +790,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
 
             merge_data = {
                 'RETIREMENT': retirement,
+                'USER': instance.user,
             }
 
             plain_msg = render_to_string(

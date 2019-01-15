@@ -1,17 +1,180 @@
+===================================
+=== ENGLISH VERSION WILL FOLLOW ===
+===================================
+
+Bonjour {{USER.first_name}}
+
+Merci pour votre participation à la {{RETIREMENT.name}}
+des retraites de rédaction Thèsez-vous.
+
+===================================
+AVEZ-VOUS ACCÈS À UN REMBOURSEMENT?
+===================================
+
+Pourquoi ne pas solliciter votre direction, votre association, votre
+département afin d’avoir accès à un remboursement des frais d'inscription.
+N’hésitez pas à nous faire part des soutiens auxquels vous avez accès afin
+qu'on partage l'information auprès de la communauté. Vous pouvez toujours
+nous écrire à info@thesez-vous.com pour avoir une attestation de présence
+officielle. Elle est souvent exigée pour accéder à un remboursement.
+
+Obtenir une attestation:
+
+info@thesez-vous.com
+
+==================================
+AIDEZ-NOUS À ÉVALUER LES RETRAITES
+==================================
+
+Nous vous invitons à remplir un questionnaire d’évaluation d'ici le
+[date d’envoi du courriel + 3jours]. Merci beaucoup d'y allouer un
+peu de votre précieux temps. C’est particulièrement important cette
+année, alors que nous procédons à l’évaluation d’impact de nos services.
+
+Remplir le questionnaire:
+
+{{RETIREMENT.review_url}}
+
+==============
+Besoin d'aide?
+==============
+
+Comme une majorité de participant.e.s aux retraites Thèsez-vous, il est
+possible de ressentir du stress, de la détresse, du surmenage ou de
+l'isolement à un moment ou l'autre de votre parcours. N'hésitez pas à en
+parler avec vos pairs, votre direction, ainsi qu'à consulter les services
+offerts au sein de votre université. Nous avons tenté de répertorier ces
+ressources sur notre site.
+
+Consulter le site:
+
+http://www.thesez-vous.com/besoin-daide.html
 
 
-{% load static %}
+=====
+Merci
+=====
 
- 
-** AU PLAISIR DE VOUS REVOIR BIENTÔT
-------------------------------------------------------------
+Nous tenons à vous remercier de vous être inscrit.e.s en grand nombre, de
+nous avoir fait confiance et d'avoir participé avec enthousiasme à la
+retraite. C'est vraiment un bonheur de vous rencontrer ou de vous revoir
+retraite après retraite. Comme la meilleure façon de pro-mouvoir nos services
+est le bouche-à-oreille, passez le mot!
 
-Nous sommes heureux de vous avoir compté parmi nous à la retraite {{RETIREMENT.name}}. Nous espérons que vous avez apprécié l'événement et avons hâte de vous revoir!
 
- 
-** L'ÉQUIPE THÈSEZ-VOUS
-------------------------------------------------------------
+================================
+COMMUNAUTÉ ET ESPACE THÈSEZ-VOUS
+================================
 
-Thèsez-vous n'autorise pas d'échanges ou de remboursements.
-Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2
-info@thesez-vous.com, www.thesez-vous.com
+Utilisez la page Facebook pour partager vos réflexions et vos ressources. Il
+émerge de Thèsez-vous des façons autres de faire de la recherche et du
+transfert de connaissances, des approches collectives, solidaires,
+interdisciplinaires... et nous souhaitons profiter de cette mobilisation! De
+plus, un premier Espace Thèsez-Vous a ouvert ses portes à Montréal en octobre
+2018. Curieux, curieuse? Réservez dès maintenant un premier bloc de rédaction
+par ici.
+
+Reserver à l'espace:
+
+https://www.thesez-vous.org/reservation/1
+
+---
+
+Bref, il y a continuellement de la nouveauté! Restez connecté.e pour ne rien
+manquer (sauf pendant vos pomodoros!)
+
+Annie-Pier et toute l'équipe de Thèsez-Vous?
+
+© 2019, Thèsez-vous.
+
+
+=======================
+=== ENGLISH VERSION ===
+=======================
+
+Hello {{USER.first_name}},
+
+First of all, we would like to thank you for your presence and your participation
+in this Thèsez-vous edition!
+
+======
+REFUND
+======
+
+We invite you to ask your advisor, your student association, your department to
+have access to a partial or full refund of registration fees. Thank you for
+sharing what supports you have access, to share information with the Thesez-vous?
+community. On our side, we continue the work of representation with
+different universities and associations!
+
+You can always contact us to have your certificate of attendance.
+
+Get a certificate:
+
+info@thesez-vous.com
+
+=================
+APPRECIATION FORM
+=================
+
+We invite you to fill out the assessment form. We are very open to comments
+and suggestions, this is essential information to improve the formula.
+
+Thank you very much for allocating 5 to 10 minutes of your precious
+time and sharing your ideas for the next retreats.
+
+Fill the assessment form:
+
+{{RETIREMENT.review_url}}
+
+==========
+Need help?
+==========
+
+Are you feeling anxious?  Do you find it hard to sleep? Do you feel like
+dropping out? Are you feeling down?  Overwhelmed?  Isolated?  Feel free to
+talk to your peers, your advisor, and to consult free services within your
+university. We have listed these resources on our site.
+
+Go to the website:
+
+http://www.thesez-vous.com/need-help.html
+
+
+=========
+Thank you
+=========
+
+We would also like to thank you for registering in great numbers,
+for trusting us, and for participating enthusiastically in the activities on
+offer. It's really a pleasure to meet you or see you after retreats. Since
+our best advertising is word of mouth, spread the word!
+
+Feel free to contact us and use the Facebook page to share your thoughts and
+resources. It emerges retreats Thèsez-vous? other ways of doing research and
+knowledge transfer, collective approaches, solidarity, interdisciplinary ...
+and we wish to take advantage of this mobilization! We also invite you to
+take part in the Community Thèsez-vous? ensemble.
+
+
+===========
+IN THE CITY
+===========
+
+The Espace Thèsez-Vous opened in October. Curious, curious?
+Book your writing block right here. Also, do not hesitate to
+publish your "dates" on Thèsez-vous? ensemble.
+
+
+Reserve a place:
+
+https://www.thesez-vous.org/reservation/1
+
+---
+
+In short, there is a lot of news for the community! Stay
+connected to not miss anything (except during your “pomodoros”!).
+
+Annie-Pier and the team of Thèsez-Vous?
+
+© 2019, Thèsez-vous.
