@@ -680,6 +680,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 # Send info email
                 merge_data = {
                     'RETIREMENT': retirement_reservation.retirement,
+                    'USER': user,
                 }
 
                 plain_msg = render_to_string(

@@ -60,7 +60,10 @@ def send_post_retirement_email(user, retirement):
     ended.
     """
 
-    merge_data = {'RETIREMENT': retirement}
+    merge_data = {
+        'RETIREMENT': retirement,
+        'USER': user,
+    }
 
     plain_msg = render_to_string("throwback.txt", merge_data)
     msg_html = render_to_string("throwback.html", merge_data)

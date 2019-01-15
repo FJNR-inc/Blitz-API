@@ -1,96 +1,434 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
+{% load static %}
+
+<head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <style>
-      @import url('https://fonts.googleapis.com/css?family=Nunito+Sans');
-
-      body {
-        margin: 0;
-        font-family: 'Nunito Sans', sans-serif;
-        color: #142823;
-      }
-
-      ul {
-        margin: 30px 0 0 0;
-        padding: 0;
-        list-style-type: none;
-      }
-
-      .email {
-        background-color: #F7EDD9;
-        height:auto;
-        padding: 20px;
-      }
-
-      .email__logo {
-        margin: 20px;
-        text-align: center;
-      }
-
-      .email__logo img {
-        height: 60px;
-        margin: auto;
-      }
-
-      .email__content {
-        background-color: #FCF7EF;
-        max-width: 600px;
-        padding: 20px;
-        margin: auto;
-      }
-
-      .email__content__title {
-        font-size: 24px;
-        font-weight: 900;
-      }
-
-      .email__content__subtitle {
-        font-size: 18px;
-        margin-top: 50px;
-      }
-
-      .email__content__summary__item {
-        line-height: 15px;
-        margin: 5px 0;
-      }
-
-      .email__content__summary__item__spacer {
-        border-bottom: 1px dotted #142823;
-        height: 12px;
-        float: right;
-
-      }
-
-      .email__content__summary__item__price {
-        float: right;
-      }
+        @import url('https://fonts.googleapis.com/css?family=Nunito+Sans');
+        body {
+            margin: 0;
+            font-family: 'Nunito Sans', sans-serif;
+            background-color: #fcf7ef;
+        }
+        h4 {
+            font-size: 25px;
+            font-weight: 900;
+        }
+        .button {
+            background-color: #142823;
+            color: white;
+            padding: 15px 30px;
+            border: 1px solid #142823;
+            text-decoration: none;
+            display: inline-block;
+            text-transform: uppercase;
+            font-weight: bold;
+            transition: all cubic-bezier(0.445, 0.05, 0.55, 0.95) 300ms;
+            line-height: 15pt;
+            text-align: center;
+            font-size: 11pt;
+            min-width: 170px;
+            font-family: 'Nunito Sans', sans-serif;
+        }
+        .button:hover {
+            color: #142823;
+            background-color: transparent;
+            cursor: pointer;
+        }
+        .email {
+            padding: 5px;
+        }
+        .email__header {
+            text-align: center;
+        }
+        .email__header__logo {
+            height: 70px;
+            margin: 50px 0;
+        }
+        .email__content {
+            background-color: white;
+            max-width: 900px;
+            padding: 40px;
+            margin: auto;
+        }
+        .email__content__details {
+            display: flex;
+            margin-top: 60px;
+            padding: 40px;
+        }
+        .email__content__details--help {
+            background-color: #ffe6bc;
+        }
+        .email__content__details--help .email__content__details__picture {
+            background-image: url("{% static 'images/THES_besoin_daide_illustration.png' %}");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        .email__content__details--reverse .email__content__details__picture {
+            margin-right: 0;
+            margin-left: 20px;
+        }
+        .email__content__details--reverse .email__content__details__text {
+            margin-right: 20px;
+            margin-left: 0;
+        }
+        .email__content__details__picture {
+            flex: 1;
+            background-image: url("{% static 'images/THES_retraite_40e.JPG' %}");
+            background-size: cover;
+            margin-right: 20px;
+        }
+        .email__content__details__text {
+            padding: 20px;
+            flex: 1;
+            margin-left: 20px;
+        }
+        .email__content__details__text__info {
+            margin-bottom: 10px;
+        }
+        .email__content__details__text__info__label {
+            font-weight: 900;
+        }
+        .email__content__boxs {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 60px;
+        }
+        .email__content__boxs__box {
+            width: 50%;
+            text-align: center;
+            flex: 1 0 35%;
+            padding: 40px;
+        }
+        .email__content__boxs__box__icon {
+            width: 75%;
+            display: block;
+            margin: auto;
+        }
+        .email__content__boxs__box--1 {
+            background-color: #ffe6bc;
+        }
+        .email__content__boxs__box--2 {
+            background-color: #4d9374;
+        }
+        .email__content__boxs__box--3 {
+            background-color: #0f2822;
+            color: white;
+        }
+        .email__content__boxs__box--4 {
+            background-color: #e3925c;
+        }
+        .email__content__footer {
+            margin-top: 60px;
+        }
+        .email__content__footer__name {
+            font-weight: 900;
+        }
+        .email__content__separator {
+            border-top: 1px solid #0f2822;
+            margin-top: 60px;
+        }
+        .email__content__title {
+            text-transform: uppercase;
+            font-weight: 900;
+            padding-top: 60px;
+            margin-bottom: 10px;
+        }
+        .email__content__button {
+            padding-top: 60px;
+        }
+        .email__footer {
+            text-align: center;
+        }
+        @media only screen and (max-width: 800px) {
+            .email__content__details {
+                display: block;
+            }
+            .email__content__details__picture {
+                height: 300px;
+            }
+        }
+        @media only screen and (max-width: 500px) {
+            .email__content__details {
+                padding: 5px;
+            }
+        }
+        @media only screen and (max-width: 400px) {
+            .email__content {
+                padding: 5px;
+            }
+        }
     </style>
-  </head>
-  <body>
-    <div class="email">
-      <div class="email__logo">
-        {% load static %}
-        <img src="{% static 'images/logo_general.png'%}" alt="">
+</head>
+<body>
+  <div class="email">
+      <div class="email__header">
+          <img class="email__header__logo" src="{% static 'images/logo_general.svg' %}" alt="">
+          <p>
+              English will follow
+          </p>
       </div>
       <div class="email__content">
-        <h1 class="email__content__title">
-          Au plaisir de vous revoir bientôt
-        </h1>
-        <p>
-          Nous sommes heureux de vous avoir compté parmi nous à la retraite {{RETIREMENT.name}}. Nous espérons que vous avez apprécié l'événement et avons hâte de vous revoir!
-        </p>
+          <h4>
+              Bonjour {{USER.first_name}},
+          </h4>
+          <h4>
+              Merci pour votre participation à la {{RETIREMENT.name}} des retraites de rédaction Thèsez-vous.
+          </h4>
 
-        <h2 class="email__content__subtitle">
-          L'équipe Thèsez-vous
-        </h2>
-        <p>
-          Thèsez-vous n'autorise pas d'échanges ou de remboursements.<br>
-          Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2<br>
-          info@thesez-vous.com, www.thesez-vous.com
-        </p>
+          <div class="email__content__title">
+              AVEZ-VOUS ACCÈS À UN REMBOURSEMENT?
+          </div>
+          <div class="email__content__content">
+              Pourquoi ne pas solliciter votre direction, votre association, votre département afin d’avoir
+              accès à un remboursement des frais d'inscription. N’hésitez pas à nous faire part des soutiens
+              auxquels vous avez accès afin qu'on partage l'information auprès de la communauté. Vous
+              pouvez toujours nous écrire à <a href="mailto:info@thesez-vous.com">info@thesez-vous.com</a>
+              pour avoir une attestation de présence officielle. Elle est souvent exigée pour
+              accéder à un remboursement.
+          </div>
+          <div class="email__content__button">
+              <a href="mailto:info@thesez-vous.com" class="button">
+                  Obtenir une attestation
+              </a>
+          </div>
+
+          <div class="email__content__separator"></div>
+
+          <div class="email__content__title">
+              AIDEZ-NOUS À ÉVALUER LES RETRAITES
+          </div>
+          <div class="email__content__content">
+              Nous vous invitons à remplir un questionnaire d’évaluation d'ici le [date d’envoi du courriel +
+              3jours]. Merci beaucoup d'y allouer un peu de votre précieux temps. C’est particulièrement
+              important cette année, alors que nous procédons
+              à l’évaluation d’impact de nos services.
+          </div>
+          <div class="email__content__button">
+              <a href="{{RETIREMENT.review_url}}" class="button">
+                  REMPLIR LE QUESTIONNAIRE
+              </a>
+          </div>
+
+          <div class="email__content__details email__content__details--help">
+              <div class="email__content__details__picture">
+              </div>
+              <div class="email__content__details__text">
+                  <div class="email__content__title">
+                      Besoin d'aide?
+                  </div>
+                  <div class="email__content__content">
+                      Comme une majorité de
+                      participant.e.s aux retraites
+                      Thèsez-vous, il est possible de
+                      ressentir du stress, de la détresse, du
+                      surmenage ou de l'isolement à un
+                      moment ou l'autre de votre parcours.
+                      N'hésitez pas à en parler avec vos
+                      pairs, votre direction, ainsi qu'à
+                      consulter les services offerts au sein
+                      de votre université. Nous avons tenté
+                      de répertorier ces ressources sur
+                      notre site.
+                  </div>
+                  <div class="email__content__button">
+                      <a href="http://www.thesez-vous.com/besoin-daide.html" class="button">
+                          Consulter le site
+                      </a>
+                  </div>
+              </div>
+          </div>
+
+          <div class="email__content__title">
+              Merci
+          </div>
+          <div class="email__content__content">
+              Nous tenons à vous remercier de vous être inscrit.e.s en grand nombre, de nous avoir fait
+              confiance et d'avoir participé avec enthousiasme à la retraite. C'est vraiment un bonheur de
+              vous rencontrer ou de vous revoir retraite après retraite. Comme la meilleure façon de
+              pro-mouvoir nos services est le bouche-à-oreille, passez le mot!
+          </div>
+
+          <div class="email__content__separator"></div>
+
+          <div class="email__content__details email__content__details--reverse">
+              <div class="email__content__details__text">
+                  <div class="email__content__title">
+                      COMMUNAUTÉ ET ESPACE
+                      THÈSEZ-VOUS
+                  </div>
+                  <div class="email__content__content">
+                      Utilisez la page Facebook pour partager vos
+                      réflexions et vos ressources. Il émerge de
+                      Thèsez-vous des façons autres de faire de la
+                      recherche et du transfert de connaissances,
+                      des approches collectives, solidaires,
+                      interdisciplinaires... et nous souhaitons
+                      profiter de cette mobilisation! De plus, un
+                      premier Espace Thèsez-Vous a ouvert ses
+                      portes à Montréal en octobre 2018. Curieux,
+                      curieuse? Réservez dès maintenant un
+                      premier bloc de rédaction par ici.
+                  </div>
+                  <div class="email__content__button">
+                      <a href="https://www.thesez-vous.org/reservation/1" class="button">
+                          RÉSERVER À L’ESPACE
+                      </a>
+                  </div>
+              </div>
+              <div class="email__content__details__picture">
+              </div>
+          </div>
+
+          <div class="email__content__separator"></div>
+
+          <div class="email__content__footer">
+              <p>
+                  Bref, il y a continuellement de la nouveauté! Restez connecté.e pour ne rien manquer (sauf
+                  pendant vos pomodoros!)
+              </p>
+              <p>
+              <p class="email__content__footer__name">
+                  Annie-Pier et toute l'équipe de Thèsez-vous
+              </p>
+          </div>
       </div>
-    </div>
+      <div class="email__footer">
+          <p>
+              © 2019, Thèsez-vous.
+          </p>
+      </div>
 
-  </body>
+      <div class="email__header">
+          <p>
+              English version
+          </p>
+      </div>
+      <div class="email__content">
+          <h4>
+              Hello Elise,
+          </h4>
+          <h4>
+              First of all, we would like to thank you for your presence and your participation
+              in this Thèsez-vous edition!
+          </h4>
+
+          <div class="email__content__title">
+              Refund
+          </div>
+          <div class="email__content__content">
+              We invite you to ask your advisor, your student association, your department to
+              have access to a partial or full refund of registration fees. Thank you for
+              sharing what supports you have access, to share information with the Thesez-vous?
+              community. On our side, we continue the work of representation with
+              different universities and associations!
+              You can always contact us to have your certificate of attendance.
+
+          </div>
+          <div class="email__content__button">
+              <a href="mailto:info@thesez-vous.com" class="button">
+                  Get a certificate
+              </a>
+          </div>
+
+          <div class="email__content__separator"></div>
+
+          <div class="email__content__title">
+              APPRECIATION FORM
+          </div>
+          <div class="email__content__content">
+              We invite you to fill out the assessment form. We are very open to comments
+              and suggestions, this is essential information to improve the formula.
+              Thank you very much for allocating 5 to 10 minutes of your precious
+              time and sharing your ideas for the next retreats.
+          </div>
+          <div class="email__content__button">
+              <a href="{{RETIREMENT.review_url}}" class="button">
+                  Fill out the assessment form
+              </a>
+          </div>
+
+          <div class="email__content__details email__content__details--help">
+              <div class="email__content__details__picture">
+              </div>
+              <div class="email__content__details__text">
+                  <div class="email__content__title">
+                      Need help?
+                  </div>
+                  <div class="email__content__content">
+                      Are you feeling anxious?  Do you find it hard to sleep? Do you feel like dropping out?
+                      Are you feeling down?  Overwhelmed?  Isolated?  Feel free to talk to your peers,
+                      your advisor, and to consult free services within your university. We have listed
+                      these resources on our site.
+                  </div>
+                  <div class="email__content__button">
+                      <a href="http://www.thesez-vous.com/need-help.html" class="button">
+                          Go to the website
+                      </a>
+                  </div>
+              </div>
+          </div>
+
+          <div class="email__content__title">
+              Thank you
+          </div>
+          <div class="email__content__content">
+              <p>
+                  We would also like to thank you for registering in great numbers,
+                  for trusting us, and for participating enthusiastically in the activities on offer.
+                  It's really a pleasure to meet you or see you after retreats. Since our best
+                  advertising is word of mouth, spread the word!
+              </p>
+              <p>
+                  Feel free to contact us and use the Facebook page to share your thoughts and resources.
+                  It emerges retreats Thèsez-vous? other ways of doing research and knowledge transfer,
+                  collective approaches, solidarity, interdisciplinary ... and we wish to take advantage
+                  of this mobilization! We also invite you to take part in the Community Thèsez-vous? ensemble.
+              </p>
+          </div>
+
+          <div class="email__content__separator"></div>
+
+          <div class="email__content__details email__content__details--reverse">
+              <div class="email__content__details__text">
+                  <div class="email__content__title">
+                      IN THE CITY
+                  </div>
+                  <div class="email__content__content">
+                      The Espace Thèsez-Vous opened in October. Curious, curious?
+                      Book your writing block right here. Also, do not hesitate to
+                      publish your "dates" on Thèsez-vous? ensemble.
+                  </div>
+                  <div class="email__content__button">
+                      <a href="https://www.thesez-vous.org/reservation/1" class="button">
+                          Reserver a place
+                      </a>
+                  </div>
+              </div>
+              <div class="email__content__details__picture">
+              </div>
+          </div>
+
+          <div class="email__content__separator"></div>
+
+          <div class="email__content__footer">
+              <p>
+                  In short, there is a lot of news for the community! Stay
+                  connected to not miss anything (except during your “pomodoros”!).
+              </p>
+              <p>
+              <p class="email__content__footer__name">
+                  Annie-Pier and the team of Thèsez-Vous?
+              </p>
+          </div>
+      </div>
+      <div class="email__footer">
+          <p>
+              © 2019, Thèsez-vous.
+          </p>
+      </div>
+  </div>
+</body>
 </html>
