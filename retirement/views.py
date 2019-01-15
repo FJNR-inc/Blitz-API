@@ -4,6 +4,7 @@ from copy import copy
 from datetime import datetime, timedelta
 
 import requests
+import traceback
 
 import pytz
 import rest_framework
@@ -25,6 +26,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from store.exceptions import PaymentAPIError
+from store.models import Refund
 from store.services import refund_amount, PAYSAFE_EXCEPTION
 
 from . import permissions, serializers
@@ -32,7 +34,9 @@ from .models import (Picture, Reservation, Retirement, WaitQueue,
                      WaitQueueNotification)
 from .resources import (ReservationResource, RetirementResource,
                         WaitQueueNotificationResource, WaitQueueResource)
-from .services import notify_reserved_retirement_seat
+from .services import (notify_reserved_retirement_seat,
+                       send_retirement_7_days_email,
+                       send_post_retirement_email, )
 
 User = get_user_model()
 
@@ -72,6 +76,56 @@ class RetirementViewSet(viewsets.ModelViewSet):
             '".xls'
         ])
         return response
+
+    @action(detail=True, permission_classes=[])
+    def remind_users(self, request, pk=None):
+        """
+        That custom action allows an admin (or automated task) to notify
+        users who will attend the retirement.
+        """
+        retirement = self.get_object()
+        # This is a hard-coded limitation to allow anonymous users to call
+        # the function.
+        time_limit = retirement.start_time - timedelta(days=8)
+        if timezone.now() < time_limit:
+            response_data = {
+                'detail': "Retirement takes place in more than 8 days."
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Notify a user for every reserved seat
+        for reservation in retirement.reservations.filter(is_active=True):
+            send_retirement_7_days_email(reservation.user, retirement)
+
+        response_data = {
+            'stop': True,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    @action(detail=True, permission_classes=[])
+    def recap(self, request, pk=None):
+        """
+        That custom action allows an admin (or automated task) to notify
+        users who has attended the retirement.
+        """
+        retirement = self.get_object()
+        # This is a hard-coded limitation to allow anonymous users to call
+        # the function.
+        time_limit = retirement.end_time - timedelta(days=1)
+        if timezone.now() < time_limit:
+            response_data = {
+                'detail': "Retirement ends in more than 1 day."
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Notify a user for every reserved seat
+        for reservation in retirement.reservations.filter(is_active=True):
+            send_post_retirement_email(reservation.user, retirement)
+
+        response_data = {
+            'stop': True,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class PictureViewSet(viewsets.ModelViewSet):
@@ -165,6 +219,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
         return super(ReservationViewSet, self).update(request, *args, **kwargs)
 
+    @transaction.atomic
     def destroy(self, request, *args, **kwargs):
         """
         A user can cancel his reservation by "deleting" it. It will return an
@@ -206,6 +261,12 @@ class ReservationViewSet(viewsets.ModelViewSet):
                     total_amount = round(Decimal(
                         amount_no_tax + amount_tax
                     ), 2)
+                    Refund.objects.create(
+                        orderline=order_line,
+                        refund_date=timezone.now(),
+                        amount=total_amount/100,
+                        details="Reservation canceled",
+                    )
                     refund_response = refund_amount(
                         order.settlement_id,
                         int(total_amount)
@@ -242,35 +303,42 @@ class ReservationViewSet(viewsets.ModelViewSet):
                     settings.EXTERNAL_SCHEDULER['URL'],
                 )
 
-                # interval = retirement.notification_interval.total_seconds()
-
                 data = {
                     "hour": timezone.now().hour,
                     "minute": (timezone.now().minute + 5) % 60,
-                    # This is a relative URL
                     "url": '{0}{1}'.format(
-                        reverse('retirement:waitqueuenotification-list'),
+                        request.build_absolute_uri(
+                            reverse('retirement:waitqueuenotification-list')
+                        ),
                         "/notify"
                     ),
-                    # "initial_execution": True,
                     "description": "Retirement wait queue notification"
                 }
 
                 try:
+                    auth_data = {
+                        "username": settings.EXTERNAL_SCHEDULER['USER'],
+                        "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
+                    }
+                    auth = requests.post(
+                        scheduler_url + "/authentication",
+                        json=auth_data,
+                    )
+                    auth.raise_for_status()
+
                     r = requests.post(
-                        scheduler_url,
-                        auth=(
-                            settings.EXTERNAL_SCHEDULER['USER'],
-                            settings.EXTERNAL_SCHEDULER['PASSWORD'],
-                        ),
+                        scheduler_url + '/tasks',
                         json=data,
+                        headers={
+                            'Authorization':
+                            'Token ' + json.loads(auth.content)['token']},
                     )
                     r.raise_for_status()
                 except (requests.exceptions.HTTPError,
                         requests.exceptions.ConnectionError) as err:
                     mail_admins(
                         "Thèsez-vous: external scheduler error",
-                        str(err.__traceback__)
+                        traceback.format_exc()
                     )
 
             retirement.save()

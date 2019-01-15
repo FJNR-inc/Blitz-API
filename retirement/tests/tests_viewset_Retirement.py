@@ -2,8 +2,13 @@ import json
 from datetime import datetime, timedelta
 
 import pytz
+import responses
+from unittest import mock
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core import mail
+from django.test.utils import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -69,11 +74,32 @@ class RetirementTests(APITestCase):
             form_url="example.com",
         )
 
+    @override_settings(
+        EXTERNAL_SCHEDULER={
+            'URL': "http://example.com",
+            'USER': "user",
+            'PASSWORD': "password",
+        }
+    )
+    @responses.activate
     def test_create(self):
         """
         Ensure we can create a retirement if user has permission.
         """
         self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/authentication",
+            json={"token": "1234567890"},
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/tasks",
+            status=200
+        )
 
         data = {
             'name': "random_retirement",
@@ -100,6 +126,12 @@ class RetirementTests(APITestCase):
             reverse('retirement:retirement-list'),
             data,
             format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
         )
 
         content = {
@@ -145,8 +177,6 @@ class RetirementTests(APITestCase):
             remove_translation_fields(json.loads(response.content)),
             content
         )
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_create_invalid_refund_rate(self):
         """
@@ -759,3 +789,105 @@ class RetirementTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_reminder_email(self):
+        """
+        Ensure emails are sent to every user that has a reservation to the
+        targeted retirement.
+        """
+
+        with mock.patch(
+                'retirement.views.timezone.now',
+                return_value=self.retirement.start_time):
+            response = self.client.get(
+                reverse(
+                    'retirement:retirement-remind-users',
+                    kwargs={'pk': 1},
+                ),
+            )
+
+        content = {'stop': True}
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(
+            len(mail.outbox),
+            self.retirement.reservations.filter(is_active=True).count()
+        )
+
+    def test_reminder_email_too_early(self):
+        """
+        Ensure we can't send emails too early. Prevents spamming by anonymous
+        users.
+        """
+        FIXED_TIME = self.retirement.start_time - timedelta(days=9)
+
+        with mock.patch(
+                'retirement.views.timezone.now', return_value=FIXED_TIME):
+            response = self.client.get(
+                reverse(
+                    'retirement:retirement-remind-users',
+                    kwargs={'pk': 1},
+                ),
+            )
+
+        content = {'detail': "Retirement takes place in more than 8 days."}
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_recap_email(self):
+        """
+        Ensure emails are sent to every user that has a reservation to the
+        targeted retirement.
+        """
+
+        with mock.patch(
+                'retirement.views.timezone.now',
+                return_value=self.retirement.end_time):
+            response = self.client.get(
+                reverse(
+                    'retirement:retirement-recap',
+                    kwargs={'pk': 1},
+                ),
+            )
+
+        content = {'stop': True}
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(
+            len(mail.outbox),
+            self.retirement.reservations.filter(is_active=True).count()
+        )
+
+    def test_recap_email_too_early(self):
+        """
+        Ensure we can't send emails too early. Prevents spamming by anonymous
+        users.
+        """
+        FIXED_TIME = self.retirement.end_time - timedelta(days=2)
+
+        with mock.patch(
+                'retirement.views.timezone.now', return_value=FIXED_TIME):
+            response = self.client.get(
+                reverse(
+                    'retirement:retirement-recap',
+                    kwargs={'pk': 1},
+                ),
+            )
+
+        content = {'detail': "Retirement ends in more than 1 day."}
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(len(mail.outbox), 0)

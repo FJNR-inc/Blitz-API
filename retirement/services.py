@@ -34,6 +34,46 @@ def notify_reserved_retirement_seat(user, retirement):
     )
 
 
+def send_retirement_7_days_email(user, retirement):
+    """
+    This function sends an email to notify a user that a retirement in which he
+    has bought a seat is starting in 7 days.
+    """
+
+    merge_data = {'RETIREMENT': retirement}
+
+    plain_msg = render_to_string("reminder.txt", merge_data)
+    msg_html = render_to_string("reminder.html", merge_data)
+
+    return send_mail(
+        "Rappel retraite",
+        plain_msg,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        html_message=msg_html,
+    )
+
+
+def send_post_retirement_email(user, retirement):
+    """
+    This function sends an email to get back to a user after a retirement has
+    ended.
+    """
+
+    merge_data = {'RETIREMENT': retirement}
+
+    plain_msg = render_to_string("throwback.txt", merge_data)
+    msg_html = render_to_string("throwback.html", merge_data)
+
+    return send_mail(
+        "Merci pour votre participation",
+        plain_msg,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        html_message=msg_html,
+    )
+
+
 def refund_retirement(reservation, refund_rate, refund_reason):
     """
     reservation: Reservation model instance

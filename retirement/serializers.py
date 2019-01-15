@@ -1,10 +1,14 @@
 from copy import copy
 from datetime import timedelta
 from decimal import Decimal, DecimalException
+import json
+import requests
+import traceback
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
+from django.core.mail import mail_admins
 from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models import F
@@ -165,6 +169,108 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
         if err:
             raise serializers.ValidationError(err)
         return super(RetirementSerializer, self).validate(attr)
+
+    def create(self, validated_data):
+        """
+        Schedule retirement reminder and post-event emails.
+        """
+        retirement = super().create(validated_data)
+
+        scheduler_url = '{0}'.format(
+            settings.EXTERNAL_SCHEDULER['URL'],
+        )
+
+        # Set reminder email
+        reminder_date = validated_data['start_time'] - timedelta(days=7)
+
+        data = {
+            "hour": 8,
+            "minute": 0,
+            "day_of_month": reminder_date.day,
+            "month": reminder_date.month,
+            "url": '{0}{1}'.format(
+                self.context['request'].build_absolute_uri(
+                    reverse(
+                        'retirement:retirement-detail',
+                        args=(retirement.id, )
+                    )
+                ),
+                "/remind_users"
+            ),
+            "description": "Retirement 7-days reminder notification"
+        }
+
+        try:
+            auth_data = {
+                "username": settings.EXTERNAL_SCHEDULER['USER'],
+                "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
+            }
+            auth = requests.post(
+                scheduler_url + "/authentication",
+                json=auth_data,
+            )
+            auth.raise_for_status()
+
+            r = requests.post(
+                scheduler_url + "/tasks",
+                json=data,
+                headers={
+                    'Authorization':
+                    'Token ' + json.loads(auth.content)['token']},
+            )
+            r.raise_for_status()
+        except (requests.exceptions.HTTPError,
+                requests.exceptions.ConnectionError) as err:
+            mail_admins(
+                "Thèsez-vous: external scheduler error",
+                "{0}\nRetirement:{1}\nException:\n{2}\n".format(
+                    "Pre-event email task scheduling failed!",
+                    retirement.__dict__,
+                    traceback.format_exc(),
+                )
+            )
+
+        # Set post-event email
+        throwback_date = validated_data['end_time'] + timedelta(days=1)
+
+        data = {
+            "hour": 0,
+            "minute": 0,
+            "day_of_month": throwback_date.day,
+            "month": reminder_date.month,
+            "url": '{0}{1}'.format(
+                self.context['request'].build_absolute_uri(
+                    reverse(
+                        'retirement:retirement-detail',
+                        args=(retirement.id, )
+                    )
+                ),
+                "/recap"
+            ),
+            "description": "Retirement post-event notification"
+        }
+
+        try:
+            r = requests.post(
+                scheduler_url + "/tasks",
+                json=data,
+                headers={
+                    'Authorization':
+                    'Token ' + json.loads(auth.content)['token']},
+            )
+            r.raise_for_status()
+        except (requests.exceptions.HTTPError,
+                requests.exceptions.ConnectionError) as err:
+            mail_admins(
+                "Thèsez-vous: external scheduler error",
+                "{0}\nRetirement:{1}\nException:\n{2}\n".format(
+                    "Post-event email task scheduling failed!",
+                    retirement.__dict__,
+                    traceback.format_exc(),
+                )
+            )
+
+        return retirement
 
     def to_representation(self, instance):
         is_staff = self.context['request'].user.is_staff

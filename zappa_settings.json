@@ -47,7 +47,10 @@
             "EMAIL_HOST": "smtp.zoho.com",
             "SUPPORT_EMAIL": "support@thesez-vous.org",
             "DATA_UPLOAD_MAX_MEMORY_SIZE": "5242880",
-            "FILE_UPLOAD_MAX_MEMORY_SIZE": "5242880"
+            "FILE_UPLOAD_MAX_MEMORY_SIZE": "5242880",
+            "EXTERNAL_SCHEDULER_URL": "https://cron-manager.fjnr.ca",
+            "EXTERNAL_SCHEDULER_USER": "",
+            "EXTERNAL_SCHEDULER_PASSWORD": ""
         },
         "vpc_config" : {
             "SubnetIds": [ "subnet-0bd158ff494029446","subnet-087e1408264ff9358" ],

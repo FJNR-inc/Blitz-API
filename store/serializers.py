@@ -443,8 +443,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 else:
                     raise serializers.ValidationError(coupon_info['error'])
 
-            tax = round(amount * Decimal(TAX_RATE), 2)
-            amount *= Decimal(TAX_RATE + 1)
+            tax = amount * Decimal(repr(TAX_RATE))
+            tax = tax.quantize(Decimal('0.01'))
+            amount *= Decimal(repr(TAX_RATE + 1))
             amount = round(amount * 100, 2)
 
             membership_orderlines = order.order_lines.filter(
@@ -661,7 +662,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     'DISCOUNT': discount_amount,
                     'COUPON': coupon,
                     'SUBTOTAL': round(amount / 100 - tax, 2),
-                    'COST': round(Decimal(amount) / 100, 2),
+                    'COST': round(amount / 100, 2),
                 }
 
                 plain_msg = render_to_string("invoice.txt", merge_data)
