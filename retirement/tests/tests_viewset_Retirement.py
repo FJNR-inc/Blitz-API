@@ -52,6 +52,8 @@ class RetirementTests(APITestCase):
             activity_language='FR',
             accessibility=True,
             form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
         )
 
         self.second_retirement = Retirement.objects.create(
@@ -72,6 +74,8 @@ class RetirementTests(APITestCase):
             activity_language='FR',
             accessibility=True,
             form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
         )
 
     @override_settings(
@@ -120,6 +124,8 @@ class RetirementTests(APITestCase):
             'is_active': True,
             'accessibility': True,
             'form_url': "example.com",
+            'carpool_url': 'example2.com',
+            'review_url': 'example3.com',
         }
 
         response = self.client.post(
@@ -170,6 +176,8 @@ class RetirementTests(APITestCase):
             'url': 'http://testserver/retirement/retirements/3',
             'accessibility': True,
             'form_url': "example.com",
+            'carpool_url': 'example2.com',
+            'review_url': 'example3.com',
             'place_name': '',
         }
 
@@ -204,6 +212,8 @@ class RetirementTests(APITestCase):
             'is_active': True,
             'accessibility': True,
             'form_url': "example.com",
+            'carpool_url': 'example2.com',
+            'review_url': 'example3.com',
         }
 
         response = self.client.post(
@@ -279,6 +289,8 @@ class RetirementTests(APITestCase):
             'is_active': True,
             'accessibility': True,
             'form_url': "example.com",
+            'carpool_url': 'example2.com',
+            'review_url': 'example3.com',
         }
 
         response = self.client.post(
@@ -357,6 +369,8 @@ class RetirementTests(APITestCase):
             'refund_rate': (1,),
             'accessibility': "",
             'form_url': (1,),
+            'carpool_url': (1,),
+            'review_url': (1,),
             'place_name': (1,),
         }
 
@@ -392,6 +406,8 @@ class RetirementTests(APITestCase):
             'refund_rate': ['A valid integer is required.'],
             'accessibility': ['"" is not a valid boolean.'],
             'form_url': ['Not a valid string.'],
+            'carpool_url': ['Not a valid string.'],
+            'review_url': ['Not a valid string.'],
             'place_name': ['Not a valid string.'],
         }
 
@@ -424,6 +440,8 @@ class RetirementTests(APITestCase):
             'is_active': False,
             'accessibility': True,
             'form_url': "example.com",
+            'carpool_url': 'example2.com',
+            'review_url': 'example3.com',
         }
 
         response = self.client.put(
@@ -469,6 +487,8 @@ class RetirementTests(APITestCase):
             'total_reservations': 0,
             'accessibility': True,
             'form_url': "example.com",
+            'carpool_url': 'example2.com',
+            'review_url': 'example3.com',
             'place_name': '',
             'users': [],
             'url': 'http://testserver/retirement/retirements/1'
@@ -545,6 +565,8 @@ class RetirementTests(APITestCase):
                     'total_reservations': 0,
                     'accessibility': True,
                     'form_url': "example.com",
+                    'carpool_url': 'example2.com',
+                    'review_url': 'example3.com',
                     'place_name': '',
                     'users': [],
                     'url': 'http://testserver/retirement/retirements/1'
@@ -584,6 +606,8 @@ class RetirementTests(APITestCase):
                     'total_reservations': 0,
                     'accessibility': True,
                     'form_url': "example.com",
+                    'carpool_url': 'example2.com',
+                    'review_url': 'example3.com',
                     'place_name': '',
                     'users': [],
                     'url': 'http://testserver/retirement/retirements/2'
@@ -645,6 +669,8 @@ class RetirementTests(APITestCase):
                 'total_reservations': 0,
                 'accessibility': True,
                 'form_url': "example.com",
+                'carpool_url': 'example2.com',
+                'review_url': 'example3.com',
                 'place_name': '',
                 'users': [],
                 'url': 'http://testserver/retirement/retirements/2'}]
@@ -700,6 +726,8 @@ class RetirementTests(APITestCase):
             'total_reservations': 0,
             'accessibility': True,
             'form_url': "example.com",
+            'carpool_url': 'example2.com',
+            'review_url': 'example3.com',
             'place_name': '',
             'users': [],
             'url': 'http://testserver/retirement/retirements/1'
@@ -762,6 +790,8 @@ class RetirementTests(APITestCase):
             'total_reservations': 0,
             'accessibility': True,
             'form_url': "example.com",
+            'carpool_url': 'example2.com',
+            'review_url': 'example3.com',
             'place_name': '',
             'users': [],
             'url': 'http://testserver/retirement/retirements/1'

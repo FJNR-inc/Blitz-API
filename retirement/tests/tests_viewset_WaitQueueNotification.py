@@ -49,6 +49,8 @@ class WaitQueueNotificationTests(APITestCase):
             reserved_seats=4,
             accessibility=True,
             form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
         )
 
         FIXED_TIME = datetime(2000, 1, 10, tzinfo=LOCAL_TIMEZONE)

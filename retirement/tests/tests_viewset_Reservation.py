@@ -74,6 +74,8 @@ class ReservationTests(APITestCase):
             reserved_seats=1,
             accessibility=True,
             form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
         )
         cls.retirement2 = Retirement.objects.create(
             name="random_retirement",
@@ -92,6 +94,8 @@ class ReservationTests(APITestCase):
             is_active=False,
             accessibility=True,
             form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
         )
         cls.retirement_overlap = Retirement.objects.create(
             name="ultra_retirement",
@@ -110,6 +114,8 @@ class ReservationTests(APITestCase):
             is_active=True,
             accessibility=True,
             form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
         )
         cls.order = Order.objects.create(
             user=cls.user,
@@ -229,7 +235,9 @@ class ReservationTests(APITestCase):
                 'min_day_exchange': 7,
                 'is_active': False,
                 'accessibility': True,
-                'form_url': "example.com",
+                'form_url': 'example.com',
+                'carpool_url': 'example2.com',
+                'review_url': 'example3.com',
                 'place_name': '',
                 'url': 'http://testserver/retirement/retirements/2'
             },
@@ -415,6 +423,8 @@ class ReservationTests(APITestCase):
                 'is_active': False,
                 'accessibility': True,
                 'form_url': "example.com",
+                'carpool_url': 'example2.com',
+                'review_url': 'example3.com',
                 'place_name': '',
                 'url': 'http://testserver/retirement/retirements/2'
             },
