@@ -62,6 +62,7 @@ class RetirementViewSet(viewsets.ModelViewSet):
     filter_fields = {
         'start_time': ['exact', 'gte', 'lte'],
         'end_time': ['exact', 'gte', 'lte'],
+        'is_active': ['exact'],
     }
     ordering = ('name', 'start_time', 'end_time')
 
