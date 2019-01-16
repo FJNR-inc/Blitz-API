@@ -261,7 +261,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 # Temporary Token
 
 REST_FRAMEWORK_TEMPORARY_TOKENS = {
-    'MINUTES': config('TEMPORARY_TOKEN_MINUTES', default=30000000, cast=int),
+    'MINUTES': config('TEMPORARY_TOKEN_MINUTES', default=30, cast=int),
     'RENEW_ON_SUCCESS': config('TEMPORARY_TOKEN_RENEW_ON_SUCCESS', default=True, cast=bool),
     'USE_AUTHENTICATION_BACKENDS': config('USE_AUTHENTICATION_BACKENDS', default=False, cast=bool),
 }
@@ -269,7 +269,7 @@ REST_FRAMEWORK_TEMPORARY_TOKENS = {
 # Activation Token
 
 ACTIVATION_TOKENS = {
-    'MINUTES': config('ACTIVATION_TOKENS_MINUTES', default=30, cast=int),
+    'MINUTES': config('ACTIVATION_TOKENS_MINUTES', default=1440, cast=int),
 }
 
 
