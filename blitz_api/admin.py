@@ -74,11 +74,18 @@ class CustomOrganizationAdmin(SimpleHistoryAdmin, TranslationAdmin,
 class ActionTokenAdmin(admin.ModelAdmin):
     list_display = ('key', 'type', 'user',)
     search_fields = ('type', 'user__email',)
+    list_filter = (
+        'type',
+        'expires',
+    )
 
 
 class TemporaryTokenAdmin(SimpleHistoryAdmin):
     list_display = ('key', 'user',)
     search_fields = ('user__email',)
+    list_filter = (
+        'expires',
+    )
 
 
 class AcademicFieldAdmin(SimpleHistoryAdmin, TranslationAdmin,
