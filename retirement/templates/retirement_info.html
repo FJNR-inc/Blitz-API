@@ -57,7 +57,7 @@
         }
         .email__content__details__picture {
             flex: 1;
-            background-image: url("{% static 'images/THES_retraite_40e.JPG' %}");
+            background-image: url('{{ STATIC_URL }}images/THES_retraite_40e.JPG');
             background-size: cover;
             margin-right: 20px;
         }
@@ -135,7 +135,7 @@
 <body>
   <div class="email">
     <div class="email__header">
-        <img class="email__header__logo" src="{% static 'images/logo_general.svg' %}" alt="">
+        <img class="email__header__logo" src="{% static 'images/logo_general.png' %}" alt="">
         <p>
             English will follow
         </p>
@@ -221,19 +221,19 @@
 
         <div class="email__content__boxs">
             <div class="email__content__boxs__box email__content__boxs__box--1">
-                <img class="email__content__boxs__box__icon" src="images/THES_illustration_serviette.svg">
+                <img class="email__content__boxs__box__icon" src="{% static 'images/THES_illustration_serviette.png' %}">
                 La litterie et les serviettes sont fournies.
             </div>
             <div class="email__content__boxs__box email__content__boxs__box--2">
-                <img class="email__content__boxs__box__icon" src="images/THES_illustration_tapis_yoga.svg">
+                <img class="email__content__boxs__box__icon" src="{% static 'images/THES_illustration_tapis_yoga.png' %}">
                 Pensez à apporter votre tapis pour prendre part au yoga.
             </div>
             <div class="email__content__boxs__box email__content__boxs__box--3">
-                <img class="email__content__boxs__box__icon" src="images/THES_illustration_mitaines.svg">
+                <img class="email__content__boxs__box__icon" src="{% static 'images/THES_illustration_mitaines.png' %}">
                 Prévoyez les vêtements nécessaires pour profiter des activités extérieures.
             </div>
             <div class="email__content__boxs__box email__content__boxs__box--4">
-                <img class="email__content__boxs__box__icon" src="images/THES_illustration_horloge.svg">
+                <img class="email__content__boxs__box__icon" src="{% static 'images/THES_illustration_horloge.png' %}">
                 Arrivez au moins 15 minutes à l'avance pour vous installer!
             </div>
         </div>
@@ -370,19 +370,19 @@
 
         <div class="email__content__boxs">
             <div class="email__content__boxs__box email__content__boxs__box--1">
-                <img class="email__content__boxs__box__icon" src="images/THES_illustration_serviette.svg">
+                <img class="email__content__boxs__box__icon" src="{% static 'images/THES_illustration_serviette.png' %}">
                 Bedding and towels are included
             </div>
             <div class="email__content__boxs__box email__content__boxs__box--2">
-                <img class="email__content__boxs__box__icon" src="images/THES_illustration_tapis_yoga.svg">
+                <img class="email__content__boxs__box__icon" src="{% static 'images/THES_illustration_tapis_yoga.png' %}">
                 Remember to bring your yoga mat to take part in yoga.
             </div>
             <div class="email__content__boxs__box email__content__boxs__box--3">
-                <img class="email__content__boxs__box__icon" src="images/THES_illustration_mitaines.svg">
+                <img class="email__content__boxs__box__icon" src="{% static 'images/THES_illustration_mitaines.png' %}">
                 Bring the necessary clothing to enjoy outdoor activities.
             </div>
             <div class="email__content__boxs__box email__content__boxs__box--4">
-                <img class="email__content__boxs__box__icon" src="images/THES_illustration_horloge.svg">
+                <img class="email__content__boxs__box__icon" src="{% static 'images/THES_illustration_horloge.png' %}">
                 Arrive at least 15 minutes in advance to settle!
             </div>
         </div>

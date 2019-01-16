@@ -61,7 +61,7 @@
             background-color: #ffe6bc;
         }
         .email__content__details--help .email__content__details__picture {
-            background-image: url("{% static 'images/THES_besoin_daide_illustration.png' %}");
+            background-image: url("{{ STATIC_URL }}images/THES_besoin_daide_illustration.png");
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
@@ -76,7 +76,7 @@
         }
         .email__content__details__picture {
             flex: 1;
-            background-image: url("{% static 'images/THES_retraite_40e.JPG' %}");
+            background-image: url("{{ STATIC_URL }}images/THES_retraite_40e.JPG");
             background-size: cover;
             margin-right: 20px;
         }
@@ -165,7 +165,7 @@
 <body>
   <div class="email">
       <div class="email__header">
-          <img class="email__header__logo" src="{% static 'images/logo_general.svg' %}" alt="">
+          <img class="email__header__logo" src="{% static 'images/logo_general.png' %}" alt="">
           <p>
               English will follow
           </p>
