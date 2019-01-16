@@ -1131,9 +1131,11 @@ class OrderTests(APITestCase):
         )
 
         content = {
-            'message': "An error occured while processing the payment: "
-                       "invalid payment token or payment profile/card "
-                       "inactive."
+            'non_field_errors': [
+                "An error occured while processing the payment: "
+                "invalid payment token or payment profile/card "
+                "inactive."
+            ]
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -1351,8 +1353,10 @@ class OrderTests(APITestCase):
         )
 
         content = content = {
-            'message': "An error occured while processing the payment: "
-                       "invalid payment or single-use token."
+            'non_field_errors': [
+                "An error occured while processing the payment: "
+                "invalid payment or single-use token."
+            ]
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -1401,8 +1405,10 @@ class OrderTests(APITestCase):
         )
 
         content = content = {
-            'message': "An error occured while processing the payment: "
-                       "invalid payment or single-use token."
+            'non_field_errors': [
+                "An error occured while processing the payment: "
+                "invalid payment or single-use token."
+            ]
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -1463,8 +1469,10 @@ class OrderTests(APITestCase):
         )
 
         content = content = {
-            'message': "An error occured while processing the payment: "
-                       "the request has been declined by the issuing bank."
+            'non_field_errors': [
+                "An error occured while processing the payment: "
+                "the request has been declined by the issuing bank."
+            ]
         }
 
         self.assertEqual(json.loads(response.content), content)

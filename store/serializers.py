@@ -164,7 +164,7 @@ class CustomPaymentSerializer(serializers.HyperlinkedModelSerializer):
                 )
             except PaymentAPIError as err:
                 raise serializers.ValidationError({
-                    'message': err
+                    'non_field_errors': [err]
                 })
 
             charge_res_content = charge_response.json()
@@ -407,7 +407,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 )
             except PaymentAPIError as err:
                 raise serializers.ValidationError({
-                    'message': err
+                    'non_field_errors': [err]
                 })
             # Create local profile
             profile = PaymentProfile.objects.create(
@@ -564,7 +564,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     )
                 except PaymentAPIError as err:
                     raise serializers.ValidationError({
-                        'message': err
+                        'non_field_errors': [err]
                     })
 
             elif need_transaction and single_use_token and int(amount):
@@ -581,7 +581,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     )
                 except PaymentAPIError as err:
                     raise serializers.ValidationError({
-                        'message': err
+                        'non_field_errors': [err]
                     })
             elif (membership_orderlines
                   or package_orderlines
