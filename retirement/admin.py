@@ -13,6 +13,7 @@ from .resources import (ReservationResource, RetirementResource,
 
 class PictureAdminInline(admin.TabularInline):
     model = Picture
+    show_change_link = True
     readonly_fields = ('picture_tag', )
 
 

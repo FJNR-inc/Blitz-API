@@ -60,6 +60,7 @@ class CustomUserAdmin(UserAdmin, SimpleHistoryAdmin, ExportActionModelAdmin):
 class DomainInline(admin.StackedInline):
     model = Domain
     can_delete = True
+    show_change_link = True
     verbose_name_plural = _('Domains')
     fk_name = 'organization'
     extra = 0  # No one extra blank field in the admin representation

@@ -14,6 +14,7 @@ from .resources import (MembershipResource, OrderResource, OrderLineResource,
 class OrderLineInline(admin.StackedInline):
     model = OrderLine
     can_delete = True
+    show_change_link = True
     verbose_name_plural = _('Orderlines')
     fk_name = 'order'
     extra = 0
@@ -138,6 +139,7 @@ class PaymentProfileAdmin(SimpleHistoryAdmin):
 class CouponUserInline(admin.StackedInline):
     model = CouponUser
     can_delete = True
+    show_change_link = True
     verbose_name_plural = _('Coupon users')
     fk_name = 'coupon'
     extra = 0
