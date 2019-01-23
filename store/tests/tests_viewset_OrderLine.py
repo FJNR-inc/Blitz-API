@@ -106,6 +106,8 @@ class OrderLineTests(APITestCase):
             'object_id': 1,
             'order': 'http://testserver/orders/1',
             'quantity': 2,
+            'coupon': None,
+            'coupon_real_value': None,
             'url': 'http://testserver/order_lines/3'
         }
 
@@ -231,6 +233,8 @@ class OrderLineTests(APITestCase):
             'object_id': 1,
             'order': 'http://testserver/orders/1',
             'quantity': 2,
+            'coupon': None,
+            'coupon_real_value': None,
             'url': 'http://testserver/order_lines/3'
         }
 
@@ -258,6 +262,8 @@ class OrderLineTests(APITestCase):
 
         content = {
             'content_type': 'membership',
+            'coupon': None,
+            'coupon_real_value': None,
             'id': 3,
             'object_id': self.membership.id,
             'order': 'http://testserver/orders/1',
@@ -387,6 +393,8 @@ class OrderLineTests(APITestCase):
             'object_id': 1,
             'order': 'http://testserver/orders/1',
             'quantity': 99,
+            'coupon': None,
+            'coupon_real_value': None,
             'url': 'http://testserver/order_lines/1'
         }
 
@@ -423,6 +431,8 @@ class OrderLineTests(APITestCase):
             'object_id': 1,
             'order': 'http://testserver/orders/1',
             'quantity': 9999,
+            'coupon': None,
+            'coupon_real_value': None,
             'url': 'http://testserver/order_lines/1'
         }
 
@@ -532,6 +542,8 @@ class OrderLineTests(APITestCase):
                 'object_id': 1,
                 'order': 'http://testserver/orders/1',
                 'quantity': 1,
+                'coupon': None,
+                'coupon_real_value': None,
                 'url': 'http://testserver/order_lines/1'
             }]
         }
@@ -563,6 +575,8 @@ class OrderLineTests(APITestCase):
                 'object_id': 1,
                 'order': 'http://testserver/orders/1',
                 'quantity': 1,
+                'coupon': None,
+                'coupon_real_value': None,
                 'url': 'http://testserver/order_lines/1'
             }, {
                 'content_type': 'package',
@@ -570,6 +584,8 @@ class OrderLineTests(APITestCase):
                 'object_id': 1,
                 'order': 'http://testserver/orders/2',
                 'quantity': 99,
+                'coupon': None,
+                'coupon_real_value': None,
                 'url': 'http://testserver/order_lines/2'
             }]
         }
@@ -615,6 +631,8 @@ class OrderLineTests(APITestCase):
             'object_id': 1,
             'order': 'http://testserver/orders/1',
             'quantity': 1,
+            'coupon': None,
+            'coupon_real_value': None,
             'url': 'http://testserver/order_lines/1'
         }
 
@@ -660,6 +678,8 @@ class OrderLineTests(APITestCase):
             'object_id': 1,
             'order': 'http://testserver/orders/1',
             'quantity': 1,
+            'coupon': None,
+            'coupon_real_value': None,
             'url': 'http://testserver/order_lines/1'
         }
 

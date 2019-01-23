@@ -26,7 +26,7 @@ from retirement.models import WaitQueueNotification, Retirement
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
                      PaymentProfile, CustomPayment, Coupon, CouponUser, Refund,
-                     )
+                    )
 from .services import (charge_payment,
                        create_external_payment_profile,
                        create_external_card,
@@ -265,6 +265,14 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
         queryset=ContentType.objects.all(),
         slug_field='model',
     )
+    coupon_real_value = serializers.ReadOnlyField()
+    coupon = serializers.SlugRelatedField(
+        slug_field='code',
+        # queryset=Coupon.objects.all(),
+        allow_null=True,
+        required=False,
+        read_only=True,
+    )
 
     def validate(self, attrs):
         """Limits packages according to request user membership"""
@@ -357,6 +365,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         queryset=Coupon.objects.all(),
         allow_null=True,
         required=False,
+        write_only=True,
     )
     # target_user = serializers.HyperlinkedRelatedField(
     #     many=False,
@@ -421,6 +430,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             )
 
         with transaction.atomic():
+            coupon = validated_data.pop('coupon', None)
             order = Order.objects.create(**validated_data)
             charge_response = None
             discount_amount = 0
@@ -428,7 +438,6 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 OrderLine.objects.create(order=order, **orderline_data)
             amount = order.total_cost
 
-            coupon = validated_data.get('coupon')
             if coupon:
                 coupon_info = validate_coupon_for_order(coupon, order)
                 if coupon_info['valid_use']:
@@ -440,6 +449,11 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     amount -= discount_amount
                     coupon_user.uses = coupon_user.uses + 1
                     coupon_user.save()
+                    coupon_info['orderline'].coupon = coupon
+                    coupon_info['orderline'].coupon_real_value = coupon_info[
+                        'value'
+                    ]
+                    coupon_info['orderline'].save()
                 else:
                     raise serializers.ValidationError(coupon_info['error'])
 

@@ -55,6 +55,7 @@ class OrderTests(APITestCase):
     @classmethod
     def setUpClass(cls):
         super(OrderTests, cls).setUpClass()
+        cls.maxDiff=None
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.user.city = "Current city"
@@ -278,28 +279,36 @@ class OrderTests(APITestCase):
                 'object_id': 1,
                 'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2'
+                'url': 'http://testserver/order_lines/2',
+                'coupon': None,
+                'coupon_real_value': None,
             }, {
                 'content_type': 'package',
                 'id': 3,
                 'object_id': 1,
                 'order': 'http://testserver/orders/3',
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/3'
+                'url': 'http://testserver/order_lines/3',
+                'coupon': "ABCD1234",
+                'coupon_real_value': 10.0,
             }, {
                 'content_type': 'timeslot',
                 'id': 4,
                 'object_id': 1,
                 'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/4'
+                'url': 'http://testserver/order_lines/4',
+                'coupon': None,
+                'coupon_real_value': None,
             }, {
                 'content_type': 'retirement',
                 'id': 5,
                 'object_id': 1,
                 'order': 'http://testserver/orders/3',
                 'url': 'http://testserver/order_lines/5',
-                'quantity': 1
+                'quantity': 1,
+                'coupon': None,
+                'coupon_real_value': None,
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/2',
@@ -307,7 +316,6 @@ class OrderTests(APITestCase):
             'authorization_id': '1',
             'settlement_id': '1',
             'reference_number': '751',
-            'coupon': "ABCD1234",
         }
 
         self.assertEqual(response_data, content)
@@ -375,7 +383,9 @@ class OrderTests(APITestCase):
                 'object_id': 1,
                 'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2'
+                'url': 'http://testserver/order_lines/2',
+                'coupon': None,
+                'coupon_real_value': None,
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/2',
@@ -383,7 +393,6 @@ class OrderTests(APITestCase):
             'authorization_id': '0',
             'settlement_id': '0',
             'reference_number': '0',
-            'coupon': None,
         }
 
         self.assertEqual(response_data, content)
@@ -974,7 +983,9 @@ class OrderTests(APITestCase):
                 'object_id': 2,
                 'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2'
+                'url': 'http://testserver/order_lines/2',
+                'coupon': None,
+                'coupon_real_value': None,
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/1',
@@ -982,7 +993,6 @@ class OrderTests(APITestCase):
             'authorization_id': '1',
             'settlement_id': '1',
             'reference_number': '751',
-            'coupon': None,
         }
 
         self.assertEqual(response_data, content)
@@ -1208,13 +1218,17 @@ class OrderTests(APITestCase):
                 'quantity': 2,
                 'url': 'http://testserver/order_lines/2',
                 'order': 'http://testserver/orders/3',
+                'coupon': None,
+                'coupon_real_value': None,
             }, {
                 'content_type': 'timeslot',
                 'id': 3,
                 'object_id': 1,
                 'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/3'
+                'url': 'http://testserver/order_lines/3',
+                'coupon': None,
+                'coupon_real_value': None,
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/1',
@@ -1222,7 +1236,6 @@ class OrderTests(APITestCase):
             'authorization_id': '1',
             'settlement_id': '1',
             'reference_number': '751',
-            'coupon': None,
         }
 
         self.assertEqual(response_data, content)
@@ -1286,14 +1299,18 @@ class OrderTests(APITestCase):
                 'object_id': 1,
                 'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2'
+                'url': 'http://testserver/order_lines/2',
+                'coupon': None,
+                'coupon_real_value': None,
             }, {
                 'content_type': 'package',
                 'id': 3,
                 'object_id': 1,
                 'order': 'http://testserver/orders/3',
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/3'
+                'url': 'http://testserver/order_lines/3',
+                'coupon': None,
+                'coupon_real_value': None,
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/2',
@@ -1301,7 +1318,6 @@ class OrderTests(APITestCase):
             'authorization_id': '1',
             'settlement_id': '1',
             'reference_number': '751',
-            'coupon': None,
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -1550,21 +1566,24 @@ class OrderTests(APITestCase):
                 'object_id': 1,
                 'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2'
+                'url': 'http://testserver/order_lines/2',
+                'coupon': None,
+                'coupon_real_value': None,
             }, {
                 'content_type': 'package',
                 'id': 3,
                 'object_id': 1,
                 'order': 'http://testserver/orders/3',
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/3'
+                'url': 'http://testserver/order_lines/3',
+                'coupon': None,
+                'coupon_real_value': None,
             }],
             'settlement_id': '1',
             'reference_number': '751',
             'transaction_date': response_data['transaction_date'],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/2',
-            'coupon': None,
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -1742,9 +1761,10 @@ class OrderTests(APITestCase):
                 'object_id': 1,
                 'order': 'http://testserver/orders/1',
                 'quantity': 99,
-                'url': 'http://testserver/order_lines/1'
+                'url': 'http://testserver/order_lines/1',
+                'coupon': None,
+                'coupon_real_value': None,
             }],
-            'coupon': None,
         }
 
         self.assertEqual(response_data, content)
@@ -1812,11 +1832,12 @@ class OrderTests(APITestCase):
                     'object_id': 1,
                     'order': 'http://testserver/orders/1',
                     'quantity': 1,
-                    'url': 'http://testserver/order_lines/1'
+                    'url': 'http://testserver/order_lines/1',
+                    'coupon': None,
+                    'coupon_real_value': None,
                 }],
                 'url': 'http://testserver/orders/1',
                 'user': 'http://testserver/users/1',
-                'coupon': None,
             }]
         }
 
@@ -1853,11 +1874,12 @@ class OrderTests(APITestCase):
                     'object_id': 1,
                     'order': 'http://testserver/orders/1',
                     'quantity': 1,
-                    'url': 'http://testserver/order_lines/1'
+                    'url': 'http://testserver/order_lines/1',
+                    'coupon': None,
+                    'coupon_real_value': None,
                 }],
                 'url': 'http://testserver/orders/1',
                 'user': 'http://testserver/users/1',
-                'coupon': None,
             }, {
                 'id': 2,
                 'transaction_date': data['results'][1]['transaction_date'],
@@ -1867,7 +1889,6 @@ class OrderTests(APITestCase):
                 'order_lines': [],
                 'url': 'http://testserver/orders/2',
                 'user': 'http://testserver/users/2',
-                'coupon': None,
             }]
         }
 
@@ -1920,11 +1941,12 @@ class OrderTests(APITestCase):
                 'object_id': 1,
                 'order': 'http://testserver/orders/1',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/1'
+                'url': 'http://testserver/order_lines/1',
+                'coupon': None,
+                'coupon_real_value': None,
             }],
             'url': 'http://testserver/orders/1',
             'user': 'http://testserver/users/1',
-            'coupon': None,
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -1977,11 +1999,12 @@ class OrderTests(APITestCase):
                 'object_id': 1,
                 'order': 'http://testserver/orders/1',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/1'
+                'url': 'http://testserver/order_lines/1',
+                'coupon': None,
+                'coupon_real_value': None,
             }],
             'url': 'http://testserver/orders/1',
             'user': 'http://testserver/users/1',
-            'coupon': None,
         }
 
         self.assertEqual(json.loads(response.content), content)

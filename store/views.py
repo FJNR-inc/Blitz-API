@@ -239,7 +239,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             }
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
         orderlines = serializer.validated_data.pop('order_lines', None)
-        serializer.validated_data.pop('order_lines', None)
+        coupon = serializer.validated_data.pop('coupon', None)
         serializer.validated_data.pop('payment_token', None)
         serializer.validated_data.pop('single_use_token', None)
         order = Order(
@@ -259,7 +259,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
             orderline_list[idx].save()
 
-        response = validate_coupon_for_order(order.coupon, order)
+        response = validate_coupon_for_order(coupon, order)
         response['orderline'] = serializers.OrderLineSerializerNoOrder(
             response['orderline'],
             context={'request': request}
@@ -267,6 +267,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         response['orderline'].pop('url', None)
         response['orderline'].pop('id', None)
         response['orderline'].pop('order', None)
+        response['orderline'].pop('coupon', None)
+        response['orderline'].pop('coupon_real_value', None)
         order.delete()
         for orderline in orderline_list:
             orderline.delete()

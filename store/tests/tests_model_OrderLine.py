@@ -7,7 +7,7 @@ from rest_framework.test import APITestCase
 from blitz_api.factories import UserFactory
 from blitz_api.models import AcademicLevel
 
-from ..models import OrderLine, Order, Package
+from ..models import OrderLine, Order, Package, Coupon
 
 
 class OrderTests(APITestCase):
@@ -30,6 +30,16 @@ class OrderTests(APITestCase):
             authorization_id=1,
             settlement_id=1,
         )
+        cls.coupon = Coupon.objects.create(
+            value=13,
+            code="12345678",
+            start_time="2019-01-06T15:11:05-05:00",
+            end_time="2020-01-06T15:11:06-05:00",
+            max_use=100,
+            max_use_per_user=2,
+            details="Any package for fjeanneau clients",
+            owner=cls.user,
+        )
 
     def test_create(self):
         """
@@ -40,6 +50,7 @@ class OrderTests(APITestCase):
             quantity=999,
             content_type=self.package_type,
             object_id=1,
+            coupon=self.coupon,
         )
 
         self.assertEqual(str(order_line), 'extreme_package, qt:999')
