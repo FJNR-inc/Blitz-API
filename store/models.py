@@ -31,15 +31,6 @@ class Order(models.Model):
         related_name='orders',
     )
 
-    coupon = models.ForeignKey(
-        'Coupon',
-        on_delete=models.CASCADE,
-        verbose_name=_("Applied coupon"),
-        related_name='orders',
-        null=True,
-        blank=True,
-    )
-
     transaction_date = models.DateTimeField(
         verbose_name=_("Transaction date"),
     )
@@ -120,6 +111,22 @@ class OrderLine(models.Model):
 
     quantity = models.PositiveIntegerField(
         verbose_name=_("Quantity"),
+    )
+
+    coupon = models.ForeignKey(
+        'Coupon',
+        on_delete=models.CASCADE,
+        verbose_name=_("Applied coupon"),
+        related_name='order_lines',
+        null=True,
+        blank=True,
+    )
+
+    coupon_real_value = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        verbose_name=_("Coupon real value"),
+        null=True,
     )
 
     history = HistoricalRecords()
