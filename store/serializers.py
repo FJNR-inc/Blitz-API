@@ -779,6 +779,7 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
         extra_kwargs = {
             'applicable_retirements': {
                 'required': False,
+                'view_name': 'retirement:retirement-detail',
             },
             'applicable_timeslots': {
                 'required': False,
