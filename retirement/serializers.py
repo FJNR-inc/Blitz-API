@@ -733,9 +733,10 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         'AUTHORIZATION': order.authorization_id,
                         'TYPE': "Achat",
                         'ITEM_LIST': items,
-                        'TAX': (
+                        'TAX': round(
                             (new_order_line.cost - current_retirement.price) *
-                            Decimal(TAX_RATE)
+                            Decimal(TAX_RATE),
+                            2,
                         ),
                         'DISCOUNT': current_retirement.price,
                         'COUPON': {'code': _("Échange")},
