@@ -33,11 +33,13 @@ def move_coupon_to_orderlines(apps, schema_editor):
             )
             content_object = ct.get_object_for_this_type(pk=orderline.object_id)
             orderline.cost = content_object.price * orderline.quantity
+            orderline.save()
 
         for orderline in no_price_orderline:
             orderline.coupon = None
             orderline.coupon_real_value = 0
             orderline.cost = 0
+            orderline.save()
 
         if order.coupon:
             retirement_orderlines = order.order_lines.filter(
@@ -62,47 +64,9 @@ def move_coupon_to_orderlines(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('store', '0017_order_coupon_null'),
+        ('store', '0018_add_coupon_orderline'),
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='historicalorderline',
-            name='coupon',
-            field=models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='store.Coupon'),
-        ),
-        migrations.AddField(
-            model_name='orderline',
-            name='coupon',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='order_lines', to='store.Coupon', verbose_name='Applied coupon'),
-        ),
-        migrations.AddField(
-            model_name='historicalorderline',
-            name='coupon_real_value',
-            field=models.DecimalField(decimal_places=2, max_digits=6, default=0, verbose_name='Coupon real value'),
-        ),
-        migrations.AddField(
-            model_name='orderline',
-            name='coupon_real_value',
-            field=models.DecimalField(decimal_places=2, max_digits=6, default=0, verbose_name='Coupon real value'),
-        ),
-        migrations.AddField(
-            model_name='historicalorderline',
-            name='cost',
-            field=models.DecimalField(decimal_places=2, default=0, max_digits=6, verbose_name='Orderline cost'),
-        ),
-        migrations.AddField(
-            model_name='orderline',
-            name='cost',
-            field=models.DecimalField(decimal_places=2, default=0, max_digits=6, verbose_name='Orderline cost'),
-        ),
         migrations.RunPython(move_coupon_to_orderlines, migrations.RunPython.noop),
-        migrations.RemoveField(
-            model_name='historicalorder',
-            name='coupon',
-        ),
-        migrations.RemoveField(
-            model_name='order',
-            name='coupon',
-        ),
     ]
