@@ -8,6 +8,7 @@ import traceback
 
 import pytz
 import rest_framework
+
 from blitz_api.exceptions import MailServiceError
 from blitz_api.services import send_mail
 from django.conf import settings
@@ -21,7 +22,8 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
-from rest_framework import exceptions, mixins, status, viewsets
+from rest_framework import exceptions, mixins, status, viewsets, serializers
+from rest_framework import serializers as rest_framework_serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
@@ -251,12 +253,22 @@ class ReservationViewSet(viewsets.ModelViewSet):
             (retirement.start_time - timezone.now()) >=
             timedelta(days=retirement.min_day_refund))
 
+        # No need to check for previous refunds because a refunded
+        # reservation == canceled reservation, thus not active.
         if instance.is_active:
+            if order_line.quantity > 1:
+                raise rest_framework_serializers.ValidationError({
+                    'non_field_errors': [_(
+                        "The order containing this reservation has a quantity "
+                        "bigger than 1. Please contact the support team."
+                    )]
+                })
             if respects_minimum_days:
                 try:
+                    amount = order_line.cost
                     # The refund_rate converts in cents at the same time
                     amount_no_tax = Decimal(
-                        retirement.price * retirement.refund_rate
+                        amount * retirement.refund_rate
                     )
                     amount_tax = Decimal(TAX) * amount_no_tax
                     total_amount = round(Decimal(
@@ -299,6 +311,9 @@ class ReservationViewSet(viewsets.ModelViewSet):
             # Ask the external scheduler to start calling /notify if the
             # reserved_seats count == 1. Otherwise, the scheduler should
             # already be calling /notify at specified intervals.
+            #
+            # Since we are in the context of a cancelation, if reserved_seats
+            # equals 1, that means that this is the first cancelation.
             if retirement.reserved_seats == 1:
                 scheduler_url = '{0}'.format(
                     settings.EXTERNAL_SCHEDULER['URL'],
@@ -346,19 +361,14 @@ class ReservationViewSet(viewsets.ModelViewSet):
 
             # Send an email if a refund has been issued
             if instance.cancelation_action == 'R':
-                # Here, the 'details' key is used to provide details of the
-                #  item to the email template.
-                # As of now, only 'retirement' objects have the 'email_content'
-                #  key that is used here. There is surely a better way to
-                #  to handle that logic that will be more generic.
+                # Here the price takes the applied coupon into account, if
+                # applicable.
                 old_retirement = {
-                    'price': (retirement.price * retirement.refund_rate) / 100,
+                    'price': (amount * retirement.refund_rate) / 100,
                     'name': "{0}: {1}".format(
                         _("Retirement"),
                         retirement.name
-                    ),
-                    'details':
-                        retirement.email_content
+                    )
                 }
 
                 # Send order confirmation email

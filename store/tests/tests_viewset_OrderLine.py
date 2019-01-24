@@ -51,7 +51,7 @@ class OrderLineTests(APITestCase):
             name="extreme_package",
             details="100 reservations package",
             available=True,
-            price=400,
+            price=40,
             reservations=100,
         )
         cls.package.exclusive_memberships.set([
@@ -73,13 +73,15 @@ class OrderLineTests(APITestCase):
             order=cls.order,
             quantity=1,
             content_type=cls.package_type,
-            object_id=1,
+            object_id=cls.package.id,
+            cost=cls.package.price,
         )
         cls.order_line_admin = OrderLine.objects.create(
             order=cls.order_admin,
             quantity=99,
             content_type=cls.package_type,
-            object_id=1,
+            object_id=cls.package.id,
+            cost=99 * cls.package.price,
         )
 
     def test_create_package(self):
@@ -107,7 +109,8 @@ class OrderLineTests(APITestCase):
             'order': 'http://testserver/orders/1',
             'quantity': 2,
             'coupon': None,
-            'coupon_real_value': None,
+            'coupon_real_value': 0.0,
+            'cost': 2 * self.package.price,
             'url': 'http://testserver/order_lines/3'
         }
 
@@ -230,11 +233,12 @@ class OrderLineTests(APITestCase):
         content = {
             'content_type': 'package',
             'id': 3,
-            'object_id': 1,
+            'object_id': self.package.id,
             'order': 'http://testserver/orders/1',
             'quantity': 2,
             'coupon': None,
-            'coupon_real_value': None,
+            'coupon_real_value': 0.0,
+            'cost': 2 * self.package.price,
             'url': 'http://testserver/order_lines/3'
         }
 
@@ -263,11 +267,12 @@ class OrderLineTests(APITestCase):
         content = {
             'content_type': 'membership',
             'coupon': None,
-            'coupon_real_value': None,
+            'coupon_real_value': 0.0,
             'id': 3,
             'object_id': self.membership.id,
             'order': 'http://testserver/orders/1',
             'quantity': 1,
+            'cost': self.membership.price,
             'url': 'http://testserver/order_lines/3'
         }
 
@@ -394,7 +399,8 @@ class OrderLineTests(APITestCase):
             'order': 'http://testserver/orders/1',
             'quantity': 99,
             'coupon': None,
-            'coupon_real_value': None,
+            'coupon_real_value': 0.0,
+            'cost': 99 * self.package.price,
             'url': 'http://testserver/order_lines/1'
         }
 
@@ -411,7 +417,7 @@ class OrderLineTests(APITestCase):
 
         data = {
             'order': reverse('order-detail', args=[self.order.id]),
-            'quantity': 9999,
+            'quantity': 9,
         }
 
         response = self.client.patch(
@@ -430,9 +436,10 @@ class OrderLineTests(APITestCase):
             'id': 1,
             'object_id': 1,
             'order': 'http://testserver/orders/1',
-            'quantity': 9999,
+            'quantity': 9,
             'coupon': None,
-            'coupon_real_value': None,
+            'coupon_real_value': 0.0,
+            'cost': 9 * self.package.price,
             'url': 'http://testserver/order_lines/1'
         }
 
@@ -487,21 +494,6 @@ class OrderLineTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_delete(self):
-        """
-        Ensure we can delete an order line.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        response = self.client.delete(
-            reverse(
-                'orderline-detail',
-                kwargs={'pk': 1},
-            ),
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
     def test_list(self):
         """
         Ensure we can't list order lines as an unauthenticated user.
@@ -539,11 +531,12 @@ class OrderLineTests(APITestCase):
             'results': [{
                 'content_type': 'package',
                 'id': 1,
-                'object_id': 1,
+                'object_id': self.package.id,
                 'order': 'http://testserver/orders/1',
                 'quantity': 1,
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': self.package.price,
                 'url': 'http://testserver/order_lines/1'
             }]
         }
@@ -572,20 +565,22 @@ class OrderLineTests(APITestCase):
             'results': [{
                 'content_type': 'package',
                 'id': 1,
-                'object_id': 1,
+                'object_id': self.package.id,
                 'order': 'http://testserver/orders/1',
                 'quantity': 1,
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': self.package.price,
                 'url': 'http://testserver/order_lines/1'
             }, {
                 'content_type': 'package',
                 'id': 2,
-                'object_id': 1,
+                'object_id': self.package.id,
                 'order': 'http://testserver/orders/2',
                 'quantity': 99,
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': 99 * self.package.price,
                 'url': 'http://testserver/order_lines/2'
             }]
         }
@@ -628,11 +623,12 @@ class OrderLineTests(APITestCase):
         content = {
             'content_type': 'package',
             'id': 1,
-            'object_id': 1,
+            'object_id': self.package.id,
             'order': 'http://testserver/orders/1',
             'quantity': 1,
             'coupon': None,
-            'coupon_real_value': None,
+            'coupon_real_value': 0.0,
+            'cost': self.package.price,
             'url': 'http://testserver/order_lines/1'
         }
 
@@ -675,11 +671,12 @@ class OrderLineTests(APITestCase):
         content = {
             'content_type': 'package',
             'id': 1,
-            'object_id': 1,
+            'object_id': self.package.id,
             'order': 'http://testserver/orders/1',
             'quantity': 1,
             'coupon': None,
-            'coupon_real_value': None,
+            'coupon_real_value': 0.0,
+            'cost': self.package.price,
             'url': 'http://testserver/order_lines/1'
         }
 

@@ -63,7 +63,7 @@ class Order(models.Model):
             models.Q(content_type__model='retirement')
         )
         for orderline in orderlines:
-            cost += orderline.content_object.price * orderline.quantity
+            cost += orderline.cost * orderline.quantity
         return cost
 
     @property
@@ -126,7 +126,14 @@ class OrderLine(models.Model):
         max_digits=6,
         decimal_places=2,
         verbose_name=_("Coupon real value"),
-        null=True,
+        default=0,
+    )
+
+    cost = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        verbose_name=_("Orderline cost"),
+        default=0,
     )
 
     history = HistoricalRecords()

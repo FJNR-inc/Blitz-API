@@ -55,7 +55,6 @@ class OrderTests(APITestCase):
     @classmethod
     def setUpClass(cls):
         super(OrderTests, cls).setUpClass()
-        cls.maxDiff=None
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.user.city = "Current city"
@@ -80,7 +79,7 @@ class OrderTests(APITestCase):
             name="extreme_package",
             details="100 reservations package",
             available=True,
-            price=400,
+            price=40,
             reservations=100,
         )
         cls.package2 = Package.objects.create(
@@ -109,6 +108,7 @@ class OrderTests(APITestCase):
             quantity=1,
             content_type=cls.package_type,
             object_id=1,
+            cost=cls.package.price,
         )
         cls.payment_profile = PaymentProfile.objects.create(
             name="payment_api_name",
@@ -281,7 +281,8 @@ class OrderTests(APITestCase):
                 'quantity': 1,
                 'url': 'http://testserver/order_lines/2',
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': 50.0,
             }, {
                 'content_type': 'package',
                 'id': 3,
@@ -291,6 +292,7 @@ class OrderTests(APITestCase):
                 'url': 'http://testserver/order_lines/3',
                 'coupon': "ABCD1234",
                 'coupon_real_value': 10.0,
+                'cost': 2 * self.package.price - 10,
             }, {
                 'content_type': 'timeslot',
                 'id': 4,
@@ -299,7 +301,8 @@ class OrderTests(APITestCase):
                 'quantity': 1,
                 'url': 'http://testserver/order_lines/4',
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': 0.0,
             }, {
                 'content_type': 'retirement',
                 'id': 5,
@@ -308,7 +311,8 @@ class OrderTests(APITestCase):
                 'url': 'http://testserver/order_lines/5',
                 'quantity': 1,
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': 199.0,
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/2',
@@ -385,7 +389,8 @@ class OrderTests(APITestCase):
                 'quantity': 1,
                 'url': 'http://testserver/order_lines/2',
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': 0.0,
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/2',
@@ -925,9 +930,9 @@ class OrderTests(APITestCase):
     @responses.activate
     def test_create_reserved_retirement(self):
         """
-        Ensure we can't create an order with reservations if the requested
-        retirement has only reserved seats and the user has not been notified
-        (not on the mailing list).
+        Ensure we can create an order with reservations if the requested
+        retirement has reserved seats and the user has been notified
+        (on the mailing list).
         """
         self.client.force_authenticate(user=self.user)
 
@@ -985,7 +990,8 @@ class OrderTests(APITestCase):
                 'quantity': 1,
                 'url': 'http://testserver/order_lines/2',
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': 199.0,
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/1',
@@ -1219,7 +1225,8 @@ class OrderTests(APITestCase):
                 'url': 'http://testserver/order_lines/2',
                 'order': 'http://testserver/orders/3',
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': 2 * self.package.price,
             }, {
                 'content_type': 'timeslot',
                 'id': 3,
@@ -1228,7 +1235,8 @@ class OrderTests(APITestCase):
                 'quantity': 1,
                 'url': 'http://testserver/order_lines/3',
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': 0.0,
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/1',
@@ -1291,6 +1299,12 @@ class OrderTests(APITestCase):
 
         response_data = json.loads(response.content)
 
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
         content = {
             'id': 3,
             'order_lines': [{
@@ -1301,7 +1315,8 @@ class OrderTests(APITestCase):
                 'quantity': 1,
                 'url': 'http://testserver/order_lines/2',
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': 50.0,
             }, {
                 'content_type': 'package',
                 'id': 3,
@@ -1310,7 +1325,8 @@ class OrderTests(APITestCase):
                 'quantity': 2,
                 'url': 'http://testserver/order_lines/3',
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': 2 * self.package.price,
             }],
             'url': 'http://testserver/orders/3',
             'user': 'http://testserver/users/2',
@@ -1330,8 +1346,6 @@ class OrderTests(APITestCase):
         admin.tickets = 1
         admin.membership = None
         admin.save()
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     @responses.activate
     def test_create_with_invalid_single_use_token(self):
@@ -1568,7 +1582,8 @@ class OrderTests(APITestCase):
                 'quantity': 1,
                 'url': 'http://testserver/order_lines/2',
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': 50.0,
             }, {
                 'content_type': 'package',
                 'id': 3,
@@ -1577,7 +1592,8 @@ class OrderTests(APITestCase):
                 'quantity': 2,
                 'url': 'http://testserver/order_lines/3',
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': 2 * self.package.price,
             }],
             'settlement_id': '1',
             'reference_number': '751',
@@ -1763,7 +1779,8 @@ class OrderTests(APITestCase):
                 'quantity': 99,
                 'url': 'http://testserver/order_lines/1',
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': 99 * self.package.price
             }],
         }
 
@@ -1834,7 +1851,8 @@ class OrderTests(APITestCase):
                     'quantity': 1,
                     'url': 'http://testserver/order_lines/1',
                     'coupon': None,
-                    'coupon_real_value': None,
+                    'coupon_real_value': 0.0,
+                    'cost': self.package.price,
                 }],
                 'url': 'http://testserver/orders/1',
                 'user': 'http://testserver/users/1',
@@ -1876,7 +1894,8 @@ class OrderTests(APITestCase):
                     'quantity': 1,
                     'url': 'http://testserver/order_lines/1',
                     'coupon': None,
-                    'coupon_real_value': None,
+                    'coupon_real_value': 0.0,
+                    'cost': self.package.price,
                 }],
                 'url': 'http://testserver/orders/1',
                 'user': 'http://testserver/users/1',
@@ -1943,7 +1962,8 @@ class OrderTests(APITestCase):
                 'quantity': 1,
                 'url': 'http://testserver/order_lines/1',
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': self.package.price,
             }],
             'url': 'http://testserver/orders/1',
             'user': 'http://testserver/users/1',
@@ -2001,7 +2021,8 @@ class OrderTests(APITestCase):
                 'quantity': 1,
                 'url': 'http://testserver/order_lines/1',
                 'coupon': None,
-                'coupon_real_value': None,
+                'coupon_real_value': 0.0,
+                'cost': self.package.price,
             }],
             'url': 'http://testserver/orders/1',
             'user': 'http://testserver/users/1',

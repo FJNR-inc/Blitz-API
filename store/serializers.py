@@ -26,7 +26,7 @@ from retirement.models import WaitQueueNotification, Retirement
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
                      PaymentProfile, CustomPayment, Coupon, CouponUser, Refund,
-                    )
+                     )
 from .services import (charge_payment,
                        create_external_payment_profile,
                        create_external_card,
@@ -266,9 +266,9 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
         slug_field='model',
     )
     coupon_real_value = serializers.ReadOnlyField()
+    cost = serializers.ReadOnlyField()
     coupon = serializers.SlugRelatedField(
         slug_field='code',
-        # queryset=Coupon.objects.all(),
         allow_null=True,
         required=False,
         read_only=True,
@@ -325,6 +325,11 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
                     )
                 ],
             })
+
+        if (content_type.model == 'membership'
+                or content_type.model == 'package'
+                or content_type.model == 'retirement'):
+            attrs['cost'] = obj.price * validated_data.get('quantity')
 
         return attrs
 
@@ -436,7 +441,6 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             discount_amount = 0
             for orderline_data in orderlines_data:
                 OrderLine.objects.create(order=order, **orderline_data)
-            amount = order.total_cost
 
             if coupon:
                 coupon_info = validate_coupon_for_order(coupon, order)
@@ -445,10 +449,14 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         user=user,
                         coupon=coupon,
                     )
-                    discount_amount = coupon_info['value']
-                    amount -= discount_amount
                     coupon_user.uses = coupon_user.uses + 1
                     coupon_user.save()
+                    discount_amount = coupon_info['value']
+                    orderline_cost = coupon_info['orderline'].cost
+                    coupon_info['orderline'].cost = (
+                        orderline_cost -
+                        discount_amount
+                    )
                     coupon_info['orderline'].coupon = coupon
                     coupon_info['orderline'].coupon_real_value = coupon_info[
                         'value'
@@ -457,6 +465,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 else:
                     raise serializers.ValidationError(coupon_info['error'])
 
+            amount = order.total_cost
             tax = amount * Decimal(repr(TAX_RATE))
             tax = tax.quantize(Decimal('0.01'))
             amount *= Decimal(repr(TAX_RATE + 1))

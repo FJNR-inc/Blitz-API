@@ -127,7 +127,8 @@ class ReservationTests(APITestCase):
             order=cls.order,
             quantity=1,
             content_type=cls.retirement_type,
-            object_id=1,
+            object_id=cls.retirement.id,
+            cost=cls.retirement.price,
         )
         cls.reservation = Reservation.objects.create(
             user=cls.user,
@@ -1746,6 +1747,35 @@ class ReservationTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_orderline_quantity_too_big(self):
+        """
+        Ensure that a user can't delete a reservation if the orderline
+        containing it has a quatity bigger than 1.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        self.order_line.quantity = 2
+        self.order_line.save()
+
+        response = self.client.delete(
+            reverse(
+                'retirement:reservation-detail',
+                kwargs={'pk': self.reservation_admin.id},
+            ),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        content = {
+            'non_field_errors': [
+                "The order containing this reservation has a quantity "
+                "bigger than 1. Please contact the support team."
+            ]
+        }
+
+        self.order_line.quantity = 1
+        self.order_line.save()
 
     @responses.activate
     def test_delete_twice(self):

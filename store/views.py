@@ -269,6 +269,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         response['orderline'].pop('order', None)
         response['orderline'].pop('coupon', None)
         response['orderline'].pop('coupon_real_value', None)
+        response['orderline'].pop('cost', None)
         order.delete()
         for orderline in orderline_list:
             orderline.delete()

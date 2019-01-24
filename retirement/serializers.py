@@ -453,9 +453,18 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         profile = PaymentProfile.objects.filter(owner=user).first()
         instance_pk = instance.pk
         current_retirement = instance.retirement
+        coupon = instance.order_line.coupon
+        coupon_value = instance.order_line.coupon_real_value
 
         if not self.context['request'].user.is_staff:
             validated_data.pop('is_present', None)
+
+        if not instance.is_active:
+            raise serializers.ValidationError({
+                'non_field_errors': [_(
+                    "This reservation has already been canceled."
+                )]
+            })
 
         if (self.context['view'].action == 'partial_update'
                 and validated_data.get('retirement')):
@@ -470,8 +479,14 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 (instance.retirement.start_time - timezone.now()) >=
                 timedelta(days=instance.retirement.min_day_exchange))
             if instance.retirement.price < validated_data['retirement'].price:
+                # If the new retirement is more expensive, reapply the coupon
+                # on the new orderline created. In other words, any coupon
+                # used for the initial purchase is applied again here.
                 need_transaction = True
-                amount = validated_data['retirement'].price
+                amount = (
+                    validated_data['retirement'].price -
+                    instance.order_line.coupon_real_value
+                )
                 if not (payment_token or single_use_token):
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
@@ -481,10 +496,17 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         )]
                     })
             if instance.retirement.price > validated_data['retirement'].price:
+                # If a coupon was applied for the purchase, check if the real
+                # cost of the purchase was lower than the price difference.
+                # If so, refund the real cost of the purchase.
+                # Else refund the difference between the 2 retirements.
                 need_refund = True
-                amount = instance.retirement.price - validated_data[
-                    'retirement'
-                ].price
+                price_diff = (
+                    instance.retirement.price -
+                    validated_data['retirement'].price
+                )
+                real_cost = instance.order_line.cost
+                amount = min(price_diff, real_cost)
             if instance.retirement == validated_data['retirement']:
                 raise serializers.ValidationError({
                     'retirement': [_(
@@ -552,7 +574,10 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         content_type=ContentType.objects.get_for_model(
                             Retirement
                         ),
-                        object_id=validated_data['retirement'].id
+                        object_id=validated_data['retirement'].id,
+                        cost=amount,
+                        coupon=coupon,
+                        coupon_real_value=coupon_value,
                     )
                     tax = round(amount * Decimal(TAX_RATE), 2)
                     amount *= Decimal(TAX_RATE + 1)
