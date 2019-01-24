@@ -505,7 +505,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
 
             user_waiting = new_retirement.wait_queue.filter(user=user)
             if not (((new_retirement.seats - new_retirement.total_reservations
-                      - new_retirement.reserved_seats) > 0) or
+                      - new_retirement.reserved_seats + 1) > 0) or
                     (new_retirement.reserved_seats
                      and WaitQueueNotification.objects.filter(
                          user=user, retirement=new_retirement))):
