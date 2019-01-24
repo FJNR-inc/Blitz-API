@@ -48,9 +48,12 @@ def move_coupon_to_orderlines(apps, schema_editor):
 
             retirements_id = retirement_orderlines.values_list('object_id', flat=True)
 
-            applicable_retirement = Retirement.objects.filter(
-                id__in=retirements_id
-            ).latest('price')
+            try:
+                applicable_retirement = Retirement.objects.filter(
+                    id__in=retirements_id
+                ).latest('price')
+            except Retirement.DoesNotExist:
+                continue
 
             applicable_orderline = retirement_orderlines.get(
                 object_id=applicable_retirement.pk
