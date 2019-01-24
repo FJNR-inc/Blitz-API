@@ -733,11 +733,21 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         'AUTHORIZATION': order.authorization_id,
                         'TYPE': "Achat",
                         'ITEM_LIST': items,
-                        'TAX': tax,
+                        'TAX': (
+                            (new_order_line.cost - current_retirement.price) *
+                            Decimal(TAX_RATE)
+                        ),
                         'DISCOUNT': current_retirement.price,
                         'COUPON': {'code': _("Échange")},
-                        'SUBTOTAL': round(amount / 100 - tax, 2),
-                        'COST': round(Decimal(amount) / 100, 2),
+                        'SUBTOTAL': round(
+                            new_order_line.cost - current_retirement.price,
+                            2
+                        ),
+                        'COST': round(
+                            (new_order_line.cost - current_retirement.price) *
+                            Decimal(TAX_RATE + 1),
+                            2
+                        ),
                     }
 
                     plain_msg = render_to_string("invoice.txt", merge_data)
