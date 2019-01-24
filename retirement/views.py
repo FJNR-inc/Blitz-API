@@ -500,12 +500,14 @@ class WaitQueueNotificationViewSet(mixins.ListModelMixin,
         # Checks if lastest notification is older than 24h
         # This is a hard-coded limitation to allow anonymous users to call
         # the function.
-        time_limit = timezone.now() - timedelta(days=1)
-        if WaitQueueNotification.objects.filter(created_at__gt=time_limit):
-            response_data = {
-                'detail': "Last notification was sent less than 24h ago."
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
+        # Keep a 5 minutes gap.
+        time_limit = timezone.now() - timedelta(hours=23, minutes=55)
+        notified_someone = False
+        ready_retirements = False
+
+        retirements_to_notify = Retirement.objects.filter(
+            reserved_seats__gt=0,
+        )
 
         # Remove older notifications
         remove_before = timezone.now() - timedelta(
@@ -517,10 +519,13 @@ class WaitQueueNotificationViewSet(mixins.ListModelMixin,
             created_at__lt=remove_before
         ).delete()
 
-        # Get retirements that have reserved seats
-        retirements = Retirement.objects.filter(reserved_seats__gt=0)
-
-        for retirement in retirements:
+        for retirement in retirements_to_notify:
+            if retirement.wait_queue_notifications.filter(
+                    created_at__gt=time_limit):
+                # Next iteration, since this wait_queue has been notified less
+                # than 24h ago.
+                continue
+            ready_retirements = True
             # Get the wait queue with elements ordered by ascending date
             wait_queue = retirement.wait_queue.all().order_by('created_at')
             # Get number of waiting users
@@ -544,10 +549,23 @@ class WaitQueueNotificationViewSet(mixins.ListModelMixin,
                         user=user,
                         retirement=retirement,
                     )
-
+                    notified_someone = True
             retirement.save()
 
-        if Retirement.objects.filter(reserved_seats__gt=0).count() == 0:
+        if retirements_to_notify.count() == 0:
+            response_data = {
+                'detail': "No reserved seats.",
+                'stop': True,
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not ready_retirements:
+            response_data = {
+                'detail': "Last notification was sent less than 24h ago."
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not notified_someone:
             response_data = {
                 'detail': "No reserved seats.",
                 'stop': True,

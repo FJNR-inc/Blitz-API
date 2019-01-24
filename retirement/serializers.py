@@ -455,6 +455,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         current_retirement = instance.retirement
         coupon = instance.order_line.coupon
         coupon_value = instance.order_line.coupon_real_value
+        order_line = instance.order_line
+        request = self.context['request']
 
         if not self.context['request'].user.is_staff:
             validated_data.pop('is_present', None)
@@ -466,9 +468,59 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 )]
             })
 
+        # Create a copy of the reservation. This copy keeps track of
+        # the exchange.
+        canceled_reservation = instance
+        canceled_reservation.pk = None
+        canceled_reservation.save()
+
+        instance = Reservation.objects.get(id=instance_pk)
+
+        canceled_reservation.is_active = False
+        canceled_reservation.cancelation_reason = 'U'
+        canceled_reservation.cancelation_action = 'E'
+        canceled_reservation.cancelation_date = timezone.now()
+        canceled_reservation.save()
+
+        # Update the reservation
+        instance = super(ReservationSerializer, self).update(
+            instance,
+            validated_data,
+        )
+
+        # Update retirement seats
+        free_seats = (
+            current_retirement.seats -
+            current_retirement.total_reservations
+        )
+        if (current_retirement.reserved_seats or free_seats == 1):
+            current_retirement.reserved_seats += 1
+            current_retirement.save()
+
+        if validated_data.get('retirement'):
+            # Validate if user has the right to reserve a seat in the new
+            # retirement
+            new_retirement = instance.retirement
+            old_retirement = current_retirement
+
+            user_waiting = new_retirement.wait_queue.filter(user=user)
+            if not (((new_retirement.seats - new_retirement.total_reservations
+                      - new_retirement.reserved_seats) > 0) or
+                    (new_retirement.reserved_seats
+                     and WaitQueueNotification.objects.filter(
+                         user=user, retirement=new_retirement))):
+                raise serializers.ValidationError({
+                    'non_field_errors': [_(
+                        "There are no places left in the requested "
+                        "retirement."
+                    )]
+                })
+            if user_waiting:
+                user_waiting.delete()
+
         if (self.context['view'].action == 'partial_update'
                 and validated_data.get('retirement')):
-            if instance.order_line.quantity > 1:
+            if order_line.quantity > 1:
                 raise serializers.ValidationError({
                     'non_field_errors': [_(
                         "The order containing this reservation has a quantity "
@@ -476,16 +528,16 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     )]
                 })
             respects_minimum_days = (
-                (instance.retirement.start_time - timezone.now()) >=
-                timedelta(days=instance.retirement.min_day_exchange))
-            if instance.retirement.price < validated_data['retirement'].price:
+                (current_retirement.start_time - timezone.now()) >=
+                timedelta(days=current_retirement.min_day_exchange))
+            if current_retirement.price < validated_data['retirement'].price:
                 # If the new retirement is more expensive, reapply the coupon
                 # on the new orderline created. In other words, any coupon
                 # used for the initial purchase is applied again here.
                 need_transaction = True
                 amount = (
                     validated_data['retirement'].price -
-                    instance.order_line.coupon_real_value
+                    order_line.coupon_real_value
                 )
                 if not (payment_token or single_use_token):
                     raise serializers.ValidationError({
@@ -495,19 +547,19 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                             "single_use_token to charge the balance."
                         )]
                     })
-            if instance.retirement.price > validated_data['retirement'].price:
+            if current_retirement.price > validated_data['retirement'].price:
                 # If a coupon was applied for the purchase, check if the real
                 # cost of the purchase was lower than the price difference.
                 # If so, refund the real cost of the purchase.
                 # Else refund the difference between the 2 retirements.
                 need_refund = True
                 price_diff = (
-                    instance.retirement.price -
+                    current_retirement.price -
                     validated_data['retirement'].price
                 )
-                real_cost = instance.order_line.cost
+                real_cost = order_line.cost
                 amount = min(price_diff, real_cost)
-            if instance.retirement == validated_data['retirement']:
+            if current_retirement == validated_data['retirement']:
                 raise serializers.ValidationError({
                     'retirement': [_(
                         "That retirement is already assigned to this object."
@@ -568,7 +620,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         authorization_id=1,
                         settlement_id=1,
                     )
-                    orderline = OrderLine.objects.create(
+                    new_order_line = OrderLine.objects.create(
                         order=order,
                         quantity=1,
                         content_type=ContentType.objects.get_for_model(
@@ -587,11 +639,11 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     # Do a complete refund of the previous retirement
                     try:
                         refund_instance = refund_retirement(
-                            instance,
+                            canceled_reservation,
                             100,
                             "Exchange retirement {0} for retirement "
                             "{1}".format(
-                                str(instance.retirement),
+                                str(current_retirement),
                                 str(validated_data['retirement'])
                             )
                         )
@@ -645,7 +697,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         'merchantRefNum'
                     ]
                     order.save()
-                    validated_data['order_line'] = orderline
+                    instance.order_line = new_order_line
+                    instance.save()
 
                     # Here, the 'details' key is used to provide details of the
                     #  item to the email template.
@@ -655,10 +708,10 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     # generic.
                     items = [
                         {
-                            'price': orderline.content_object.price,
+                            'price': new_order_line.content_object.price,
                             'name': "{0}: {1}".format(
-                                str(orderline.content_type),
-                                orderline.content_object.name
+                                str(new_order_line.content_type),
+                                new_order_line.content_object.name
                             ),
                         }
                     ]
@@ -681,7 +734,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         'TYPE': "Achat",
                         'ITEM_LIST': items,
                         'TAX': tax,
-                        'DISCOUNT': instance.retirement.price,
+                        'DISCOUNT': current_retirement.price,
                         'COUPON': {'code': _("Échange")},
                         'SUBTOTAL': round(amount / 100 - tax, 2),
                         'COST': round(Decimal(amount) / 100, 2),
@@ -703,9 +756,20 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     amount = round(amount * 100, 2)
                     retirement = validated_data['retirement']
 
+                    refund_instance = Refund.objects.create(
+                        orderline=order_line,
+                        refund_date=timezone.now(),
+                        amount=amount/100,
+                        details="Exchange retirement {0} for "
+                                "retirement {1}".format(
+                                    str(current_retirement),
+                                    str(validated_data['retirement'])
+                                ),
+                    )
+
                     try:
                         refund_response = refund_amount(
-                            instance.order_line.order.settlement_id,
+                            order_line.order.settlement_id,
                             int(amount)
                         )
                     except PaymentAPIError as err:
@@ -720,17 +784,6 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                             'message': str(err)
                         })
 
-                    refund_instance = Refund.objects.create(
-                        orderline=instance.order_line,
-                        refund_date=timezone.now(),
-                        amount=amount/100,
-                        details="Exchange retirement {0} for "
-                                "retirement {1}".format(
-                                    str(instance.retirement),
-                                    str(validated_data['retirement'])
-                                ),
-                    )
-
                     # Send the refund email
                     new_retirement = retirement
                     old_retirement = current_retirement
@@ -738,7 +791,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     # Send refund confirmation email
                     merge_data = {
                         'DATETIME': timezone.localtime().strftime("%x %X"),
-                        'ORDER_ID': instance.order_line.order.id,
+                        'ORDER_ID': order_line.order.id,
                         'CUSTOMER_NAME':
                         user.first_name + " " + user.last_name,
                         'CUSTOMER_EMAIL': user.email,
@@ -763,38 +816,56 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         html_message=msg_html,
                     )
 
-                canceled_reservation = instance
-                canceled_reservation.pk = None
-                canceled_reservation.save()
-                instance = Reservation.objects.get(id=instance_pk)
+        # Ask the external scheduler to start calling /notify if the
+        # reserved_seats count == 1. Otherwise, the scheduler should
+        # already be calling /notify at specified intervals.
+        #
+        # Since we are in the context of a cancelation, if reserved_seats
+        # equals 1, that means that this is the first cancelation.
+        if current_retirement.reserved_seats == 1:
+            scheduler_url = '{0}'.format(
+                settings.EXTERNAL_SCHEDULER['URL'],
+            )
 
-            # End of atomic transaction
+            data = {
+                "hour": timezone.now().hour,
+                "minute": (timezone.now().minute + 5) % 60,
+                "url": '{0}{1}'.format(
+                    request.build_absolute_uri(
+                        reverse('retirement:waitqueuenotification-list')
+                    ),
+                    "/notify"
+                ),
+                "description": "Retirement wait queue notification"
+            }
 
-        instance = super(ReservationSerializer, self).update(
-            instance,
-            validated_data,
-        )
+            try:
+                auth_data = {
+                    "username": settings.EXTERNAL_SCHEDULER['USER'],
+                    "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
+                }
+                auth = requests.post(
+                    scheduler_url + "/authentication",
+                    json=auth_data,
+                )
+                auth.raise_for_status()
+
+                r = requests.post(
+                    scheduler_url + '/tasks',
+                    json=data,
+                    headers={
+                        'Authorization':
+                        'Token ' + json.loads(auth.content)['token']},
+                )
+                r.raise_for_status()
+            except (requests.exceptions.HTTPError,
+                    requests.exceptions.ConnectionError) as err:
+                mail_admins(
+                    "Thèsez-vous: external scheduler error",
+                    traceback.format_exc()
+                )
 
         if validated_data.get('retirement'):
-            retirement = instance.retirement
-            new_retirement = retirement
-            old_retirement = current_retirement
-
-            user_waiting = retirement.wait_queue.filter(user=user)
-            if not (((new_retirement.seats - new_retirement.total_reservations
-                      - new_retirement.reserved_seats) > 0) or
-                    (new_retirement.reserved_seats
-                     and WaitQueueNotification.objects.filter(
-                         user=user, retirement=new_retirement))):
-                raise serializers.ValidationError({
-                    'non_field_errors': [_(
-                        "There are no places left in the requested "
-                        "retirement."
-                    )]
-                })
-            if user_waiting:
-                user_waiting.delete()
-
             # Send exchange confirmation email
             merge_data = {
                 'DATETIME': timezone.localtime().strftime("%x %X"),
@@ -817,16 +888,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 html_message=msg_html,
             )
 
-            # Create a copy of the reservation. This copy keeps track of
-            # the exchange.
-            canceled_reservation.is_active = False
-            canceled_reservation.cancelation_reason = 'U'
-            canceled_reservation.cancelation_action = 'E'
-            canceled_reservation.cancelation_date = timezone.now()
-            canceled_reservation.save()
-
             merge_data = {
-                'RETIREMENT': retirement,
+                'RETIREMENT': new_retirement,
                 'USER': instance.user,
             }
 
