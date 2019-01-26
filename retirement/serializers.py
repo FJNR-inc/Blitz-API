@@ -783,6 +783,9 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                             order_line.order.settlement_id,
                             int(round(amount))
                         )
+                        refund_res_content = refund_response.json()
+                        refund_instance.refund_id = refund_res_content['id']
+                        refund_instance.save()
                     except PaymentAPIError as err:
                         if str(err) == PAYSAFE_EXCEPTION['3406']:
                             raise serializers.ValidationError({

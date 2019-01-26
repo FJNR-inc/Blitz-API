@@ -274,7 +274,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
                     total_amount = round(Decimal(
                         amount_no_tax + amount_tax
                     ), 2)
-                    Refund.objects.create(
+                    refund_instance = Refund.objects.create(
                         orderline=order_line,
                         refund_date=timezone.now(),
                         amount=total_amount/100,
@@ -284,17 +284,19 @@ class ReservationViewSet(viewsets.ModelViewSet):
                         order.settlement_id,
                         int(round(total_amount))
                     )
+                    refund_res_content = refund_response.json()
+                    refund_instance.refund_id = refund_res_content['id']
+                    refund_instance.save()
                 except PaymentAPIError as err:
                     if str(err) == PAYSAFE_EXCEPTION['3406']:
-                        return Response(
-                            {'non_field_errors': _("The order has not been "
-                                                   "charged yet. Try again "
-                                                   "later.")},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-                    return Response(
-                        {'message': str(err)},
-                        status=status.HTTP_400_BAD_REQUEST,
+                        raise rest_framework_serializers.ValidationError({
+                            'non_field_errors': _(
+                                "The order has not been charged yet. Try "
+                                "again later."
+                            )
+                        })
+                    raise rest_framework_serializers.ValidationError(
+                        {'message': str(err)}
                     )
                 instance.cancelation_action = 'R'
             else:

@@ -107,12 +107,14 @@ def refund_retirement(reservation, refund_rate, refund_reason):
         orderline.order.settlement_id,
         int(amount_to_refund)
     )
+    refund_res_content = refund_response.json()
 
     refund_instance = Refund.objects.create(
         orderline=orderline,
         refund_date=timezone.now(),
         amount=amount_to_refund/100,
         details=refund_reason,
+        refund_id=refund_res_content['id'],
     )
 
     return refund_instance

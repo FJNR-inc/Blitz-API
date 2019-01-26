@@ -176,6 +176,13 @@ class Refund(SafeDeleteModel):
         verbose_name=_("Refund date"),
     )
 
+    refund_id = models.CharField(
+        verbose_name=_("Refund ID"),
+        max_length=253,
+        null=True,
+        blank=True,
+    )
+
     history = HistoricalRecords()
 
     def __str__(self):

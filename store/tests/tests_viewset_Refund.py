@@ -116,6 +116,7 @@ class RefundTests(APITestCase):
                 'details': "Refund details",
                 'amount': '10.00',
                 'refund_date': response_data['results'][0]['refund_date'],
+                'refund_id': None,
                 'url': 'http://testserver/refunds/1'
             }]
         }
@@ -151,6 +152,7 @@ class RefundTests(APITestCase):
                 'details': "Refund details",
                 'amount': '10.00',
                 'refund_date': response_data['results'][0]['refund_date'],
+                'refund_id': None,
                 'url': 'http://testserver/refunds/1'
             }, {
                 'orderline': 'http://testserver/order_lines/2',
@@ -158,6 +160,7 @@ class RefundTests(APITestCase):
                 'details': "Admin refund details",
                 'amount': '10.00',
                 'refund_date': response_data['results'][1]['refund_date'],
+                'refund_id': None,
                 'url': 'http://testserver/refunds/2'
             }]
         }
@@ -203,6 +206,7 @@ class RefundTests(APITestCase):
             'details': "Refund details",
             'amount': '10.00',
             'refund_date': response_data['refund_date'],
+            'refund_id': None,
             'url': 'http://testserver/refunds/1'
         }
 
@@ -250,6 +254,7 @@ class RefundTests(APITestCase):
             'details': "Refund details",
             'amount': '10.00',
             'refund_date': response_data['refund_date'],
+            'refund_id': None,
             'url': 'http://testserver/refunds/1'
         }
 
