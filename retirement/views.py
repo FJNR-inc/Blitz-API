@@ -265,7 +265,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
                 })
             if respects_minimum_days:
                 try:
-                    amount = order_line.cost
+                    amount = retirement.price
                     # The refund_rate converts in cents at the same time
                     amount_no_tax = Decimal(
                         amount * retirement.refund_rate
