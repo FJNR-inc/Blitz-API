@@ -663,7 +663,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         # Charge the order with the external payment API
                         try:
                             charge_response = charge_payment(
-                                int(amount),
+                                int(round(amount)),
                                 payment_token,
                                 str(order.id)
                             )
@@ -680,7 +680,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                                 single_use_token
                             )
                             charge_response = charge_payment(
-                                int(amount),
+                                int(round(amount)),
                                 card_create_response.json()['paymentToken'],
                                 str(order.id)
                             )
@@ -781,7 +781,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     try:
                         refund_response = refund_amount(
                             order_line.order.settlement_id,
-                            int(amount)
+                            int(round(amount))
                         )
                     except PaymentAPIError as err:
                         if str(err) == PAYSAFE_EXCEPTION['3406']:

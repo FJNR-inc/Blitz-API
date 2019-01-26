@@ -282,7 +282,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
                     )
                     refund_response = refund_amount(
                         order.settlement_id,
-                        int(total_amount)
+                        int(round(total_amount))
                     )
                 except PaymentAPIError as err:
                     if str(err) == PAYSAFE_EXCEPTION['3406']:

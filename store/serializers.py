@@ -581,7 +581,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 # Charge the order with the external payment API
                 try:
                     charge_response = charge_payment(
-                        int(amount),
+                        int(round(amount)),
                         payment_token,
                         str(order.id)
                     )
@@ -598,7 +598,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         single_use_token
                     )
                     charge_response = charge_payment(
-                        int(amount),
+                        int(round(amount)),
                         card_create_response.json()['paymentToken'],
                         str(order.id)
                     )
