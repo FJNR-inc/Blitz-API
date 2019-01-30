@@ -413,6 +413,92 @@ class OrderTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     @responses.activate
+    def test_create_reservation_twice(self):
+        """
+        Ensure we can't create an order for the same reservation twice.
+        """
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'order_lines': [{
+                'content_type': 'timeslot',
+                'object_id': 1,
+                'quantity': 1,
+            }],
+        }
+
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'id': 3,
+            'order_lines': [{
+                'content_type': 'timeslot',
+                'id': 2,
+                'object_id': 1,
+                'order': 'http://testserver/orders/3',
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/2',
+                'coupon': None,
+                'coupon_real_value': 0.0,
+                'cost': 0.0,
+            }],
+            'url': 'http://testserver/orders/3',
+            'user': 'http://testserver/users/2',
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '0',
+            'settlement_id': '0',
+            'reference_number': '0',
+        }
+
+        self.assertEqual(response_data, content)
+
+        admin = self.admin
+        admin.refresh_from_db()
+
+        self.assertEqual(admin.tickets, 0)
+        admin.tickets = 1
+        admin.membership = None
+        admin.save()
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                "You already are registered to this timeslot: "
+                "2130-01-15 13:00:00+00:00 - 2130-01-15 17:00:00+00:00."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+    @responses.activate
     def test_create_user_has_membership(self):
         """
         Ensure we can't create an order containing a membership if the user

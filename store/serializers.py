@@ -518,6 +518,13 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                                 "reservation."
                             )]
                         })
+                    if user in timeslot.users.all():
+                        raise serializers.ValidationError({
+                            'non_field_errors': [_(
+                                "You already are registered to this timeslot: "
+                                "{0}.".format(str(timeslot))
+                            )]
+                        })
                     if (timeslot.period.workplace and
                             timeslot.period.workplace.seats - reserved > 0):
                         Reservation.objects.create(
