@@ -50,7 +50,7 @@ env:
   - PAYSAFE_VAULT_URL=customervault/v1/
   - PAYSAFE_CARD_URL=cardpayments/v1/
   - EMAIL_HOST_USER=admin@fjnr.ca
-  - ADMINS='("Francis Jeanneau", "francis.jeanneau@fjnr.ca"), ("Noël Rignon", "noel.rignon@fjnr.ca"),'
+  - ADMINS='("Support FJNR", "support@fjnr.ca"),'
   - SERVER_EMAIL=admin@fjnr.ca
   - EMAIL_HOST=smtp.zoho.com
   - DATA_UPLOAD_MAX_MEMORY_SIZE=5242880
