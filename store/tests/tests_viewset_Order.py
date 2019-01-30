@@ -1094,6 +1094,100 @@ class OrderTests(APITestCase):
         self.assertEqual(len(mail.outbox), 2)
 
     @responses.activate
+    def test_create_retirement_twice(self):
+        """
+        Ensure we can't create an order with a reservation for a retirement
+        to which the user is already registered.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.save()
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'retirement',
+                'object_id': self.retirement.id,
+                'quantity': 1,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'id': 3,
+            'order_lines': [{
+                'content_type': 'retirement',
+                'id': 2,
+                'object_id': 1,
+                'order': 'http://testserver/orders/3',
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/2',
+                'coupon': None,
+                'coupon_real_value': 0.0,
+                'cost': 199.0,
+            }],
+            'url': 'http://testserver/orders/3',
+            'user': 'http://testserver/users/1',
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '1',
+            'settlement_id': '1',
+            'reference_number': '751',
+        }
+
+        self.assertEqual(response_data, content)
+
+        # 1 email for the order details
+        # 1 email for the retirement informations
+        self.assertEqual(len(mail.outbox), 2)
+
+        # Duplicate order
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                "You already are registered to this retirement: {0}.".format(
+                    str(self.retirement)
+                )
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+    @responses.activate
     def test_create_retirement_missing_user_info(self):
         """
         Ensure we can't create an order with reservations if the requesting

@@ -558,9 +558,17 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 for retirement_orderline in retirement_orderlines:
                     retirement = retirement_orderline.content_object
                     user_waiting = retirement.wait_queue.filter(user=user)
-                    reserved = (
-                        retirement.reservations.filter(is_active=True).count()
+                    reservations = retirement.reservations.filter(
+                        is_active=True
                     )
+                    reserved = reservations.count()
+                    if reservations.filter(user=user):
+                        raise serializers.ValidationError({
+                            'non_field_errors': [_(
+                                "You already are registered to this "
+                                "retirement: {0}.".format(str(retirement))
+                            )]
+                        })
                     if (((retirement.seats - retirement.total_reservations -
                           retirement.reserved_seats) > 0)
                             or (retirement.reserved_seats
