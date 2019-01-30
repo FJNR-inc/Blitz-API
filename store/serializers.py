@@ -774,10 +774,7 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
         many=True,
         required=False,
     )
-    code = serializers.RegexField(
-        "(?=[A-Z0-9]{8})[^IO0]{8}",
-        max_length=8,
-        min_length=8,
+    code = serializers.CharField(
         allow_blank=True,
         required=False,
         validators=[
