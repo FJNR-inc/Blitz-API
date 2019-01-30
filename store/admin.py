@@ -113,7 +113,7 @@ class OrderLineAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
     search_fields = (
         'order__user__email',
         'order__user__username',
-        'coupon',
+        'coupon__code',
     )
 
     def owner(self, instance):
