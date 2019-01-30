@@ -503,7 +503,7 @@ class RetirementTests(APITestCase):
 
     def test_delete(self):
         """
-        Ensure we can delete a retirement.
+        Ensure we can delete a retirement (setting is_active to false).
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -514,12 +514,25 @@ class RetirementTests(APITestCase):
             ),
         )
 
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content,
+        )
+
+        self.retirement.refresh_from_db()
+        self.assertFalse(self.retirement.is_active)
+
+        self.retirement.is_active = True
 
     def test_list(self):
         """
         Ensure we can list retirements as an unauthenticated user.
+        Only if retirement is_active == True.
         """
+
+        self.second_retirement.is_active = False
+        self.second_retirement.save()
 
         response = self.client.get(
             reverse('retirement:retirement-list'),
@@ -527,7 +540,7 @@ class RetirementTests(APITestCase):
         )
 
         content = {
-            'count': 2,
+            'count': 1,
             'next': None,
             'previous': None,
             'results': [
@@ -570,47 +583,6 @@ class RetirementTests(APITestCase):
                     'place_name': '',
                     'users': [],
                     'url': 'http://testserver/retirement/retirements/1'
-                },
-                {
-                    'activity_language': 'FR',
-                    'details': 'This is a description of'
-                               ' the ultra retirement.',
-                    'email_content': None,
-                    'id': 2,
-                    'address_line1': '123 random street',
-                    'address_line2': None,
-                    'city': '',
-                    'country': 'Random country',
-                    'postal_code': '123 456',
-                    'state_province': 'Random state',
-                    'latitude': None,
-                    'longitude': None,
-                    'name': 'ultra_retirement',
-                    'pictures': [],
-                    'start_time': '2140-01-15T08:00:00-05:00',
-                    'end_time': '2140-01-17T12:00:00-05:00',
-                    'seats': 400,
-                    'reserved_seats': 0,
-                    'next_user_notified': 0,
-                    'notification_interval': '1 00:00:00',
-                    'price': '199.00',
-                    'exclusive_memberships': [],
-                    'timezone': None,
-                    'is_active': True,
-                    'places_remaining': 400,
-                    'min_day_exchange': 7,
-                    'min_day_refund': 7,
-                    'refund_rate': 50,
-                    'reservations': [],
-                    'reservations_canceled': [],
-                    'total_reservations': 0,
-                    'accessibility': True,
-                    'form_url': "example.com",
-                    'carpool_url': 'example2.com',
-                    'review_url': 'example3.com',
-                    'place_name': '',
-                    'users': [],
-                    'url': 'http://testserver/retirement/retirements/2'
                 }
             ]
         }

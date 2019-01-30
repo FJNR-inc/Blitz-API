@@ -68,6 +68,22 @@ class RetirementViewSet(viewsets.ModelViewSet):
     }
     ordering = ('name', 'start_time', 'end_time')
 
+    def get_queryset(self):
+        """
+        This viewset should return active retirements except if
+        the currently authenticated user is an admin (is_staff).
+        """
+        if self.request.user.is_staff:
+            return Retirement.objects.all()
+        return Retirement.objects.filter(is_active=True)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.is_active:
+            instance.is_active = False
+            instance.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
         dataset = RetirementResource().export()
