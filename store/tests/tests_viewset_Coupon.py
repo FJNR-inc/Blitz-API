@@ -458,7 +458,7 @@ class CouponTests(APITestCase):
         response_data = json.loads(response.content)
 
         content = {
-            "email_list": "This field is required."
+            "email_list": ["This field is required."]
         }
 
         self.assertEqual(

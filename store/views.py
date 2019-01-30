@@ -422,7 +422,7 @@ class CouponViewSet(viewsets.ModelViewSet):
 
         if not email_list_data:
             raise exceptions.ValidationError({
-                "email_list": _("This field is required.")
+                "email_list": [_("This field is required.")]
             })
         try:
             email_list = serializer.to_internal_value(email_list_data)
