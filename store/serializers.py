@@ -21,7 +21,7 @@ from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,)
 from workplace.models import Reservation
 from retirement.models import Reservation as RetirementReservation
-from retirement.models import WaitQueueNotification, Retirement
+from retirement.models import WaitQueueNotification
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
@@ -795,6 +795,46 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
             })
         validated_data['code'] = code
         return super(CouponSerializer, self).create(validated_data)
+
+    def to_representation(self, instance):
+        data = super(CouponSerializer, self).to_representation(instance)
+        from workplace.serializers import TimeSlotSerializer
+        from retirement.serializers import RetirementSerializer
+        action = self.context['view'].action
+        if action == 'retrieve' or action == 'list':
+            data['applicable_retirements'] = RetirementSerializer(
+                instance.applicable_retirements,
+                many=True,
+                context={
+                    'request': self.context['request'],
+                    'view': self.context['view'],
+                },
+            ).data
+            data['applicable_timeslots'] = TimeSlotSerializer(
+                instance.applicable_timeslots,
+                many=True,
+                context={
+                    'request': self.context['request'],
+                    'view': self.context['view'],
+                },
+            ).data
+            data['applicable_packages'] = PackageSerializer(
+                instance.applicable_packages,
+                many=True,
+                context={
+                    'request': self.context['request'],
+                    'view': self.context['view'],
+                },
+            ).data
+            data['applicable_memberships'] = MembershipSerializer(
+                instance.applicable_memberships,
+                many=True,
+                context={
+                    'request': self.context['request'],
+                    'view': self.context['view'],
+                },
+            ).data
+        return data
 
     class Meta:
         model = Coupon

@@ -1,12 +1,14 @@
 import json
+import pytz
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from unittest import mock
 
+from django.conf import settings
 from django.core import mail
 from django.utils import timezone
 from django.urls import reverse
@@ -16,10 +18,14 @@ from django.contrib.contenttypes.models import ContentType
 from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.models import AcademicLevel
 from blitz_api.services import remove_translation_fields
+from workplace.models import TimeSlot, Period, Workplace
+from retirement.models import Retirement
 
 from ..models import Package, Order, OrderLine, Membership, Coupon
 
 User = get_user_model()
+
+LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
 class CouponTests(APITestCase):
@@ -44,6 +50,48 @@ class CouponTests(APITestCase):
             available=True,
             price=50,
             duration=timedelta(days=365),
+        )
+        cls.workplace = Workplace.objects.create(
+            name="random_workplace",
+            details="This is a description of the workplace.",
+            seats=40,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+        )
+        cls.period = Period.objects.create(
+            name="random_period_active",
+            workplace=cls.workplace,
+            start_date=timezone.now(),
+            end_date=timezone.now() + timedelta(weeks=4),
+            price=3,
+            is_active=True,
+        )
+        cls.time_slot = TimeSlot.objects.create(
+            name="morning_time_slot",
+            period=cls.period,
+            price=1,
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+        )
+        cls.retirement = Retirement.objects.create(
+            name="mega_retirement",
+            seats=400,
+            details="This is a description of the mega retirement.",
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+            price=199,
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            is_active=True,
+            activity_language='FR',
+            accessibility=True,
         )
         cls.coupon = Coupon.objects.create(
             value=13,
@@ -750,6 +798,19 @@ class CouponTests(APITestCase):
         """
         self.client.force_authenticate(user=self.user)
 
+        self.coupon.applicable_retirements.set([
+            self.retirement,
+        ])
+        self.coupon.applicable_timeslots.set([
+            self.time_slot,
+        ])
+        self.coupon.applicable_packages.set([
+            self.package,
+        ])
+        self.coupon.applicable_memberships.set([
+            self.membership,
+        ])
+
         response = self.client.get(
             reverse('coupon-list'),
             format='json',
@@ -775,10 +836,96 @@ class CouponTests(APITestCase):
                 "max_use_per_user": 2,
                 "details": "Any package for clients",
                 "owner": "http://testserver/users/1",
-                "applicable_retirements": [],
-                "applicable_timeslots": [],
-                "applicable_packages": [],
-                "applicable_memberships": [],
+                "applicable_memberships": [{
+                    'academic_levels': [],
+                    'available': True,
+                    'details': '1-Year student membership',
+                    'duration': '365 00:00:00',
+                    'id': 1,
+                    'name': 'basic_membership',
+                    'price': '50.00',
+                    'url': 'http://testserver/memberships/1'
+                }],
+                "applicable_packages": [{
+                    'available': True,
+                    'details': '100 reservations package',
+                    'exclusive_memberships': [],
+                    'id': 1,
+                    'name': 'extreme_package',
+                    'price': '400.00',
+                    'reservations': 100,
+                    'url': 'http://testserver/packages/1'
+                }],
+                "applicable_retirements": [{
+                    'accessibility': True,
+                    'activity_language': 'FR',
+                    'address_line1': '123 random street',
+                    'address_line2': None,
+                    'carpool_url': None,
+                    'city': '',
+                    'country': 'Random country',
+                    'details': 'This is a description of the mega retirement.',
+                    'email_content': None,
+                    'end_time': '2130-01-17T12:00:00-05:00',
+                    'exclusive_memberships': [],
+                    'form_url': None,
+                    'id': 1,
+                    'is_active': True,
+                    'latitude': None,
+                    'longitude': None,
+                    'min_day_exchange': 7,
+                    'min_day_refund': 7,
+                    'name': 'mega_retirement',
+                    'next_user_notified': 0,
+                    'notification_interval': '1 00:00:00',
+                    'pictures': [],
+                    'place_name': '',
+                    'places_remaining': 400,
+                    'postal_code': '123 456',
+                    'price': '199.00',
+                    'refund_rate': 50,
+                    'reservations': [],
+                    'reservations_canceled': [],
+                    'reserved_seats': 0,
+                    'review_url': None,
+                    'seats': 400,
+                    'start_time': '2130-01-15T08:00:00-05:00',
+                    'state_province': 'Random state',
+                    'timezone': None,
+                    'total_reservations': 0,
+                    'url': 'http://testserver/retirement/retirements/1',
+                    'users': []
+                }],
+                "applicable_timeslots": [{
+                    'end_time': '2130-01-15T12:00:00-05:00',
+                    'id': 1,
+                    'period': 'http://testserver/periods/1',
+                    'places_remaining': 40,
+                    'price': '1.00',
+                    'reservations': [],
+                    'reservations_canceled': [],
+                    'start_time': '2130-01-15T08:00:00-05:00',
+                    'url': 'http://testserver/time_slots/1',
+                    'users': [],
+                    'workplace': {
+                        'address_line1': '123 random street',
+                        'address_line2': None,
+                        'city': '',
+                        'country': 'Random country',
+                        'details': 'This is a description of the workplace.',
+                        'id': 1,
+                        'latitude': None,
+                        'longitude': None,
+                        'name': 'random_workplace',
+                        'pictures': [],
+                        'place_name': '',
+                        'postal_code': '123 456',
+                        'seats': 40,
+                        'state_province': 'Random state',
+                        'timezone': None,
+                        'url': 'http://testserver/workplaces/1'
+                    }
+                }],
                 "users": []
             }]
         }
@@ -786,6 +933,11 @@ class CouponTests(APITestCase):
         self.assertEqual(data, content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.coupon.applicable_retirements.set([])
+        self.coupon.applicable_timeslots.set([])
+        self.coupon.applicable_packages.set([])
+        self.coupon.applicable_memberships.set([])
 
     def test_list_as_admin(self):
         """
@@ -850,13 +1002,27 @@ class CouponTests(APITestCase):
     def test_read(self):
         """
         Ensure we can read a coupon as an authenticated user.
+        Ensure we get a nested repr for applicable_* fields.
         """
         self.client.force_authenticate(user=self.user)
+
+        self.coupon.applicable_retirements.set([
+            self.retirement,
+        ])
+        self.coupon.applicable_timeslots.set([
+            self.time_slot,
+        ])
+        self.coupon.applicable_packages.set([
+            self.package,
+        ])
+        self.coupon.applicable_memberships.set([
+            self.membership,
+        ])
 
         response = self.client.get(
             reverse(
                 'coupon-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.coupon.pk},
             ),
         )
 
@@ -865,9 +1031,6 @@ class CouponTests(APITestCase):
         content = {
             "url": "http://testserver/coupons/1",
             "id": 1,
-            "applicable_product_types": [
-                "package"
-            ],
             "value": "13.00",
             "code": data['code'],
             "start_time": "2019-01-06T15:11:05-05:00",
@@ -876,16 +1039,108 @@ class CouponTests(APITestCase):
             "max_use_per_user": 2,
             "details": "Any package for clients",
             "owner": "http://testserver/users/1",
-            "applicable_retirements": [],
-            "applicable_timeslots": [],
-            "applicable_packages": [],
-            "applicable_memberships": [],
+            "applicable_product_types": ['package'],
+            "applicable_memberships": [{
+                'academic_levels': [],
+                'available': True,
+                'details': '1-Year student membership',
+                'duration': '365 00:00:00',
+                'id': 1,
+                'name': 'basic_membership',
+                'price': '50.00',
+                'url': 'http://testserver/memberships/1'
+            }],
+            "applicable_packages": [{
+                'available': True,
+                'details': '100 reservations package',
+                'exclusive_memberships': [],
+                'id': 1,
+                'name': 'extreme_package',
+                'price': '400.00',
+                'reservations': 100,
+                'url': 'http://testserver/packages/1'
+            }],
+            "applicable_retirements": [{
+                'accessibility': True,
+                'activity_language': 'FR',
+                'address_line1': '123 random street',
+                'address_line2': None,
+                'carpool_url': None,
+                'city': '',
+                'country': 'Random country',
+                'details': 'This is a description of the mega retirement.',
+                'email_content': None,
+                'end_time': '2130-01-17T12:00:00-05:00',
+                'exclusive_memberships': [],
+                'form_url': None,
+                'id': 1,
+                'is_active': True,
+                'latitude': None,
+                'longitude': None,
+                'min_day_exchange': 7,
+                'min_day_refund': 7,
+                'name': 'mega_retirement',
+                'next_user_notified': 0,
+                'notification_interval': '1 00:00:00',
+                'pictures': [],
+                'place_name': '',
+                'places_remaining': 400,
+                'postal_code': '123 456',
+                'price': '199.00',
+                'refund_rate': 50,
+                'reservations': [],
+                'reservations_canceled': [],
+                'reserved_seats': 0,
+                'review_url': None,
+                'seats': 400,
+                'start_time': '2130-01-15T08:00:00-05:00',
+                'state_province': 'Random state',
+                'timezone': None,
+                'total_reservations': 0,
+                'url': 'http://testserver/retirement/retirements/1',
+                'users': []
+            }],
+            "applicable_timeslots": [{
+                'end_time': '2130-01-15T12:00:00-05:00',
+                'id': 1,
+                'period': 'http://testserver/periods/1',
+                'places_remaining': 40,
+                'price': '1.00',
+                'reservations': [],
+                'reservations_canceled': [],
+                'start_time': '2130-01-15T08:00:00-05:00',
+                'url': 'http://testserver/time_slots/1',
+                'users': [],
+                'workplace': {
+                    'address_line1': '123 random street',
+                    'address_line2': None,
+                    'city': '',
+                    'country': 'Random country',
+                    'details': 'This is a description of the workplace.',
+                    'id': 1,
+                    'latitude': None,
+                    'longitude': None,
+                    'name': 'random_workplace',
+                    'pictures': [],
+                    'place_name': '',
+                    'postal_code': '123 456',
+                    'seats': 40,
+                    'state_province': 'Random state',
+                    'timezone': None,
+                    'url': 'http://testserver/workplaces/1'
+                }
+            }],
             "users": []
         }
 
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.coupon.applicable_retirements.set([])
+        self.coupon.applicable_timeslots.set([])
+        self.coupon.applicable_packages.set([])
+        self.coupon.applicable_memberships.set([])
 
     def test_read_admin(self):
         """
