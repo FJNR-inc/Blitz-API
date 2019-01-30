@@ -767,7 +767,16 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
         many=True,
         required=False,
     )
-    code = serializers.ReadOnlyField()
+    code = serializers.RegexField(
+        "(?=[A-Z0-9]{8})[^IO0]{8}",
+        max_length=8,
+        min_length=8,
+        allow_blank=True,
+        required=False,
+        validators=[
+            UniqueValidator(queryset=Coupon.objects.all()),
+        ]
+    )
     value = serializers.DecimalField(
         max_digits=6,
         decimal_places=2,
@@ -784,9 +793,10 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
         """
         Generate coupon's code and create the coupon.
         """
-        code = ""
-        n = 0
+        code = validated_data.get('code', None)
+
         used_code = Coupon.objects.all().values_list('code', flat=True)
+        n = 0
         while ((not code or code in used_code) and (n < 100)):
             code = ''.join(
                 random.choices(

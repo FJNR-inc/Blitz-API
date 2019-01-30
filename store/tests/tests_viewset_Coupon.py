@@ -105,7 +105,7 @@ class CouponTests(APITestCase):
         )
         cls.coupon2 = Coupon.objects.create(
             value=13,
-            code="ABCDEFGH",
+            code="ABCD1234",
             start_time="2019-01-06T15:11:05-05:00",
             end_time="2020-01-06T15:11:06-05:00",
             max_use=100,
@@ -171,6 +171,171 @@ class CouponTests(APITestCase):
 
         self.assertEqual(
             json.loads(response.content),
+            content
+        )
+
+    def test_create_choose_code(self):
+        """
+        Ensure we can create a coupon if user has permission.
+        Ensure that the user can choose the code (regex-validated).
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "code": "1234ABCD",
+            "applicable_product_types": [
+                "package"
+            ],
+            "value": "13.00",
+            "start_time": "2019-01-06T15:11:05-05:00",
+            "end_time": "2020-01-06T15:11:06-05:00",
+            "max_use": 100,
+            "max_use_per_user": 2,
+            "details": "Any package for clients",
+            "owner": "http://testserver/users/1",
+        }
+
+        response = self.client.post(
+            reverse('coupon-list'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            "url": "http://testserver/coupons/3",
+            "id": 3,
+            "applicable_product_types": [
+                "package"
+            ],
+            "value": "13.00",
+            "code": "1234ABCD",
+            "start_time": "2019-01-06T15:11:05-05:00",
+            "end_time": "2020-01-06T15:11:06-05:00",
+            "max_use": 100,
+            "max_use_per_user": 2,
+            "details": "Any package for clients",
+            "owner": "http://testserver/users/1",
+            "applicable_retirements": [],
+            "applicable_timeslots": [],
+            "applicable_packages": [],
+            "applicable_memberships": [],
+            "users": []
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        self.assertEqual(
+            response_data,
+            content
+        )
+
+    def test_create_choose_invalid_code(self):
+        """
+        Ensure we get an error if the user defined code is invalid.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        # Code too short
+        data = {
+            "code": "0",
+            "applicable_product_types": [
+                "package"
+            ],
+            "value": "13.00",
+            "start_time": "2019-01-06T15:11:05-05:00",
+            "end_time": "2020-01-06T15:11:06-05:00",
+            "max_use": 100,
+            "max_use_per_user": 2,
+            "details": "Any package for clients",
+            "owner": "http://testserver/users/1",
+        }
+
+        response = self.client.post(
+            reverse('coupon-list'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            "code": [
+                "Ensure this field has at least 8 characters.",
+                "This value does not match the required pattern."
+            ]
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        self.assertEqual(
+            response_data,
+            content
+        )
+
+        # Code too long
+        data['code'] = "000000000"
+
+        response = self.client.post(
+            reverse('coupon-list'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            "code": [
+                "Ensure this field has no more than 8 characters.",
+                "This value does not match the required pattern."
+            ]
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        self.assertEqual(
+            response_data,
+            content
+        )
+
+        # Restricted characters
+        data['code'] = "IO0OI1O0"
+
+        response = self.client.post(
+            reverse('coupon-list'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            "code": [
+                "This value does not match the required pattern."
+            ]
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        self.assertEqual(
+            response_data,
             content
         )
 
