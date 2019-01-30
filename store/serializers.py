@@ -508,9 +508,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             if reservation_orderlines:
                 for reservation_orderline in reservation_orderlines:
                     timeslot = reservation_orderline.content_object
-                    reserved = (
-                        timeslot.reservations.filter(is_active=True).count()
-                    )
+                    reservations = timeslot.reservations.filter(is_active=True)
+                    reserved = reservations.count()
                     if timeslot.price > user.tickets:
                         raise serializers.ValidationError({
                             'non_field_errors': [_(
@@ -518,7 +517,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                                 "reservation."
                             )]
                         })
-                    if user in timeslot.users.all():
+                    if reservations.filter(user=user):
                         raise serializers.ValidationError({
                             'non_field_errors': [_(
                                 "You already are registered to this timeslot: "
