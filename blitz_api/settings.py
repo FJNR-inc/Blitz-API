@@ -278,6 +278,7 @@ ACTIVATION_TOKENS = {
 
 ANYMAIL = {
     'SENDINBLUE_API_KEY': config('SENDINBLUE_API_KEY', default='example_key'),
+    'REQUESTS_TIMEOUT': config('REQUESTS_TIMEOUT', default=(30, 30), cast=tuple),
     'TEMPLATES': {
         'CONFIRM_SIGN_UP': config('CONFIRM_SIGN_UP', default='example_id'),
         'FORGOT_PASSWORD': config('FORGOT_PASSWORD', default='example_id'),
