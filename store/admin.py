@@ -154,6 +154,7 @@ class CouponAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
     list_display = (
         'code',
         'value',
+        'percent_off',
         'owner',
         'details',
     )

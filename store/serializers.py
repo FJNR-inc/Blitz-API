@@ -21,7 +21,7 @@ from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,)
 from workplace.models import Reservation
 from retirement.models import Reservation as RetirementReservation
-from retirement.models import WaitQueueNotification
+from retirement.models import WaitQueueNotification, Retirement
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
@@ -787,6 +787,12 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
         max_digits=6,
         decimal_places=2,
         min_value=0.0,
+        required=False,
+    )
+    percent_off = serializers.IntegerField(
+        min_value=0,
+        max_value=100,
+        required=False,
     )
     max_use = serializers.IntegerField(
         min_value=0
@@ -794,6 +800,28 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
     max_use_per_user = serializers.IntegerField(
         min_value=0
     )
+
+    def validate(self, attr):
+        validated_data = super(CouponSerializer, self).validate(attr)
+        if (validated_data.get('value', None) and
+                validated_data.get('percent_off', None)):
+            raise serializers.ValidationError({
+                'non_field_errors': [_(
+                    "You can't set a discount value (value) and a discount "
+                    "percentage (percent_off) at the same time."
+                )]
+            })
+        action = self.context['request'].parser_context['view'].action
+        if action != 'partial_update':
+            if (not validated_data.get('value', None) and
+                    not validated_data.get('percent_off', None)):
+                raise serializers.ValidationError({
+                    'non_field_errors': [_(
+                        "You need to set a value discount (value) or a "
+                        "discount percentage (percent_off) for this coupon."
+                    )]
+                })
+        return validated_data
 
     def create(self, validated_data):
         """
@@ -818,6 +846,37 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
             })
         validated_data['code'] = code
         return super(CouponSerializer, self).create(validated_data)
+
+    def update(self, instance, validated_data):
+
+        new_value = validated_data.get('value', None)
+        new_percent_off = validated_data.get('percent_off', None)
+
+        value_off = (
+            (not instance.value and new_value) or
+            (instance.value and new_value != 0)
+        )
+        percent_off = (
+            (not instance.percent_off and new_percent_off) or
+            (instance.percent_off and new_percent_off != 0)
+        )
+
+        if value_off and percent_off:
+            raise serializers.ValidationError({
+                'non_field_errors': [_(
+                    "You can't set a discount value (value) and a discount "
+                    "percentage (percent_off) at the same time."
+                )]
+            })
+        if not value_off and not percent_off:
+            raise serializers.ValidationError({
+                'non_field_errors': [_(
+                    "You need to set a value discount (value) or a discount "
+                    "percentage (percent_off) for this coupon."
+                )]
+            })
+
+        return super(CouponSerializer, self).update(instance, validated_data)
 
     def to_representation(self, instance):
         data = super(CouponSerializer, self).to_representation(instance)

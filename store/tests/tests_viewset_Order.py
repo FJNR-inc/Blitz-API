@@ -2289,13 +2289,14 @@ class OrderTests(APITestCase):
 
         self.assertEqual(response_data, content)
 
-    def test_validate_coupon_infinite_value(self):
+    def test_validate_coupon_full_discount(self):
         """
-        Ensure that we can validate a coupon with infinite value.
+        Ensure that we can validate a coupon with 100% discount.
         """
         self.client.force_authenticate(user=self.admin)
 
         self.coupon.value = 0
+        self.coupon.percent_off = 100
         self.coupon.save()
 
         data = {

@@ -149,6 +149,7 @@ class CouponTests(APITestCase):
                 "package"
             ],
             "value": "13.00",
+            "percent_off": None,
             "code": response_data['code'],
             "start_time": "2019-01-06T15:11:05-05:00",
             "end_time": "2020-01-06T15:11:06-05:00",
@@ -210,6 +211,7 @@ class CouponTests(APITestCase):
                 "package"
             ],
             "value": "13.00",
+            "percent_off": None,
             "code": "1234ABCD",
             "start_time": "2019-01-06T15:11:05-05:00",
             "end_time": "2020-01-06T15:11:06-05:00",
@@ -232,6 +234,152 @@ class CouponTests(APITestCase):
 
         self.assertEqual(
             response_data,
+            content
+        )
+
+    def test_create_percentage(self):
+        """
+        Ensure we can create a coupon if user has permission.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "applicable_product_types": [
+                "package"
+            ],
+            "percent_off": "80",
+            "start_time": "2019-01-06T15:11:05-05:00",
+            "end_time": "2020-01-06T15:11:06-05:00",
+            "max_use": 100,
+            "max_use_per_user": 2,
+            "details": "Any package for clients",
+            "owner": "http://testserver/users/1",
+        }
+
+        response = self.client.post(
+            reverse('coupon-list'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            "url": "http://testserver/coupons/3",
+            "id": 3,
+            "applicable_product_types": [
+                "package"
+            ],
+            "value": None,
+            "percent_off": 80,
+            "code": response_data['code'],
+            "start_time": "2019-01-06T15:11:05-05:00",
+            "end_time": "2020-01-06T15:11:06-05:00",
+            "max_use": 100,
+            "max_use_per_user": 2,
+            "details": "Any package for clients",
+            "owner": "http://testserver/users/1",
+            "applicable_retirements": [],
+            "applicable_timeslots": [],
+            "applicable_packages": [],
+            "applicable_memberships": [],
+            "users": []
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        self.assertEqual(
+            json.loads(response.content),
+            content
+        )
+
+    def test_create_percentage_and_value(self):
+        """
+        Ensure we can create a coupon if user has permission.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "applicable_product_types": [
+                "package"
+            ],
+            "percent_off": "80",
+            "value": "150.00",
+            "start_time": "2019-01-06T15:11:05-05:00",
+            "end_time": "2020-01-06T15:11:06-05:00",
+            "max_use": 100,
+            "max_use_per_user": 2,
+            "details": "Any package for clients",
+            "owner": "http://testserver/users/1",
+        }
+
+        response = self.client.post(
+            reverse('coupon-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        content = {
+            'non_field_errors': [
+                "You can't set a discount value (value) and a discount "
+                "percentage (percent_off) at the same time."
+            ]
+        }
+
+        self.assertEqual(
+            json.loads(response.content),
+            content
+        )
+
+    def test_create_no_percentage_or_value(self):
+        """
+        Ensure we can create a coupon if user has permission.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "applicable_product_types": [
+                "package"
+            ],
+            "start_time": "2019-01-06T15:11:05-05:00",
+            "end_time": "2020-01-06T15:11:06-05:00",
+            "max_use": 100,
+            "max_use_per_user": 2,
+            "details": "Any package for clients",
+            "owner": "http://testserver/users/1",
+        }
+
+        response = self.client.post(
+            reverse('coupon-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        content = {
+            'non_field_errors': [
+                "You need to set a value discount (value) or a discount "
+                "percentage (percent_off) for this coupon."
+            ]
+        }
+
+        self.assertEqual(
+            json.loads(response.content),
             content
         )
 
@@ -534,9 +682,6 @@ class CouponTests(APITestCase):
         )
 
         content = {
-            "value": [
-                "This field is required."
-            ],
             "start_time": [
                 "This field is required."
             ],
@@ -566,6 +711,7 @@ class CouponTests(APITestCase):
 
         data = {
             "value": None,
+            "percent_off": None,
             "start_time": None,
             "end_time": None,
             "max_use": None,
@@ -580,10 +726,13 @@ class CouponTests(APITestCase):
         )
 
         content = {
-            "value": [
+            "start_time": [
                 "This field may not be null."
             ],
-            "start_time": [
+            "percent_off": [
+                "This field may not be null."
+            ],
+            "value": [
                 "This field may not be null."
             ],
             "end_time": [
@@ -612,6 +761,7 @@ class CouponTests(APITestCase):
 
         data = {
             "value": (1,),
+            "percent_off": (1,),
             "start_time": (1,),
             "end_time": (1,),
             "max_use": (1,),
@@ -628,6 +778,9 @@ class CouponTests(APITestCase):
         content = {
             "value": [
                 "A valid number is required."
+            ],
+            "percent_off": [
+                "A valid integer is required."
             ],
             "start_time": [
                 "Datetime has wrong format. Use one of these formats instead:"
@@ -663,6 +816,7 @@ class CouponTests(APITestCase):
                 "package"
             ],
             "value": "-13.00",
+            "percent_off": "-13",
             "start_time": "2019-01-06T15:11:05-05:00",
             "end_time": "2020-01-06T15:11:06-05:00",
             "max_use": -100,
@@ -680,6 +834,9 @@ class CouponTests(APITestCase):
         content = {
             "value": [
                 "Ensure this value is greater than or equal to 0.0."
+            ],
+            "percent_off": [
+                "Ensure this value is greater than or equal to 0."
             ],
             "max_use": [
                 "Ensure this value is greater than or equal to 0."
@@ -730,6 +887,7 @@ class CouponTests(APITestCase):
                 "package"
             ],
             "value": "13.00",
+            "percent_off": None,
             "code": response_data['code'],
             "start_time": "2019-01-06T15:11:05-05:00",
             "end_time": "2020-01-06T15:11:06-05:00",
@@ -753,7 +911,7 @@ class CouponTests(APITestCase):
 
     def test_update_partial(self):
         """
-        Ensure we can partially update a package.
+        Ensure we can partially update a coupon.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -772,6 +930,12 @@ class CouponTests(APITestCase):
             format='json',
         )
 
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content,
+        )
+
         response_data = json.loads(response.content)
 
         content = {
@@ -781,6 +945,7 @@ class CouponTests(APITestCase):
                 "package"
             ],
             "value": "13.00",
+            "percent_off": None,
             "code": response_data['code'],
             "start_time": "2019-01-06T15:11:05-05:00",
             "end_time": "2020-01-06T15:11:06-05:00",
@@ -799,8 +964,6 @@ class CouponTests(APITestCase):
             response_data,
             content
         )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_delete_as_admin(self):
         """
@@ -890,6 +1053,7 @@ class CouponTests(APITestCase):
                     "package"
                 ],
                 "value": "13.00",
+                "percent_off": None,
                 "code": data['results'][0]['code'],
                 "start_time": "2019-01-06T15:11:05-05:00",
                 "end_time": "2020-01-06T15:11:06-05:00",
@@ -1024,6 +1188,7 @@ class CouponTests(APITestCase):
                     "package"
                 ],
                 "value": "13.00",
+                "percent_off": None,
                 "code": data['results'][0]['code'],
                 "start_time": "2019-01-06T15:11:05-05:00",
                 "end_time": "2020-01-06T15:11:06-05:00",
@@ -1041,6 +1206,7 @@ class CouponTests(APITestCase):
                 "id": 2,
                 "applicable_product_types": [],
                 "value": "13.00",
+                "percent_off": None,
                 "code": data['results'][1]['code'],
                 "start_time": "2019-01-06T15:11:05-05:00",
                 "end_time": "2020-01-06T15:11:06-05:00",
@@ -1093,6 +1259,7 @@ class CouponTests(APITestCase):
             "url": "http://testserver/coupons/1",
             "id": 1,
             "value": "13.00",
+            "percent_off": None,
             "code": data['code'],
             "start_time": "2019-01-06T15:11:05-05:00",
             "end_time": "2020-01-06T15:11:06-05:00",
@@ -1231,6 +1398,7 @@ class CouponTests(APITestCase):
                 "package"
             ],
             "value": "13.00",
+            "percent_off": None,
             "code": data['code'],
             "start_time": "2019-01-06T15:11:05-05:00",
             "end_time": "2020-01-06T15:11:06-05:00",

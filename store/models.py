@@ -375,6 +375,12 @@ class Coupon(SafeDeleteModel):
         max_digits=6,
         decimal_places=2,
         verbose_name=_("Value"),
+        null=True,
+    )
+
+    percent_off = models.PositiveIntegerField(
+        verbose_name=_("Percentage off"),
+        null=True,
     )
 
     # Code generator:

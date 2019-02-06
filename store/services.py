@@ -1,3 +1,4 @@
+from decimal import Decimal
 import json
 import random
 import requests
@@ -541,7 +542,8 @@ def validate_coupon_for_order(coupon, order):
             most_exp_product = product
             coupon_info['orderline'] = orderline
     if not coupon.value:
-        discount_amount = most_exp_product.price
+        percent_off = Decimal(coupon.percent_off) / 100
+        discount_amount = most_exp_product.price * percent_off
     else:
         discount_amount = min(
             coupon.value,
