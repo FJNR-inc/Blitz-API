@@ -444,6 +444,12 @@ class OrderTests(APITestCase):
                 format='json',
             )
 
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
         response_data = json.loads(response.content)
 
         content = {
@@ -476,8 +482,6 @@ class OrderTests(APITestCase):
         admin.tickets = 1
         admin.membership = None
         admin.save()
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         response = self.client.post(
             reverse('order-list'),

@@ -177,49 +177,47 @@ class CustomPaymentSerializer(serializers.HyperlinkedModelSerializer):
             ]
             custom_payment.save()
 
-            # TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
+        # TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
-            items = [
-                {
-                    'price': custom_payment.price,
-                    'name': custom_payment.name,
-                }
-            ]
-
-            # Send custom_payment confirmation email
-            merge_data = {
-                'STATUS': "APPROUVÉE",
-                'CARD_NUMBER': charge_res_content['card']['lastDigits'],
-                'CARD_TYPE': PAYSAFE_CARD_TYPE[
-                    charge_res_content['card']['type']
-                ],
-                'DATETIME': timezone.localtime().strftime("%x %X"),
-                'ORDER_ID': custom_payment.id,
-                'CUSTOMER_NAME': user.first_name + " " + user.last_name,
-                'CUSTOMER_EMAIL': user.email,
-                'CUSTOMER_NUMBER': user.id,
-                'AUTHORIZATION': custom_payment.authorization_id,
-                'TYPE': "Achat",
-                'ITEM_LIST': items,
-                # No tax applied on custom payments.
-                'TAX': "0.00",
-                'COST': custom_payment.price,
+        items = [
+            {
+                'price': custom_payment.price,
+                'name': custom_payment.name,
             }
+        ]
 
-            plain_msg = render_to_string("invoice.txt", merge_data)
-            msg_html = render_to_string("invoice.html", merge_data)
+        # Send custom_payment confirmation email
+        merge_data = {
+            'STATUS': "APPROUVÉE",
+            'CARD_NUMBER': charge_res_content['card']['lastDigits'],
+            'CARD_TYPE': PAYSAFE_CARD_TYPE[
+                charge_res_content['card']['type']
+            ],
+            'DATETIME': timezone.localtime().strftime("%x %X"),
+            'ORDER_ID': custom_payment.id,
+            'CUSTOMER_NAME': user.first_name + " " + user.last_name,
+            'CUSTOMER_EMAIL': user.email,
+            'CUSTOMER_NUMBER': user.id,
+            'AUTHORIZATION': custom_payment.authorization_id,
+            'TYPE': "Achat",
+            'ITEM_LIST': items,
+            # No tax applied on custom payments.
+            'TAX': "0.00",
+            'COST': custom_payment.price,
+        }
 
-            send_mail(
-                "Confirmation d'achat",
-                plain_msg,
-                settings.DEFAULT_FROM_EMAIL,
-                [custom_payment.user.email],
-                html_message=msg_html,
-            )
+        plain_msg = render_to_string("invoice.txt", merge_data)
+        msg_html = render_to_string("invoice.html", merge_data)
 
-            user.save()
+        send_mail(
+            "Confirmation d'achat",
+            plain_msg,
+            settings.DEFAULT_FROM_EMAIL,
+            [custom_payment.user.email],
+            html_message=msg_html,
+        )
 
-            return custom_payment
+        return custom_payment
 
     class Meta:
         model = CustomPayment
@@ -498,6 +496,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 user.membership_end = (
                     timezone.now().date() + user.membership.duration
                 )
+                user.save()
             if package_orderlines:
                 need_transaction = True
                 for package_orderline in package_orderlines:
@@ -505,6 +504,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         package_orderline.content_object.reservations *
                         package_orderline.quantity
                     )
+                    user.save()
             if reservation_orderlines:
                 for reservation_orderline in reservation_orderlines:
                     timeslot = reservation_orderline.content_object
@@ -536,6 +536,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         # used in the future if we want to allow multiple
                         # reservations of the same timeslot.
                         user.tickets -= 1
+                        user.save()
                     else:
                         raise serializers.ValidationError({
                             'non_field_errors': [_(
@@ -652,94 +653,95 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     order.reference_number = "charge-" + str(uuid.uuid4())
                 order.save()
 
-                orderlines = order.order_lines.filter(
-                    models.Q(content_type__model='membership') |
-                    models.Q(content_type__model='package') |
-                    models.Q(content_type__model='retirement')
-                )
+        if need_transaction:
+            # Send order email
+            orderlines = order.order_lines.filter(
+                models.Q(content_type__model='membership') |
+                models.Q(content_type__model='package') |
+                models.Q(content_type__model='retirement')
+            )
 
-                # Here, the 'details' key is used to provide details of the
-                #  item to the email template.
-                # As of now, only 'retirement' objects have the 'email_content'
-                #  key that is used here. There is surely a better way to
-                #  to handle that logic that will be more generic.
-                items = [
-                    {
-                        'price': orderline.content_object.price,
-                        'name': "{0}: {1}".format(
-                            str(orderline.content_type),
-                            orderline.content_object.name
-                        ),
-                        # Removed details section because it was only used
-                        # for retirements. Retirements instead have another
-                        # unique email containing details of the event.
-                        # 'details':
-                        #    orderline.content_object.email_content if hasattr(
-                        #         orderline.content_object, 'email_content'
-                        #     ) else ""
-                    } for orderline in orderlines
-                ]
+            # Here, the 'details' key is used to provide details of the
+            #  item to the email template.
+            # As of now, only 'retirement' objects have the 'email_content'
+            #  key that is used here. There is surely a better way to
+            #  to handle that logic that will be more generic.
+            items = [
+                {
+                    'price': orderline.content_object.price,
+                    'name': "{0}: {1}".format(
+                        str(orderline.content_type),
+                        orderline.content_object.name
+                    ),
+                    # Removed details section because it was only used
+                    # for retirements. Retirements instead have another
+                    # unique email containing details of the event.
+                    # 'details':
+                    #    orderline.content_object.email_content if hasattr(
+                    #         orderline.content_object, 'email_content'
+                    #     ) else ""
+                } for orderline in orderlines
+            ]
 
-                # Send order confirmation email
-                merge_data = {
-                    'STATUS': "APPROUVÉE",
-                    'CARD_NUMBER': charge_res_content['card']['lastDigits'],
-                    'CARD_TYPE': PAYSAFE_CARD_TYPE[
-                        charge_res_content['card']['type']
-                    ],
-                    'DATETIME': timezone.localtime().strftime("%x %X"),
-                    'ORDER_ID': order.id,
-                    'CUSTOMER_NAME': user.first_name + " " + user.last_name,
-                    'CUSTOMER_EMAIL': user.email,
-                    'CUSTOMER_NUMBER': user.id,
-                    'AUTHORIZATION': order.authorization_id,
-                    'TYPE': "Achat",
-                    'ITEM_LIST': items,
-                    'TAX': tax,
-                    'DISCOUNT': discount_amount,
-                    'COUPON': coupon,
-                    'SUBTOTAL': round(amount / 100 - tax, 2),
-                    'COST': round(amount / 100, 2),
-                }
+            # Send order confirmation email
+            merge_data = {
+                'STATUS': "APPROUVÉE",
+                'CARD_NUMBER': charge_res_content['card']['lastDigits'],
+                'CARD_TYPE': PAYSAFE_CARD_TYPE[
+                    charge_res_content['card']['type']
+                ],
+                'DATETIME': timezone.localtime().strftime("%x %X"),
+                'ORDER_ID': order.id,
+                'CUSTOMER_NAME': user.first_name + " " + user.last_name,
+                'CUSTOMER_EMAIL': user.email,
+                'CUSTOMER_NUMBER': user.id,
+                'AUTHORIZATION': order.authorization_id,
+                'TYPE': "Achat",
+                'ITEM_LIST': items,
+                'TAX': tax,
+                'DISCOUNT': discount_amount,
+                'COUPON': coupon,
+                'SUBTOTAL': round(amount / 100 - tax, 2),
+                'COST': round(amount / 100, 2),
+            }
 
-                plain_msg = render_to_string("invoice.txt", merge_data)
-                msg_html = render_to_string("invoice.html", merge_data)
+            plain_msg = render_to_string("invoice.txt", merge_data)
+            msg_html = render_to_string("invoice.html", merge_data)
 
-                send_mail(
-                    "Confirmation d'achat",
-                    plain_msg,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [order.user.email],
-                    html_message=msg_html,
-                )
+            send_mail(
+                "Confirmation d'achat",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [order.user.email],
+                html_message=msg_html,
+            )
 
-            for retirement_reservation in retirement_reservations:
-                # Send info email
-                merge_data = {
-                    'RETIREMENT': retirement_reservation.retirement,
-                    'USER': user,
-                }
+        # Send retirement informations emails
+        for retirement_reservation in retirement_reservations:
+            # Send info email
+            merge_data = {
+                'RETIREMENT': retirement_reservation.retirement,
+                'USER': user,
+            }
 
-                plain_msg = render_to_string(
-                    "retirement_info.txt",
-                    merge_data
-                )
-                msg_html = render_to_string(
-                    "retirement_info.html",
-                    merge_data
-                )
+            plain_msg = render_to_string(
+                "retirement_info.txt",
+                merge_data
+            )
+            msg_html = render_to_string(
+                "retirement_info.html",
+                merge_data
+            )
 
-                send_mail(
-                    "Confirmation d'inscription à la retraite",
-                    plain_msg,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [retirement_reservation.user.email],
-                    html_message=msg_html,
-                )
+            send_mail(
+                "Confirmation d'inscription à la retraite",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [retirement_reservation.user.email],
+                html_message=msg_html,
+            )
 
-            user.save()
-
-            return order
+        return order
 
     def update(self, instance, validated_data):
         orderlines_data = validated_data.pop('order_lines')

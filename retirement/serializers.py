@@ -269,6 +269,7 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
                 headers={
                     'Authorization':
                     'Token ' + json.loads(auth.content)['token']},
+                timeout=(10, 10),
             )
             r.raise_for_status()
         except (requests.exceptions.HTTPError,
@@ -442,7 +443,6 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 })
         return attrs
 
-    @transaction.atomic
     def update(self, instance, validated_data):
         user = instance.user
         payment_token = validated_data.pop('payment_token', None)
@@ -468,111 +468,127 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 )]
             })
 
-        # Create a copy of the reservation. This copy keeps track of
-        # the exchange.
-        canceled_reservation = instance
-        canceled_reservation.pk = None
-        canceled_reservation.save()
+        with transaction.atomic():
+            # Create a copy of the reservation. This copy keeps track of
+            # the exchange.
+            canceled_reservation = instance
+            canceled_reservation.pk = None
+            canceled_reservation.save()
 
-        instance = Reservation.objects.get(id=instance_pk)
+            instance = Reservation.objects.get(id=instance_pk)
 
-        canceled_reservation.is_active = False
-        canceled_reservation.cancelation_reason = 'U'
-        canceled_reservation.cancelation_action = 'E'
-        canceled_reservation.cancelation_date = timezone.now()
-        canceled_reservation.save()
+            canceled_reservation.is_active = False
+            canceled_reservation.cancelation_reason = 'U'
+            canceled_reservation.cancelation_action = 'E'
+            canceled_reservation.cancelation_date = timezone.now()
+            canceled_reservation.save()
 
-        # Update the reservation
-        instance = super(ReservationSerializer, self).update(
-            instance,
-            validated_data,
-        )
+            # Update the reservation
+            instance = super(ReservationSerializer, self).update(
+                instance,
+                validated_data,
+            )
 
-        # Update retirement seats
-        free_seats = (
-            current_retirement.seats -
-            current_retirement.total_reservations
-        )
-        if (current_retirement.reserved_seats or free_seats == 1):
-            current_retirement.reserved_seats += 1
-            current_retirement.save()
+            # Update retirement seats
+            free_seats = (
+                current_retirement.seats -
+                current_retirement.total_reservations
+            )
+            if (current_retirement.reserved_seats or free_seats == 1):
+                current_retirement.reserved_seats += 1
+                current_retirement.save()
 
-        if validated_data.get('retirement'):
-            # Validate if user has the right to reserve a seat in the new
-            # retirement
-            new_retirement = instance.retirement
-            old_retirement = current_retirement
+            if validated_data.get('retirement'):
+                # Validate if user has the right to reserve a seat in the new
+                # retirement
+                new_retirement = instance.retirement
+                old_retirement = current_retirement
 
-            user_waiting = new_retirement.wait_queue.filter(user=user)
-            if not (((new_retirement.seats - new_retirement.total_reservations
-                      - new_retirement.reserved_seats + 1) > 0) or
-                    (new_retirement.reserved_seats
-                     and WaitQueueNotification.objects.filter(
-                         user=user, retirement=new_retirement))):
-                raise serializers.ValidationError({
-                    'non_field_errors': [_(
-                        "There are no places left in the requested "
-                        "retirement."
-                    )]
-                })
-            if user_waiting:
-                user_waiting.delete()
-
-        if (self.context['view'].action == 'partial_update'
-                and validated_data.get('retirement')):
-            if order_line.quantity > 1:
-                raise serializers.ValidationError({
-                    'non_field_errors': [_(
-                        "The order containing this reservation has a quantity "
-                        "bigger than 1. Please contact the support team."
-                    )]
-                })
-            respects_minimum_days = (
-                (current_retirement.start_time - timezone.now()) >=
-                timedelta(days=current_retirement.min_day_exchange))
-            if current_retirement.price < validated_data['retirement'].price:
-                # If the new retirement is more expensive, reapply the coupon
-                # on the new orderline created. In other words, any coupon
-                # used for the initial purchase is applied again here.
-                need_transaction = True
-                amount = (
-                    validated_data['retirement'].price -
-                    order_line.coupon_real_value
+                user_waiting = new_retirement.wait_queue.filter(user=user)
+                free_seats = (
+                    new_retirement.seats -
+                    new_retirement.total_reservations -
+                    new_retirement.reserved_seats +
+                    1
                 )
-                if not (payment_token or single_use_token):
+                reserved_for_user = (
+                    new_retirement.reserved_seats and
+                    WaitQueueNotification.objects.filter(
+                        user=user,
+                        retirement=new_retirement
+                    )
+                )
+                if not (free_seats > 0 or reserved_for_user):
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
-                            "The new retirement is more expensive than the "
-                            "current one. Provide a payment_token or "
-                            "single_use_token to charge the balance."
+                            "There are no places left in the requested "
+                            "retirement."
                         )]
                     })
-            if current_retirement.price > validated_data['retirement'].price:
-                # If a coupon was applied for the purchase, check if the real
-                # cost of the purchase was lower than the price difference.
-                # If so, refund the real cost of the purchase.
-                # Else refund the difference between the 2 retirements.
-                need_refund = True
-                price_diff = (
-                    current_retirement.price -
-                    validated_data['retirement'].price
+                if user_waiting:
+                    user_waiting.delete()
+
+            if (self.context['view'].action == 'partial_update' and
+                    validated_data.get('retirement')):
+                if order_line.quantity > 1:
+                    raise serializers.ValidationError({
+                        'non_field_errors': [_(
+                            "The order containing this reservation has a "
+                            "quantity bigger than 1. Please contact the "
+                            "support team."
+                        )]
+                    })
+                days_remaining = current_retirement.start_time - timezone.now()
+                days_exchange = timedelta(
+                    days=current_retirement.min_day_exchange
                 )
-                real_cost = order_line.cost
-                amount = min(price_diff, real_cost)
-            if current_retirement == validated_data['retirement']:
-                raise serializers.ValidationError({
-                    'retirement': [_(
-                        "That retirement is already assigned to this object."
-                    )]
-                })
-            if not respects_minimum_days:
-                raise serializers.ValidationError({
-                    'non_field_errors': [_(
-                        "Maximum exchange date exceeded."
-                    )]
-                })
-            if need_transaction:
-                if single_use_token and not profile:
+                respects_minimum_days = (days_remaining >= days_exchange)
+                new_retirement_price = validated_data['retirement'].price
+                if current_retirement.price < new_retirement_price:
+                    # If the new retirement is more expensive, reapply the
+                    # coupon on the new orderline created. In other words, any
+                    # coupon used for the initial purchase is applied again
+                    # here.
+                    need_transaction = True
+                    amount = (
+                        validated_data['retirement'].price -
+                        order_line.coupon_real_value
+                    )
+                    if not (payment_token or single_use_token):
+                        raise serializers.ValidationError({
+                            'non_field_errors': [_(
+                                "The new retirement is more expensive than "
+                                "the current one. Provide a payment_token or "
+                                "single_use_token to charge the balance."
+                            )]
+                        })
+                if current_retirement.price > new_retirement_price:
+                    # If a coupon was applied for the purchase, check if the
+                    # real cost of the purchase was lower than the price
+                    # difference.
+                    # If so, refund the real cost of the purchase.
+                    # Else refund the difference between the 2 retirements.
+                    need_refund = True
+                    price_diff = (
+                        current_retirement.price -
+                        validated_data['retirement'].price
+                    )
+                    real_cost = order_line.cost
+                    amount = min(price_diff, real_cost)
+                if current_retirement == validated_data['retirement']:
+                    raise serializers.ValidationError({
+                        'retirement': [_(
+                            "That retirement is already assigned to this "
+                            "object."
+                        )]
+                    })
+                if not respects_minimum_days:
+                    raise serializers.ValidationError({
+                        'non_field_errors': [_(
+                            "Maximum exchange date exceeded."
+                        )]
+                    })
+                if need_transaction and (single_use_token and not profile):
                     # Create external profile
                     try:
                         create_profile_res = create_external_payment_profile(
@@ -592,27 +608,26 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                             create_profile_res.json()['id']
                         )
                     )
-            # Generate a list of tuples containing start/end time of
-            # existing reservations.
-            start = validated_data['retirement'].start_time
-            end = validated_data['retirement'].end_time
-            active_reservations = Reservation.objects.filter(
-                user=user,
-                is_active=True,
-            ).exclude(pk=instance.pk).values_list(
-                'retirement__start_time',
-                'retirement__end_time',
-            )
+                # Generate a list of tuples containing start/end time of
+                # existing reservations.
+                start = validated_data['retirement'].start_time
+                end = validated_data['retirement'].end_time
+                active_reservations = Reservation.objects.filter(
+                    user=user,
+                    is_active=True,
+                ).exclude(pk=instance.pk).values_list(
+                    'retirement__start_time',
+                    'retirement__end_time',
+                )
 
-            for retirements in active_reservations:
-                if max(retirements[0], start) < min(retirements[1], end):
-                    raise serializers.ValidationError({
-                        'non_field_errors': [_(
-                            "This reservation overlaps with another active "
-                            "reservations for this user."
-                        )]
-                    })
-            with transaction.atomic():
+                for retirements in active_reservations:
+                    if max(retirements[0], start) < min(retirements[1], end):
+                        raise serializers.ValidationError({
+                            'non_field_errors': [_(
+                                "This reservation overlaps with another "
+                                "active reservations for this user."
+                            )]
+                        })
                 if need_transaction:
                     order = Order.objects.create(
                         user=user,
@@ -659,7 +674,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                             'message': str(err)
                         })
 
-                    if need_transaction and payment_token and int(amount):
+                    if payment_token and int(amount):
                         # Charge the order with the external payment API
                         try:
                             charge_response = charge_payment(
@@ -672,7 +687,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                                 'message': err
                             })
 
-                    elif need_transaction and single_use_token and int(amount):
+                    elif single_use_token and int(amount):
                         # Add card to the external profile & charge user
                         try:
                             card_create_response = create_external_card(
@@ -700,67 +715,6 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     instance.order_line = new_order_line
                     instance.save()
 
-                    # Here, the 'details' key is used to provide details of the
-                    #  item to the email template.
-                    # As of now, only 'retirement' objects have the
-                    # 'email_content' key that is used here. There is surely a
-                    # better way to handle that logic that will be more
-                    # generic.
-                    items = [
-                        {
-                            'price': new_order_line.content_object.price,
-                            'name': "{0}: {1}".format(
-                                str(new_order_line.content_type),
-                                new_order_line.content_object.name
-                            ),
-                        }
-                    ]
-
-                    # Send order confirmation email
-                    merge_data = {
-                        'STATUS': "APPROUVÉE",
-                        'CARD_NUMBER':
-                        charge_res_content['card']['lastDigits'],
-                        'CARD_TYPE': PAYSAFE_CARD_TYPE[
-                            charge_res_content['card']['type']
-                        ],
-                        'DATETIME': timezone.localtime().strftime("%x %X"),
-                        'ORDER_ID': order.id,
-                        'CUSTOMER_NAME':
-                            user.first_name + " " + user.last_name,
-                        'CUSTOMER_EMAIL': user.email,
-                        'CUSTOMER_NUMBER': user.id,
-                        'AUTHORIZATION': order.authorization_id,
-                        'TYPE': "Achat",
-                        'ITEM_LIST': items,
-                        'TAX': round(
-                            (new_order_line.cost - current_retirement.price) *
-                            Decimal(TAX_RATE),
-                            2,
-                        ),
-                        'DISCOUNT': current_retirement.price,
-                        'COUPON': {'code': _("Échange")},
-                        'SUBTOTAL': round(
-                            new_order_line.cost - current_retirement.price,
-                            2
-                        ),
-                        'COST': round(
-                            (new_order_line.cost - current_retirement.price) *
-                            Decimal(TAX_RATE + 1),
-                            2
-                        ),
-                    }
-
-                    plain_msg = render_to_string("invoice.txt", merge_data)
-                    msg_html = render_to_string("invoice.html", merge_data)
-
-                    send_mail(
-                        "Confirmation d'achat",
-                        plain_msg,
-                        settings.DEFAULT_FROM_EMAIL,
-                        [order.user.email],
-                        html_message=msg_html,
-                    )
                 if need_refund:
                     tax = round(amount * Decimal(TAX_RATE), 2)
                     amount *= Decimal(TAX_RATE + 1)
@@ -798,89 +752,148 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                             'message': str(err)
                         })
 
-                    # Send the refund email
                     new_retirement = retirement
                     old_retirement = current_retirement
 
-                    # Send refund confirmation email
-                    merge_data = {
-                        'DATETIME': timezone.localtime().strftime("%x %X"),
-                        'ORDER_ID': order_line.order.id,
-                        'CUSTOMER_NAME':
-                        user.first_name + " " + user.last_name,
-                        'CUSTOMER_EMAIL': user.email,
-                        'CUSTOMER_NUMBER': user.id,
-                        'TYPE': "Remboursement",
-                        'NEW_RETIREMENT': new_retirement,
-                        'OLD_RETIREMENT': old_retirement,
-                        'SUBTOTAL':
-                        old_retirement.price - new_retirement.price,
-                        'COST': round(amount/100, 2),
-                        'TAX': round(Decimal(tax), 2),
+            # Ask the external scheduler to start calling /notify if the
+            # reserved_seats count == 1. Otherwise, the scheduler should
+            # already be calling /notify at specified intervals.
+            #
+            # Since we are in the context of a cancelation, if reserved_seats
+            # equals 1, that means that this is the first cancelation.
+            if current_retirement.reserved_seats == 1:
+                scheduler_url = '{0}'.format(
+                    settings.EXTERNAL_SCHEDULER['URL'],
+                )
+
+                data = {
+                    "hour": timezone.now().hour,
+                    "minute": (timezone.now().minute + 5) % 60,
+                    "url": '{0}{1}'.format(
+                        request.build_absolute_uri(
+                            reverse('retirement:waitqueuenotification-list')
+                        ),
+                        "/notify"
+                    ),
+                    "description": "Retirement wait queue notification"
+                }
+
+                try:
+                    auth_data = {
+                        "username": settings.EXTERNAL_SCHEDULER['USER'],
+                        "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
                     }
+                    auth = requests.post(
+                        scheduler_url + "/authentication",
+                        json=auth_data,
+                    )
+                    auth.raise_for_status()
 
-                    plain_msg = render_to_string("refund.txt", merge_data)
-                    msg_html = render_to_string("refund.html", merge_data)
-
-                    send_mail(
-                        "Confirmation de remboursement",
-                        plain_msg,
-                        settings.DEFAULT_FROM_EMAIL,
-                        [user.email],
-                        html_message=msg_html,
+                    r = requests.post(
+                        scheduler_url + '/tasks',
+                        json=data,
+                        headers={
+                            'Authorization':
+                            'Token ' + json.loads(auth.content)['token']},
+                        timeout=(10, 10),
+                    )
+                    r.raise_for_status()
+                except (requests.exceptions.HTTPError,
+                        requests.exceptions.ConnectionError) as err:
+                    mail_admins(
+                        "Thèsez-vous: external scheduler error",
+                        traceback.format_exc()
                     )
 
-        # Ask the external scheduler to start calling /notify if the
-        # reserved_seats count == 1. Otherwise, the scheduler should
-        # already be calling /notify at specified intervals.
-        #
-        # Since we are in the context of a cancelation, if reserved_seats
-        # equals 1, that means that this is the first cancelation.
-        if current_retirement.reserved_seats == 1:
-            scheduler_url = '{0}'.format(
-                settings.EXTERNAL_SCHEDULER['URL'],
-            )
-
-            data = {
-                "hour": timezone.now().hour,
-                "minute": (timezone.now().minute + 5) % 60,
-                "url": '{0}{1}'.format(
-                    request.build_absolute_uri(
-                        reverse('retirement:waitqueuenotification-list')
+        # Send appropriate emails
+        # Send order confirmation email
+        if need_transaction:
+            items = [
+                {
+                    'price': new_order_line.content_object.price,
+                    'name': "{0}: {1}".format(
+                        str(new_order_line.content_type),
+                        new_order_line.content_object.name
                     ),
-                    "/notify"
+                }
+            ]
+
+            merge_data = {
+                'STATUS': "APPROUVÉE",
+                'CARD_NUMBER':
+                charge_res_content['card']['lastDigits'],
+                'CARD_TYPE': PAYSAFE_CARD_TYPE[
+                    charge_res_content['card']['type']
+                ],
+                'DATETIME': timezone.localtime().strftime("%x %X"),
+                'ORDER_ID': order.id,
+                'CUSTOMER_NAME':
+                    user.first_name + " " + user.last_name,
+                'CUSTOMER_EMAIL': user.email,
+                'CUSTOMER_NUMBER': user.id,
+                'AUTHORIZATION': order.authorization_id,
+                'TYPE': "Achat",
+                'ITEM_LIST': items,
+                'TAX': round(
+                    (new_order_line.cost - current_retirement.price) *
+                    Decimal(TAX_RATE),
+                    2,
                 ),
-                "description": "Retirement wait queue notification"
+                'DISCOUNT': current_retirement.price,
+                'COUPON': {'code': _("Échange")},
+                'SUBTOTAL': round(
+                    new_order_line.cost - current_retirement.price,
+                    2
+                ),
+                'COST': round(
+                    (new_order_line.cost - current_retirement.price) *
+                    Decimal(TAX_RATE + 1),
+                    2
+                ),
             }
 
-            try:
-                auth_data = {
-                    "username": settings.EXTERNAL_SCHEDULER['USER'],
-                    "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
-                }
-                auth = requests.post(
-                    scheduler_url + "/authentication",
-                    json=auth_data,
-                )
-                auth.raise_for_status()
+            plain_msg = render_to_string("invoice.txt", merge_data)
+            msg_html = render_to_string("invoice.html", merge_data)
 
-                r = requests.post(
-                    scheduler_url + '/tasks',
-                    json=data,
-                    headers={
-                        'Authorization':
-                        'Token ' + json.loads(auth.content)['token']},
-                )
-                r.raise_for_status()
-            except (requests.exceptions.HTTPError,
-                    requests.exceptions.ConnectionError) as err:
-                mail_admins(
-                    "Thèsez-vous: external scheduler error",
-                    traceback.format_exc()
-                )
+            send_mail(
+                "Confirmation d'achat",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [order.user.email],
+                html_message=msg_html,
+            )
 
+        # Send refund confirmation email
+        if need_refund:
+            merge_data = {
+                'DATETIME': timezone.localtime().strftime("%x %X"),
+                'ORDER_ID': order_line.order.id,
+                'CUSTOMER_NAME':
+                user.first_name + " " + user.last_name,
+                'CUSTOMER_EMAIL': user.email,
+                'CUSTOMER_NUMBER': user.id,
+                'TYPE': "Remboursement",
+                'NEW_RETIREMENT': new_retirement,
+                'OLD_RETIREMENT': old_retirement,
+                'SUBTOTAL':
+                old_retirement.price - new_retirement.price,
+                'COST': round(amount/100, 2),
+                'TAX': round(Decimal(tax), 2),
+            }
+
+            plain_msg = render_to_string("refund.txt", merge_data)
+            msg_html = render_to_string("refund.html", merge_data)
+
+            send_mail(
+                "Confirmation de remboursement",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                html_message=msg_html,
+            )
+
+        # Send exchange confirmation email
         if validated_data.get('retirement'):
-            # Send exchange confirmation email
             merge_data = {
                 'DATETIME': timezone.localtime().strftime("%x %X"),
                 'CUSTOMER_NAME': user.first_name + " " + user.last_name,

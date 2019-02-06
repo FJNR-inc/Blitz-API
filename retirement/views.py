@@ -238,7 +238,6 @@ class ReservationViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
         return super(ReservationViewSet, self).update(request, *args, **kwargs)
 
-    @transaction.atomic
     def destroy(self, request, *args, **kwargs):
         """
         A user can cancel his reservation by "deleting" it. It will return an
@@ -264,154 +263,161 @@ class ReservationViewSet(viewsets.ModelViewSet):
         user = instance.user
         order_line = instance.order_line
         order = order_line.order
+        reservation_active = instance.is_active
 
         respects_minimum_days = (
             (retirement.start_time - timezone.now()) >=
             timedelta(days=retirement.min_day_refund))
 
-        # No need to check for previous refunds because a refunded
-        # reservation == canceled reservation, thus not active.
-        if instance.is_active:
-            if order_line.quantity > 1:
-                raise rest_framework_serializers.ValidationError({
-                    'non_field_errors': [_(
-                        "The order containing this reservation has a quantity "
-                        "bigger than 1. Please contact the support team."
-                    )]
-                })
-            if respects_minimum_days:
-                try:
-                    amount = retirement.price
-                    # The refund_rate converts in cents at the same time
-                    amount_no_tax = Decimal(
-                        amount * retirement.refund_rate
-                    )
-                    amount_tax = Decimal(TAX) * amount_no_tax
-                    total_amount = round(Decimal(
-                        amount_no_tax + amount_tax
-                    ), 2)
-                    refund_instance = Refund.objects.create(
-                        orderline=order_line,
-                        refund_date=timezone.now(),
-                        amount=total_amount/100,
-                        details="Reservation canceled",
-                    )
-                    refund_response = refund_amount(
-                        order.settlement_id,
-                        int(round(total_amount))
-                    )
-                    refund_res_content = refund_response.json()
-                    refund_instance.refund_id = refund_res_content['id']
-                    refund_instance.save()
-                except PaymentAPIError as err:
-                    if str(err) == PAYSAFE_EXCEPTION['3406']:
-                        raise rest_framework_serializers.ValidationError({
-                            'non_field_errors': _(
-                                "The order has not been charged yet. Try "
-                                "again later."
-                            )
-                        })
-                    raise rest_framework_serializers.ValidationError(
-                        {'message': str(err)}
-                    )
-                instance.cancelation_action = 'R'
-            else:
-                instance.cancelation_action = 'N'
+        with transaction.atomic():
+            # No need to check for previous refunds because a refunded
+            # reservation == canceled reservation, thus not active.
+            if reservation_active:
+                if order_line.quantity > 1:
+                    raise rest_framework_serializers.ValidationError({
+                        'non_field_errors': [_(
+                            "The order containing this reservation has a "
+                            "quantity bigger than 1. Please contact the "
+                            "support team."
+                        )]
+                    })
+                if respects_minimum_days:
+                    try:
+                        amount = retirement.price
+                        # The refund_rate converts in cents at the same time
+                        amount_no_tax = Decimal(
+                            amount * retirement.refund_rate
+                        )
+                        amount_tax = Decimal(TAX) * amount_no_tax
+                        total_amount = round(Decimal(
+                            amount_no_tax + amount_tax
+                        ), 2)
+                        refund_instance = Refund.objects.create(
+                            orderline=order_line,
+                            refund_date=timezone.now(),
+                            amount=total_amount/100,
+                            details="Reservation canceled",
+                        )
+                        refund_response = refund_amount(
+                            order.settlement_id,
+                            int(round(total_amount))
+                        )
+                        refund_res_content = refund_response.json()
+                        refund_instance.refund_id = refund_res_content['id']
+                        refund_instance.save()
+                    except PaymentAPIError as err:
+                        if str(err) == PAYSAFE_EXCEPTION['3406']:
+                            raise rest_framework_serializers.ValidationError({
+                                'non_field_errors': _(
+                                    "The order has not been charged yet. Try "
+                                    "again later."
+                                )
+                            })
+                        raise rest_framework_serializers.ValidationError(
+                            {'message': str(err)}
+                        )
+                    instance.cancelation_action = 'R'
+                else:
+                    instance.cancelation_action = 'N'
 
-            instance.is_active = False
-            instance.cancelation_reason = 'U'
-            instance.cancelation_date = timezone.now()
-            instance.save()
+                instance.is_active = False
+                instance.cancelation_reason = 'U'
+                instance.cancelation_date = timezone.now()
+                instance.save()
 
-            free_seats = retirement.seats - retirement.total_reservations
-            if (retirement.reserved_seats or free_seats == 1):
-                retirement.reserved_seats += 1
-            # Ask the external scheduler to start calling /notify if the
-            # reserved_seats count == 1. Otherwise, the scheduler should
-            # already be calling /notify at specified intervals.
-            #
-            # Since we are in the context of a cancelation, if reserved_seats
-            # equals 1, that means that this is the first cancelation.
-            if retirement.reserved_seats == 1:
-                scheduler_url = '{0}'.format(
-                    settings.EXTERNAL_SCHEDULER['URL'],
-                )
+                free_seats = retirement.seats - retirement.total_reservations
+                if (retirement.reserved_seats or free_seats == 1):
+                    retirement.reserved_seats += 1
+                # Ask the external scheduler to start calling /notify if the
+                # reserved_seats count == 1. Otherwise, the scheduler should
+                # already be calling /notify at specified intervals.
+                #
+                # Since we are in the context of a cancelation, if
+                # reserved_seats equals 1, that means that this is the first
+                # cancelation.
+                if retirement.reserved_seats == 1:
+                    scheduler_url = '{0}'.format(
+                        settings.EXTERNAL_SCHEDULER['URL'],
+                    )
 
-                data = {
-                    "hour": timezone.now().hour,
-                    "minute": (timezone.now().minute + 5) % 60,
-                    "url": '{0}{1}'.format(
-                        request.build_absolute_uri(
-                            reverse('retirement:waitqueuenotification-list')
+                    data = {
+                        "hour": timezone.now().hour,
+                        "minute": (timezone.now().minute + 5) % 60,
+                        "url": '{0}{1}'.format(
+                            request.build_absolute_uri(
+                                reverse(
+                                    'retirement:waitqueuenotification-list'
+                                )
+                            ),
+                            "/notify"
                         ),
-                        "/notify"
-                    ),
-                    "description": "Retirement wait queue notification"
-                }
-
-                try:
-                    auth_data = {
-                        "username": settings.EXTERNAL_SCHEDULER['USER'],
-                        "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
+                        "description": "Retirement wait queue notification"
                     }
-                    auth = requests.post(
-                        scheduler_url + "/authentication",
-                        json=auth_data,
-                    )
-                    auth.raise_for_status()
 
-                    r = requests.post(
-                        scheduler_url + '/tasks',
-                        json=data,
-                        headers={
-                            'Authorization':
-                            'Token ' + json.loads(auth.content)['token']},
-                    )
-                    r.raise_for_status()
-                except (requests.exceptions.HTTPError,
-                        requests.exceptions.ConnectionError) as err:
-                    mail_admins(
-                        "Thèsez-vous: external scheduler error",
-                        traceback.format_exc()
-                    )
+                    try:
+                        auth_data = {
+                            "username": settings.EXTERNAL_SCHEDULER['USER'],
+                            "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
+                        }
+                        auth = requests.post(
+                            scheduler_url + "/authentication",
+                            json=auth_data,
+                        )
+                        auth.raise_for_status()
 
-            retirement.save()
+                        r = requests.post(
+                            scheduler_url + '/tasks',
+                            json=data,
+                            headers={
+                                'Authorization':
+                                'Token ' + json.loads(auth.content)['token']},
+                            timeout=(10, 10),
+                        )
+                        r.raise_for_status()
+                    except (requests.exceptions.HTTPError,
+                            requests.exceptions.ConnectionError) as err:
+                        mail_admins(
+                            "Thèsez-vous: external scheduler error",
+                            traceback.format_exc()
+                        )
 
-            # Send an email if a refund has been issued
-            if instance.cancelation_action == 'R':
-                # Here the price takes the applied coupon into account, if
-                # applicable.
-                old_retirement = {
-                    'price': (amount * retirement.refund_rate) / 100,
-                    'name': "{0}: {1}".format(
-                        _("Retirement"),
-                        retirement.name
-                    )
-                }
+                retirement.save()
 
-                # Send order confirmation email
-                merge_data = {
-                    'DATETIME': timezone.localtime().strftime("%x %X"),
-                    'ORDER_ID': order.id,
-                    'CUSTOMER_NAME': user.first_name + " " + user.last_name,
-                    'CUSTOMER_EMAIL': user.email,
-                    'CUSTOMER_NUMBER': user.id,
-                    'TYPE': "Remboursement",
-                    'OLD_RETIREMENT': old_retirement,
-                    'COST': round(total_amount/100, 2),
-                    'TAX': round(Decimal(amount_tax/100), 2),
-                }
-
-                plain_msg = render_to_string("refund.txt", merge_data)
-                msg_html = render_to_string("refund.html", merge_data)
-
-                django_send_mail(
-                    "Confirmation de remboursement",
-                    plain_msg,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [user.email],
-                    html_message=msg_html,
+        # Send an email if a refund has been issued
+        if reservation_active and instance.cancelation_action == 'R':
+            # Here the price takes the applied coupon into account, if
+            # applicable.
+            old_retirement = {
+                'price': (amount * retirement.refund_rate) / 100,
+                'name': "{0}: {1}".format(
+                    _("Retirement"),
+                    retirement.name
                 )
+            }
+
+            # Send order confirmation email
+            merge_data = {
+                'DATETIME': timezone.localtime().strftime("%x %X"),
+                'ORDER_ID': order.id,
+                'CUSTOMER_NAME': user.first_name + " " + user.last_name,
+                'CUSTOMER_EMAIL': user.email,
+                'CUSTOMER_NUMBER': user.id,
+                'TYPE': "Remboursement",
+                'OLD_RETIREMENT': old_retirement,
+                'COST': round(total_amount/100, 2),
+                'TAX': round(Decimal(amount_tax/100), 2),
+            }
+
+            plain_msg = render_to_string("refund.txt", merge_data)
+            msg_html = render_to_string("refund.html", merge_data)
+
+            django_send_mail(
+                "Confirmation de remboursement",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                html_message=msg_html,
+            )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
