@@ -135,12 +135,12 @@ class TemporaryToken(Token):
     history = HistoricalRecords()
 
     def save(self, *args, **kwargs):
-        if not self.pk:
+        if not self.expires:
             self.expires = timezone.now() + timezone.timedelta(
                 minutes=settings.REST_FRAMEWORK_TEMPORARY_TOKENS['MINUTES']
             )
 
-        super(TemporaryToken, self).save(*args, **kwargs)
+        return super(TemporaryToken, self).save(*args, **kwargs)
 
     @property
     def expired(self):
