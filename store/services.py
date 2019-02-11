@@ -338,6 +338,17 @@ def create_external_card(profile_id, single_use_token):
                 r = get_external_card(
                     err['links'][0]['href'].split("/")[-1]
                 )
+                card_data = json.loads(r.content)
+                delete_external_card(profile_id, card_data['id'])
+                r = requests.post(
+                    post_cards_url,
+                    auth=(
+                        settings.PAYSAFE['USER'],
+                        settings.PAYSAFE['PASSWORD']
+                    ),
+                    json=data,
+                )
+                r.raise_for_status()
                 return r
             except requests.exceptions.HTTPError as err:
                 if err_code in PAYSAFE_EXCEPTION:
