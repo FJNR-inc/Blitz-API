@@ -25,6 +25,10 @@ PAYSAFE_EXCEPTION = {
         _("An error occured while adding the card: "),
         _("the zip/postal code must be provided for an AVS check request.")
     ),
+    '3006': "{0}{1}".format(
+        _("An error occured while processing the payment: "),
+        _("You submitted an expired credit card number with your request.")
+    ),
     '3008': "{0}{1}".format(
         _("An error occured while processing the payment: "),
         _("card type not supported.")
