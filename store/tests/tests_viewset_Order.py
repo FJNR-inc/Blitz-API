@@ -1715,6 +1715,13 @@ class OrderTests(APITestCase):
         )
 
         responses.add(
+            responses.POST,
+            "http://example.com/customervault/v1/profiles/123/cards/",
+            json=SAMPLE_CARD_RESPONSE,
+            status=201
+        )
+
+        responses.add(
             responses.GET,
             "http://example.com/customervault/v1/cards/456",
             json=SAMPLE_CARD_RESPONSE,
@@ -1724,6 +1731,14 @@ class OrderTests(APITestCase):
         responses.add(
             responses.POST,
             "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        responses.add(
+            responses.DELETE,
+            "http://example.com/customervault/v1/profiles/123/cards/"
+            "424d2472-4afd-44a3-a678-8f4611e864a5",
             json=SAMPLE_PAYMENT_RESPONSE,
             status=200
         )
@@ -1751,6 +1766,12 @@ class OrderTests(APITestCase):
             reverse('order-list'),
             data,
             format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
         )
 
         response_data = json.loads(response.content)
@@ -1787,8 +1808,6 @@ class OrderTests(APITestCase):
         }
 
         self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         admin = self.admin
         admin.refresh_from_db()
