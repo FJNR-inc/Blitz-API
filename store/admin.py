@@ -178,6 +178,7 @@ class CouponUserAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, ):
     )
     list_filter = (
         ('user', admin.RelatedOnlyFieldListFilter),
+        ('coupon', admin.RelatedOnlyFieldListFilter),
     ) + SafeDeleteAdmin.list_display
     search_fields = (
         'coupon__code',
