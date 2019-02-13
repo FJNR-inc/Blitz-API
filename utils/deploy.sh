@@ -45,4 +45,5 @@ echo -e \"\e[7m Installing pip requirements... \e[27m\" && \
 pip install -r requirements.txt && \
 pip install -r requirements-dev.txt && \
 zappa update dev && \
-zappa manage dev migrate"
+zappa manage dev migrate && \
+zappa manage dev \"collectstatic --noinput\""
