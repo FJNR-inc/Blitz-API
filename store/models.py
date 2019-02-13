@@ -466,6 +466,10 @@ class Coupon(SafeDeleteModel):
 
 class CouponUser(SafeDeleteModel):
     """Contains uses of coupons by users."""
+
+    class Meta:
+        unique_together = (('user', 'coupon'),)
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
