@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from import_export.admin import ExportActionModelAdmin
 from modeltranslation.admin import TranslationAdmin
+from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 from simple_history.admin import SimpleHistoryAdmin
 
 from .models import (Membership, Order, OrderLine, Package, PaymentProfile,
@@ -168,6 +169,23 @@ class CouponAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
     )
 
 
+class CouponUserAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, ):
+    list_display = (
+        'user',
+        'coupon',
+        'uses',
+        highlight_deleted,
+    )
+    list_filter = (
+        ('user', admin.RelatedOnlyFieldListFilter),
+    ) + SafeDeleteAdmin.list_display
+    search_fields = (
+        'coupon__code',
+        'user__email',
+        'user__username',
+    ) + SafeDeleteAdmin.list_filter
+
+
 admin.site.register(Membership, MembershipAdmin)
 admin.site.register(Package, PackageAdmin)
 admin.site.register(CustomPayment, CustomPaymentAdmin)
@@ -175,4 +193,5 @@ admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderLine, OrderLineAdmin)
 admin.site.register(PaymentProfile, PaymentProfileAdmin)
 admin.site.register(Coupon, CouponAdmin)
+admin.site.register(CouponUser, CouponUserAdmin)
 admin.site.register(Refund, RefundAdmin)
