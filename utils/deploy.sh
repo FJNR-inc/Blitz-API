@@ -37,6 +37,8 @@ docker run \
 -e PAYSAFE_USER \
 -e PAYSAFE_PASSWORD \
 -e EMAIL_HOST_PASSWORD \
+-e EXTERNAL_SCHEDULER_USER \
+-e EXTERNAL_SCHEDULER_PASSWORD \
 -ti -v $PARENT_DIR:/var/task lambci/lambda:build-python3.6 bash -c "\
 echo -e \"\e[7m Initializing virtualenv... \e[27m\" && \
 virtualenv env && \
