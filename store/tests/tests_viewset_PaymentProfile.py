@@ -3,6 +3,7 @@ import json
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test.utils import override_settings
 from django.urls import reverse
@@ -316,3 +317,93 @@ class PaymentProfileTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @responses.activate
+    def test_delete_card(self):
+        """
+        Ensure we can delete a card in our payment profile.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        responses.add(
+            responses.DELETE,
+            "http://example.com/customervault/v1/profiles/123/cards/1",
+            json=SAMPLE_PROFILE_RESPONSE,
+            status=204
+        )
+
+        response = self.client.delete(
+            reverse(
+                'paymentprofile-cards',
+                kwargs={
+                    'pk': self.payment_profile.pk,
+                    'card_id': 1,
+                },
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content
+        )
+
+    @responses.activate
+    def test_delete_card_as_admin(self):
+        """
+        Ensure we can delete a card in another payment profile as admin.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.DELETE,
+            "http://example.com/customervault/v1/profiles/123/cards/1",
+            json="",
+            status=204,
+        )
+
+        response = self.client.delete(
+            reverse(
+                'paymentprofile-cards',
+                kwargs={
+                    'pk': self.payment_profile_admin.pk,
+                    'card_id': '1'
+                },
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content
+        )
+
+    @responses.activate
+    def test_delete_card_not_owner(self):
+        """
+        Ensure we can't delete cards in another user's payment profile.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        responses.add(
+            responses.DELETE,
+            "http://example.com/customervault/v1/profiles/123/cards/1",
+            json=SAMPLE_PROFILE_RESPONSE,
+            status=204
+        )
+
+        response = self.client.delete(
+            reverse(
+                'paymentprofile-cards',
+                kwargs={
+                    'pk': self.payment_profile_admin.pk,
+                    'card_id': 1
+                },
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_404_NOT_FOUND,
+            response.content
+        )

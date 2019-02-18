@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from rest_framework import viewsets, status, mixins, exceptions
 from rest_framework import serializers as drf_serializers
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
@@ -156,7 +156,7 @@ class PaymentProfileViewSet(
     """
     serializer_class = serializers.PaymentProfileSerializer
     queryset = PaymentProfile.objects.all()
-    permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
+    permission_classes = (IsAuthenticated,)
     filter_fields = '__all__'
 
     def cards(self, request, *args, **kwargs):
