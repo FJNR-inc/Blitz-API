@@ -161,7 +161,7 @@ class WaitQueueNotificationTests(APITestCase):
 
     def test_list(self):
         """
-        Ensure we can list notifications that have been made. (admin only)
+        Ensure we can list notifications that have been made.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -192,7 +192,38 @@ class WaitQueueNotificationTests(APITestCase):
 
     def test_list_not_admin(self):
         """
-        Ensure we can't list notifications as a normal user.
+        Ensure we can list owned notifications as a normal user.
+        """
+        self.client.force_authenticate(user=self.user2)
+
+        response = self.client.get(
+            reverse('retirement:waitqueuenotification-list'),
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'count': 1,
+            'next': None,
+            'previous': None,
+            'results': [{
+                'created_at': response_data['results'][0]['created_at'],
+                'id': 1,
+                'retirement': 'http://testserver/retirement/retirements/1',
+                'url': 'http://testserver/retirement/'
+                       'wait_queue_notifications/1',
+                'user': 'http://testserver/users/2'
+            }]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_not_admin2(self):
+        """
+        Ensure we can list owned notifications as a normal user.
         """
         self.client.force_authenticate(user=self.user)
 
@@ -202,12 +233,15 @@ class WaitQueueNotificationTests(APITestCase):
         )
 
         content = {
-            'detail': 'You do not have permission to perform this action.'
+            'count': 0,
+            'next': None,
+            'previous': None,
+            'results': [],
         }
 
         self.assertEqual(json.loads(response.content), content)
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_list_not_authenticated(self):
         """
@@ -227,7 +261,7 @@ class WaitQueueNotificationTests(APITestCase):
 
     def test_read(self):
         """
-        Ensure we can read read a notification. (admin only)
+        Ensure we can read read a notification.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -250,6 +284,46 @@ class WaitQueueNotificationTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_read_not_admin(self):
+        """
+        Ensure we can read read a notification if owned.
+        """
+        self.client.force_authenticate(user=self.user2)
+
+        response = self.client.get(
+            reverse(
+                'retirement:waitqueuenotification-detail',
+                kwargs={'pk': 1},
+            ),
+        )
+
+        content = {
+            'id': 1,
+            'retirement': 'http://testserver/retirement/retirements/1',
+            'url': 'http://testserver/retirement/wait_queue_notifications/1',
+            'user': ''.join(['http://testserver/users/', str(self.user2.id)]),
+            'created_at': json.loads(response.content)['created_at'],
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_read_not_admin2(self):
+        """
+        Ensure we can't read a notification if not owned.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.get(
+            reverse(
+                'retirement:waitqueuenotification-detail',
+                kwargs={'pk': 1},
+            ),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_read_not_authenticated(self):
         """
         Ensure we can't read a notification as an unauthenticated user.
@@ -267,27 +341,6 @@ class WaitQueueNotificationTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_read_not_admin(self):
-        """
-        Ensure we can't read a notification as a normal user.
-        """
-        self.client.force_authenticate(user=self.user)
-        response = self.client.get(
-            reverse(
-                'retirement:waitqueuenotification-detail',
-                kwargs={'pk': 1},
-            ),
-            format='json',
-        )
-
-        content = {
-            'detail': 'You do not have permission to perform this action.'
-        }
-
-        self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_read_non_existent(self):
         """

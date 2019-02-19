@@ -496,7 +496,7 @@ class WaitQueueNotificationViewSet(mixins.ListModelMixin,
     """
     serializer_class = serializers.WaitQueueNotificationSerializer
     queryset = WaitQueueNotification.objects.all()
-    permission_classes = (IsAdminUser, )
+    permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
     filter_fields = '__all__'
     ordering_fields = (
         'created_at',
@@ -506,15 +506,16 @@ class WaitQueueNotificationViewSet(mixins.ListModelMixin,
 
     def get_queryset(self):
         """
-        The queryset contains all objects since the view is restricted to
-        admins.
+        The queryset contains all objects for admins else only owned objects.
         """
-        return WaitQueueNotification.objects.all()
+        if self.request.user.is_staff:
+            return WaitQueueNotification.objects.all()
+        return WaitQueueNotification.objects.filter(user=self.request.user)
 
     @action(detail=False, permission_classes=[])
     def notify(self, request):
         """
-        That custom action allows an admin (or automated task) to notify
+        That custom action allows anyone to notify
         users in wait queues of every retirement.
         For each retirement, there will be as many users notified as there are
         reserved seats.
