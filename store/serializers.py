@@ -582,6 +582,12 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                                 is_active=True
                             )
                         )
+                        # Decrement reserved_seats if > 0
+                        if retirement.reserved_seats:
+                            retirement.reserved_seats = (
+                                retirement.reserved_seats - 1
+                            )
+                            retirement.save()
                     else:
                         raise serializers.ValidationError({
                             'non_field_errors': [_(

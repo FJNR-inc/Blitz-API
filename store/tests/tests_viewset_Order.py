@@ -181,6 +181,7 @@ class OrderTests(APITestCase):
             is_active=True,
             activity_language='FR',
             accessibility=True,
+            reserved_seats=1,
         )
         cls.retirement_no_seats = Retirement.objects.create(
             name="no_place_left_retirement",
@@ -340,6 +341,12 @@ class OrderTests(APITestCase):
         admin.tickets = 1
         admin.membership = None
         admin.save()
+
+        # Validate that reserved_seats count is decremented
+        self.retirement.refresh_from_db()
+        self.assertFalse(self.retirement.reserved_seats)
+        self.retirement.reserved_seats = 1
+        self.retirement.save()
 
         # 1 email for the order details
         # 1 email for the retirement informations
