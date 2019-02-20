@@ -21,7 +21,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from blitz_api.exceptions import MailServiceError
-from blitz_api.services import send_mail
+from blitz_api.services import send_mail, ExportPagination
 
 from .models import Workplace, Picture, Period, TimeSlot, Reservation
 from .resources import (WorkplaceResource, PeriodResource, TimeSlotResource,
@@ -53,11 +53,17 @@ class WorkplaceViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = WorkplaceResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = WorkplaceResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="Workplace-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -107,11 +113,17 @@ class PeriodViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = PeriodResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = PeriodResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="Period-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -250,11 +262,17 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = TimeSlotResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = TimeSlotResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="TimeSlot-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -390,15 +408,20 @@ class ReservationViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = ReservationResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = ReservationResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="Reservation-',
-            LOCAL_TIMEZONE.localize(
-                datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
             '".xls'
         ])
         return response

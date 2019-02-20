@@ -23,7 +23,7 @@ from .models import (
 )
 from .resources import (AcademicFieldResource, AcademicLevelResource,
                         OrganizationResource, UserResource)
-
+from .services import ExportPagination
 from . import serializers, permissions, services
 
 User = get_user_model()
@@ -74,11 +74,17 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = UserResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = UserResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="User-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -409,11 +415,17 @@ class OrganizationViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = OrganizationResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = OrganizationResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="Organization-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -493,11 +505,17 @@ class AcademicLevelViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = AcademicLevelResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = AcademicLevelResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="AcademicLevel-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -524,11 +542,17 @@ class AcademicFieldViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = AcademicFieldResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = AcademicFieldResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="AcademicField-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),

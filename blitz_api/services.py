@@ -1,13 +1,22 @@
+from datetime import datetime
+
+import pytz
 import re
 
 from django.apps import apps
 from django.conf import settings
 from django.core.mail import EmailMessage
+from django.http import HttpResponse
 from django.utils.translation import ugettext_lazy as _
 from django.template.loader import render_to_string
 
+from rest_framework.pagination import PageNumberPagination
+
 from .exceptions import MailServiceError
 from django.core.mail import send_mail as django_send_mail
+
+
+LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
 def send_mail(users, context, template):
@@ -114,3 +123,34 @@ def notify_user_of_new_account(email, password):
             [email],
             html_message=msg_html,
         )
+
+
+class ExportPagination(PageNumberPagination):
+    """ Custom paginator for data exportation """
+    page_size = 1000
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+
+    def get_paginated_response(self, data):
+        next_url = self.get_next_link()
+        previous_url = self.get_previous_link()
+
+        if next_url is not None and previous_url is not None:
+            link = '<{next_url}; rel="next">, <{previous_url}; rel="prev">'
+        elif next_url is not None:
+            link = '<{next_url}; rel="next">'
+        elif previous_url is not None:
+            link = '<{previous_url}; rel="prev">'
+        else:
+            link = ''
+
+        link = link.format(next_url=next_url, previous_url=previous_url)
+
+        response = HttpResponse(
+            data,
+            content_type="application/vnd.ms-excel"
+        )
+        # Add pagination links to response
+        response['Link'] = link if link else {}
+
+        return response

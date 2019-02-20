@@ -10,7 +10,7 @@ import pytz
 import rest_framework
 
 from blitz_api.exceptions import MailServiceError
-from blitz_api.services import send_mail
+from blitz_api.services import send_mail, ExportPagination
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import mail_admins
@@ -86,9 +86,17 @@ class RetirementViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = RetirementResource().export()
-        response = HttpResponse(
-            dataset.xls, content_type="application/vnd.ms-excel")
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = RetirementResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="Retirement-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -198,9 +206,17 @@ class ReservationViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = ReservationResource().export()
-        response = HttpResponse(
-            dataset.xls, content_type="application/vnd.ms-excel")
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = ReservationResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="RetirementReservation-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -457,9 +473,17 @@ class WaitQueueViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = WaitQueueResource().export()
-        response = HttpResponse(
-            dataset.xls, content_type="application/vnd.ms-excel")
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = WaitQueueResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="WaitQueue-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -601,9 +625,17 @@ class WaitQueueNotificationViewSet(mixins.ListModelMixin,
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = WaitQueueNotificationResource().export()
-        response = HttpResponse(
-            dataset.xls, content_type="application/vnd.ms-excel")
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = WaitQueueNotificationResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="WaitQueueNotification-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),

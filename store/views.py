@@ -13,6 +13,8 @@ from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
+from blitz_api.services import ExportPagination
+
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, PaymentProfile,
                      CustomPayment, Coupon, Refund, )
@@ -55,11 +57,17 @@ class MembershipViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = MembershipResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = MembershipResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="Membership-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -112,11 +120,17 @@ class PackageViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = PackageResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = PackageResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="Package-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -205,11 +219,17 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = OrderResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = OrderResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="Order-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -306,11 +326,17 @@ class OrderLineViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = OrderLineResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = OrderLineResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="OrderLine-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -346,11 +372,17 @@ class CustomPaymentViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = CustomPaymentResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = CustomPaymentResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="CustomPayment-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -389,11 +421,17 @@ class CouponViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = CouponResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = CouponResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="Coupon-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
@@ -479,11 +517,17 @@ class RefundViewSet(viewsets.GenericViewSet,
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
-        dataset = RefundResource().export()
-        response = HttpResponse(
-            dataset.xls,
-            content_type="application/vnd.ms-excel"
-        )
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = RefundResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
         response['Content-Disposition'] = ''.join([
             'attachment; filename="Refund-',
             LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
