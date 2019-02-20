@@ -1148,6 +1148,7 @@ class CouponTests(APITestCase):
                         'seats': 40,
                         'state_province': 'Random state',
                         'timezone': None,
+                        'volunteers': [],
                         'url': 'http://testserver/workplaces/1'
                     }
                 }],
@@ -1355,6 +1356,7 @@ class CouponTests(APITestCase):
                     'seats': 40,
                     'state_province': 'Random state',
                     'timezone': None,
+                    'volunteers': [],
                     'url': 'http://testserver/workplaces/1'
                 }
             }],

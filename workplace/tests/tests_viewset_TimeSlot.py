@@ -194,6 +194,7 @@ class TimeSlotTests(APITestCase):
                 'state_province': 'Random state',
                 'timezone': None,
                 'place_name': '',
+                'volunteers': [],
                 'url': 'http://testserver/workplaces/1',
             }
         }
@@ -535,6 +536,7 @@ class TimeSlotTests(APITestCase):
                 "state_province": "Random state",
                 "timezone": None,
                 'place_name': '',
+                "volunteers": [],
                 "url": "http://testserver/workplaces/1"
             }
         }
@@ -614,6 +616,7 @@ class TimeSlotTests(APITestCase):
                 "state_province": "Random state",
                 "timezone": None,
                 'place_name': '',
+                "volunteers": [],
                 "url": "http://testserver/workplaces/1"
             }
         }
@@ -702,6 +705,7 @@ class TimeSlotTests(APITestCase):
                 "state_province": "Random state",
                 "timezone": None,
                 'place_name': '',
+                "volunteers": [],
                 "url": "http://testserver/workplaces/1"
             }
         }
@@ -867,6 +871,7 @@ class TimeSlotTests(APITestCase):
                 "state_province": "Random state",
                 "timezone": None,
                 'place_name': '',
+                "volunteers": [],
                 "url": "http://testserver/workplaces/1"
             }
         }
@@ -960,6 +965,7 @@ class TimeSlotTests(APITestCase):
                 "state_province": "Random state",
                 "timezone": None,
                 'place_name': '',
+                "volunteers": [],
                 "url": "http://testserver/workplaces/1"
             }
         }
@@ -1157,6 +1163,7 @@ class TimeSlotTests(APITestCase):
                     "state_province": "Random state",
                     "timezone": None,
                     "place_name": '',
+                    "volunteers": [],
                     "url": "http://testserver/workplaces/2"
                 }
             }]
@@ -1220,6 +1227,7 @@ class TimeSlotTests(APITestCase):
                     "state_province": "Random state",
                     "timezone": None,
                     "place_name": '',
+                    "volunteers": [],
                     "url": "http://testserver/workplaces/1"
                 }
             }, {
@@ -1249,6 +1257,7 @@ class TimeSlotTests(APITestCase):
                     "state_province": "Random state",
                     "timezone": None,
                     "place_name": '',
+                    "volunteers": [],
                     "url": "http://testserver/workplaces/2"
                 }
             }]
@@ -1312,6 +1321,7 @@ class TimeSlotTests(APITestCase):
                     "state_province": "Random state",
                     "timezone": None,
                     "place_name": '',
+                    "volunteers": [],
                     "url": "http://testserver/workplaces/1"
                 }
             }]
@@ -1388,6 +1398,7 @@ class TimeSlotTests(APITestCase):
                 "state_province": "Random state",
                 "timezone": None,
                 "place_name": '',
+                "volunteers": [],
                 "url": "http://testserver/workplaces/2"
             }
         }
@@ -1494,6 +1505,7 @@ class TimeSlotTests(APITestCase):
                 "state_province": "Random state",
                 "timezone": None,
                 "place_name": '',
+                "volunteers": [],
                 "url": "http://testserver/workplaces/1"
             }
         }

@@ -51,8 +51,8 @@ class WorkplaceTests(APITestCase):
             'country': 'Random_Country',
             'postal_code': 'RAN_DOM',
             'state_province': 'Random_State',
-            'name': 'random_workplace',
-            'timezone': "America/Montreal"
+            'timezone': "America/Montreal",
+            'volunteers': ["http://testserver/users/1"],
         }
 
         response = self.client.post(
@@ -77,6 +77,9 @@ class WorkplaceTests(APITestCase):
             'seats': 40,
             'timezone': "America/Montreal",
             'place_name': '',
+            'volunteers': [
+                'http://testserver/users/1'
+            ],
             'url': 'http://testserver/workplaces/2'
         }
 
@@ -196,6 +199,7 @@ class WorkplaceTests(APITestCase):
             'state_province': (1,),
             'timezone': ("invalid",),
             'place_name': (1,),
+            'volunteers': (1,),
         }
 
         response = self.client.post(
@@ -215,6 +219,9 @@ class WorkplaceTests(APITestCase):
             'seats': ['A valid integer is required.'],
             'timezone': ['Unknown timezone'],
             'place_name': ['Not a valid string.'],
+            'volunteers': [
+                'Incorrect type. Expected URL string, received int.'
+            ],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -264,6 +271,7 @@ class WorkplaceTests(APITestCase):
             'seats': 200,
             'timezone': 'America/Montreal',
             'place_name': '',
+            'volunteers': [],
             'url': 'http://testserver/workplaces/1'
         }
 
@@ -319,6 +327,7 @@ class WorkplaceTests(APITestCase):
                 'seats': 40,
                 'timezone': 'America/Montreal',
                 'place_name': '',
+                'volunteers': [],
                 'url': 'http://testserver/workplaces/1'
             }]
         }
@@ -356,6 +365,7 @@ class WorkplaceTests(APITestCase):
             'seats': 40,
             'place_name': '',
             'timezone': 'America/Montreal',
+            'volunteers': [],
             'url': 'http://testserver/workplaces/1'
         }
 

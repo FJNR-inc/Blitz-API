@@ -14,7 +14,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail as django_send_mail
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Q
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -233,7 +233,7 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
     """
     serializer_class = serializers.TimeSlotSerializer
     queryset = TimeSlot.objects.all()
-    permission_classes = (permissions.IsAdminOrReadOnly,)
+    permission_classes = (permissions.IsAdminOrReadOnly, )
     # We need to find a way to use '__all__' without excluding nested
     # attributes through FKs such as period__workplace. For now, we declare
     # each fields one by one.
@@ -408,9 +408,13 @@ class ReservationViewSet(viewsets.ModelViewSet):
         This viewset should return the request user's reservations except if
         the currently authenticated user is an admin (is_staff).
         """
-        if self.request.user.is_staff:
+        user = self.request.user
+        if user.is_staff:
             return Reservation.objects.all()
-        return Reservation.objects.filter(user=self.request.user)
+        return Reservation.objects.filter(
+            Q(user=user) |
+            Q(timeslot__period__workplace__volunteers=user, is_active=True)
+        )
 
     def get_permissions(self):
         """
@@ -419,6 +423,11 @@ class ReservationViewSet(viewsets.ModelViewSet):
         if self.action == 'destroy':
             permission_classes = [
                 permissions.IsOwner,
+                IsAuthenticated,
+            ]
+        elif self.action == 'partial_update':
+            permission_classes = [
+                permissions.IsVolunteerOrUpdateReadOnly,
                 IsAuthenticated,
             ]
         else:

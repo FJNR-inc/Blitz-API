@@ -33,6 +33,13 @@ class Workplace(Address, SafeDeleteModel):
         verbose_name=_("Seats"),
     )
 
+    volunteers = models.ManyToManyField(
+        User,
+        blank=True,
+        verbose_name=_("Volunteer"),
+        related_name='workplaces',
+    )
+
     # History is registered in translation.py
     # history = HistoricalRecords()
 

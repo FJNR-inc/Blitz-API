@@ -40,6 +40,8 @@ class ReservationTests(APITestCase):
             state_province="Random state",
             country="Random country",
         )
+        cls.workplace.volunteers.set([cls.user])
+        cls.workplace.save()
         cls.workplace2 = Workplace.objects.create(
             name="Blitz2",
             seats=1,
@@ -105,6 +107,11 @@ class ReservationTests(APITestCase):
             timeslot=cls.time_slot_active,
             is_active=True,
         )
+        cls.reservation_volunteer = Reservation.objects.create(
+            user=cls.user,
+            timeslot=cls.time_slot,
+            is_active=True,
+        )
         cls.reservation_admin = Reservation.objects.create(
             user=cls.admin,
             timeslot=cls.time_slot_active,
@@ -149,11 +156,11 @@ class ReservationTests(APITestCase):
         del response_data['user_details']['date_joined']
 
         content = {
-            'id': 3,
+            'id': 4,
             'is_active': True,
             'is_present': False,
             'timeslot': 'http://testserver/time_slots/1',
-            'url': 'http://testserver/reservations/3',
+            'url': 'http://testserver/reservations/4',
             'user': 'http://testserver/users/1',
             'cancelation_date': None,
             'cancelation_reason': None,
@@ -161,13 +168,19 @@ class ReservationTests(APITestCase):
                 'end_time': '2130-01-15T12:00:00-05:00',
                 'id': 1,
                 'period': 'http://testserver/periods/1',
-                'places_remaining': 39,
-                'reservations': ['http://testserver/reservations/3'],
+                'places_remaining': 38,
+                'reservations': [
+                    'http://testserver/reservations/2',
+                    'http://testserver/reservations/4',
+                ],
                 'reservations_canceled': [],
                 'price': '3.00',
                 'start_time': '2130-01-15T08:00:00-05:00',
                 'url': 'http://testserver/time_slots/1',
-                'users': ['http://testserver/users/1'],
+                'users': [
+                    'http://testserver/users/1',
+                    'http://testserver/users/1'
+                ],
                 'workplace': {
                     'address_line1': '123 random street',
                     'address_line2': None,
@@ -184,6 +197,7 @@ class ReservationTests(APITestCase):
                     'state_province': 'Random state',
                     'timezone': None,
                     'place_name': '',
+                    'volunteers': ['http://testserver/users/1'],
                     'url': 'http://testserver/workplaces/1'
                 }
             },
@@ -316,11 +330,11 @@ class ReservationTests(APITestCase):
         del response_data['user_details']['date_joined']
 
         content = {
-            'id': 3,
+            'id': 4,
             'is_active': True,
             'is_present': False,
             'timeslot': 'http://testserver/time_slots/2',
-            'url': 'http://testserver/reservations/3',
+            'url': 'http://testserver/reservations/4',
             'user': 'http://testserver/users/1',
             'cancelation_date': None,
             'cancelation_reason': None,
@@ -331,8 +345,8 @@ class ReservationTests(APITestCase):
                 'places_remaining': -2,
                 'reservations': [
                     'http://testserver/reservations/1',
-                    'http://testserver/reservations/2',
-                    'http://testserver/reservations/3'
+                    'http://testserver/reservations/3',
+                    'http://testserver/reservations/4',
                 ],
                 'reservations_canceled': [],
                 'price': '3.00',
@@ -359,6 +373,7 @@ class ReservationTests(APITestCase):
                     'state_province': 'Random state',
                     'timezone': None,
                     'place_name': '',
+                    'volunteers': [],
                     'url': 'http://testserver/workplaces/2'
                 }
             },
@@ -599,6 +614,198 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_update_partial_as_volunteer(self):
+        """
+        Ensure we can partially update a reservation (is_present field only)
+        if request user is in the timeslot's workplace volunteers list.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            'is_present': True,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'reservation-detail',
+                kwargs={'pk': self.reservation_volunteer.pk},
+            ),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+
+        del response_data['user_details']
+        del response_data['timeslot_details']
+
+        content = {
+            'id': 2,
+            'is_active': True,
+            'is_present': True,
+            'timeslot': 'http://testserver/time_slots/1',
+            'url': 'http://testserver/reservations/2',
+            'user': 'http://testserver/users/1',
+            'cancelation_date': None,
+            'cancelation_reason': None
+        }
+
+        self.assertEqual(response_data, content)
+
+    def test_update_partial_as_volunteer_not_owned(self):
+        """
+        Ensure we can partially update any reservation (is_present field only)
+        if request user is in the timeslot's workplace volunteers list.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        reservation_admin = Reservation.objects.create(
+            user=self.admin,
+            timeslot=self.time_slot,
+            is_active=True,
+        )
+
+        data = {
+            'is_present': True,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'reservation-detail',
+                kwargs={'pk': reservation_admin.pk},
+            ),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+
+        del response_data['user_details']
+        del response_data['timeslot_details']
+
+        content = {
+            'id': 4,
+            'is_active': True,
+            'is_present': True,
+            'timeslot': 'http://testserver/time_slots/1',
+            'url': 'http://testserver/reservations/4',
+            'user': 'http://testserver/users/2',
+            'cancelation_date': None,
+            'cancelation_reason': None
+        }
+
+        self.assertEqual(response_data, content)
+
+    def test_update_partial_as_volunteer_not_active(self):
+        """
+        Ensure we can't partially update a reservation (is_present field only)
+        if is_active == False.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        reservation_admin = Reservation.objects.create(
+            user=self.admin,
+            timeslot=self.time_slot,
+            is_active=False,
+        )
+
+        data = {
+            'is_present': True,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'reservation-detail',
+                kwargs={'pk': reservation_admin.pk},
+            ),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_404_NOT_FOUND,
+            response.content
+        )
+
+    def test_update_partial_not_volunteer(self):
+        """
+        Ensure we can't partially update a reservation (is_present field only)
+        if request user is not in the timeslot's workplace volunteers list.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            'is_present': True,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'reservation-detail',
+                kwargs={'pk': 1},
+            ),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'detail': 'You do not have permission to perform this action.'
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+            response.content
+        )
+
+        self.assertEqual(response_data, content)
+
+    def test_update_partial_not_volunteer_not_owned(self):
+        """
+        Ensure we can't partially update a reservation (is_present field only)
+        if request user is not in the timeslot's workplace volunteers list.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        reservation_admin = Reservation.objects.create(
+            user=self.admin,
+            timeslot=self.time_slot,
+            is_active=False,
+        )
+
+        data = {
+            'is_present': True,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'reservation-detail',
+                kwargs={'pk': reservation_admin.pk},
+            ),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_404_NOT_FOUND,
+            response.content
+        )
+
     def test_update_partial_without_is_pesent(self):
         """
         Ensure we can't partially update a reservation (other fields).
@@ -683,9 +890,11 @@ class ReservationTests(APITestCase):
         del data['results'][0]['timeslot_details']
         del data['results'][1]['user_details']
         del data['results'][1]['timeslot_details']
+        del data['results'][2]['user_details']
+        del data['results'][2]['timeslot_details']
 
         content = {
-            'count': 2,
+            'count': 3,
             'next': None,
             'previous': None,
             'results': [{
@@ -701,8 +910,17 @@ class ReservationTests(APITestCase):
                 'id': 2,
                 'is_active': True,
                 'is_present': False,
-                'timeslot': 'http://testserver/time_slots/2',
+                'timeslot': 'http://testserver/time_slots/1',
                 'url': 'http://testserver/reservations/2',
+                'user': 'http://testserver/users/1',
+                'cancelation_date': None,
+                'cancelation_reason': None
+            }, {
+                'id': 3,
+                'is_active': True,
+                'is_present': False,
+                'timeslot': 'http://testserver/time_slots/2',
+                'url': 'http://testserver/reservations/3',
                 'user': 'http://testserver/users/2',
                 'cancelation_date': None,
                 'cancelation_reason': None
@@ -730,9 +948,11 @@ class ReservationTests(APITestCase):
 
         del data['results'][0]['user_details']
         del data['results'][0]['timeslot_details']
+        del data['results'][1]['user_details']
+        del data['results'][1]['timeslot_details']
 
         content = {
-            'count': 1,
+            'count': 2,
             'next': None,
             'previous': None,
             'results': [{
@@ -741,6 +961,15 @@ class ReservationTests(APITestCase):
                 'is_present': False,
                 'timeslot': 'http://testserver/time_slots/2',
                 'url': 'http://testserver/reservations/1',
+                'user': 'http://testserver/users/1',
+                'cancelation_date': None,
+                'cancelation_reason': None
+            }, {
+                'id': 2,
+                'is_active': True,
+                'is_present': False,
+                'timeslot': 'http://testserver/time_slots/1',
+                'url': 'http://testserver/reservations/2',
                 'user': 'http://testserver/users/1',
                 'cancelation_date': None,
                 'cancelation_reason': None
@@ -793,7 +1022,7 @@ class ReservationTests(APITestCase):
         response = self.client.get(
             reverse(
                 'reservation-detail',
-                kwargs={'pk': 2},
+                kwargs={'pk': 3},
             ),
         )
 

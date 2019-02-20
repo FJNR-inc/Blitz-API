@@ -15,6 +15,21 @@ class IsAdminOrReadOnly(permissions.BasePermission):
         return request.user.is_staff
 
 
+class IsVolunteerOrUpdateReadOnly(permissions.BasePermission):
+    """
+    Custom permission to allow volunteers to modify timeslot reservations.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        volunteers = obj.timeslot.period.workplace.volunteers.all()
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        if request.method in ['PATCH', ]:
+            return (request.user.is_staff or
+                    request.user in volunteers)
+        return request.user.is_staff
+
+
 class IsOwner(permissions.BasePermission):
     """
     Custom permission to only allow admins or owners of an object to view/edit.
