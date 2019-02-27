@@ -353,6 +353,195 @@ class OrderTests(APITestCase):
         self.assertEqual(len(mail.outbox), 2)
 
     @responses.activate
+    def test_verify_membership_cost_with_coupon(self):
+        """
+        Ensure we can have a good price of order with coupon
+        """
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        # create coupon for membership
+        coupon = Coupon.objects.create(
+            code="ABCD1235",
+            start_time=LOCAL_TIMEZONE.localize(datetime(2000, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            value=10,
+            max_use_per_user=0,
+            max_use=0,
+            owner=self.admin,
+        )
+        membeship_type = ContentType.objects.get_for_model(Membership)
+        coupon.applicable_product_types.set([membeship_type])
+
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'membership',
+                    'object_id': 1,
+                    'quantity': 1,
+                }
+            ],
+            'coupon': "ABCD1235",
+        }
+
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        membership = Membership.objects.get(id=1)
+        response_data = json.loads(response.content)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        self.assertEqual(
+            (response_data['order_lines'][0]['cost'] + 10),
+            membership.price
+        )
+
+    @responses.activate
+    def test_verify_package_cost_with_coupon(self):
+        """
+        Ensure we can have a good price of order with coupon
+        """
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        # create coupon for membership
+        coupon = Coupon.objects.create(
+            code="ABCD1235",
+            start_time=LOCAL_TIMEZONE.localize(datetime(2000, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            value=10,
+            max_use_per_user=0,
+            max_use=0,
+            owner=self.admin,
+        )
+        package_type = ContentType.objects.get_for_model(Package)
+        coupon.applicable_product_types.set([package_type])
+
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'package',
+                    'object_id': 1,
+                    'quantity': 2,
+                }
+            ],
+            'coupon': "ABCD1235",
+        }
+
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        package = Package.objects.get(id=1)
+        response_data = json.loads(response.content)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        self.assertEqual(
+            (response_data['order_lines'][0]['cost'] + 10)/2,
+            package.price
+        )
+
+    @responses.activate
+    def test_verify_retirement_cost_with_coupon(self):
+        """
+        Ensure we can have a good price of order with coupon
+        """
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        # create coupon for membership
+        coupon = Coupon.objects.create(
+            code="ABCD1235",
+            start_time=LOCAL_TIMEZONE.localize(datetime(2000, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            value=10,
+            max_use_per_user=0,
+            max_use=0,
+            owner=self.admin,
+        )
+        retirement_type = ContentType.objects.get_for_model(Retirement)
+        coupon.applicable_product_types.set([retirement_type])
+
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'retirement',
+                    'object_id': 1,
+                    'quantity': 1,
+                }
+            ],
+            'coupon': "ABCD1235",
+        }
+
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        retirement = Retirement.objects.get(id=1)
+        response_data = json.loads(response.content)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        self.assertEqual(
+            (response_data['order_lines'][0]['cost'] + 10),
+            retirement.price
+        )
+
+    @responses.activate
     def test_create_reservation_only(self):
         """
         Ensure we can create an order for a reservation only.

@@ -175,6 +175,90 @@ class CouponTests(APITestCase):
             content
         )
 
+    def test_create_without_start_time(self):
+        """
+        Ensure we can create a coupon if user has permission.
+        Ensure we can create a coupon without start date.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "applicable_product_types": [
+                "package"
+            ],
+            "value": "13.00",
+            "end_time": "2020-01-06T15:11:06-05:00",
+            "max_use": 100,
+            "max_use_per_user": 2,
+            "details": "Any package for clients",
+            "owner": "http://testserver/users/1",
+        }
+
+        response = self.client.post(
+            reverse('coupon-list'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+        print(response_data)
+
+        content = {
+            'start_time': ['This field is required.']
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        self.assertEqual(
+            json.loads(response.content),
+            content
+        )
+
+    def test_create_with_end_time_before_start_time(self):
+        """
+        Ensure we can create a coupon with end date before start date.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "applicable_product_types": [
+                "package"
+            ],
+            "value": "13.00",
+            "end_time": "2019-01-06T15:11:05-05:00",
+            "start_time": "2020-01-06T15:11:06-05:00",
+            "max_use": 100,
+            "max_use_per_user": 2,
+            "details": "Any package for clients",
+            "owner": "http://testserver/users/1",
+        }
+
+        response = self.client.post(
+            reverse('coupon-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'non_field_errors': [
+                'Start date need to be before the end date.'
+            ]}
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        self.assertEqual(
+            json.loads(response.content),
+            content
+        )
+
     def test_create_choose_code(self):
         """
         Ensure we can create a coupon if user has permission.
@@ -377,6 +461,92 @@ class CouponTests(APITestCase):
                 "percentage (percent_off) for this coupon."
             ]
         }
+
+        self.assertEqual(
+            json.loads(response.content),
+            content
+        )
+
+    def test_create_with_too_big_percentage(self):
+        """
+        Ensure we can create a coupon with the percentage between 1 and 100 .
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "applicable_product_types": [
+                "package"
+            ],
+            "percent_off": "101",
+            "start_time": "2019-01-06T15:11:05-05:00",
+            "end_time": "2020-01-06T15:11:06-05:00",
+            "max_use": 100,
+            "max_use_per_user": 2,
+            "details": "Any package for clients",
+            "owner": "http://testserver/users/1",
+        }
+
+        response = self.client.post(
+            reverse('coupon-list'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+        print("1", response_data)
+
+        content = {'percent_off': [
+            'Ensure this value is less than or equal to 100.'
+        ]}
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        self.assertEqual(
+            json.loads(response.content),
+            content
+        )
+
+    def test_create_with_max_use_person_smaller_max_use(self):
+        """
+        Ensure we can create coupon with max use person smaller max use
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "applicable_product_types": [
+                "package"
+            ],
+            "percent_off": "80",
+            "start_time": "2019-01-06T15:11:05-05:00",
+            "end_time": "2020-01-06T15:11:06-05:00",
+            "max_use": 100,
+            "max_use_per_user": 102,
+            "details": "Any package for clients",
+            "owner": "http://testserver/users/1",
+        }
+
+        response = self.client.post(
+            reverse('coupon-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'non_field_errors': ['the maximum number of '
+                                 'use per person can not '
+                                 'be more than the maximum '
+                                 'number of use']
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
 
         self.assertEqual(
             json.loads(response.content),

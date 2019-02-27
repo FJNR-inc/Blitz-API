@@ -809,6 +809,23 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
 
     def validate(self, attr):
         validated_data = super(CouponSerializer, self).validate(attr)
+
+        start_time = validated_data.get(
+            'start_time',
+            getattr(self.instance, 'start_time', None)
+        )
+        end_time = validated_data.get(
+            'end_time',
+            getattr(self.instance, 'end_time', None)
+        )
+        max_use = validated_data.get(
+            'max_use',
+            getattr(self.instance, 'max_use', None)
+        )
+        max_use_per_user = validated_data.get(
+            'max_use_per_user',
+            getattr(self.instance, 'max_use_per_user', None)
+        )
         if (validated_data.get('value', None) and
                 validated_data.get('percent_off', None)):
             raise serializers.ValidationError({
@@ -827,6 +844,17 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
                         "discount percentage (percent_off) for this coupon."
                     )]
                 })
+
+        if start_time > end_time:
+            raise serializers.ValidationError(
+                _('Start date need to be before the end date.')
+            )
+        if max_use < max_use_per_user:
+            raise serializers.ValidationError(
+                _("the maximum number of use per person can not "
+                  "be more than the maximum number of use")
+            )
+
         return validated_data
 
     def create(self, validated_data):
