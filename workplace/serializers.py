@@ -515,6 +515,38 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         }
 
 
+class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
+    name = serializers.CharField(max_length=200)
+    start_time = serializers.DateTimeField()
+    end_time = serializers.DateTimeField()
+    period = serializers.HyperlinkedRelatedField(
+        view_name='period-detail',
+        queryset=Period.objects.all(),
+    )
+    weekdays = serializers.ListField(
+        child=serializers.IntegerField(
+            max_value=6,
+            min_value=0
+        )
+    )
+
+    def validate_title(self, weekdays):
+        """
+        Check that no weekday is duplicated.
+        """
+        if len(weekdays) != len(set(weekdays)):
+            raise serializers.ValidationError(_(
+                "Duplicated weekdays are not authorized."
+            ))
+        return weekdays
+
+    # def validate(self, attrs):
+
+    class Meta:
+        model = TimeSlot
+        exclude = ('deleted', 'price', 'users')
+
+
 class ReservationSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     # Custom names are needed to overcome an issue with DRF:

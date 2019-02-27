@@ -4,6 +4,9 @@ from copy import copy
 
 from datetime import datetime
 
+from dateutil.parser import parse
+from dateutil.rrule import rrule, DAILY
+
 import rest_framework
 from rest_framework import viewsets, status, exceptions
 from rest_framework.decorators import action
@@ -279,6 +282,81 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
             '".xls'
         ])
         return response
+
+    @action(methods=['post'], detail=False, permission_classes=[IsAdminUser])
+    def batch_create(self, request):
+        """
+        This custom action allows an admin to batch create timeslots.
+
+        Parameters:
+            name: name to be used for all timeslots
+            start_time: datetime (isoformat) at which the timeslot begins
+            end_time: datetime (isoformat) at which the timeslot ends
+            period: period in which timeslots are created. The period defines
+                the boundary of the timeslot batch.
+            weekdays: Days of the week for which the timeslots are created.
+                Takes a list of integer from 0:Monday to 6:Sunday.
+
+        ie:
+            {
+                'name': "test",
+                'start_time': '2002-12-25T08:00:00',
+                'end_time': '2002-12-25T12:00:00',
+                'period': validated_data['period'],
+                'weekdays': [0,4]
+            }
+            That will create timeslots named "test", with start_time=08:00:00
+            and end_time=12:00:00 for every Monday and Thursday between
+            period.start_date and period.end_date.
+
+        Process will abort if a conflict arise.
+        """
+        serializer = serializers.BatchTimeSlotSerializer(data=request.data)
+
+        serializer.is_valid(raise_exception=True)
+
+        validated_data = serializer.validated_data
+
+        period_start_date = validated_data['period'].start_date
+        period_end_date = validated_data['period'].end_date
+
+        timeslot_data = {
+            'name': validated_data['name'],
+            'start_time': validated_data['start_time'],
+            'end_time': validated_data['end_time'],
+            'period': validated_data['period'],
+        }
+
+        timeslot_data_list = list()
+
+        timeslot_dates = list(
+            rrule(
+                freq=DAILY,
+                dtstart=period_start_date,
+                until=period_end_date,
+                byweekday=validated_data['weekdays'],
+            )
+        )
+
+        with transaction.atomic():
+            for day in timeslot_dates:
+                timeslot_data['start_time'] = day.replace(
+                    hour=validated_data['start_time'].hour,
+                    minute=validated_data['start_time'].minute,
+                    second=validated_data['start_time'].second,
+                    tzinfo=None,
+                )
+                timeslot_data['end_time'] = day.replace(
+                    hour=validated_data['end_time'].hour,
+                    minute=validated_data['end_time'].minute,
+                    second=validated_data['end_time'].second,
+                    tzinfo=None,
+                )
+                timeslot_data_list.append(TimeSlot(**timeslot_data))
+
+            TimeSlot.objects.bulk_create(timeslot_data_list)
+
+        return Response("success", status=status.HTTP_200_OK)
 
     def filter_queryset(self, queryset):
         """
