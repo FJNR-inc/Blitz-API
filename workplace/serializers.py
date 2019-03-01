@@ -1,5 +1,8 @@
 from copy import copy
 
+from dateutil.parser import parse
+from dateutil.rrule import rrule, DAILY
+
 from rest_framework import serializers, status
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueValidator
@@ -402,7 +405,7 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         period_timeslots = TimeSlot.objects.filter(
             period=period
         )
-        # Exclude current period (for updates)
+        # Exclude current timeslot (for updates)
         period_timeslots = period_timeslots.exclude(id=instance_id)
         time_list = period_timeslots.values_list('start_time', 'end_time')
 
@@ -530,7 +533,7 @@ class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         )
     )
 
-    def validate_title(self, weekdays):
+    def validate_weekdays(self, weekdays):
         """
         Check that no weekday is duplicated.
         """
@@ -540,7 +543,66 @@ class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
             ))
         return weekdays
 
-    # def validate(self, attrs):
+    def validate(self, attrs):
+        validated_data = super(BatchTimeSlotSerializer, self).validate(attrs)
+        period_start_date = validated_data['period'].start_date
+        period_end_date = validated_data['period'].end_date
+
+        time_list = TimeSlot.objects.filter(
+            period=validated_data['period']
+        ).values_list('start_time', 'end_time')
+
+        timeslot_data = {
+            'name': validated_data['name'],
+            'start_time': validated_data['start_time'],
+            'end_time': validated_data['end_time'],
+            'period': validated_data['period'],
+        }
+
+        timeslot_data_list = list()
+
+        timeslot_dates = list(
+            rrule(
+                freq=DAILY,
+                dtstart=period_start_date,
+                until=period_end_date,
+                byweekday=validated_data['weekdays'],
+            )
+        )
+
+        for day in timeslot_dates:
+            timeslot_data['start_time'] = timeslot_data['start_time'].replace(
+                day=day.day,
+                month=day.month,
+                year=day.year,
+            )
+            timeslot_data['end_time'] = timeslot_data['end_time'].replace(
+                day=day.day,
+                month=day.month,
+                year=day.year,
+            )
+            new_timeslot = TimeSlot(**timeslot_data)
+            timeslot_data_list.append(new_timeslot)
+
+        for duration in time_list:
+            for timeslot in timeslot_data_list:
+                start = timeslot.start_time
+                end = timeslot.end_time
+                if max(duration[0], start) < min(duration[1], end):
+                    raise serializers.ValidationError({
+                        'non_field_errors': _(
+                            "An existing timeslot overlaps with the provided "
+                            "start_time and end_time."
+                        ),
+                    })
+
+        return timeslot_data_list
+
+    def create(self, validated_data):
+        return TimeSlot.objects.bulk_create(validated_data)
+
+    def save(self, **kwargs):
+        return self.create(self.validated_data)
 
     class Meta:
         model = TimeSlot

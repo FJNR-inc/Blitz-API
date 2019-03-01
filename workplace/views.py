@@ -311,52 +311,30 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
 
         Process will abort if a conflict arise.
         """
-        serializer = serializers.BatchTimeSlotSerializer(data=request.data)
+        serializer = serializers.BatchTimeSlotSerializer(
+            data=request.data
+        )
 
         serializer.is_valid(raise_exception=True)
 
-        validated_data = serializer.validated_data
+        serializer.save()
 
-        period_start_date = validated_data['period'].start_date
-        period_end_date = validated_data['period'].end_date
+        # The following commented code grabs the newly created timeslots and
+        #  returns them in the request.
+        #
+        # data = serializer.save()
+        # data = serializers.TimeSlotSerializer(
+        #     data,
+        #     many=True,
+        #     context={
+        #         'request': request,
+        #         'view': self
+        #     },
+        # ).data
+        #
+        # return Response(data, status=status.HTTP_201_CREATED)
 
-        timeslot_data = {
-            'name': validated_data['name'],
-            'start_time': validated_data['start_time'],
-            'end_time': validated_data['end_time'],
-            'period': validated_data['period'],
-        }
-
-        timeslot_data_list = list()
-
-        timeslot_dates = list(
-            rrule(
-                freq=DAILY,
-                dtstart=period_start_date,
-                until=period_end_date,
-                byweekday=validated_data['weekdays'],
-            )
-        )
-
-        with transaction.atomic():
-            for day in timeslot_dates:
-                timeslot_data['start_time'] = day.replace(
-                    hour=validated_data['start_time'].hour,
-                    minute=validated_data['start_time'].minute,
-                    second=validated_data['start_time'].second,
-                    tzinfo=None,
-                )
-                timeslot_data['end_time'] = day.replace(
-                    hour=validated_data['end_time'].hour,
-                    minute=validated_data['end_time'].minute,
-                    second=validated_data['end_time'].second,
-                    tzinfo=None,
-                )
-                timeslot_data_list.append(TimeSlot(**timeslot_data))
-
-            TimeSlot.objects.bulk_create(timeslot_data_list)
-
-        return Response("success", status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_201_CREATED)
 
     def filter_queryset(self, queryset):
         """

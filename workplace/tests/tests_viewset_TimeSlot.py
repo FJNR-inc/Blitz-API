@@ -1531,3 +1531,161 @@ class TimeSlotTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_batch_create(self):
+        """
+        Ensure that an admin can batch create timeslots for a specific period.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "period": reverse(
+                'period-detail', args=[self.period_no_workplace.id]
+            ),
+            "name": "test",
+            "start_time": "2012-01-01T08:00:00-05:00",  # Date not relevant,
+            "end_time": "2012-01-01T12:00:00-05:00",   # Only time is used.
+            "weekdays": [1, 2, 3, ],
+        }
+
+        response = self.client.post(
+            reverse('timeslot-batch-create'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_batch_create_without_permission(self):
+        """
+        Ensure that an admin can batch create timeslots for a specific period.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            "period": reverse(
+                'period-detail', args=[self.period_no_workplace.id]
+            ),
+            "name": "test",
+            "start_time": "2012-01-01T08:00:00-05:00",  # Date not relevant,
+            "end_time": "2012-01-01T12:00:00-05:00",   # Only time is used.
+            "weekdays": [1, 2, 3, ],
+        }
+
+        response = self.client.post(
+            reverse('timeslot-batch-create'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'detail': 'You do not have permission to perform this action.'
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_batch_create_duplicate_weekdays(self):
+        """
+        Ensure that an admin can't batch create when weekdays are duplicated.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "period": reverse(
+                'period-detail', args=[self.period_no_workplace.id]
+            ),
+            "name": "test",
+            "start_time": "2012-01-01T08:00:00-05:00",  # Date not relevant,
+            "end_time": "2012-01-01T12:00:00-05:00",   # Only time is used.
+            "weekdays": [1, 2, 3, 3, ],
+        }
+
+        response = self.client.post(
+            reverse('timeslot-batch-create'),
+            data,
+            format='json',
+        )
+
+        content = {
+            "weekdays": [
+                "Duplicated weekdays are not authorized."
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_batch_create_bad_weekdays(self):
+        """
+        Ensure that an admin can't batch create when weekdays are incorrect.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "period": reverse(
+                'period-detail', args=[self.period_no_workplace.id]
+            ),
+            "name": "test",
+            "start_time": "2012-01-01T08:00:00-05:00",  # Date not relevant,
+            "end_time": "2012-01-01T12:00:00-05:00",   # Only time is used.
+            "weekdays": [1, 2, 3, 9, ],
+        }
+
+        response = self.client.post(
+            reverse('timeslot-batch-create'),
+            data,
+            format='json',
+        )
+
+        content = {
+            "weekdays": {
+                "3": [  # Element at position 3 is bad
+                    "Ensure this value is less than or equal to 6."
+                ]
+            }
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_batch_create_duplicate_timeslot(self):
+        """
+        Ensure that an admin can't batch create when existing timeslots
+        overlap with the one we try to batch create.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "period": reverse(
+                'period-detail', args=[self.period_active.id]
+            ),
+            "name": "test",
+            "start_time": "2012-01-01T00:00:00",  # Date not relevant,
+            "end_time": "2012-01-01T23:59:59",   # Only time is used.
+            "weekdays": [0, 1, 2, 3, 4, 5, 6],
+        }
+
+        response = self.client.post(
+            reverse('timeslot-batch-create'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        content = {
+            "non_field_errors": [
+                "An existing timeslot overlaps with the provided start_time "
+                "and end_time."
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
