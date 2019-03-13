@@ -443,6 +443,16 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 })
         return attrs
 
+    def create(self, validated_data):
+        """
+        Allows an admin to create retirements reservations for another user.
+        """
+        validated_data['refundable'] = False
+        validated_data['exchangeable'] = False
+
+        return super().create(validated_data)
+
+
     def update(self, instance, validated_data):
         user = instance.user
         payment_token = validated_data.pop('payment_token', None)
@@ -948,7 +958,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 'view_name': 'retirement:retirement-detail',
             },
             'is_active': {
-                'required': True,
+                'required': False,
                 'help_text': _("Whether the reservation is active or not."),
             },
             'url': {

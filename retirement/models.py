@@ -238,6 +238,15 @@ class Reservation(SafeDeleteModel):
         on_delete=models.CASCADE,
         verbose_name=_("Order line"),
         related_name='retirement_reservations',
+        null=True,
+    )
+    refundable = models.BooleanField(
+        verbose_name=_("Refundable"),
+        default=True,
+    )
+    exchangeable = models.BooleanField(
+        verbose_name=_("Exchangeable"),
+        default=True,
     )
 
     history = HistoricalRecords()
