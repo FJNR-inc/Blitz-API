@@ -52,6 +52,7 @@ class ReservationTests(APITestCase):
     @classmethod
     def setUpClass(cls):
         super(ReservationTests, cls).setUpClass()
+        cls.maxDiff=None
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()
@@ -155,9 +156,6 @@ class ReservationTests(APITestCase):
                 'retirement:retirement-detail', args=[self.retirement2.id]
             ),
             'user': reverse('user-detail', args=[self.user.id]),
-            'order_line': reverse(
-                'orderline-detail', args=[self.order_line.id]),
-            'is_active': True,
         }
 
         response = self.client.post(
@@ -193,6 +191,8 @@ class ReservationTests(APITestCase):
             'cancelation_action': None,
             'cancelation_date': None,
             'cancelation_reason': None,
+            'refundable': False,
+            'exchangeable': False,
             'retirement': 'http://testserver/retirement/retirements/2',
             'order_line': 'http://testserver/order_lines/1',
             'retirement_details': {
@@ -381,6 +381,8 @@ class ReservationTests(APITestCase):
             'cancelation_action': None,
             'cancelation_date': None,
             'cancelation_reason': None,
+            'refundable': True,
+            'exchangeable': True,
             'retirement': 'http://testserver/retirement/retirements/2',
             'order_line': 'http://testserver/order_lines/1',
             'retirement_details': {
@@ -658,7 +660,9 @@ class ReservationTests(APITestCase):
             'order_line': 'http://testserver/order_lines/1',
             'cancelation_date': None,
             'cancelation_action': None,
-            'cancelation_reason': None
+            'cancelation_reason': None,
+            'exchangeable': True,
+            'refundable': True,
         }
 
         self.assertEqual(response_data, content)
@@ -720,7 +724,9 @@ class ReservationTests(APITestCase):
             'order_line': 'http://testserver/order_lines/1',
             'cancelation_date': None,
             'cancelation_action': None,
-            'cancelation_reason': None
+            'cancelation_reason': None,
+            'refundable': True,
+            'exchangeable': True,
         }
 
         self.assertEqual(response_data, content)
@@ -1102,7 +1108,9 @@ class ReservationTests(APITestCase):
             'order_line': 'http://testserver/order_lines/2',
             'cancelation_date': None,
             'cancelation_action': None,
-            'cancelation_reason': None
+            'cancelation_reason': None,
+            'refundable': True,
+            'exchangeable': True,
         }
 
         self.assertEqual(response_data, content)
@@ -1237,7 +1245,9 @@ class ReservationTests(APITestCase):
             'order_line': 'http://testserver/order_lines/2',
             'cancelation_date': None,
             'cancelation_action': None,
-            'cancelation_reason': None
+            'cancelation_reason': None,
+            'refundable': True,
+            'exchangeable': True,
         }
 
         self.assertEqual(response_data, content)
@@ -1350,7 +1360,9 @@ class ReservationTests(APITestCase):
             'order_line': 'http://testserver/order_lines/1',
             'cancelation_date': None,
             'cancelation_action': None,
-            'cancelation_reason': None
+            'cancelation_reason': None,
+            'refundable': True,
+            'exchangeable': True,
         }
 
         self.assertEqual(response_data, content)
@@ -1452,7 +1464,9 @@ class ReservationTests(APITestCase):
                 'order_line': 'http://testserver/order_lines/1',
                 'cancelation_date': None,
                 'cancelation_action': None,
-                'cancelation_reason': None
+                'cancelation_reason': None,
+                'refundable': True,
+                'exchangeable': True,
             }, {
                 'id': 2,
                 'is_active': True,
@@ -1463,7 +1477,9 @@ class ReservationTests(APITestCase):
                 'order_line': 'http://testserver/order_lines/1',
                 'cancelation_date': None,
                 'cancelation_action': None,
-                'cancelation_reason': None
+                'cancelation_reason': None,
+                'refundable': True,
+                'exchangeable': True,
             }]
         }
 
@@ -1503,7 +1519,9 @@ class ReservationTests(APITestCase):
                 'order_line': 'http://testserver/order_lines/1',
                 'cancelation_date': None,
                 'cancelation_action': None,
-                'cancelation_reason': None
+                'cancelation_reason': None,
+                'refundable': True,
+                'exchangeable': True,
             }]
         }
 
@@ -1539,7 +1557,9 @@ class ReservationTests(APITestCase):
             'order_line': 'http://testserver/order_lines/1',
             'cancelation_date': None,
             'cancelation_action': None,
-            'cancelation_reason': None
+            'cancelation_reason': None,
+            'refundable': True,
+            'exchangeable': True,
         }
 
         self.assertEqual(response_data, content)
