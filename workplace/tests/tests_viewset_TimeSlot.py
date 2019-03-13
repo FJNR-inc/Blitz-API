@@ -3,7 +3,7 @@ import pytz
 
 from unittest import mock
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date, time
 
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
@@ -1539,16 +1539,16 @@ class TimeSlotTests(APITestCase):
         """
         self.client.force_authenticate(user=self.admin)
 
-        initial_timeslot_count = TimeSlot.objects.count()
-
         data = {
             "period": reverse(
                 'period-detail', args=[self.period_no_workplace.id]
             ),
-            "name": "test",
-            "start_time": "2130-01-01T08:00:00-05:00",
-            "end_time": "2130-01-07T12:00:00-05:00",
-            "weekdays": [1, 2, 3, ],
+            "name": "test",  # Optional
+            "start_time": "08:00:00",
+            "end_time": "12:00:00",
+            "start_date": "2130-01-01",
+            "end_date": "2130-12-12",
+            "weekdays": [0, 1, 2, 3, 4, 5, 6],
         }
 
         response = self.client.post(
@@ -1557,15 +1557,43 @@ class TimeSlotTests(APITestCase):
             format='json',
         )
 
-        new_timeslot_count = TimeSlot.objects.count()
-
         self.assertEqual(
             response.status_code,
             status.HTTP_201_CREATED,
             response.content
         )
 
-        self.assertEqual(new_timeslot_count - initial_timeslot_count, 3)
+        new_timeslots = TimeSlot.objects.filter(
+            period=self.period_no_workplace
+        )
+        new_timeslot_count = new_timeslots.count()
+
+        start_date = date(2130, 1, 1)
+        end_date = date(2130, 12, 12)
+
+        nb_timeslot = (end_date - start_date).days
+
+        self.assertEqual(
+            new_timeslot_count,
+            nb_timeslot + 1,
+            "Bad timeslot count"
+        )
+
+        # Verify time for every timeslot
+        # This is to make sure that there are no variations due to DST
+        # Timezone is America/Monrteal since no workplace is associated with
+        # the provided period.
+        for timeslot in new_timeslots:
+            self.assertEqual(
+                timeslot.start_time.astimezone(
+                    pytz.timezone("America/Montreal")).time(),
+                time(8, 0, 0)
+            )
+            self.assertEqual(
+                timeslot.end_time.astimezone(
+                    pytz.timezone("America/Montreal")).time(),
+                time(12, 0, 0)
+            )
 
     def test_batch_create_without_permission(self):
         """
@@ -1577,9 +1605,10 @@ class TimeSlotTests(APITestCase):
             "period": reverse(
                 'period-detail', args=[self.period_no_workplace.id]
             ),
-            "name": "test",
-            "start_time": "2012-01-01T08:00:00-05:00",
-            "end_time": "2012-01-01T12:00:00-05:00",
+            "start_time": "08:00:00",
+            "end_time": "12:00:00",
+            "start_date": "2012-01-01",
+            "end_date": "2012-01-01",
             "weekdays": [1, 2, 3, ],
         }
 
@@ -1608,8 +1637,10 @@ class TimeSlotTests(APITestCase):
                 'period-detail', args=[self.period_no_workplace.id]
             ),
             "name": "test",
-            "start_time": "2012-01-01T08:00:00-05:00",
-            "end_time": "2012-01-01T12:00:00-05:00",
+            "start_time": "08:00:00",
+            "end_time": "12:00:00",
+            "start_date": "2012-01-01",
+            "end_date": "2012-01-01",
             "weekdays": [1, 2, 3, 3, ],
         }
 
@@ -1640,8 +1671,10 @@ class TimeSlotTests(APITestCase):
                 'period-detail', args=[self.period_no_workplace.id]
             ),
             "name": "test",
-            "start_time": "2012-01-01T08:00:00-05:00",
-            "end_time": "2012-01-01T12:00:00-05:00",
+            "start_time": "08:00:00",
+            "end_time": "12:00:00",
+            "start_date": "2012-01-01",
+            "end_date": "2012-01-01",
             "weekdays": [1, 2, 3, 9, ],
         }
 
@@ -1675,8 +1708,10 @@ class TimeSlotTests(APITestCase):
                 'period-detail', args=[self.period_active.id]
             ),
             "name": "test",
-            "start_time": "2130-01-15T00:00:00",
-            "end_time": "2130-02-15T23:59:59",
+            "start_date": "2130-01-15",
+            "end_date": "2130-02-15",
+            "start_time": "00:00:00",
+            "end_time": "23:59:59",
             "weekdays": [0, 1, 2, 3, 4, 5, 6],
         }
 
@@ -1713,8 +1748,10 @@ class TimeSlotTests(APITestCase):
                 'period-detail', args=[self.period_no_workplace.id]
             ),
             "name": "test",
-            "start_time": "2012-01-01T08:00:00-05:00",
-            "end_time": "2012-01-01T12:00:00-05:00",
+            "start_time": "08:00:00",
+            "end_time": "12:00:00",
+            "start_date": "2012-01-01",
+            "end_date": "2012-01-01",
             "weekdays": [1, 2, 3, ],
         }
 
@@ -1725,8 +1762,8 @@ class TimeSlotTests(APITestCase):
         )
 
         content = {
-            'start_time': [
-                "Start time must be set within the period's start_date and "
+            'start_date': [
+                "Start date must be set within the period's start_date and "
                 'end_date.'
             ]
         }

@@ -1,7 +1,11 @@
 from copy import copy
 
+from datetime import datetime
+
 from dateutil.parser import parse
 from dateutil.rrule import rrule, DAILY
+
+import pytz
 
 from rest_framework import serializers, status
 from rest_framework.reverse import reverse
@@ -519,8 +523,10 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
-    start_time = serializers.DateTimeField()
-    end_time = serializers.DateTimeField()
+    start_time = serializers.TimeField()
+    end_time = serializers.TimeField()
+    start_date = serializers.DateField()
+    end_date = serializers.DateField()
     period = serializers.HyperlinkedRelatedField(
         view_name='period-detail',
         queryset=Period.objects.all(),
@@ -544,26 +550,46 @@ class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
 
     def validate(self, attrs):
         validated_data = super(BatchTimeSlotSerializer, self).validate(attrs)
-        period_start_date = validated_data['period'].start_date
-        period_end_date = validated_data['period'].end_date
-        start_date = attrs.get('start_time')
-        end_date = attrs.get('end_time')
+        period = validated_data['period']
+        period_start_date = period.start_date
+        period_end_date = period.end_date
+        start_date = attrs.get('start_date')
+        end_date = attrs.get('end_date')
+        start_time = attrs.get('start_time')
+        end_time = attrs.get('end_time')
 
-        # Make sure that start_time & end_time are within the period's
+        # Use workplace's timezone if possible. Otherwise use Montreal timezone
+        if period.workplace and period.workplace.timezone:
+            tz = pytz.timezone(period.workplace.timezone)
+        else:
+            tz = pytz.timezone('America/Montreal')
+
+        # Convert provided date and time to timezone aware datetimes
+        aware_start = tz.localize(datetime.combine(start_date, start_time))
+        aware_end = tz.localize(datetime.combine(end_date, end_time))
+
+        # Make sure that start_date & end_date are within the period's
         # start_date & end_date
-        if start_date < period_start_date or start_date > period_end_date:
+        if aware_start < period_start_date or aware_start > period_end_date:
             raise serializers.ValidationError({
-                'start_time': [_(
-                    "Start time must be set within the period's start_date "
+                'start_date': [_(
+                    "Start date must be set within the period's start_date "
                     "and end_date."
                 )],
             })
-        if end_date < period_start_date or end_date > period_end_date:
+        if aware_end < period_start_date or aware_end > period_end_date:
             raise serializers.ValidationError({
-                'end_time': [_(
-                    "End time must be set within the period's start_date "
+                'end_date': [_(
+                    "End date must be set within the period's start_date "
                     "and end_date."
                 )],
+            })
+
+        # Make sure that start_date is lower than end_date
+        if aware_start >= aware_end:
+            raise serializers.ValidationError({
+                'end_date': [_("End date must be later than start_date.")],
+                'start_date': [_("Start date must be earlier than end_date.")],
             })
 
         time_list = TimeSlot.objects.filter(
@@ -571,33 +597,47 @@ class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         ).values_list('start_time', 'end_time')
 
         timeslot_data = {
-            'start_time': validated_data['start_time'],
-            'end_time': validated_data['end_time'],
             'period': validated_data['period'],
         }
 
         timeslot_data_list = list()
 
-        timeslot_dates = list(
+        # Create a list of start times for timeslots
+        # Naive datetimes are used to avoid problems with DST (not handled by
+        # rrule)
+        timeslot_start_dates = list(
             rrule(
                 freq=DAILY,
-                dtstart=start_date,
-                until=end_date,
+                dtstart=aware_start.replace(tzinfo=None),
+                until=aware_end.replace(tzinfo=None),
                 byweekday=validated_data['weekdays'],
             )
         )
 
-        for day in timeslot_dates:
-            timeslot_data['start_time'] = timeslot_data['start_time'].replace(
-                day=day.day,
-                month=day.month,
-                year=day.year,
+        # Create a list of end times for timeslots
+        # Naive datetimes are used to avoid problems with DST (not handled by
+        # rrule)
+        timeslot_end_dates = list(
+            rrule(
+                freq=DAILY,
+                dtstart=aware_start.replace(
+                    hour=aware_end.hour,
+                    minute=aware_end.minute,
+                    second=aware_end.second,
+                    tzinfo=None,
+                ),
+                until=aware_end.replace(tzinfo=None),
+                byweekday=validated_data['weekdays'],
             )
-            timeslot_data['end_time'] = timeslot_data['end_time'].replace(
-                day=day.day,
-                month=day.month,
-                year=day.year,
-            )
+        )
+
+        # For every start/end times in the list built by rrule, we add the
+        # timezone information and create the timeslot using that timezone-
+        # aware datetime. This will be automatically converted to correct UTC
+        # time by Django.
+        for start, end in zip(timeslot_start_dates, timeslot_end_dates):
+            timeslot_data['start_time'] = tz.localize(start)
+            timeslot_data['end_time'] = tz.localize(end)
             new_timeslot = TimeSlot(**timeslot_data)
             timeslot_data_list.append(new_timeslot)
 
