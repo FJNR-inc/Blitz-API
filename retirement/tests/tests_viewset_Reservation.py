@@ -266,6 +266,7 @@ class ReservationTests(APITestCase):
                 'academic_program_code': None,
                 'faculty': None,
                 'student_number': None,
+                'volunteer_for_workplace': [],
             }
         }
 
@@ -453,6 +454,7 @@ class ReservationTests(APITestCase):
                 'academic_program_code': None,
                 'faculty': None,
                 'student_number': None,
+                'volunteer_for_workplace': [],
             }
         }
 

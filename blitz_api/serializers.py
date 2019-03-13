@@ -164,6 +164,12 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
     membership = MembershipSerializer(
         read_only=True,
     )
+    volunteer_for_workplace = serializers.HyperlinkedRelatedField(
+        many=True,
+        read_only=True,
+        view_name='workplace-detail',
+        source='workplaces',
+    )
 
     def validate_academic_field(self, value):
         """
@@ -261,6 +267,12 @@ class UserSerializer(UserUpdateSerializer):
     academic_field = AcademicFieldSerializer(required=False)
     membership = MembershipSerializer(
         read_only=True,
+    )
+    volunteer_for_workplace = serializers.HyperlinkedRelatedField(
+        many=True,
+        read_only=True,
+        view_name='workplace-detail',
+        source='workplaces',
     )
 
     def validate_email(self, value):
@@ -388,6 +400,7 @@ class UserSerializer(UserUpdateSerializer):
             'groups',
             'user_permissions',
             'reservations',
+            'workplaces'
         )
 
 
