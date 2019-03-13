@@ -1538,13 +1538,15 @@ class TimeSlotTests(APITestCase):
         """
         self.client.force_authenticate(user=self.admin)
 
+        initial_timeslot_count = TimeSlot.objects.count()
+
         data = {
             "period": reverse(
                 'period-detail', args=[self.period_no_workplace.id]
             ),
             "name": "test",
-            "start_time": "2012-01-01T08:00:00-05:00",  # Date not relevant,
-            "end_time": "2012-01-01T12:00:00-05:00",   # Only time is used.
+            "start_time": "2130-01-01T08:00:00-05:00",
+            "end_time": "2130-01-07T12:00:00-05:00",
             "weekdays": [1, 2, 3, ],
         }
 
@@ -1554,7 +1556,15 @@ class TimeSlotTests(APITestCase):
             format='json',
         )
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        new_timeslot_count = TimeSlot.objects.count()
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
+        )
+
+        self.assertEqual(new_timeslot_count - initial_timeslot_count, 3)
 
     def test_batch_create_without_permission(self):
         """
@@ -1567,8 +1577,8 @@ class TimeSlotTests(APITestCase):
                 'period-detail', args=[self.period_no_workplace.id]
             ),
             "name": "test",
-            "start_time": "2012-01-01T08:00:00-05:00",  # Date not relevant,
-            "end_time": "2012-01-01T12:00:00-05:00",   # Only time is used.
+            "start_time": "2012-01-01T08:00:00-05:00",
+            "end_time": "2012-01-01T12:00:00-05:00",
             "weekdays": [1, 2, 3, ],
         }
 
@@ -1597,8 +1607,8 @@ class TimeSlotTests(APITestCase):
                 'period-detail', args=[self.period_no_workplace.id]
             ),
             "name": "test",
-            "start_time": "2012-01-01T08:00:00-05:00",  # Date not relevant,
-            "end_time": "2012-01-01T12:00:00-05:00",   # Only time is used.
+            "start_time": "2012-01-01T08:00:00-05:00",
+            "end_time": "2012-01-01T12:00:00-05:00",
             "weekdays": [1, 2, 3, 3, ],
         }
 
@@ -1629,8 +1639,8 @@ class TimeSlotTests(APITestCase):
                 'period-detail', args=[self.period_no_workplace.id]
             ),
             "name": "test",
-            "start_time": "2012-01-01T08:00:00-05:00",  # Date not relevant,
-            "end_time": "2012-01-01T12:00:00-05:00",   # Only time is used.
+            "start_time": "2012-01-01T08:00:00-05:00",
+            "end_time": "2012-01-01T12:00:00-05:00",
             "weekdays": [1, 2, 3, 9, ],
         }
 
@@ -1664,8 +1674,8 @@ class TimeSlotTests(APITestCase):
                 'period-detail', args=[self.period_active.id]
             ),
             "name": "test",
-            "start_time": "2012-01-01T00:00:00",  # Date not relevant,
-            "end_time": "2012-01-01T23:59:59",   # Only time is used.
+            "start_time": "2130-01-15T00:00:00",
+            "end_time": "2130-02-15T23:59:59",
             "weekdays": [0, 1, 2, 3, 4, 5, 6],
         }
 
@@ -1689,3 +1699,37 @@ class TimeSlotTests(APITestCase):
         }
 
         self.assertEqual(json.loads(response.content), content)
+
+    def test_batch_create_bad_dates(self):
+        """
+        Ensure that an admin can't batch create when dates do not respect
+        period boundaries.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            "period": reverse(
+                'period-detail', args=[self.period_no_workplace.id]
+            ),
+            "name": "test",
+            "start_time": "2012-01-01T08:00:00-05:00",
+            "end_time": "2012-01-01T12:00:00-05:00",
+            "weekdays": [1, 2, 3, ],
+        }
+
+        response = self.client.post(
+            reverse('timeslot-batch-create'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'start_time': [
+                "Start time must be set within the period's start_date and "
+                'end_date.'
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -547,6 +547,25 @@ class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         validated_data = super(BatchTimeSlotSerializer, self).validate(attrs)
         period_start_date = validated_data['period'].start_date
         period_end_date = validated_data['period'].end_date
+        start_date = attrs.get('start_time')
+        end_date = attrs.get('end_time')
+
+        # Make sure that start_time & end_time are within the period's
+        # start_date & end_date
+        if start_date < period_start_date or start_date > period_end_date:
+            raise serializers.ValidationError({
+                'start_time': [_(
+                    "Start time must be set within the period's start_date "
+                    "and end_date."
+                )],
+            })
+        if end_date < period_start_date or end_date > period_end_date:
+            raise serializers.ValidationError({
+                'end_time': [_(
+                    "End time must be set within the period's start_date "
+                    "and end_date."
+                )],
+            })
 
         time_list = TimeSlot.objects.filter(
             period=validated_data['period']
@@ -564,8 +583,8 @@ class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         timeslot_dates = list(
             rrule(
                 freq=DAILY,
-                dtstart=period_start_date,
-                until=period_end_date,
+                dtstart=start_date,
+                until=end_date,
                 byweekday=validated_data['weekdays'],
             )
         )

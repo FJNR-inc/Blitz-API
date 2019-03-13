@@ -290,24 +290,31 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
 
         Parameters:
             name: name to be used for all timeslots
-            start_time: datetime (isoformat) at which the timeslot begins
-            end_time: datetime (isoformat) at which the timeslot ends
+            start_time: datetime (isoformat).
+            end_time: datetime (isoformat).
             period: period in which timeslots are created. The period defines
-                the boundary of the timeslot batch.
+                the max boundary of the timeslot batch.
             weekdays: Days of the week for which the timeslots are created.
                 Takes a list of integer from 0:Monday to 6:Sunday.
+
+        NOTE:
+            The date from the datetimes (start_time & end_time) are used as
+            boundaries for the batch creation.
+            The time from the datetimes (start_time & end_time) are used as
+            start time & end time for the timeslots to be created.
 
         ie:
             {
                 'name': "test",
-                'start_time': '2002-12-25T08:00:00',
-                'end_time': '2002-12-25T12:00:00',
+                'start_time': '2019-11-25T08:00:00',
+                'end_time': '2019-12-25T12:00:00',
                 'period': validated_data['period'],
                 'weekdays': [0,4]
             }
             That will create timeslots named "test", with start_time=08:00:00
             and end_time=12:00:00 for every Monday and Thursday between
-            period.start_date and period.end_date.
+            2019-11-25 and 2019-12-25 if those dates are within the period
+            date range.
 
         Process will abort if a conflict arise.
         """
