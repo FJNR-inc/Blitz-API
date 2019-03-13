@@ -519,7 +519,6 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
-    name = serializers.CharField(max_length=200)
     start_time = serializers.DateTimeField()
     end_time = serializers.DateTimeField()
     period = serializers.HyperlinkedRelatedField(
@@ -572,7 +571,6 @@ class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         ).values_list('start_time', 'end_time')
 
         timeslot_data = {
-            'name': validated_data['name'],
             'start_time': validated_data['start_time'],
             'end_time': validated_data['end_time'],
             'period': validated_data['period'],
@@ -625,7 +623,7 @@ class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = TimeSlot
-        exclude = ('deleted', 'price', 'users')
+        exclude = ('deleted', 'price', 'users', 'name', )
 
 
 class ReservationSerializer(serializers.HyperlinkedModelSerializer):
