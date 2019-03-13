@@ -1,7 +1,11 @@
 from copy import copy
 
+from datetime import datetime
+
 from dateutil.parser import parse
 from dateutil.rrule import rrule, DAILY
+
+import pytz
 
 from rest_framework import serializers, status
 from rest_framework.reverse import reverse
@@ -521,6 +525,8 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
 class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
     start_time = serializers.DateTimeField()
     end_time = serializers.DateTimeField()
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
     period = serializers.HyperlinkedRelatedField(
         view_name='period-detail',
         queryset=Period.objects.all(),
@@ -546,24 +552,33 @@ class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         validated_data = super(BatchTimeSlotSerializer, self).validate(attrs)
         period_start_date = validated_data['period'].start_date
         period_end_date = validated_data['period'].end_date
-        start_date = attrs.get('start_time')
-        end_date = attrs.get('end_time')
+        start_date = attrs.get('start_date')
+        end_date = attrs.get('end_date')
+        start_time = attrs.get('start_time')
+        end_time = attrs.get('end_time')
 
-        # Make sure that start_time & end_time are within the period's
+        # Make sure that start_date & end_date are within the period's
         # start_date & end_date
         if start_date < period_start_date or start_date > period_end_date:
             raise serializers.ValidationError({
-                'start_time': [_(
-                    "Start time must be set within the period's start_date "
+                'start_date': [_(
+                    "Start date must be set within the period's start_date "
                     "and end_date."
                 )],
             })
         if end_date < period_start_date or end_date > period_end_date:
             raise serializers.ValidationError({
-                'end_time': [_(
-                    "End time must be set within the period's start_date "
+                'end_date': [_(
+                    "End date must be set within the period's start_date "
                     "and end_date."
                 )],
+            })
+
+        # Make sure that start_date is lower than end_date
+        if start_date >= end_date:
+            raise serializers.ValidationError({
+                'end_date': [_("End date must be later than start_date.")],
+                'start_date': [_("Start date must be earlier than end_date.")],
             })
 
         time_list = TimeSlot.objects.filter(
@@ -571,8 +586,6 @@ class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         ).values_list('start_time', 'end_time')
 
         timeslot_data = {
-            'start_time': validated_data['start_time'],
-            'end_time': validated_data['end_time'],
             'period': validated_data['period'],
         }
 
@@ -587,20 +600,23 @@ class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
             )
         )
 
+        print(start_date, end_date, timeslot_dates)
+        print(start_date.replace(tzinfo=pytz.utc))
+
         for day in timeslot_dates:
-            timeslot_data['start_time'] = timeslot_data['start_time'].replace(
-                day=day.day,
-                month=day.month,
-                year=day.year,
+            timeslot_data['start_time'] = day.replace(
+                hour=start_time.hour,
+                minute=start_time.minute,
+                second=start_time.second,
             )
-            timeslot_data['end_time'] = timeslot_data['end_time'].replace(
-                day=day.day,
-                month=day.month,
-                year=day.year,
+            timeslot_data['end_time'] = day.replace(
+                hour=end_time.hour,
+                minute=end_time.minute,
+                second=end_time.second,
             )
             new_timeslot = TimeSlot(**timeslot_data)
             timeslot_data_list.append(new_timeslot)
-
+# timezone.get_current_timezone()
         for duration in time_list:
             for timeslot in timeslot_data_list:
                 start = timeslot.start_time
