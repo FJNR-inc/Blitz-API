@@ -284,6 +284,7 @@ ANYMAIL = {
         'CONFIRM_SIGN_UP': config('CONFIRM_SIGN_UP', default='example_id'),
         'FORGOT_PASSWORD': config('FORGOT_PASSWORD', default='example_id'),
         'RESERVATION_CANCELLED': config('RESERVATION_CANCELLED', default='example_id'),
+        'CONFIRM_CHANGE_EMAIL': config('CONFIRM_CHANGE_EMAIL', default='example_id'),
     },
 }
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
