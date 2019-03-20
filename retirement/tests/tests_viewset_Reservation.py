@@ -52,7 +52,6 @@ class ReservationTests(APITestCase):
     @classmethod
     def setUpClass(cls):
         super(ReservationTests, cls).setUpClass()
-        cls.maxDiff=None
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()
@@ -194,7 +193,7 @@ class ReservationTests(APITestCase):
             'refundable': False,
             'exchangeable': False,
             'retirement': 'http://testserver/retirement/retirements/2',
-            'order_line': 'http://testserver/order_lines/1',
+            'order_line': None,
             'retirement_details': {
                 'activity_language': None,
                 'end_time': '2130-02-17T12:00:00-05:00',
@@ -381,8 +380,8 @@ class ReservationTests(APITestCase):
             'cancelation_action': None,
             'cancelation_date': None,
             'cancelation_reason': None,
-            'refundable': True,
-            'exchangeable': True,
+            'refundable': False,
+            'exchangeable': False,
             'retirement': 'http://testserver/retirement/retirements/2',
             'order_line': 'http://testserver/order_lines/1',
             'retirement_details': {
@@ -511,8 +510,6 @@ class ReservationTests(APITestCase):
         content = {
             'user': ['This field is required.'],
             'retirement': ['This field is required.'],
-            'order_line': ['This field is required.'],
-            'is_active': ['This field is required.']
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -541,8 +538,7 @@ class ReservationTests(APITestCase):
         content = {
             'user': ['This field may not be null.'],
             'retirement': ['This field may not be null.'],
-            'order_line': ['This field may not be null.'],
-            'is_active': ['This field may not be null.']
+            'is_active': ['This field may not be null.'],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -1432,6 +1428,48 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_update_partial_non_exchangeable(self):
+        """
+        Ensure we can't change a reservation's retirement if the reservation
+        is marked as non-exchangeable.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        self.reservation.exchangeable = False
+        self.reservation.save()
+
+        data = {
+            'retirement': reverse(
+                'retirement:retirement-detail',
+                kwargs={'pk': 2},
+            ),
+        }
+
+        response = self.client.patch(
+            reverse(
+                'retirement:reservation-detail',
+                kwargs={'pk': self.reservation.pk},
+            ),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                "This reservation is not exchangeable. Please contact us "
+                "to make any changes to this reservation."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.reservation.exchangeable = True
+        self.reservation.save()
+
     def test_list(self):
         """
         Ensure we can list reservations as an admin.
@@ -1694,6 +1732,51 @@ class ReservationTests(APITestCase):
         self.reservation.cancelation_reason = None
 
         self.assertEqual(len(mail.outbox), 0)
+
+    def test_delete_non_refundable(self):
+        """
+        Ensure that a user can cancel one of his retirement reservations.
+        This cancelation does not respect 'refundable', thus the user
+         will not be refunded.
+        The user won't receive any email.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.reservation.refundable = False
+        self.reservation.save()
+
+        FIXED_TIME = datetime(2000, 1, 10, tzinfo=LOCAL_TIMEZONE)
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'retirement:reservation-detail',
+                    kwargs={'pk': self.reservation.pk},
+                ),
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content
+        )
+
+        self.reservation.refresh_from_db()
+
+        self.assertFalse(self.reservation.is_active)
+        self.assertEqual(self.reservation.cancelation_reason, 'U')
+        self.assertEqual(self.reservation.cancelation_action, 'N')
+        self.assertEqual(self.reservation.cancelation_date, FIXED_TIME)
+
+        self.reservation.is_active = True
+        self.reservation.cancelation_date = None
+        self.reservation.cancelation_reason = None
+
+        self.assertEqual(len(mail.outbox), 0)
+
+        self.reservation.refundable = True
+        self.reservation.save()
 
     @responses.activate
     def test_delete_scheduler_error(self):

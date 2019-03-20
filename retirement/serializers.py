@@ -449,11 +449,20 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         """
         validated_data['refundable'] = False
         validated_data['exchangeable'] = False
+        validated_data['is_active'] = True
 
         return super().create(validated_data)
 
-
     def update(self, instance, validated_data):
+
+        if not instance.exchangeable and validated_data.get('retirement'):
+            raise serializers.ValidationError({
+                'non_field_errors': [_(
+                    "This reservation is not exchangeable. Please contact us "
+                    "to make any changes to this reservation."
+                )]
+            })
+
         user = instance.user
         payment_token = validated_data.pop('payment_token', None)
         single_use_token = validated_data.pop('single_use_token', None)
@@ -479,6 +488,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             })
 
         with transaction.atomic():
+            # NOTE: This copy logic should probably be inside the "if" below
+            #       that checks if a retirement exchange is done.
             # Create a copy of the reservation. This copy keeps track of
             # the exchange.
             canceled_reservation = instance

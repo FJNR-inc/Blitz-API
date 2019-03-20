@@ -297,7 +297,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
                             "support team."
                         )]
                     })
-                if respects_minimum_days:
+                if respects_minimum_days and instance.refundable:
                     try:
                         amount = retirement.price
                         # The refund_rate converts in cents at the same time
