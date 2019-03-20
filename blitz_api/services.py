@@ -15,6 +15,8 @@ from rest_framework.pagination import PageNumberPagination
 from .exceptions import MailServiceError
 from django.core.mail import send_mail as django_send_mail
 
+from rest_framework.utils.urls import remove_query_param, replace_query_param
+
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
@@ -134,23 +136,42 @@ class ExportPagination(PageNumberPagination):
     def get_paginated_response(self, data):
         next_url = self.get_next_link()
         previous_url = self.get_previous_link()
+        first_url = self.get_first_link()
+        last_url = self.get_last_link()
 
-        if next_url is not None and previous_url is not None:
-            link = '<{next_url}; rel="next">, <{previous_url}; rel="prev">'
-        elif next_url is not None:
-            link = '<{next_url}; rel="next">'
-        elif previous_url is not None:
-            link = '<{previous_url}; rel="prev">'
-        else:
-            link = ''
-
-        link = link.format(next_url=next_url, previous_url=previous_url)
+        links = []
+        for url, label in (
+                    (first_url, 'first'),
+                    (previous_url, 'prev'),
+                    (next_url, 'next'),
+                    (last_url, 'last'),
+                ):
+            if url is not None:
+                links.append('<{}>; rel="{}"'.format(url, label))
 
         response = HttpResponse(
             data,
             content_type="application/vnd.ms-excel"
         )
         # Add pagination links to response
-        response['Link'] = link if link else {}
+        response['Link'] = ', '.join(links) if links else {}
 
         return response
+
+    def get_first_link(self):
+        if not self.page.has_previous():
+            return None
+        else:
+            url = self.request.build_absolute_uri()
+            return remove_query_param(url, self.page_query_param)
+
+    def get_last_link(self):
+        if not self.page.has_next():
+            return None
+        else:
+            url = self.request.build_absolute_uri()
+            return replace_query_param(
+                url,
+                self.page_query_param,
+                self.page.paginator.num_pages,
+            )
