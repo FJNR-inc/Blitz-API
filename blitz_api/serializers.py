@@ -138,7 +138,7 @@ class AcademicFieldSerializer(serializers.HyperlinkedModelSerializer):
 
 class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
     """
-    Set  certain fields such as university, academic_level and email to read
+    Set  certain fields such as university and email to read
     only.
     """
     id = serializers.ReadOnlyField()
@@ -159,8 +159,8 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
         required=False,
     )
     academic_field = AcademicFieldSerializer()
-    university = OrganizationSerializer(read_only=True)
-    academic_level = AcademicLevelSerializer(read_only=True)
+    university = OrganizationSerializer()
+    academic_level = AcademicLevelSerializer()
     membership = MembershipSerializer(
         read_only=True,
     )
@@ -170,6 +170,22 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
         view_name='workplace-detail',
         source='workplaces',
     )
+    email = serializers.EmailField(
+        label=_('Email address'),
+        max_length=254,
+        required=True,
+    )
+
+    def validate_email(self, value):
+        """
+        Lowercase all email addresses.
+        """
+        if User.objects.filter(email__iexact=value):
+            raise serializers.ValidationError(_(
+                "An account for the specified email "
+                "address already exists."
+            ))
+        return value
 
     def validate_academic_field(self, value):
         """
@@ -184,6 +200,30 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
             _("This academic field does not exist.")
         )
 
+    def validate_academic_level(self, value):
+        """
+        Check that the academic level exists.
+        """
+        if 'name' in value:
+            field = AcademicLevel.objects.filter(name=value['name'])
+
+            if field:
+                return field[0]
+        raise serializers.ValidationError(
+            _("This academic level does not exist.")
+        )
+
+    def validate_university(self, value):
+        """
+        Check that the university exists.
+        """
+        if 'name' in value:
+            org = Organization.objects.filter(name=value['name'])
+
+            if org:
+                return org[0]
+        raise serializers.ValidationError(_("This university does not exist."))
+
     def validate_phone(self, value):
         if value is not None:
             return phone_number_validator(value)
@@ -191,6 +231,49 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
 
     def validate_other_phone(self, value):
         return phone_number_validator(value)
+
+    def validate(self, attrs):
+        """Validate university and email match"""
+        validated_data = super().validate(attrs)
+
+        user = self.context['request'].user
+
+        email_activation_needed = False
+
+        email = validated_data.get(
+            'email',
+            getattr(self.instance, 'email', None)
+        )
+        university = validated_data.get(
+            'university',
+            getattr(self.instance, 'university', None)
+        )
+
+        old_email = getattr(self.instance, 'email', None)
+
+        new_email = attrs.get('email', None)
+        new_university = attrs.get('university', None)
+
+        if new_email or new_university:
+            # Check that the email-university match is valid
+            domains = university.domains.all()
+
+            email_d = email.split("@", 1)[1]
+            if not any(d.name.lower() == email_d.lower() for d in domains):
+                raise serializers.ValidationError({
+                    'email': [_("Invalid domain name.")]
+                })
+
+        if new_email and new_email != old_email:
+            email_activation_needed = True
+            # Create a ChangeEmail token containing the new email
+            # Send an activation email containing the token key
+            # When user clicks the link, only then the email should be changed.
+
+        if new_email and not email_activation_needed:
+            validated_data['username'] = email
+
+        return validated_data
 
     def update(self, instance, validated_data):
         validated_data['username'] = instance.username
@@ -246,9 +329,6 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
             'last_login',
             'groups',
             'user_permissions',
-            'university',
-            'academic_level',
-            'email',
             'reservations',
         )
 
