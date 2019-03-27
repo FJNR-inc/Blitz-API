@@ -221,7 +221,7 @@ class PackageTests(APITestCase):
             'name': ['Not a valid string.'],
             'price': ['A valid number is required.'],
             'reservations': ['A valid integer is required.'],
-            'available': ['"[1]" is not a valid boolean.'],
+            'available': ['Must be a valid boolean.'],
         }
 
         self.assertEqual(json.loads(response.content), content)

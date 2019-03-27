@@ -542,7 +542,7 @@ class ReservationTests(APITestCase):
         content = {
             'user': ['Invalid hyperlink - No URL match.'],
             'timeslot': ['Invalid hyperlink - No URL match.'],
-            'is_active': ['"invalid" is not a valid boolean.'],
+            'is_active': ['Must be a valid boolean.'],
         }
 
         self.assertEqual(json.loads(response.content), content)

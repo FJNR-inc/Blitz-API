@@ -1110,7 +1110,7 @@ class TimeSlotTests(APITestCase):
 
         content = {
             'force_delete': [
-                '"invalid" is not a valid boolean.'
+                'Must be a valid boolean.'
             ]
         }
 

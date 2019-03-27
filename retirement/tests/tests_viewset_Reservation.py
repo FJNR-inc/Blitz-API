@@ -568,7 +568,7 @@ class ReservationTests(APITestCase):
             'user': ['Invalid hyperlink - No URL match.'],
             'retirement': ['Invalid hyperlink - No URL match.'],
             'order_line': ['Invalid hyperlink - No URL match.'],
-            'is_active': ['"invalid" is not a valid boolean.'],
+            'is_active': ['Must be a valid boolean.'],
         }
 
         self.assertEqual(json.loads(response.content), content)

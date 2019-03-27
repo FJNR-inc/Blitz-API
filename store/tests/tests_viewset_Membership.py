@@ -203,7 +203,7 @@ class MembershipTests(APITestCase):
             ],
             'name': ['This field may not be blank.'],
             'price': ['A valid number is required.'],
-            'available': ['"invalid" is not a valid boolean.'],
+            'available': ['Must be a valid boolean.'],
         }
 
         self.assertEqual(json.loads(response.content), content)

@@ -391,7 +391,7 @@ class RetirementTests(APITestCase):
             'country': ['Not a valid string.'],
             'seats': ['A valid integer is required.'],
             'timezone': ['Unknown timezone'],
-            'is_active': ['"" is not a valid boolean.'],
+            'is_active': ['Must be a valid boolean.'],
             'end_time': [
                 'Datetime has wrong format. Use one of these formats instead: '
                 'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
@@ -404,7 +404,7 @@ class RetirementTests(APITestCase):
             'min_day_exchange': ['A valid integer is required.'],
             'min_day_refund': ['A valid integer is required.'],
             'refund_rate': ['A valid integer is required.'],
-            'accessibility': ['"" is not a valid boolean.'],
+            'accessibility': ['Must be a valid boolean.'],
             'form_url': ['Not a valid string.'],
             'carpool_url': ['Not a valid string.'],
             'review_url': ['Not a valid string.'],

@@ -311,7 +311,7 @@ class PeriodTests(APITestCase):
                 'Datetime has wrong format. Use one of these formats instead: '
                 'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
             ],
-            'is_active': ['"" is not a valid boolean.'],
+            'is_active': ['Must be a valid boolean.'],
             'name': ['This field may not be blank.'],
             'price': ['A valid number is required.'],
             'start_date': [
@@ -648,7 +648,7 @@ class PeriodTests(APITestCase):
 
         content = {
             'force_delete': [
-                '"invalid" is not a valid boolean.'
+                'Must be a valid boolean.'
             ]
         }
 

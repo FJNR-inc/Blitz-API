@@ -186,7 +186,7 @@ class UsersTests(APITestCase):
             'academic_level': {'name': ['This field may not be blank.']},
             'birthdate': [
                 'Date has wrong format. Use one of these formats instead: '
-                'YYYY[-MM[-DD]].'
+                'YYYY-MM-DD.'
             ],
             'first_name': ['This field may not be blank.'],
             'gender': ['"" is not a valid choice.'],
@@ -349,7 +349,7 @@ class UsersTests(APITestCase):
             'academic_level': ['This academic level does not exist.'],
             'birthdate': [
                 'Date has wrong format. Use one of these formats instead: '
-                'YYYY[-MM[-DD]].'
+                'YYYY-MM-DD.'
             ],
             'gender': ['"invalid_gender" is not a valid choice.'],
             'university': ['This university does not exist.']

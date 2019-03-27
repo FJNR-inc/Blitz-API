@@ -874,7 +874,7 @@ class UsersIdTests(APITestCase):
             'academic_level': ['This academic level does not exist.'],
             'birthdate': [
                 'Date has wrong format. Use one of these formats instead: '
-                'YYYY[-MM[-DD]].'
+                'YYYY-MM-DD.'
             ],
             'gender': ['"invalid_gender" is not a valid choice.'],
             'university': ['This university does not exist.'],
