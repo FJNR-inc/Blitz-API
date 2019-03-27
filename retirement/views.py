@@ -557,6 +557,7 @@ class WaitQueueNotificationViewSet(mixins.ListModelMixin,
         retirements_to_notify = Retirement.objects.filter(
             reserved_seats__gt=0,
             start_time__gt=timezone.now(),
+            is_active=True,
         )
 
         # Remove older notifications
