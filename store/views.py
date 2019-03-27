@@ -17,11 +17,11 @@ from blitz_api.services import ExportPagination
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, PaymentProfile,
-                     CustomPayment, Coupon, Refund, )
+                     CustomPayment, Coupon, CouponUser, Refund, )
 from .permissions import IsOwner
 from .resources import (MembershipResource, PackageResource, OrderResource,
                         OrderLineResource, CustomPaymentResource,
-                        CouponResource, RefundResource, )
+                        CouponResource, CouponUserResource, RefundResource, )
 from .services import (delete_external_card, validate_coupon_for_order,
                        notify_for_coupon, )
 
@@ -498,6 +498,47 @@ class CouponViewSet(viewsets.ModelViewSet):
         except Http404:
             pass
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CouponUserViewSet(viewsets.ModelViewSet):
+    """
+    No specific view implementation done.
+    """
+    serializer_class = serializers.CouponUserSerializer
+    queryset = CouponUser.objects.all()
+    permission_classes = (IsAuthenticated, IsAdminUser)
+    filter_fields = '__all__'
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def export(self, request):
+        # Use custom paginator (by page, min/max 1000 objects/page)
+        self.pagination_class = ExportPagination
+        # Order queryset by ascending id, thus by descending age too
+        queryset = self.get_queryset().order_by('pk')
+        # Filter queryset
+        queryset = self.filter_queryset(queryset)
+        # Paginate queryset using custom paginator
+        page = self.paginate_queryset(queryset)
+        # Build dataset using paginated queryset
+        dataset = CouponUserResource().export(page)
+        # Build response object
+        response = self.get_paginated_response(dataset.xls)
+        # Add filename to response
+        response['Content-Disposition'] = ''.join([
+            'attachment; filename="CouponUser-',
+            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
+            '".xls'
+        ])
+        return response
+
+    def get_queryset(self):
+        """
+        This viewset should return owned coupons except if
+        the currently authenticated user is an admin (is_staff).
+        """
+        if self.request.user.is_staff:
+            return CouponUser.objects.all()
+        return CouponUser.objects.filter(user=self.request.user)
 
 
 class RefundViewSet(viewsets.GenericViewSet,

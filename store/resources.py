@@ -230,6 +230,58 @@ class CouponResource(resources.ModelResource):
         )
 
 
+class CouponUserResource(resources.ModelResource):
+
+    user_email = fields.Field(
+        column_name='user_email',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'email'),
+    )
+
+    user_firstname = fields.Field(
+        column_name='user_firstname',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'first_name'),
+    )
+
+    user_lastname = fields.Field(
+        column_name='user_lastname',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'last_name'),
+    )
+
+    student_number = fields.Field(
+        column_name='student_number',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'student_number'),
+    )
+
+    academic_program_code = fields.Field(
+        column_name='academic_program_code',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'academic_program_code'),
+    )
+
+    class Meta:
+        model = CouponUser
+        fields = (
+            'user_email',
+            'user_firstname',
+            'user_lastname',
+            'student_number',
+            'academic_program_code',
+            'uses',
+        )
+        export_order = (
+            'user_email',
+            'user_firstname',
+            'user_lastname',
+            'student_number',
+            'academic_program_code',
+            'uses',
+        )
+
+
 class RefundResource(resources.ModelResource):
 
     orderline = fields.Field(

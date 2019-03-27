@@ -37,6 +37,7 @@ router.register('packages', views.PackageViewSet)
 router.register('memberships', views.MembershipViewSet)
 router.register('custom_payments', views.CustomPaymentViewSet)
 router.register('coupons', views.CouponViewSet)
+router.register('coupon_uses', views.CouponUserViewSet)
 router.register('refunds', views.RefundViewSet)
 # router.register('payment_profiles', views.PaymentProfileViewSet)
 

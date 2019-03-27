@@ -9,7 +9,7 @@ from .models import (Membership, Order, OrderLine, Package, PaymentProfile,
                      CustomPayment, Coupon, CouponUser, Refund, )
 from .resources import (MembershipResource, OrderResource, OrderLineResource,
                         PackageResource, CustomPaymentResource, CouponResource,
-                        RefundResource, )
+                        CouponUserResource, RefundResource, )
 
 
 class OrderLineInline(admin.StackedInline):
@@ -169,7 +169,9 @@ class CouponAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
     )
 
 
-class CouponUserAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, ):
+class CouponUserAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
+                      ExportActionModelAdmin, ):
+    resource_class = CouponUserResource
     list_display = (
         'user',
         'coupon',

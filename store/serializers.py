@@ -944,6 +944,14 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
         }
 
 
+class CouponUserSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = CouponUser
+        exclude = ('deleted', )
+
+
 class RefundSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
 
