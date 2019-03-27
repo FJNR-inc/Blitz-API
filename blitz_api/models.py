@@ -5,6 +5,8 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 
+from jsonfield import JSONField
+
 from rest_framework.authtoken.models import Token
 
 from simple_history import register
@@ -164,6 +166,7 @@ class ActionToken(models.Model):
     ACTIONS_TYPE = [
         ('account_activation', _('Account activation')),
         ('password_change', _('Password change')),
+        ('email_change', _('Email change')),
     ]
 
     key = models.CharField(
@@ -194,6 +197,10 @@ class ActionToken(models.Model):
     expires = models.DateTimeField(
         verbose_name="Expiration date",
         blank=True,
+    )
+
+    data = JSONField(
+        null=True
     )
 
     objects = ActionTokenManager()

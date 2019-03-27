@@ -3,6 +3,7 @@ import json
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
+from django.core import mail
 from django.urls import reverse
 
 from .. import models
@@ -14,10 +15,10 @@ class UsersIdTests(APITestCase):
     @classmethod
     def setUpClass(cls):
         super(UsersIdTests, cls).setUpClass()
-        org = models.Organization.objects.create(name="random_university")
+        cls.org = models.Organization.objects.create(name="random_university")
         models.Domain.objects.create(
             name="mailinator.com",
-            organization_id=org.id
+            organization_id=cls.org.id
         )
         models.AcademicField.objects.create(name="random_field")
         models.AcademicLevel.objects.create(name="random_level")
@@ -196,6 +197,13 @@ class UsersIdTests(APITestCase):
             format='json',
         )
 
+        # Check the status code
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content,
+        )
+
         content = json.loads(response.content)
 
         # Check if update was successful
@@ -220,9 +228,6 @@ class UsersIdTests(APITestCase):
             'The system failed to return some '
             'attributes : {0}'.format(attributes)
         )
-
-        # Check the status code
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_partial_update_user_with_permission_change_password(self):
         """
@@ -276,12 +281,338 @@ class UsersIdTests(APITestCase):
         # Check the status code
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_partial_update_user_change_email(self):
+        """
+        Ensure we can get an activation email at a new email address if its
+        domain matches with the current university.
+        """
+        data = {
+            "email": "new_email@mailinator.com"
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse(
+                'user-detail',
+                kwargs={'pk': self.user.id},
+            ),
+            data,
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        # Check id of the user
+        self.assertEqual(content['id'], 1)
+
+        # Check the system doesn't return attributes not expected
+        attributes = self.user_attrs.copy()
+        for key in content.keys():
+            self.assertTrue(
+                key in attributes,
+                'Attribute "{0}" is not expected but is '
+                'returned by the system.'.format(key)
+            )
+            attributes.remove(key)
+
+        # Ensure the system returns all expected attributes
+        self.assertTrue(
+            len(attributes) == 0,
+            'The system failed to return some '
+            'attributes : {0}'.format(attributes)
+        )
+
+        old_email = self.user.email
+
+        self.user.refresh_from_db()
+
+        # Ensure that the email was not changed yet
+        self.assertEqual(self.user.email, old_email)
+
+        # Check the status code
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # An email with an activation token is sent
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_partial_update_user_change_email_invalid_domain(self):
+        """
+        Ensure we can't change email address if its domain does not match with
+        the current university.
+        """
+        data = {
+            "email": "new_email@invalid.com"
+        }
+
+        self.user.university = self.org
+        self.user.save()
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse(
+                'user-detail',
+                kwargs={'pk': self.user.id},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'email': ['Invalid domain name.']
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_partial_update_user_change_university(self):
+        """
+        Ensure we can change university if the current email domain matches.
+        """
+        data = {
+            "university": {
+                'name': "Blitz",
+            }
+        }
+
+        new_uni = models.Organization.objects.create(
+            name="Blitz"
+        )
+        models.Domain.objects.create(
+            name="blitz.com",
+            organization_id=new_uni.id
+        )
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse(
+                'user-detail',
+                kwargs={'pk': self.user.id},
+            ),
+            data,
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        # Check id of the user
+        self.assertEqual(content['id'], 1)
+
+        # Check the system doesn't return attributes not expected
+        attributes = self.user_attrs.copy()
+        for key in content.keys():
+            self.assertTrue(
+                key in attributes,
+                'Attribute "{0}" is not expected but is '
+                'returned by the system.'.format(key)
+            )
+            attributes.remove(key)
+
+        # Ensure the system returns all expected attributes
+        self.assertTrue(
+            len(attributes) == 0,
+            'The system failed to return some '
+            'attributes : {0}'.format(attributes)
+        )
+
+        self.user.refresh_from_db()
+
+        # Ensure that university was updated
+        self.assertEqual(self.user.university, new_uni)
+
+        # Check the status code
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # No email is sent if only the university changed
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_partial_update_user_change_university_invalid_domain(self):
+        """
+        Ensure we can't change university if the current email domain does not
+        match.
+        """
+        data = {
+            "university": {
+                'name': self.org.name
+            }
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse(
+                'user-detail',
+                kwargs={'pk': self.user.id},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'email': ['Invalid domain name.']
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_partial_update_user_change_university_and_email(self):
+        """
+        Ensure we can get an activation email at a new email address if its
+        domain matches with the newly provided university.
+        """
+        data = {
+            "email": "new_email@mailinator.com",
+            "university": {
+                'name': self.org.name,
+            }
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse(
+                'user-detail',
+                kwargs={'pk': self.user.id},
+            ),
+            data,
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        # Check id of the user
+        self.assertEqual(content['id'], 1)
+
+        # Check the system doesn't return attributes not expected
+        attributes = self.user_attrs.copy()
+        for key in content.keys():
+            self.assertTrue(
+                key in attributes,
+                'Attribute "{0}" is not expected but is '
+                'returned by the system.'.format(key)
+            )
+            attributes.remove(key)
+
+        # Ensure the system returns all expected attributes
+        self.assertTrue(
+            len(attributes) == 0,
+            'The system failed to return some '
+            'attributes : {0}'.format(attributes)
+        )
+
+        old_email = self.user.email
+        old_university = self.user.university
+
+        self.user.refresh_from_db()
+
+        # Ensure that the email was not changed yet
+        self.assertEqual(self.user.email, old_email)
+
+        # Ensure that the university was not changed yet
+        self.assertEqual(self.user.university, old_university)
+
+        # Check the status code
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # An email with an activation token is sent
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_partial_update_user_change_uni_and_email_invalid_domain(self):
+        """
+        Ensure we can't change email address if its domain does not match with
+        the newly provided university.
+        """
+        data = {
+            "email": "test@another.domain",
+            "university": {
+                'name': self.org.name
+            }
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse(
+                'user-detail',
+                kwargs={'pk': self.user.id},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'email': ['Invalid domain name.']
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_partial_update_user_remove_university(self):
+        """
+        Ensure we can remove university at all time.
+        If the university field is set as NULL, the API interprets this as
+        "remove the university".
+        """
+        data = {
+            "university": None
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse(
+                'user-detail',
+                kwargs={'pk': self.user.id},
+            ),
+            data,
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        # Check id of the user
+        self.assertEqual(content['id'], 1)
+
+        # Check the system doesn't return attributes not expected
+        attributes = self.user_attrs.copy()
+        for key in content.keys():
+            self.assertTrue(
+                key in attributes,
+                'Attribute "{0}" is not expected but is '
+                'returned by the system.'.format(key)
+            )
+            attributes.remove(key)
+
+        # Ensure the system returns all expected attributes
+        self.assertTrue(
+            len(attributes) == 0,
+            'The system failed to return some '
+            'attributes : {0}'.format(attributes)
+        )
+
+        self.user.refresh_from_db()
+
+        # Ensure that university was updated
+        self.assertEqual(self.user.university, None)
+
+        # Check the status code
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # No email is sent if only the university changed
+        self.assertEqual(len(mail.outbox), 0)
+
     def test_update_user_with_permission(self):
         """
         Ensure we can update a specific user if caller has permission.
-        Put requires a full update, including password.
+        Put requires a full update, including password and email.
         """
         data = {
+            'email': "test@mailinator.com",
             'password': 'Test123!',
             'new_password': '!321tset',
             'phone': '1234567890',
@@ -305,6 +636,13 @@ class UsersIdTests(APITestCase):
             ),
             data,
             format='json',
+        )
+
+        # Check the status code
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content,
         )
 
         content = json.loads(response.content)
@@ -335,8 +673,8 @@ class UsersIdTests(APITestCase):
             'attributes : {0}'.format(attributes)
         )
 
-        # Check the status code
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # An email with an activation token is sent to the new email address
+        self.assertEqual(len(mail.outbox), 1)
 
     def test_update_user_without_permission(self):
         """
@@ -533,11 +871,13 @@ class UsersIdTests(APITestCase):
 
         content = {
             'academic_field': ['This academic field does not exist.'],
+            'academic_level': ['This academic level does not exist.'],
             'birthdate': [
                 'Date has wrong format. Use one of these formats instead: '
                 'YYYY[-MM[-DD]].'
             ],
-            'gender': ['"invalid_gender" is not a valid choice.']
+            'gender': ['"invalid_gender" is not a valid choice.'],
+            'university': ['This university does not exist.'],
         }
 
         self.assertEqual(json.loads(response.content), content)

@@ -26,6 +26,13 @@ class UsersActivationTests(APITestCase):
             user=self.user,
             type='account_activation',
         )
+        self.email_change_token = ActionToken.objects.create(
+            user=self.user,
+            type='email_change',
+            data={
+                'email': "new_email@mailinator.com",
+            }
+        )
 
     def test_activate_user(self):
         """
@@ -63,6 +70,50 @@ class UsersActivationTests(APITestCase):
         tokens = ActionToken.objects.filter(
             user=user_sync,
             type='account_activation',
+        )
+        self.assertTrue(len(tokens) == 0)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_email_change(self):
+        """
+        Ensure we can activate a new email using an "email_change" ActionToken.
+        """
+        data = {
+            'activation_token': self.email_change_token.key,
+        }
+
+        response = self.client.post(
+            reverse('users_activation'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        # It's the good user
+        self.assertEqual(response_data['user']['id'], self.user.id)
+
+        # We read a new time the user to be synchronized
+        user_sync = User.objects.get(id=self.user.id)
+
+        # The user's email is updated
+        self.assertEqual(
+            user_sync.email,
+            self.email_change_token.data['email'],
+        )
+
+        # A temporary authentication token has been created and returned
+        auth_token = TemporaryToken.objects.filter(
+            user=user_sync,
+        )
+        self.assertTrue(auth_token.count() == 1)
+        self.assertEqual(response_data['token'], auth_token[0].key)
+
+        # The activation token has been removed
+        tokens = ActionToken.objects.filter(
+            user=user_sync,
+            type='email_change',
         )
         self.assertTrue(len(tokens) == 0)
 

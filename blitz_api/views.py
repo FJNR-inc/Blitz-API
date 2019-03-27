@@ -195,31 +195,48 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class UsersActivation(APIView):
     """
-    Activate user from an activation token
+    Activate email from an activation token or email change token
     """
     authentication_classes = ()
     permission_classes = ()
 
     def post(self, request):
         """
-        Respond to POSTed email/password with token.
+        Activate email if the provided Token is valid.
         """
         activation_token = request.data.get('activation_token')
 
-        token = ActionToken.objects.filter(
+        new_account_token = ActionToken.objects.filter(
             key=activation_token,
             type='account_activation',
         )
+        change_email_token = ActionToken.objects.filter(
+            key=activation_token,
+            type='email_change',
+        )
+
+        # There is no reference to this token or multiple identical token
+        # exists.
+        if ((not new_account_token and not change_email_token)
+                or (new_account_token.count() > 1
+                    and change_email_token.count() > 1)):
+            error = '"{0}" is not a valid activation_token.'. \
+                format(activation_token)
+
+            return Response(
+                {'detail': error},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         # There is only one reference, we will set the user active
-        if len(token) == 1:
+        if len(new_account_token) == 1:
             # We activate the user
-            user = token[0].user
+            user = new_account_token[0].user
             user.is_active = True
             user.save()
 
             # We delete the token used
-            token[0].delete()
+            new_account_token[0].delete()
 
             # Authenticate the user automatically
             token, _created = TemporaryToken.objects.get_or_create(
@@ -243,16 +260,62 @@ class UsersActivation(APIView):
 
             return Response(return_data)
 
-        # There is no reference to this token or multiple identical token
-        # token exists
-        else:
-            error = '"{0}" is not a valid activation_token.'. \
-                format(activation_token)
-
-            return Response(
-                {'detail': error},
-                status=status.HTTP_400_BAD_REQUEST
+        # There is only one reference, we will change user's informations
+        # The ActionToken's data field can include 'email' and 'university_id'
+        # fields.
+        # NOTE: This assumes that data validation was done before creating the
+        # activation token and submitting it here.
+        if len(change_email_token) == 1:
+            # We activate the user
+            user = change_email_token[0].user
+            new_email = change_email_token[0].data.get('email', None)
+            new_university_id = change_email_token[0].data.get(
+                'university_id', None
             )
+            # If no email is provided in the ActionToken's data field, this is
+            # considered to be a bug.
+            if not new_email:
+                error = '"{0}" is not a valid activation_token.'. \
+                    format(activation_token)
+
+                return Response(
+                    {'detail': error},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            # Update user info
+            user.email = new_email
+            if new_university_id:
+                user.university = Organization.objects.get(
+                    pk=new_university_id
+                )
+            else:
+                user.university = None
+            user.save()
+
+            # We delete the token used
+            change_email_token[0].delete()
+
+            # Authenticate the user automatically
+            token, _created = TemporaryToken.objects.get_or_create(
+                user=user
+            )
+            CONFIG = settings.REST_FRAMEWORK_TEMPORARY_TOKENS
+            token.expires = timezone.now() + timezone.timedelta(
+                minutes=CONFIG['MINUTES']
+            )
+            token.save()
+
+            # We return the user
+            serializer = serializers.UserSerializer(
+                user,
+                context={'request': request},
+            )
+
+            return_data = dict()
+            return_data['user'] = serializer.data
+            return_data['token'] = token.key
+
+            return Response(return_data)
 
 
 class ResetPassword(APIView):
