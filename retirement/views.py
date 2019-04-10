@@ -330,7 +330,13 @@ class ReservationViewSet(viewsets.ModelViewSet):
                                 )
                             })
                         raise rest_framework_serializers.ValidationError(
-                            {'message': str(err)}
+                            {
+                                'message': str(err),
+                                'non_field_errors': _(
+                                    "An error occured with the payment system."
+                                    " Please try again later."
+                                ),
+                            }
                         )
                     instance.cancelation_action = 'R'
                 else:
