@@ -256,6 +256,7 @@ REST_FRAMEWORK = {
 # CORS Header Django Rest Framework
 
 CORS_ORIGIN_ALLOW_ALL = True
+CORS_EXPOSE_HEADERS = ["Link",]
 
 
 # Temporary Token
