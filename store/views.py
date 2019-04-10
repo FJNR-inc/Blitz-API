@@ -516,7 +516,7 @@ class CouponUserViewSet(viewsets.ModelViewSet):
         # Order queryset by ascending id, thus by descending age too
         queryset = self.get_queryset().order_by('pk')
         # Filter queryset
-        queryset = self.filter_queryset(queryset)
+        queryset = self.filter_queryset(queryset).filter(uses__gt=0)
         # Paginate queryset using custom paginator
         page = self.paginate_queryset(queryset)
         # Build dataset using paginated queryset

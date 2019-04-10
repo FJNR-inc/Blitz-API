@@ -262,10 +262,17 @@ class CouponUserResource(resources.ModelResource):
         widget=ForeignKeyWidget(User, 'academic_program_code'),
     )
 
+    university = fields.Field(
+        column_name='university',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'university__name'),
+    )
+
     class Meta:
         model = CouponUser
         fields = (
             'user_email',
+            'university',
             'user_firstname',
             'user_lastname',
             'student_number',
@@ -274,6 +281,7 @@ class CouponUserResource(resources.ModelResource):
         )
         export_order = (
             'user_email',
+            'university',
             'user_firstname',
             'user_lastname',
             'student_number',
