@@ -8,7 +8,7 @@ Markdown==2.6.11
 Pygments==2.3.1
 django-anymail==4.2
 Pillow==5.3.0
-django-simple-history==2.7.0
+django-simple-history==2.7.1
 djangorestframework-filters==0.11.1
 python-decouple==3.1
 django-storages==1.7.1
