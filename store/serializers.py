@@ -461,7 +461,11 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     ]
                     coupon_info['orderline'].save()
                 else:
-                    raise serializers.ValidationError(coupon_info['error'])
+                    raise serializers.ValidationError({
+                        "non_field_errors": [
+                            coupon_info['error']
+                        ],
+                    })
 
             amount = order.total_cost
             tax = amount * Decimal(repr(TAX_RATE))
