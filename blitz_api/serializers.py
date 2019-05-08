@@ -312,7 +312,7 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
             # use this SendinBlue template
             message.template_id = settings.ANYMAIL[
                 "TEMPLATES"
-            ]["CONFIRM_SIGN_UP"]
+            ]["CONFIRM_CHANGE_EMAIL"]
             message.merge_global_data = context
             response = message.send()  # returns number of sent emails
 

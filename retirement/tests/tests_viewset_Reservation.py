@@ -52,6 +52,7 @@ class ReservationTests(APITestCase):
     @classmethod
     def setUpClass(cls):
         super(ReservationTests, cls).setUpClass()
+        cls.maxDiff=None
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()
