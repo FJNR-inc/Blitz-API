@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - datablitz_db_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  blitz-api:
+    build:
+      context: .
+    env_file: .env
+    volumes:
+      - .:/opt/project
+      - /opt/project/src
+      - ~/.aws/:/root/.aws
+    depends_on:
+      - postgres
+    # See dockerfile for runserver command
+    command: runserver
+    ports:
+      - 8000:8000
+
+volumes:
+  datablitz_db_data:
