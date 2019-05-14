@@ -424,15 +424,10 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             is_active=True,
         )
 
-        # deletes reservations with the same user and retirement from
-        # active_reservation
-        # keeping this line allows to reserves two time the same retirement
-        #
-        # active_reservations = active_reservations.exclude(**validated_data)
-
         active_reservations = active_reservations.values_list(
             'retirement__start_time',
             'retirement__end_time',
+
         )
 
         for retirements in active_reservations:
