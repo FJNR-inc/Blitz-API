@@ -37,6 +37,10 @@ class Retirement(Address, SafeDeleteModel):
 
     seats = models.IntegerField(verbose_name=_("Seats"), )
 
+    # number of seats reserved for people in queue
+    # when someone cancels their reservation and there is a queue,
+    # reserved_seat is incremented by 1. If reserved_seats > 0, only
+    # people with a waitQueueNotification can order a reservation
     reserved_seats = models.IntegerField(
         verbose_name=_("Reserved seats"),
         default=0,
@@ -139,6 +143,13 @@ class Retirement(Address, SafeDeleteModel):
             is_active=True,
         ).count()
         return reservations
+
+    @property
+    def places_remaining(self):
+        seats = self.seats
+        reserved_seats = self.reserved_seats
+        reservations = self.reservations.filter(is_active=True).count()
+        return seats - reservations - reserved_seats
 
     def __str__(self):
         return self.name

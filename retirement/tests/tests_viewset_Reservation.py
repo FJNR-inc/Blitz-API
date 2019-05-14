@@ -338,14 +338,14 @@ class ReservationTests(APITestCase):
 
     def test_create_duplicate(self):
         """
-        Ensure we can create the same reservation multiple times. This does
-        not duplicate the entry and instead returns the existing one.
+        Ensure we cannot create the same reservation multiple times.
+        Overlapping reservation error is sent
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
             'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement2.id]
+                'retirement:retirement-detail', args=[self.retirement.id]
             ),
             'user': reverse('user-detail', args=[self.user.id]),
             'order_line': reverse(
@@ -359,109 +359,16 @@ class ReservationTests(APITestCase):
             format='json',
         )
 
-        response_data = json.loads(response.content)
-        response_data['retirement_details'] = remove_translation_fields(
-            response_data['retirement_details']
-        )
-        response_data['user_details'] = remove_translation_fields(
-            response_data['user_details']
-        )
-        del response_data['user_details']["first_name"]
-        del response_data['user_details']["last_name"]
-        del response_data['user_details']["email"]
-        del response_data['user_details']['date_joined']
-
         content = {
-            'id': 3,
-            'is_active': True,
-            'is_present': False,
-            'url': 'http://testserver/retirement/reservations/3',
-            'user': 'http://testserver/users/1',
-            'cancelation_action': None,
-            'cancelation_date': None,
-            'cancelation_reason': None,
-            'refundable': False,
-            'exchangeable': False,
-            'retirement': 'http://testserver/retirement/retirements/2',
-            'order_line': 'http://testserver/order_lines/1',
-            'retirement_details': {
-                'activity_language': None,
-                'end_time': '2130-02-17T12:00:00-05:00',
-                'id': 2,
-                'exclusive_memberships': [],
-                'places_remaining': 38,
-                'next_user_notified': 0,
-                'notification_interval': '1 00:00:00',
-                'price': '199.00',
-                'start_time': '2130-02-15T08:00:00-05:00',
-                'url': 'http://testserver/retirement/retirements/1',
-                'users': [
-                    'http://testserver/users/2',
-                    'http://testserver/users/1'
-                ],
-                'address_line1': '123 random street',
-                'address_line2': None,
-                'city': '',
-                'country': 'Random country',
-                'details': 'This is a description of the retirement.',
-                'email_content': None,
-                'latitude': None,
-                'longitude': None,
-                'name': 'random_retirement',
-                'pictures': [],
-                'postal_code': '123 456',
-                'reserved_seats': 0,
-                'seats': 40,
-                'state_province': 'Random state',
-                'timezone': None,
-                'reservations': [
-                    'http://testserver/retirement/reservations/2',
-                    'http://testserver/retirement/reservations/3'
-                ],
-                'reservations_canceled': [],
-                'total_reservations': 2,
-                'refund_rate': 100,
-                'min_day_refund': 7,
-                'min_day_exchange': 7,
-                'is_active': False,
-                'accessibility': True,
-                'form_url': "example.com",
-                'carpool_url': 'example2.com',
-                'review_url': 'example3.com',
-                'place_name': '',
-                'url': 'http://testserver/retirement/retirements/2'
-            },
-            'user_details': {
-                'academic_field': None,
-                'academic_level': None,
-                'birthdate': None,
-                'gender': None,
-                'groups': [],
-                'id': 1,
-                'is_active': True,
-                'is_staff': False,
-                'is_superuser': False,
-                'last_login': None,
-                'membership': None,
-                'membership_end': None,
-                'other_phone': None,
-                'phone': None,
-                'tickets': 1,
-                'university': None,
-                'url': 'http://testserver/users/1',
-                'user_permissions': [],
-                'city': None,
-                'personnal_restrictions': None,
-                'academic_program_code': None,
-                'faculty': None,
-                'student_number': None,
-                'volunteer_for_workplace': [],
-            }
+            'non_field_errors': [
+                'This reservation overlaps with another active reservations '
+                'for this user.'
+            ]
         }
 
-        self.assertEqual(response_data, content)
+        self.assertEqual(json.loads(response.content), content)
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_non_existent_period_user(self):
         """
@@ -569,6 +476,43 @@ class ReservationTests(APITestCase):
             'retirement': ['Invalid hyperlink - No URL match.'],
             'order_line': ['Invalid hyperlink - No URL match.'],
             'is_active': ['Must be a valid boolean.'],
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_no_place_left(self):
+        """
+        Ensure we can't create a reservation if there is no place left
+        """
+
+        self.client.force_authenticate(user=self.admin)
+
+        self.retirement2.seats = 0
+        self.retirement2.save()
+
+        data = {
+            'retirement': reverse(
+                'retirement:retirement-detail', args=[self.retirement2.id]
+            ),
+            'user': reverse('user-detail', args=[self.user.id]),
+            'order_line': reverse(
+                'orderline-detail', args=[self.order_line.id]),
+            'is_active': True,
+        }
+
+        response = self.client.post(
+            reverse('retirement:reservation-list'),
+            data,
+            format='json',
+        )
+
+        content = {
+            'non_field_errors': [
+                "This retirement doesn't have available places. Please "
+                'check number of seats available and reserved seats.'
+            ]
         }
 
         self.assertEqual(json.loads(response.content), content)

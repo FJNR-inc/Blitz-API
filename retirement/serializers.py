@@ -44,7 +44,7 @@ TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 class RetirementSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
-    places_remaining = serializers.SerializerMethodField()
+    places_remaining = serializers.ReadOnlyField()
     total_reservations = serializers.ReadOnlyField()
     reservations = serializers.SerializerMethodField()
     reservations_canceled = serializers.SerializerMethodField()
@@ -123,12 +123,6 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
                 request=self.context['request'],
             ) for id in reservation_ids
         ]
-
-    def get_places_remaining(self, obj):
-        seats = obj.seats
-        reserved_seats = obj.reserved_seats
-        reservations = obj.reservations.filter(is_active=True).count()
-        return seats - reservations - reserved_seats
 
     def validate(self, attr):
         err = {}
@@ -428,7 +422,15 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         active_reservations = Reservation.objects.filter(
             user=validated_data['user'],
             is_active=True,
-        ).exclude(**validated_data).values_list(
+        )
+
+        # deletes reservations with the same user and retirement from
+        # active_reservation
+        # keeping this line allows to reserves two time the same retirement
+        #
+        # active_reservations = active_reservations.exclude(**validated_data)
+
+        active_reservations = active_reservations.values_list(
             'retirement__start_time',
             'retirement__end_time',
         )
@@ -450,6 +452,14 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         validated_data['refundable'] = False
         validated_data['exchangeable'] = False
         validated_data['is_active'] = True
+
+        if validated_data['retirement'].places_remaining <= 0:
+            raise serializers.ValidationError({
+                'non_field_errors': [_(
+                    "This retirement doesn't have available places. Please "
+                    "check number of seats available and reserved seats."
+                )]
+            })
 
         return super().create(validated_data)
 
