@@ -182,6 +182,7 @@ class OrderTests(APITestCase):
             activity_language='FR',
             accessibility=True,
             reserved_seats=1,
+            has_shared_rooms=True,
         )
         cls.retirement_no_seats = Retirement.objects.create(
             name="no_place_left_retirement",
@@ -200,6 +201,7 @@ class OrderTests(APITestCase):
             is_active=True,
             activity_language='FR',
             accessibility=True,
+            has_shared_rooms=True,
         )
         cls.coupon = Coupon.objects.create(
             code="ABCD1234",

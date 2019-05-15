@@ -76,6 +76,7 @@ class ReservationTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True,
         )
         cls.retirement2 = Retirement.objects.create(
             name="random_retirement",
@@ -96,6 +97,7 @@ class ReservationTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True,
         )
         cls.retirement_overlap = Retirement.objects.create(
             name="ultra_retirement",
@@ -116,6 +118,7 @@ class ReservationTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True,
         )
         cls.order = Order.objects.create(
             user=cls.user,
@@ -239,7 +242,8 @@ class ReservationTests(APITestCase):
                 'carpool_url': 'example2.com',
                 'review_url': 'example3.com',
                 'place_name': '',
-                'url': 'http://testserver/retirement/retirements/2'
+                'url': 'http://testserver/retirement/retirements/2',
+                'has_shared_rooms': True,
             },
             'user_details': {
                 'academic_field': None,
