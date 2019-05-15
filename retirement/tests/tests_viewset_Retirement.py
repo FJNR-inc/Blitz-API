@@ -54,6 +54,7 @@ class RetirementTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True,
         )
 
         self.second_retirement = Retirement.objects.create(
@@ -76,6 +77,7 @@ class RetirementTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True,
         )
 
     @override_settings(
@@ -126,6 +128,7 @@ class RetirementTests(APITestCase):
             'form_url': "example.com",
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
+            'has_shared_rooms': True,
         }
 
         response = self.client.post(
@@ -179,6 +182,7 @@ class RetirementTests(APITestCase):
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
             'place_name': '',
+            'has_shared_rooms': True,
         }
 
         self.assertEqual(
@@ -491,7 +495,8 @@ class RetirementTests(APITestCase):
             'review_url': 'example3.com',
             'place_name': '',
             'users': [],
-            'url': 'http://testserver/retirement/retirements/1'
+            'url': 'http://testserver/retirement/retirements/1',
+            'has_shared_rooms': True,
         }
 
         self.assertEqual(
@@ -582,7 +587,8 @@ class RetirementTests(APITestCase):
                     'review_url': 'example3.com',
                     'place_name': '',
                     'users': [],
-                    'url': 'http://testserver/retirement/retirements/1'
+                    'url': 'http://testserver/retirement/retirements/1',
+                    'has_shared_rooms': True,
                 }
             ]
         }
@@ -645,7 +651,9 @@ class RetirementTests(APITestCase):
                 'review_url': 'example3.com',
                 'place_name': '',
                 'users': [],
-                'url': 'http://testserver/retirement/retirements/2'}]
+                'url': 'http://testserver/retirement/retirements/2',
+                'has_shared_rooms': True,
+            }]
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -702,7 +710,8 @@ class RetirementTests(APITestCase):
             'review_url': 'example3.com',
             'place_name': '',
             'users': [],
-            'url': 'http://testserver/retirement/retirements/1'
+            'url': 'http://testserver/retirement/retirements/1',
+            'has_shared_rooms': True,
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -766,7 +775,8 @@ class RetirementTests(APITestCase):
             'review_url': 'example3.com',
             'place_name': '',
             'users': [],
-            'url': 'http://testserver/retirement/retirements/1'
+            'url': 'http://testserver/retirement/retirements/1',
+            'has_shared_rooms': True,
         }
 
         self.assertEqual(response_data, content)

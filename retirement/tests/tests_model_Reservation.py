@@ -40,6 +40,7 @@ class ReservationTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True
         )
         cls.order = Order.objects.create(
             user=cls.user,

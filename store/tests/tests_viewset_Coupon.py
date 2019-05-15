@@ -92,6 +92,7 @@ class CouponTests(APITestCase):
             is_active=True,
             activity_language='FR',
             accessibility=True,
+            has_shared_rooms=True,
         )
         cls.coupon = Coupon.objects.create(
             value=13,
@@ -1119,7 +1120,8 @@ class CouponTests(APITestCase):
                     'timezone': None,
                     'total_reservations': 0,
                     'url': 'http://testserver/retirement/retirements/1',
-                    'users': []
+                    'users': [],
+                    'has_shared_rooms': True,
                 }],
                 "applicable_timeslots": [{
                     'end_time': '2130-01-15T12:00:00-05:00',
@@ -1327,7 +1329,8 @@ class CouponTests(APITestCase):
                 'timezone': None,
                 'total_reservations': 0,
                 'url': 'http://testserver/retirement/retirements/1',
-                'users': []
+                'users': [],
+                'has_shared_rooms': True,
             }],
             "applicable_timeslots": [{
                 'end_time': '2130-01-15T12:00:00-05:00',

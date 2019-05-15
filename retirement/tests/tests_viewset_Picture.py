@@ -64,6 +64,7 @@ class PictureTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True,
         )
         self.picture = Picture.objects.create(
             name="random_picture",
