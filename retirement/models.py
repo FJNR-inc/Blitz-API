@@ -133,6 +133,8 @@ class Retirement(Address, SafeDeleteModel):
         verbose_name=_("Review URL"),
     )
 
+    has_shared_rooms = models.BooleanField()
+
     # History is registered in translation.py
     # history = HistoricalRecords()
 
