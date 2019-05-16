@@ -57,6 +57,8 @@ router.register(
     base_name="authentication",
 )
 
+router.register('export_media', views.ExportMediaViewSet)
+
 urlpatterns = [
     path(
         'authentication',
