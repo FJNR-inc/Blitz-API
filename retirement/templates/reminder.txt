@@ -1,6 +1,7 @@
 
 
 {% load static %}
+{% load i18n %}
 
  
 ** PLUS QU'UNE SEMAINE AVANT LA RETRAITE!
@@ -8,14 +9,19 @@
 
 Nous sommes heureux de vous compter parmi nous à la retraite {{RETIREMENT.name}}. Nous profitons de ce rappel pour vous recommuniquer les informations relatives à l'événement!
 
+
+{% language 'fr' %}
  * Date et heure de début: {{RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}
  * Date et heure de fin: {{RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{RETIREMENT.end_time|date:"G"}}h{{RETIREMENT.end_time|date:"i"}}
+{% endlanguage %}
 
- 
+
+{% if RETIREMENT.email_content %} 
 ** CE QUE VOUS DEVEZ SAVOIR
 ------------------------------------------------------------
 
 {{RETIREMENT.email_content}}
+{% endif %}
 
  
 ** FORMULAIRE
