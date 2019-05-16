@@ -382,3 +382,13 @@ class Address(models.Model):
 
     class Meta:
         abstract = True
+
+
+class ExportMedia(models.Model):
+    file = models.FileField(
+        verbose_name='file',
+        upload_to='export/%Y/%m/'
+    )
+
+    def __str__(self):
+        return self.file.name

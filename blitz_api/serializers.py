@@ -13,7 +13,7 @@ from django.db.models.base import ObjectDoesNotExist
 
 from .models import (
     Domain, Organization, ActionToken, AcademicField, AcademicLevel,
-)
+    ExportMedia)
 from .services import remove_translation_fields, check_if_translated_field
 from . import services
 from store.serializers import MembershipSerializer
@@ -590,3 +590,10 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     token = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
+
+class ExportMediaSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = ExportMedia
+        fields = '__all__'

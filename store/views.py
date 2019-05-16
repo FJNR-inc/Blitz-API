@@ -13,7 +13,7 @@ from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
-from blitz_api.services import ExportPagination
+from blitz_api.mixins import ExportMixin
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, PaymentProfile,
@@ -31,7 +31,7 @@ from . import serializers, permissions
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
-class MembershipViewSet(viewsets.ModelViewSet):
+class MembershipViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given membership.
@@ -55,26 +55,6 @@ class MembershipViewSet(viewsets.ModelViewSet):
     }
     ordering = ('name',)
 
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = MembershipResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="Membership-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
-
     def get_queryset(self):
         """
         This viewset should return available memberships except if
@@ -94,7 +74,7 @@ class MembershipViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class PackageViewSet(viewsets.ModelViewSet):
+class PackageViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given package.
@@ -117,26 +97,6 @@ class PackageViewSet(viewsets.ModelViewSet):
         'price': ['exact', 'gte', 'lte'],
     }
     ordering = ('name',)
-
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = PackageResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="Package-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
 
     def get_queryset(self):
         """
@@ -202,7 +162,7 @@ class PaymentProfileViewSet(
         return PaymentProfile.objects.filter(owner=self.request.user)
 
 
-class OrderViewSet(viewsets.ModelViewSet):
+class OrderViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given order.
@@ -216,26 +176,6 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.OrderSerializer
     queryset = Order.objects.all()
     permission_classes = (permissions.IsAdminOrCreateReadOnly, IsAuthenticated)
-
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = OrderResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="Order-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
 
     @action(
         methods=['post'], detail=False, permission_classes=[IsAuthenticated])
@@ -309,7 +249,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Order.objects.filter(user=self.request.user.id)
 
 
-class OrderLineViewSet(viewsets.ModelViewSet):
+class OrderLineViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given order line.
@@ -324,26 +264,6 @@ class OrderLineViewSet(viewsets.ModelViewSet):
     queryset = OrderLine.objects.all()
     permission_classes = (IsAuthenticated,)
 
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = OrderLineResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="OrderLine-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
-
     def get_queryset(self):
         """
         This viewset should return owned order lines except if
@@ -354,7 +274,7 @@ class OrderLineViewSet(viewsets.ModelViewSet):
         return OrderLine.objects.filter(order__user=self.request.user)
 
 
-class CustomPaymentViewSet(viewsets.ModelViewSet):
+class CustomPaymentViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given custom payment.
@@ -370,26 +290,6 @@ class CustomPaymentViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, permissions.IsAdminOrReadOnly)
     filter_fields = '__all__'
 
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = CustomPaymentResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="CustomPayment-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
-
     def get_queryset(self):
         """
         This viewset should return owned custom payments except if
@@ -403,7 +303,7 @@ class CustomPaymentViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-class CouponViewSet(viewsets.ModelViewSet):
+class CouponViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given coupon.
@@ -418,26 +318,6 @@ class CouponViewSet(viewsets.ModelViewSet):
     queryset = Coupon.objects.all()
     permission_classes = (IsAuthenticated, permissions.IsAdminOrReadOnly)
     filter_fields = '__all__'
-
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = CouponResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="Coupon-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
 
     @action(methods=['post'], detail=True, permission_classes=[IsOwner])
     def notify(self, request, pk=None):
@@ -500,7 +380,7 @@ class CouponViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CouponUserViewSet(viewsets.ModelViewSet):
+class CouponUserViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     No specific view implementation done.
     """
@@ -508,28 +388,6 @@ class CouponUserViewSet(viewsets.ModelViewSet):
     queryset = CouponUser.objects.all()
     permission_classes = (IsAuthenticated, IsAdminUser)
     filter_fields = '__all__'
-
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Filter queryset
-        queryset = self.filter_queryset(queryset).filter(uses__gt=0)
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = CouponUserResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="CouponUser-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
 
     def get_queryset(self):
         """
@@ -541,7 +399,7 @@ class CouponUserViewSet(viewsets.ModelViewSet):
         return CouponUser.objects.filter(user=self.request.user)
 
 
-class RefundViewSet(viewsets.GenericViewSet,
+class RefundViewSet(ExportMixin, viewsets.GenericViewSet,
                     mixins.ListModelMixin,
                     mixins.RetrieveModelMixin, ):
     """
@@ -555,26 +413,6 @@ class RefundViewSet(viewsets.GenericViewSet,
     queryset = Refund.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
     filter_fields = '__all__'
-
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = RefundResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="Refund-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
 
     def get_queryset(self):
         """

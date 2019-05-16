@@ -24,7 +24,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from blitz_api.exceptions import MailServiceError
-from blitz_api.services import send_mail, ExportPagination
+from blitz_api.mixins import ExportMixin
 
 from .models import Workplace, Picture, Period, TimeSlot, Reservation
 from .resources import (WorkplaceResource, PeriodResource, TimeSlotResource,
@@ -37,7 +37,7 @@ User = get_user_model()
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
-class WorkplaceViewSet(viewsets.ModelViewSet):
+class WorkplaceViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given workplace.
@@ -53,26 +53,6 @@ class WorkplaceViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_fields = '__all__'
     ordering = ('name',)
-
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = WorkplaceResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="Workplace-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
 
 
 class PictureViewSet(viewsets.ModelViewSet):
@@ -97,7 +77,7 @@ class PictureViewSet(viewsets.ModelViewSet):
     }
 
 
-class PeriodViewSet(viewsets.ModelViewSet):
+class PeriodViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given period.
@@ -113,26 +93,6 @@ class PeriodViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_fields = '__all__'
     ordering = ('name',)
-
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = PeriodResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="Period-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
 
     def get_queryset(self):
         """
@@ -235,7 +195,7 @@ class PeriodViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TimeSlotViewSet(viewsets.ModelViewSet):
+class TimeSlotViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given time slot.
@@ -262,26 +222,6 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
         'start_time': ['exact', 'gte', 'lte'],
         'end_time': ['exact', 'gte', 'lte'],
     }
-
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = TimeSlotResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="TimeSlot-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
 
     @action(methods=['post'], detail=False, permission_classes=[IsAdminUser])
     def batch_create(self, request):
@@ -443,7 +383,7 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ReservationViewSet(viewsets.ModelViewSet):
+class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given reservation.
@@ -468,26 +408,6 @@ class ReservationViewSet(viewsets.ModelViewSet):
         'timeslot__start_time',
         'timeslot__end_time',
     )
-
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = ReservationResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="Reservation-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
 
     def get_queryset(self):
         """

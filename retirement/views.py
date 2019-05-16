@@ -10,7 +10,7 @@ import pytz
 import rest_framework
 
 from blitz_api.exceptions import MailServiceError
-from blitz_api.services import send_mail, ExportPagination
+from blitz_api.mixins import ExportMixin
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import mail_admins
@@ -47,7 +47,7 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 TAX = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
-class RetirementViewSet(viewsets.ModelViewSet):
+class RetirementViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given retirement.
@@ -60,7 +60,7 @@ class RetirementViewSet(viewsets.ModelViewSet):
     """
     serializer_class = serializers.RetirementSerializer
     queryset = Retirement.objects.all()
-    permission_classes = (permissions.IsAdminOrReadOnly, )
+    permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_fields = {
         'start_time': ['exact', 'gte', 'lte'],
         'end_time': ['exact', 'gte', 'lte'],
@@ -83,26 +83,6 @@ class RetirementViewSet(viewsets.ModelViewSet):
             instance.is_active = False
             instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = RetirementResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="Retirement-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
 
     @action(detail=True, permission_classes=[])
     def remind_users(self, request, pk=None):
@@ -168,7 +148,7 @@ class PictureViewSet(viewsets.ModelViewSet):
     """
     serializer_class = serializers.PictureSerializer
     queryset = Picture.objects.all()
-    permission_classes = (permissions.IsAdminOrReadOnly, )
+    permission_classes = (permissions.IsAdminOrReadOnly,)
     # It is impossible to filter Imagefield by default. This is why we declare
     # filter fields manually here.
     filter_fields = {
@@ -177,7 +157,7 @@ class PictureViewSet(viewsets.ModelViewSet):
     }
 
 
-class ReservationViewSet(viewsets.ModelViewSet):
+class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given reservation.
@@ -203,26 +183,6 @@ class ReservationViewSet(viewsets.ModelViewSet):
         'retirement__start_time',
         'retirement__end_time',
     )
-
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = ReservationResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="RetirementReservation-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
 
     def get_queryset(self):
         """
@@ -282,8 +242,8 @@ class ReservationViewSet(viewsets.ModelViewSet):
         reservation_active = instance.is_active
 
         respects_minimum_days = (
-            (retirement.start_time - timezone.now()) >=
-            timedelta(days=retirement.min_day_refund))
+                (retirement.start_time - timezone.now()) >=
+                timedelta(days=retirement.min_day_refund))
 
         with transaction.atomic():
             # No need to check for previous refunds because a refunded
@@ -311,7 +271,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
                         refund_instance = Refund.objects.create(
                             orderline=order_line,
                             refund_date=timezone.now(),
-                            amount=total_amount/100,
+                            amount=total_amount / 100,
                             details="Reservation canceled",
                         )
                         refund_response = refund_amount(
@@ -392,7 +352,8 @@ class ReservationViewSet(viewsets.ModelViewSet):
                             json=data,
                             headers={
                                 'Authorization':
-                                'Token ' + json.loads(auth.content)['token']},
+                                    'Token ' + json.loads(auth.content)[
+                                        'token']},
                             timeout=(10, 10),
                         )
                         r.raise_for_status()
@@ -426,8 +387,8 @@ class ReservationViewSet(viewsets.ModelViewSet):
                 'CUSTOMER_NUMBER': user.id,
                 'TYPE': "Remboursement",
                 'OLD_RETIREMENT': old_retirement,
-                'COST': round(total_amount/100, 2),
-                'TAX': round(Decimal(amount_tax/100), 2),
+                'COST': round(total_amount / 100, 2),
+                'TAX': round(Decimal(amount_tax / 100), 2),
             }
 
             plain_msg = render_to_string("refund.txt", merge_data)
@@ -443,7 +404,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class WaitQueueViewSet(viewsets.ModelViewSet):
+class WaitQueueViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given wait_queue element.
@@ -460,7 +421,7 @@ class WaitQueueViewSet(viewsets.ModelViewSet):
     """
     serializer_class = serializers.WaitQueueSerializer
     queryset = WaitQueue.objects.all()
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated,)
     filter_fields = '__all__'
     ordering_fields = (
         'created_at',
@@ -476,26 +437,6 @@ class WaitQueueViewSet(viewsets.ModelViewSet):
         if self.request.user.is_staff:
             return WaitQueue.objects.all()
         return WaitQueue.objects.filter(user=self.request.user)
-
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = WaitQueueResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="WaitQueue-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
 
     def update(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -514,7 +455,7 @@ class WaitQueueViewSet(viewsets.ModelViewSet):
         return super(WaitQueueViewSet, self).destroy(request, *args, **kwargs)
 
 
-class WaitQueueNotificationViewSet(mixins.ListModelMixin,
+class WaitQueueNotificationViewSet(ExportMixin, mixins.ListModelMixin,
                                    mixins.RetrieveModelMixin,
                                    viewsets.GenericViewSet, ):
     """
@@ -630,23 +571,3 @@ class WaitQueueNotificationViewSet(mixins.ListModelMixin,
             return Response(response_data, status=status.HTTP_200_OK)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = WaitQueueNotificationResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="WaitQueueNotification-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
