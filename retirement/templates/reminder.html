@@ -1,4 +1,8 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+{% load static %}
+{% load i18n %}
+
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -70,7 +74,6 @@
   <body>
     <div class="email">
       <div class="email__logo">
-        {% load static %}
         <img src="{% static 'images/logo_general.png'%}" alt="">
       </div>
       <div class="email__content">
@@ -81,17 +84,21 @@
           Nous sommes heureux de vous compter parmi nous à la retraite {{RETIREMENT.name}}. Nous profitons de ce rappel pour vous recommuniquer les informations relatives à l'événement!
         </p>
 
+        {% language 'fr' %}
         <ul>
           <li><b>Date et heure de début: </b>{{RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}</li>
           <li><b>Date et heure de fin: </b>{{RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{RETIREMENT.end_time|date:"G"}}h{{RETIREMENT.end_time|date:"i"}}</li>
         </ul>
+        {% endlanguage %}
 
+        {% if RETIREMENT.email_content %}
         <h2 class="email__content__subtitle">
           Ce que vous devez savoir
         </h2>
         <p>
           {{RETIREMENT.email_content}}
         </p>
+        {% endif %}
 
         <h2 class="email__content__subtitle">
           Formulaire
