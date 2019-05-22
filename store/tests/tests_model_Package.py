@@ -57,7 +57,7 @@ class PackageTests(APITestCase):
             order=self.order,
             quantity=1,
             content_type=self.package_type,
-            object_id=1,
+            object_id=package.id,
         )
 
         self.assertEqual(

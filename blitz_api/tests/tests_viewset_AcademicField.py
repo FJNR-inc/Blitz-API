@@ -40,13 +40,15 @@ class AcademicFieldTests(APITestCase):
         )
 
         content = {
-            'id': 2,
             'name': "fake field",
-            'url': 'http://testserver/academic_fields/2',
         }
 
+        response_data = remove_translation_fields(json.loads(response.content))
+        del response_data['url']
+        del response_data['id']
+
         self.assertEqual(
-            remove_translation_fields(json.loads(response.content)),
+            response_data,
             content
         )
 
@@ -92,9 +94,10 @@ class AcademicFieldTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                'id': 1,
+                'id': self.field.id,
                 'name': 'random_field',
-                'url': 'http://testserver/academic_fields/1'
+                'url': 'http://testserver/academic_fields/' +
+                       str(self.field.id)
             }]
         }
 

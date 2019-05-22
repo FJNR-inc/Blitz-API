@@ -85,15 +85,18 @@ class WaitQueueTests(APITestCase):
         )
 
         content = {
-            'id': 2,
-            'retirement': 'http://testserver/retirement/retirements/1',
-            'url': 'http://testserver/retirement/wait_queues/2',
+            'retirement': 'http://testserver/retirement/retirements/' +
+                          str(self.retirement.id),
             'user': ''.join(['http://testserver/users/', str(self.user.id)]),
             'created_at': json.loads(response.content)['created_at'],
         }
 
+        response_data = json.loads(response.content)
+        del response_data['id']
+        del response_data['url']
+
         self.assertEqual(
-            json.loads(response.content),
+            response_data,
             content
         )
 
@@ -124,15 +127,18 @@ class WaitQueueTests(APITestCase):
         )
 
         content = {
-            'id': 2,
-            'retirement': 'http://testserver/retirement/retirements/1',
-            'url': 'http://testserver/retirement/wait_queues/2',
-            'user': 'http://testserver/users/1',
-            'created_at': json.loads(response.content)['created_at'],
+            'retirement': 'http://testserver/retirement/retirements/' +
+                          str(self.retirement.id),
+            'user': ''.join(['http://testserver/users/', str(self.user.id)]),
         }
 
+        response_data = json.loads(response.content)
+        del response_data['id']
+        del response_data['url']
+        del response_data['created_at']
+
         self.assertEqual(
-            json.loads(response.content),
+            response_data,
             content
         )
 
@@ -309,7 +315,7 @@ class WaitQueueTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'retirement:waitqueue-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.wait_queue_subscription.id},
             ),
         )
 
@@ -342,10 +348,14 @@ class WaitQueueTests(APITestCase):
             'previous': None,
             'results': [{
                 'created_at': response_data['results'][0]['created_at'],
-                'id': 1,
-                'retirement': 'http://testserver/retirement/retirements/1',
-                'url': 'http://testserver/retirement/wait_queues/1',
-                'user': 'http://testserver/users/2'
+                'id': self.wait_queue_subscription.id,
+                'retirement':
+                    'http://testserver/retirement/retirements/' +
+                    str(self.retirement.id),
+                'url':
+                    'http://testserver/retirement/wait_queues/' +
+                    str(self.wait_queue_subscription.id),
+                'user': 'http://testserver/users/' + str(self.user2.id)
             }]
         }
 
@@ -380,14 +390,18 @@ class WaitQueueTests(APITestCase):
         response = self.client.get(
             reverse(
                 'retirement:waitqueue-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.wait_queue_subscription.id},
             ),
         )
 
         content = {
-            'id': 1,
-            'retirement': 'http://testserver/retirement/retirements/1',
-            'url': 'http://testserver/retirement/wait_queues/1',
+            'id': self.wait_queue_subscription.id,
+            'retirement':
+                'http://testserver/retirement/retirements/' +
+                str(self.retirement.id),
+            'url':
+                'http://testserver/retirement/wait_queues/' +
+                str(self.wait_queue_subscription.id),
             'user': ''.join(['http://testserver/users/', str(self.user2.id)]),
             'created_at': json.loads(response.content)['created_at'],
         }
@@ -426,16 +440,20 @@ class WaitQueueTests(APITestCase):
         response = self.client.get(
             reverse(
                 'retirement:waitqueue-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.wait_queue_subscription.id},
             ),
         )
 
         response_data = json.loads(response.content)
 
         content = {
-            'id': 1,
-            'retirement': 'http://testserver/retirement/retirements/1',
-            'url': 'http://testserver/retirement/wait_queues/1',
+            'id': self.wait_queue_subscription.id,
+            'retirement':
+                'http://testserver/retirement/retirements/' +
+                str(self.retirement.id),
+            'url':
+                'http://testserver/retirement/wait_queues/' +
+                str(self.wait_queue_subscription.id),
             'user': ''.join(['http://testserver/users/', str(self.user2.id)]),
             'created_at': json.loads(response.content)['created_at'],
         }

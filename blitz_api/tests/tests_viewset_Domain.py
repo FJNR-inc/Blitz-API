@@ -47,15 +47,18 @@ class DomainTests(APITestCase):
         )
 
         content = {
-            'id': 2,
             'example': "email@fake.domain",
             'name': 'fake.domain',
-            'organization': 'http://testserver/organizations/1',
-            'url': 'http://testserver/domains/2'
+            'organization': 'http://testserver/organizations/' +
+                            str(self.org.id),
         }
 
+        response_data = remove_translation_fields(json.loads(response.content))
+        del response_data['url']
+        del response_data['id']
+
         self.assertEqual(
-            remove_translation_fields(json.loads(response.content)),
+            response_data,
             content
         )
 
@@ -128,11 +131,12 @@ class DomainTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                'id': 1,
+                'id': self.domain.id,
                 'example': None,
                 'name': 'random.domain',
-                'organization': 'http://testserver/organizations/1',
-                'url': 'http://testserver/domains/1'
+                'organization': 'http://testserver/organizations/' +
+                                str(self.org.id),
+                'url': 'http://testserver/domains/' + str(self.domain.id)
             }]
         }
 

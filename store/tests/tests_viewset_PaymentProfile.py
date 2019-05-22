@@ -34,7 +34,6 @@ class PaymentProfileTests(APITestCase):
     @classmethod
     def setUpClass(cls):
         super(PaymentProfileTests, cls).setUpClass()
-        cls.maxDiff = None
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()

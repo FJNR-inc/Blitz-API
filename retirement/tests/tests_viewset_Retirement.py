@@ -57,7 +57,7 @@ class RetirementTests(APITestCase):
             has_shared_rooms=True,
         )
 
-        self.second_retirement = Retirement.objects.create(
+        self.retirement2 = Retirement.objects.create(
             name="ultra_retirement",
             details="This is a description of the ultra retirement.",
             seats=400,
@@ -146,7 +146,6 @@ class RetirementTests(APITestCase):
         content = {
             'details': 'short_description',
             'email_content': None,
-            'id': 3,
             'address_line1': 'random_address_1',
             'address_line2': None,
             'city': 'random_city',
@@ -176,7 +175,6 @@ class RetirementTests(APITestCase):
             'reservations_canceled': [],
             'total_reservations': 0,
             'users': [],
-            'url': 'http://testserver/retirement/retirements/3',
             'accessibility': True,
             'form_url': "example.com",
             'carpool_url': 'example2.com',
@@ -185,8 +183,12 @@ class RetirementTests(APITestCase):
             'has_shared_rooms': True,
         }
 
+        response_data = remove_translation_fields(json.loads(response.content))
+        del response_data['id']
+        del response_data['url']
+
         self.assertEqual(
-            remove_translation_fields(json.loads(response.content)),
+            response_data,
             content
         )
 
@@ -451,7 +453,7 @@ class RetirementTests(APITestCase):
         response = self.client.put(
             reverse(
                 'retirement:retirement-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.retirement.id},
             ),
             data,
             format='json',
@@ -461,7 +463,7 @@ class RetirementTests(APITestCase):
             'details': 'short_description',
             'email_content': None,
             'activity_language': 'FR',
-            'id': 1,
+            'id': self.retirement.id,
             'address_line1': 'random_address_1',
             'address_line2': None,
             'city': 'New city',
@@ -495,7 +497,8 @@ class RetirementTests(APITestCase):
             'review_url': 'example3.com',
             'place_name': '',
             'users': [],
-            'url': 'http://testserver/retirement/retirements/1',
+            'url': 'http://testserver/retirement/retirements/' +
+                   str(self.retirement.id),
             'has_shared_rooms': True,
         }
 
@@ -515,7 +518,7 @@ class RetirementTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'retirement:retirement-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.retirement.id},
             ),
         )
 
@@ -536,8 +539,8 @@ class RetirementTests(APITestCase):
         Only if retirement is_active == True.
         """
 
-        self.second_retirement.is_active = False
-        self.second_retirement.save()
+        self.retirement2.is_active = False
+        self.retirement2.save()
 
         response = self.client.get(
             reverse('retirement:retirement-list'),
@@ -553,7 +556,7 @@ class RetirementTests(APITestCase):
                     'activity_language': 'FR',
                     'details': 'This is a description of the mega retirement.',
                     'email_content': None,
-                    'id': 1,
+                    'id': self.retirement.id,
                     'address_line1': '123 random street',
                     'address_line2': None,
                     'city': '',
@@ -587,7 +590,8 @@ class RetirementTests(APITestCase):
                     'review_url': 'example3.com',
                     'place_name': '',
                     'users': [],
-                    'url': 'http://testserver/retirement/retirements/1',
+                    'url': 'http://testserver/retirement/retirements/' +
+                           str(self.retirement.id),
                     'has_shared_rooms': True,
                 }
             ]
@@ -617,7 +621,7 @@ class RetirementTests(APITestCase):
                 'activity_language': 'FR',
                 'details': 'This is a description of the ultra retirement.',
                 'email_content': None,
-                'id': 2,
+                'id': self.retirement2.id,
                 'address_line1': '123 random street',
                 'address_line2': None,
                 'city': '',
@@ -651,7 +655,8 @@ class RetirementTests(APITestCase):
                 'review_url': 'example3.com',
                 'place_name': '',
                 'users': [],
-                'url': 'http://testserver/retirement/retirements/2',
+                'url': 'http://testserver/retirement/retirements/' +
+                       str(self.retirement2.id),
                 'has_shared_rooms': True,
             }]
         }
@@ -668,7 +673,7 @@ class RetirementTests(APITestCase):
         response = self.client.get(
             reverse(
                 'retirement:retirement-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.retirement.id},
             ),
         )
 
@@ -676,7 +681,7 @@ class RetirementTests(APITestCase):
             'details': 'This is a description of the mega retirement.',
             'email_content': None,
             'activity_language': 'FR',
-            'id': 1,
+            'id': self.retirement.id,
             'address_line1': '123 random street',
             'address_line2': None,
             'city': '',
@@ -710,7 +715,8 @@ class RetirementTests(APITestCase):
             'review_url': 'example3.com',
             'place_name': '',
             'users': [],
-            'url': 'http://testserver/retirement/retirements/1',
+            'url': 'http://testserver/retirement/retirements/' +
+                   str(self.retirement.id),
             'has_shared_rooms': True,
         }
 
@@ -727,7 +733,7 @@ class RetirementTests(APITestCase):
         response = self.client.get(
             reverse(
                 'retirement:retirement-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.retirement.id},
             ),
         )
 
@@ -741,7 +747,7 @@ class RetirementTests(APITestCase):
             'details': 'This is a description of the mega retirement.',
             'activity_language': 'FR',
             'email_content': None,
-            'id': 1,
+            'id': self.retirement.id,
             'address_line1': '123 random street',
             'address_line2': None,
             'city': '',
@@ -775,7 +781,8 @@ class RetirementTests(APITestCase):
             'review_url': 'example3.com',
             'place_name': '',
             'users': [],
-            'url': 'http://testserver/retirement/retirements/1',
+            'url': 'http://testserver/retirement/retirements/' +
+                   str(self.retirement.id),
             'has_shared_rooms': True,
         }
 
@@ -814,7 +821,7 @@ class RetirementTests(APITestCase):
             response = self.client.get(
                 reverse(
                     'retirement:retirement-remind-users',
-                    kwargs={'pk': 1},
+                    kwargs={'pk': self.retirement.id},
                 ),
             )
 
@@ -841,7 +848,7 @@ class RetirementTests(APITestCase):
             response = self.client.get(
                 reverse(
                     'retirement:retirement-remind-users',
-                    kwargs={'pk': 1},
+                    kwargs={'pk': self.retirement.id},
                 ),
             )
 
@@ -865,7 +872,7 @@ class RetirementTests(APITestCase):
             response = self.client.get(
                 reverse(
                     'retirement:retirement-recap',
-                    kwargs={'pk': 1},
+                    kwargs={'pk': self.retirement.id},
                 ),
             )
 
@@ -892,7 +899,7 @@ class RetirementTests(APITestCase):
             response = self.client.get(
                 reverse(
                     'retirement:retirement-recap',
-                    kwargs={'pk': 1},
+                    kwargs={'pk': self.retirement.id},
                 ),
             )
 
