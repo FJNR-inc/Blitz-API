@@ -18,7 +18,8 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
 from blitz_api.services import (remove_translation_fields,
-                                check_if_translated_field,)
+                                check_if_translated_field,
+                                getMessageTranslate)
 from workplace.models import Reservation
 from retirement.models import Reservation as RetirementReservation
 from retirement.models import WaitQueueNotification, Retirement
@@ -66,6 +67,13 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
         allow_null=True,
     )
 
+    def validate(self, attr):
+        if not check_if_translated_field('name', attr):
+            raise serializers.ValidationError(
+                getMessageTranslate('name', attr, True)
+            )
+        return super(BaseProductSerializer, self).validate(attr)
+
     def to_representation(self, instance):
         user = self.context['request'].user
         data = super(BaseProductSerializer, self).to_representation(instance)
@@ -83,13 +91,13 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
 class MembershipSerializer(BaseProductSerializer):
 
     def validate(self, attr):
-        action = self.context['request'].parser_context['view'].action
-        if action != 'partial_update':
-            if not check_if_translated_field('name', attr):
-                raise serializers.ValidationError({
-                    'name': _("This field is required.")
-                })
-        return super(MembershipSerializer, self).validate(attr)
+        try:
+            return super().validate(attr)
+        except serializers.ValidationError as e:
+            action = self.context['request'].parser_context['view'].action
+            if action != 'partial_update':
+                raise e
+            return attr
 
     class Meta:
         model = Membership
@@ -110,13 +118,13 @@ class PackageSerializer(BaseProductSerializer):
     )
 
     def validate(self, attr):
-        action = self.context['request'].parser_context['view'].action
-        if action != 'partial_update':
-            if not check_if_translated_field('name', attr):
-                raise serializers.ValidationError({
-                    'name': _("This field is required.")
-                })
-        return super(PackageSerializer, self).validate(attr)
+        try:
+            return super().validate(attr)
+        except serializers.ValidationError as e:
+            action = self.context['request'].parser_context['view'].action
+            if action != 'partial_update':
+                raise e
+            return attr
 
     class Meta:
         model = Package
@@ -153,7 +161,7 @@ class CustomPaymentSerializer(serializers.HyperlinkedModelSerializer):
 
         with transaction.atomic():
             custom_payment = CustomPayment.objects.create(**validated_data)
-            amount = int(round(custom_payment.price*100))
+            amount = int(round(custom_payment.price * 100))
 
             # Charge the order with the external payment API
             try:
@@ -370,6 +378,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         required=False,
         write_only=True,
     )
+
     # target_user = serializers.HyperlinkedRelatedField(
     #     many=False,
     #     write_only=True,
@@ -452,8 +461,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     discount_amount = coupon_info['value']
                     orderline_cost = coupon_info['orderline'].cost
                     coupon_info['orderline'].cost = (
-                        orderline_cost -
-                        discount_amount
+                            orderline_cost -
+                            discount_amount
                     )
                     coupon_info['orderline'].coupon = coupon
                     coupon_info['orderline'].coupon_real_value = coupon_info[
@@ -494,15 +503,15 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     })
                 user.membership = membership_orderlines[0].content_object
                 user.membership_end = (
-                    timezone.now().date() + user.membership.duration
+                        timezone.now().date() + user.membership.duration
                 )
                 user.save()
             if package_orderlines:
                 need_transaction = True
                 for package_orderline in package_orderlines:
                     user.tickets += (
-                        package_orderline.content_object.reservations *
-                        package_orderline.quantity
+                            package_orderline.content_object.reservations *
+                            package_orderline.quantity
                     )
                     user.save()
             if reservation_orderlines:
@@ -573,7 +582,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                           retirement.reserved_seats) > 0)
                             or (retirement.reserved_seats
                                 and WaitQueueNotification.objects.filter(
-                                    user=user, retirement=retirement))):
+                                        user=user, retirement=retirement))):
                         retirement_reservations.append(
                             RetirementReservation.objects.create(
                                 user=user,
@@ -585,7 +594,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         # Decrement reserved_seats if > 0
                         if retirement.reserved_seats:
                             retirement.reserved_seats = (
-                                retirement.reserved_seats - 1
+                                    retirement.reserved_seats - 1
                             )
                             retirement.save()
                     else:
@@ -859,12 +868,12 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
         new_percent_off = validated_data.get('percent_off', None)
 
         value_off = (
-            (not instance.value and new_value) or
-            (instance.value and new_value != 0)
+                (not instance.value and new_value) or
+                (instance.value and new_value != 0)
         )
         percent_off = (
-            (not instance.percent_off and new_percent_off) or
-            (instance.percent_off and new_percent_off != 0)
+                (not instance.percent_off and new_percent_off) or
+                (instance.percent_off and new_percent_off != 0)
         )
 
         if value_off and percent_off:
@@ -926,7 +935,7 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Coupon
-        exclude = ('deleted', )
+        exclude = ('deleted',)
         extra_kwargs = {
             'applicable_retirements': {
                 'required': False,
@@ -949,7 +958,7 @@ class CouponUserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = CouponUser
-        exclude = ('deleted', )
+        exclude = ('deleted',)
 
 
 class RefundSerializer(serializers.HyperlinkedModelSerializer):
@@ -957,4 +966,4 @@ class RefundSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Refund
-        exclude = ('deleted', )
+        exclude = ('deleted',)
