@@ -68,20 +68,23 @@ class MembershipTests(APITestCase):
             format='json',
         )
 
+        response_data = remove_translation_fields(json.loads(response.content))
+        del response_data['url']
+        del response_data['id']
+
         content = {
             'available': True,
-            'id': 3,
             'details': '3-Year student membership',
             'duration': '1095 00:00:00',
             'name': 'advanced_membership',
             'order_lines': [],
             'price': '125.00',
-            'url': 'http://testserver/memberships/3',
-            'academic_levels': ['http://testserver/academic_levels/1']
+            'academic_levels': ['http://testserver/academic_levels/' +
+                                str(self.academic_level.id)]
         }
 
         self.assertEqual(
-            remove_translation_fields(json.loads(response.content)),
+            response_data,
             content
         )
 
@@ -232,7 +235,7 @@ class MembershipTests(APITestCase):
         response = self.client.put(
             reverse(
                 'membership-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.membership.id},
             ),
             data,
             format='json',
@@ -240,14 +243,15 @@ class MembershipTests(APITestCase):
 
         content = {
             'available': True,
-            'id': 1,
             'details': '1-Year student membership',
             'duration': '365 00:00:00',
             'name': 'basic_membership_updated',
             'order_lines': [],
             'price': '10.00',
-            'url': 'http://testserver/memberships/1',
-            'academic_levels': ['http://testserver/academic_levels/1']
+            'url': 'http://testserver/memberships/' + str(self.membership.id),
+            'id': self.membership.id,
+            'academic_levels': ['http://testserver/academic_levels/' +
+                                str(self.academic_level.id)]
         }
 
         self.assertEqual(
@@ -266,7 +270,7 @@ class MembershipTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'membership-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.membership.id},
             ),
         )
         membership = self.membership
@@ -286,7 +290,7 @@ class MembershipTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'membership-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.membership.id},
             ),
         )
 
@@ -328,13 +332,15 @@ class MembershipTests(APITestCase):
             'previous': None,
             'results': [{
                 'available': True,
-                'id': 1,
                 'details': '1-Year student membership',
                 'duration': '365 00:00:00',
                 'name': 'basic_membership',
                 'price': '50.00',
-                'url': 'http://testserver/memberships/1',
-                'academic_levels': ['http://testserver/academic_levels/1']
+                'url': 'http://testserver/memberships/' +
+                       str(self.membership.id),
+                'id': self.membership.id,
+                'academic_levels': ['http://testserver/academic_levels/' +
+                                    str(self.academic_level.id)]
             }]
         }
 
@@ -364,24 +370,28 @@ class MembershipTests(APITestCase):
             'previous': None,
             'results': [{
                 'available': True,
-                'id': 1,
+                'id': self.membership.id,
                 'details': '1-Year student membership',
                 'duration': '365 00:00:00',
                 'name': 'basic_membership',
                 'order_lines': [],
                 'price': '50.00',
-                'url': 'http://testserver/memberships/1',
-                'academic_levels': ['http://testserver/academic_levels/1']
+                'url': 'http://testserver/memberships/' +
+                       str(self.membership.id),
+                'academic_levels': ['http://testserver/academic_levels/' +
+                                    str(self.academic_level.id)]
             }, {
                 'available': False,
-                'id': 2,
+                'id': self.membership_unavailable.id,
                 'details': 'todo',
                 'duration': '365 00:00:00',
                 'name': 'pending_membership',
                 'order_lines': [],
                 'price': '50.00',
-                'url': 'http://testserver/memberships/2',
-                'academic_levels': ['http://testserver/academic_levels/1']
+                'url': 'http://testserver/memberships/' +
+                       str(self.membership_unavailable.id),
+                'academic_levels': ['http://testserver/academic_levels/' +
+                                    str(self.academic_level.id)]
             }]
         }
 
@@ -397,19 +407,20 @@ class MembershipTests(APITestCase):
         response = self.client.get(
             reverse(
                 'membership-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.membership.id},
             ),
         )
 
         content = {
             'available': True,
-            'id': 1,
+            'id': self.membership.id,
             'details': '1-Year student membership',
             'duration': '365 00:00:00',
             'name': 'basic_membership',
             'price': '50.00',
-            'url': 'http://testserver/memberships/1',
-            'academic_levels': ['http://testserver/academic_levels/1']
+            'url': 'http://testserver/memberships/' + str(self.membership.id),
+            'academic_levels': ['http://testserver/academic_levels/' +
+                                str(self.academic_level.id)]
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -425,20 +436,21 @@ class MembershipTests(APITestCase):
         response = self.client.get(
             reverse(
                 'membership-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.membership.id},
             ),
         )
 
         content = {
             'available': True,
-            'id': 1,
+            'id': self.membership.id,
             'details': '1-Year student membership',
             'duration': '365 00:00:00',
             'name': 'basic_membership',
             'order_lines': [],
             'price': '50.00',
-            'url': 'http://testserver/memberships/1',
-            'academic_levels': ['http://testserver/academic_levels/1']
+            'url': 'http://testserver/memberships/' + str(self.membership.id),
+            'academic_levels': ['http://testserver/academic_levels/' +
+                                str(self.academic_level.id)]
         }
 
         self.assertEqual(

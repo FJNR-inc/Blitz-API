@@ -175,7 +175,7 @@ class RefundTests(APITestCase):
         response = self.client.get(
             reverse(
                 'refund-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.refund.id},
             ),
         )
 
@@ -194,7 +194,7 @@ class RefundTests(APITestCase):
         response = self.client.get(
             reverse(
                 'refund-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.refund.id},
             ),
         )
 
@@ -242,7 +242,7 @@ class RefundTests(APITestCase):
         response = self.client.get(
             reverse(
                 'refund-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.refund.id},
             ),
         )
 

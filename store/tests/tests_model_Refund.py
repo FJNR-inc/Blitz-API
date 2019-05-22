@@ -34,7 +34,7 @@ class RefundTests(APITestCase):
             order=cls.order,
             quantity=999,
             content_type=cls.membership_type,
-            object_id=1,
+            object_id=cls.membership.id,
         )
 
     def test_create(self):

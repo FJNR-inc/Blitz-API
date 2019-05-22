@@ -97,15 +97,20 @@ class PictureTests(APITestCase):
         fname = self.picture_file.name.replace('\\', '/').split("/")[-1]
 
         content = {
-            'id': 2,
             'name': 'random_picture',
             'picture': 'http://testserver/media/retirements/' + fname,
-            'url': 'http://testserver/retirement/pictures/2',
-            'retirement': 'http://testserver/retirement/retirements/1'
+            'retirement': 'http://testserver/retirement/retirements/' +
+                          str(self.retirement.id)
         }
 
+        response_data = remove_translation_fields(json.loads(response.content))
+        del response_data['url']
+        del response_data['id']
+
         self.assertEqual(
-            remove_translation_fields(json.loads(response.content)), content)
+            response_data,
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -230,19 +235,21 @@ class PictureTests(APITestCase):
         response = self.client.put(
             reverse(
                 'retirement:picture-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.picture.id},
             ),
             data,
         )
 
         content = {
-            'id': 1,
+            'id': self.picture.id,
             'name': 'new_picture',
             'name_en': 'new_picture',
             'name_fr': None,
             'picture': 'http://testserver/media/retirements/' + fname,
-            'url': 'http://testserver/retirement/pictures/1',
-            'retirement': 'http://testserver/retirement/retirements/1'
+            'url': 'http://testserver/retirement/pictures/' +
+                   str(self.picture.id),
+            'retirement': 'http://testserver/retirement/retirements/' +
+                          str(self.retirement.id)
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -258,7 +265,7 @@ class PictureTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'retirement:picture-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.picture.id},
             ), )
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -281,16 +288,13 @@ class PictureTests(APITestCase):
             'previous':
             None,
             'results': [{
-                'id':
-                1,
-                'name':
-                'random_picture',
-                'picture':
-                'http://testserver' + self.picture.picture.url,
-                'url':
-                'http://testserver/retirement/pictures/1',
-                'retirement':
-                'http://testserver/retirement/retirements/1'
+                'id': self.picture.id,
+                'name': 'random_picture',
+                'picture': 'http://testserver' + self.picture.picture.url,
+                'url': 'http://testserver/retirement/pictures/' +
+                       str(self.picture.id),
+                'retirement': 'http://testserver/retirement/retirements/' +
+                              str(self.retirement.id)
             }]
         }
 
@@ -306,15 +310,17 @@ class PictureTests(APITestCase):
         response = self.client.get(
             reverse(
                 'retirement:picture-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.picture.id},
             ), )
 
         content = {
-            'id': 1,
+            'id': self.picture.id,
             'name': 'random_picture',
             'picture': 'http://testserver' + self.picture.picture.url,
-            'url': 'http://testserver/retirement/pictures/1',
-            'retirement': 'http://testserver/retirement/retirements/1'
+            'url': 'http://testserver/retirement/pictures/' +
+                   str(self.picture.id),
+            'retirement': 'http://testserver/retirement/retirements/' +
+                          str(self.retirement.id)
         }
 
         self.assertEqual(json.loads(response.content), content)

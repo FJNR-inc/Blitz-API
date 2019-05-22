@@ -179,11 +179,14 @@ class WaitQueueNotificationTests(APITestCase):
             'previous': None,
             'results': [{
                 'created_at': response_data['results'][0]['created_at'],
-                'id': 1,
-                'retirement': 'http://testserver/retirement/retirements/1',
+                'id': self.wait_queue_notif.id,
+                'retirement':
+                    'http://testserver/retirement/retirements/' +
+                    str(self.retirement.id),
                 'url': 'http://testserver/retirement/'
-                       'wait_queue_notifications/1',
-                'user': 'http://testserver/users/2'
+                       'wait_queue_notifications/' +
+                       str(self.wait_queue_notif.id),
+                'user': 'http://testserver/users/' + str(self.user2.id)
             }]
         }
 
@@ -210,11 +213,14 @@ class WaitQueueNotificationTests(APITestCase):
             'previous': None,
             'results': [{
                 'created_at': response_data['results'][0]['created_at'],
-                'id': 1,
-                'retirement': 'http://testserver/retirement/retirements/1',
+                'id': self.wait_queue_notif.id,
+                'retirement':
+                    'http://testserver/retirement/retirements/' +
+                    str(self.retirement.id),
                 'url': 'http://testserver/retirement/'
-                       'wait_queue_notifications/1',
-                'user': 'http://testserver/users/2'
+                       'wait_queue_notifications/' +
+                       str(self.wait_queue_notif.id),
+                'user': 'http://testserver/users/' + str(self.user2.id)
             }]
         }
 
@@ -269,14 +275,18 @@ class WaitQueueNotificationTests(APITestCase):
         response = self.client.get(
             reverse(
                 'retirement:waitqueuenotification-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.wait_queue_notif.id},
             ),
         )
 
         content = {
-            'id': 1,
-            'retirement': 'http://testserver/retirement/retirements/1',
-            'url': 'http://testserver/retirement/wait_queue_notifications/1',
+            'id': self.wait_queue_notif.id,
+            'retirement':
+                'http://testserver/retirement/retirements/' +
+                str(self.retirement.id),
+            'url':
+                'http://testserver/retirement/wait_queue_notifications/' +
+                str(self.wait_queue_notif.id),
             'user': ''.join(['http://testserver/users/', str(self.user2.id)]),
             'created_at': json.loads(response.content)['created_at'],
         }
@@ -294,14 +304,18 @@ class WaitQueueNotificationTests(APITestCase):
         response = self.client.get(
             reverse(
                 'retirement:waitqueuenotification-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.wait_queue_notif.id},
             ),
         )
 
         content = {
-            'id': 1,
-            'retirement': 'http://testserver/retirement/retirements/1',
-            'url': 'http://testserver/retirement/wait_queue_notifications/1',
+            'id': self.wait_queue_notif.id,
+            'retirement':
+                'http://testserver/retirement/retirements/' +
+                str(self.retirement.id),
+            'url':
+                'http://testserver/retirement/wait_queue_notifications/' +
+                str(self.wait_queue_notif.id),
             'user': ''.join(['http://testserver/users/', str(self.user2.id)]),
             'created_at': json.loads(response.content)['created_at'],
         }

@@ -240,19 +240,19 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }, {
                 'content_type': 'timeslot',
-                'object_id': 1,
+                'object_id': self.time_slot.id,
                 'quantity': 1,
             }, {
                 'content_type': 'retirement',
-                'object_id': 1,
+                'object_id': self.retirement.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -267,6 +267,24 @@ class OrderTests(APITestCase):
             )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+
+        del response_data['order_lines'][1]['order']
+        del response_data['order_lines'][1]['url']
+        del response_data['order_lines'][1]['id']
+
+        del response_data['order_lines'][2]['order']
+        del response_data['order_lines'][2]['url']
+        del response_data['order_lines'][2]['id']
+
+        del response_data['order_lines'][3]['order']
+        del response_data['order_lines'][3]['url']
+        del response_data['order_lines'][3]['id']
 
         self.assertEqual(
             response.status_code,
@@ -275,50 +293,36 @@ class OrderTests(APITestCase):
         )
 
         content = {
-            'id': 3,
             'order_lines': [{
                 'content_type': 'membership',
-                'id': 2,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
+                'object_id': self.membership.id,
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
             }, {
                 'content_type': 'package',
-                'id': 3,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
+                'object_id': self.package.id,
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/3',
                 'coupon': "ABCD1234",
                 'coupon_real_value': 10.0,
                 'cost': 2 * self.package.price - 10,
             }, {
                 'content_type': 'timeslot',
-                'id': 4,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
+                'object_id': self.time_slot.id,
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/4',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
             }, {
                 'content_type': 'retirement',
-                'id': 5,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
-                'url': 'http://testserver/order_lines/5',
+                'object_id': self.retirement.id,
                 'quantity': 1,
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
             }],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/2',
+            'user': 'http://testserver/users/' + str(self.admin.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -373,7 +377,7 @@ class OrderTests(APITestCase):
         data = {
             'order_lines': [{
                 'content_type': 'timeslot',
-                'object_id': 1,
+                'object_id': self.time_slot.id,
                 'quantity': 1,
             }],
         }
@@ -387,22 +391,22 @@ class OrderTests(APITestCase):
             )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
 
         content = {
-            'id': 3,
             'order_lines': [{
                 'content_type': 'timeslot',
-                'id': 2,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
             }],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/2',
+            'user': 'http://testserver/users/' + str(self.admin.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '0',
             'settlement_id': '0',
@@ -440,7 +444,7 @@ class OrderTests(APITestCase):
         data = {
             'order_lines': [{
                 'content_type': 'timeslot',
-                'object_id': 1,
+                'object_id': self.time_slot.id,
                 'quantity': 1,
             }],
         }
@@ -460,22 +464,22 @@ class OrderTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
 
         content = {
-            'id': 3,
             'order_lines': [{
                 'content_type': 'timeslot',
-                'id': 2,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
             }],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/2',
+            'user': 'http://testserver/users/' + str(self.admin.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '0',
             'settlement_id': '0',
@@ -532,7 +536,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
         }
@@ -588,11 +592,11 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }, {
                 'content_type': 'timeslot',
@@ -635,7 +639,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "INVALID",
@@ -677,7 +681,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -729,7 +733,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -781,7 +785,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -836,7 +840,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -886,7 +890,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -943,11 +947,11 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }, {
                 'content_type': 'retirement',
@@ -1078,22 +1082,22 @@ class OrderTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
 
         content = {
-            'id': 3,
             'order_lines': [{
                 'content_type': 'retirement',
-                'id': 2,
-                'object_id': 2,
-                'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
             }],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/1',
+            'user': 'http://testserver/users/' + str(self.user.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -1147,22 +1151,22 @@ class OrderTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
 
         content = {
-            'id': 3,
             'order_lines': [{
                 'content_type': 'retirement',
-                'id': 2,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
             }],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/1',
+            'user': 'http://testserver/users/' + str(self.user.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -1215,11 +1219,11 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }, {
                 'content_type': 'retirement',
@@ -1269,7 +1273,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'timeslot',
@@ -1324,11 +1328,11 @@ class OrderTests(APITestCase):
             'payment_token': "invalid",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }],
         }
@@ -1391,11 +1395,11 @@ class OrderTests(APITestCase):
             'single_use_token': "SChsxyprFn176yhD",
             'order_lines': [{
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }, {
                 'content_type': 'timeslot',
-                'object_id': 1,
+                'object_id': self.time_slot.id,
                 'quantity': 1,
             }],
         }
@@ -1407,32 +1411,34 @@ class OrderTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+
+        del response_data['order_lines'][1]['order']
+        del response_data['order_lines'][1]['object_id']
+        del response_data['order_lines'][1]['url']
+        del response_data['order_lines'][1]['id']
 
         content = {
-            'id': 3,
             'order_lines': [{
                 'content_type': 'package',
-                'id': 2,
-                'object_id': 1,
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/2',
-                'order': 'http://testserver/orders/3',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
             }, {
                 'content_type': 'timeslot',
-                'id': 3,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/3',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
             }],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/1',
+            'user': 'http://testserver/users/' + str(self.user.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -1475,11 +1481,11 @@ class OrderTests(APITestCase):
             'single_use_token': "SChsxyprFn176yhD",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }],
         }
@@ -1491,6 +1497,18 @@ class OrderTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+
+        del response_data['order_lines'][1]['order']
+        del response_data['order_lines'][1]['object_id']
+        del response_data['order_lines'][1]['url']
+        del response_data['order_lines'][1]['id']
 
         self.assertEqual(
             response.status_code,
@@ -1499,37 +1517,27 @@ class OrderTests(APITestCase):
         )
 
         content = {
-            'id': 3,
             'order_lines': [{
                 'content_type': 'membership',
-                'id': 2,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
             }, {
                 'content_type': 'package',
-                'id': 3,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/3',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
             }],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/2',
+            'user': 'http://testserver/users/' + str(self.admin.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
             'reference_number': '751',
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         admin = self.admin
         admin.refresh_from_db()
@@ -1560,11 +1568,11 @@ class OrderTests(APITestCase):
             'single_use_token': "invalid",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }],
         }
@@ -1612,11 +1620,11 @@ class OrderTests(APITestCase):
             'single_use_token': "invalid",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }],
         }
@@ -1627,7 +1635,7 @@ class OrderTests(APITestCase):
             format='json',
         )
 
-        content = content = {
+        content = {
             'non_field_errors': [
                 "An error occured while processing the payment: "
                 "invalid payment or single-use token."
@@ -1676,11 +1684,11 @@ class OrderTests(APITestCase):
             'single_use_token': "invalid",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }],
         }
@@ -1758,16 +1766,18 @@ class OrderTests(APITestCase):
             'transaction_date': timezone.now(),
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
-                'order': 'http://testserver/orders/1',
+                'object_id': self.membership.id,
+                'order': 'http://testserver/orders/' + str(self.order.id),
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/1'
+                'url': 'http://testserver/order_lines/' +
+                       str(self.order_line.id)
             }, {
                 'content_type': 'package',
-                'object_id': 1,
-                'order': 'http://testserver/orders/1',
+                'object_id': self.package.id,
+                'order': 'http://testserver/orders/' + str(self.order.id),
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/1'
+                'url': 'http://testserver/order_lines/' +
+                       str(self.order_line.id)
             }],
         }
 
@@ -1784,27 +1794,30 @@ class OrderTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+
+        del response_data['order_lines'][1]['order']
+        del response_data['order_lines'][1]['object_id']
+        del response_data['order_lines'][1]['url']
+        del response_data['order_lines'][1]['id']
 
         content = {
             'authorization_id': '1',
-            'id': 3,
             'order_lines': [{
                 'content_type': 'membership',
-                'id': 2,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
             }, {
                 'content_type': 'package',
-                'id': 3,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/3',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
@@ -1812,11 +1825,10 @@ class OrderTests(APITestCase):
             'settlement_id': '1',
             'reference_number': '751',
             'transaction_date': response_data['transaction_date'],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/2',
+            'user': 'http://testserver/users/' + str(self.admin.id),
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         admin = self.admin
         admin.refresh_from_db()
@@ -1839,16 +1851,18 @@ class OrderTests(APITestCase):
             'transaction_date': timezone.now(),
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
-                'order': 'http://testserver/orders/1',
+                'object_id': self.membership.id,
+                'order': 'http://testserver/orders/' + str(self.order.id),
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/1'
+                'url': 'http://testserver/order_lines/' +
+                       str(self.order_line.id)
             }, {
                 'content_type': 'package',
-                'object_id': 1,
-                'order': 'http://testserver/orders/1',
+                'object_id': self.package.id,
+                'order': 'http://testserver/orders/' + str(self.order.id),
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/1'
+                'url': 'http://testserver/order_lines/' +
+                       str(self.order_line.id)
             }],
         }
 
@@ -1959,7 +1973,7 @@ class OrderTests(APITestCase):
         data = {
             'order_lines': [{
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 99,
             }],
         }
@@ -1967,29 +1981,29 @@ class OrderTests(APITestCase):
         response = self.client.put(
             reverse(
                 'order-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.order.id},
             ),
             data,
             format='json',
         )
 
         response_data = json.loads(response.content)
+        del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['url']
 
         content = {
-            'id': 1,
-            'url': 'http://testserver/orders/1',
-            'user': 'http://testserver/users/1',
+            'id': self.order.id,
+            'url': 'http://testserver/orders/' + str(self.order.id),
+            'user': 'http://testserver/users/' + str(self.user.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
             'reference_number': '751',
             'order_lines': [{
                 'content_type': 'package',
-                'id': 1,
-                'object_id': 1,
-                'order': 'http://testserver/orders/1',
+                'object_id': self.package.id,
+                'order': 'http://testserver/orders/' + str(self.order.id),
                 'quantity': 99,
-                'url': 'http://testserver/order_lines/1',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 99 * self.package.price
@@ -2009,7 +2023,7 @@ class OrderTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'order-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.order.id},
             ),
         )
 
@@ -2050,24 +2064,25 @@ class OrderTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                'id': 1,
+                'id': self.order.id,
                 'transaction_date': data['results'][0]['transaction_date'],
                 'authorization_id': '1',
                 'settlement_id': '1',
                 'reference_number': '751',
                 'order_lines': [{
                     'content_type': 'package',
-                    'id': 1,
+                    'id': self.order_line.id,
                     'object_id': 1,
-                    'order': 'http://testserver/orders/1',
+                    'order': 'http://testserver/orders/' + str(self.order.id),
                     'quantity': 1,
-                    'url': 'http://testserver/order_lines/1',
+                    'url': 'http://testserver/order_lines/' +
+                           str(self.order_line.id),
                     'coupon': None,
                     'coupon_real_value': 0.0,
                     'cost': self.package.price,
                 }],
-                'url': 'http://testserver/orders/1',
-                'user': 'http://testserver/users/1',
+                'url': 'http://testserver/orders/' + str(self.order.id),
+                'user': 'http://testserver/users/' + str(self.user.id),
             }]
         }
 
@@ -2093,33 +2108,34 @@ class OrderTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                'id': 1,
+                'id': self.order.id,
                 'transaction_date': data['results'][0]['transaction_date'],
                 'authorization_id': '1',
                 'settlement_id': '1',
                 'reference_number': '751',
                 'order_lines': [{
                     'content_type': 'package',
-                    'id': 1,
+                    'id': self.order_line.id,
                     'object_id': 1,
-                    'order': 'http://testserver/orders/1',
+                    'order': 'http://testserver/orders/' + str(self.order.id),
                     'quantity': 1,
-                    'url': 'http://testserver/order_lines/1',
+                    'url': 'http://testserver/order_lines/' +
+                    str(self.order_line.id),
                     'coupon': None,
                     'coupon_real_value': 0.0,
                     'cost': self.package.price,
                 }],
-                'url': 'http://testserver/orders/1',
-                'user': 'http://testserver/users/1',
+                'url': 'http://testserver/orders/' + str(self.order.id),
+                'user': 'http://testserver/users/' + str(self.user.id),
             }, {
-                'id': 2,
+                'id': self.order_admin.id,
                 'transaction_date': data['results'][1]['transaction_date'],
                 'authorization_id': '2',
                 'settlement_id': '2',
                 'reference_number': '751',
                 'order_lines': [],
-                'url': 'http://testserver/orders/2',
-                'user': 'http://testserver/users/2',
+                'url': 'http://testserver/orders/' + str(self.order_admin.id),
+                'user': 'http://testserver/users/' + str(self.admin.id),
             }]
         }
 
@@ -2135,7 +2151,7 @@ class OrderTests(APITestCase):
         response = self.client.get(
             reverse(
                 'order-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.order.id},
             ),
         )
 
@@ -2154,31 +2170,32 @@ class OrderTests(APITestCase):
         response = self.client.get(
             reverse(
                 'order-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.order.id},
             ),
         )
 
         data = json.loads(response.content)
 
         content = {
-            'id': 1,
+            'id': self.order.id,
             'transaction_date': data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
             'reference_number': '751',
             'order_lines': [{
                 'content_type': 'package',
-                'id': 1,
+                'id': self.order_line.id,
                 'object_id': 1,
-                'order': 'http://testserver/orders/1',
+                'order': 'http://testserver/orders/' + str(self.order.id),
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/1',
+                'url': 'http://testserver/order_lines/' +
+                       str(self.order_line.id),
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': self.package.price,
             }],
-            'url': 'http://testserver/orders/1',
-            'user': 'http://testserver/users/1',
+            'url': 'http://testserver/orders/' + str(self.order.id),
+            'user': 'http://testserver/users/' + str(self.user.id),
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -2213,31 +2230,32 @@ class OrderTests(APITestCase):
         response = self.client.get(
             reverse(
                 'order-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.order.id},
             ),
         )
 
         data = json.loads(response.content)
 
         content = {
-            'id': 1,
+            'id': self.order.id,
             'transaction_date': data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
             'reference_number': '751',
             'order_lines': [{
                 'content_type': 'package',
-                'id': 1,
+                'id': self.order_line.id,
                 'object_id': 1,
-                'order': 'http://testserver/orders/1',
+                'order': 'http://testserver/orders/' + str(self.order.id),
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/1',
+                'url': 'http://testserver/order_lines/' +
+                       str(self.order_line.id),
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': self.package.price,
             }],
-            'url': 'http://testserver/orders/1',
-            'user': 'http://testserver/users/1',
+            'url': 'http://testserver/orders/' + str(self.order.id),
+            'user': 'http://testserver/users/' + str(self.user.id),
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -2274,19 +2292,19 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }, {
                 'content_type': 'timeslot',
-                'object_id': 1,
+                'object_id': self.time_slot.id,
                 'quantity': 1,
             }, {
                 'content_type': 'retirement',
-                'object_id': 1,
+                'object_id': self.retirement.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -2309,7 +2327,7 @@ class OrderTests(APITestCase):
         content = {
             'orderline': {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2
             },
             'value': 10.0
@@ -2331,23 +2349,23 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }, {
                 'content_type': 'timeslot',
-                'object_id': 1,
+                'object_id': self.time_slot.id,
                 'quantity': 1,
             }, {
                 'content_type': 'retirement',
-                'object_id': 1,
+                'object_id': self.retirement.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 2,
+                'object_id': self.package2.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -2391,7 +2409,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "INVALID",
@@ -2423,7 +2441,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
         }
@@ -2458,7 +2476,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -2499,7 +2517,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -2540,7 +2558,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -2581,7 +2599,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -2617,7 +2635,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
