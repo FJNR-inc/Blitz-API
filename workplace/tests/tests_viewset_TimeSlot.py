@@ -1,23 +1,18 @@
 import json
-import pytz
-
+from datetime import datetime, date, time
 from unittest import mock
 
-from datetime import datetime, timedelta, date, time
-
-from rest_framework import status
-from rest_framework.test import APIClient, APITestCase
-
-from django.urls import reverse
-from django.utils import timezone
+import pytz
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test.utils import override_settings
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
 
 from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.services import remove_translation_fields
-
 from ..models import Period, TimeSlot, Workplace, Reservation
 
 User = get_user_model()
@@ -99,6 +94,9 @@ class TimeSlotTests(APITestCase):
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 22)),
         )
 
+    def setUp(self) -> None:
+        self.maxDiff = None
+
     def test_create(self):
         """
         Ensure we can create a timeslot if user has permission.
@@ -123,21 +121,25 @@ class TimeSlotTests(APITestCase):
         )
 
         content = {
-            'id': 3,
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
             'places_remaining': 0,
             'reservations': [],
             'reservations_canceled': [],
             'start_time': data['start_time'].isoformat(),
-            'url': 'http://testserver/time_slots/3',
-            'period': 'http://testserver/periods/3',
+            'period': f'http://testserver/periods/'
+            f'{self.period_no_workplace.id}',
             'users': [],
             'workplace': None
         }
 
+        response_content = json.loads(response.content)
+
+        del response_content['id']
+        del response_content['url']
+
         self.assertEqual(
-            remove_translation_fields(json.loads(response.content)),
+            remove_translation_fields(response_content),
             content
         )
 
@@ -163,40 +165,19 @@ class TimeSlotTests(APITestCase):
         )
 
         response_data = remove_translation_fields(json.loads(response.content))
-        response_data['workplace'] = remove_translation_fields(
-            response_data['workplace']
-        )
+        del response_data['workplace']
+        del response_data['id']
+        del response_data['url']
 
         content = {
-            'id': 3,
             'end_time': data['end_time'].isoformat(),
             'price': '3.00',
             'places_remaining': 40,
             'reservations': [],
             'reservations_canceled': [],
             'start_time': data['start_time'].isoformat(),
-            'url': 'http://testserver/time_slots/3',
-            'period': 'http://testserver/periods/1',
+            'period': f'http://testserver/periods/{self.period.id}',
             'users': [],
-            'workplace': {
-                'address_line1': '123 random street',
-                'address_line2': None,
-                'city': '',
-                'country': 'Random country',
-                'details': 'short_description',
-                'id': 1,
-                'latitude': None,
-                'longitude': None,
-                'name': 'Blitz',
-                'pictures': [],
-                'postal_code': '123 456',
-                'seats': 40,
-                'state_province': 'Random state',
-                'timezone': None,
-                'place_name': '',
-                'volunteers': [],
-                'url': 'http://testserver/workplaces/1',
-            }
         }
 
         self.assertEqual(response_data, content)
@@ -499,7 +480,7 @@ class TimeSlotTests(APITestCase):
         response = self.client.put(
             reverse(
                 'timeslot-detail',
-                kwargs={'pk': 2},
+                args=[self.time_slot_active.id],
             ),
             data,
             format='json',
@@ -510,15 +491,15 @@ class TimeSlotTests(APITestCase):
         )
 
         content = {
-            'id': 2,
+            'id': self.time_slot_active.id,
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
             'places_remaining': 40,
             'reservations': [],
             'reservations_canceled': [],
             'start_time': data['start_time'].isoformat(),
-            'url': 'http://testserver/time_slots/2',
-            'period': 'http://testserver/periods/1',
+            'url': f'http://testserver/time_slots/{self.time_slot_active.id}',
+            'period': f'http://testserver/periods/{self.period.id}',
             'users': [],
             "workplace": {
                 "address_line1": "123 random street",
@@ -526,7 +507,7 @@ class TimeSlotTests(APITestCase):
                 "city": "",
                 "country": "Random country",
                 "details": "short_description",
-                "id": 1,
+                "id": self.workplace.id,
                 "latitude": None,
                 "longitude": None,
                 "name": "Blitz",
@@ -537,7 +518,7 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 'place_name': '',
                 "volunteers": [],
-                "url": "http://testserver/workplaces/1"
+                "url": f"http://testserver/workplaces/{self.workplace.id}"
             }
         }
 
@@ -572,7 +553,7 @@ class TimeSlotTests(APITestCase):
         response = self.client.put(
             reverse(
                 'timeslot-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.time_slot.id},
             ),
             data,
             format='json',
@@ -583,43 +564,29 @@ class TimeSlotTests(APITestCase):
             response_data['workplace']
         )
 
+        del response_data['workplace']
+        del response_data['users']
+
         content = {
-            'id': 1,
+            'id': self.time_slot.id,
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
             'places_remaining': 40,
             'reservations': [],
             'reservations_canceled': [
-                'http://testserver/reservations/1',
-                'http://testserver/reservations/2'
+                f'http://testserver/reservations/{self.reservation_admin.id}',
+                f'http://testserver/reservations/{self.reservation.id}'
             ],
             'start_time': data['start_time'].isoformat(),
-            'url': 'http://testserver/time_slots/1',
-            'period': 'http://testserver/periods/1',
-            'users': [
-                'http://testserver/users/1',
-                'http://testserver/users/2'
-            ],
-            "workplace": {
-                "address_line1": "123 random street",
-                "address_line2": None,
-                "city": "",
-                "country": "Random country",
-                "details": "short_description",
-                "id": 1,
-                "latitude": None,
-                "longitude": None,
-                "name": "Blitz",
-                "pictures": [],
-                "postal_code": "123 456",
-                "seats": 40,
-                "state_province": "Random state",
-                "timezone": None,
-                'place_name': '',
-                "volunteers": [],
-                "url": "http://testserver/workplaces/1"
-            }
+            'url': f'http://testserver/time_slots/{self.time_slot.id}',
+            'period': f'http://testserver/periods/{self.period.id}',
         }
+
+        self.assertCountEqual(response_data['reservations_canceled'],
+                              content['reservations_canceled'])
+
+        del response_data['reservations_canceled']
+        del content['reservations_canceled']
 
         self.assertEqual(response_data, content)
 
@@ -661,7 +628,7 @@ class TimeSlotTests(APITestCase):
         response = self.client.patch(
             reverse(
                 'timeslot-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.time_slot.id},
             ),
             data,
             format='json',
@@ -672,30 +639,27 @@ class TimeSlotTests(APITestCase):
             response_data['workplace']
         )
 
+        del response_data['users']
         content = {
-            'id': 1,
+            'id': self.time_slot.id,
             'end_time': response_data['end_time'],
             'price': '1000.00',
             'places_remaining': 38,
             'reservations': [
-                'http://testserver/reservations/1',
-                'http://testserver/reservations/2'
+                f'http://testserver/reservations/{self.reservation_admin.id}',
+                f'http://testserver/reservations/{self.reservation.id}'
             ],
             'reservations_canceled': [],
             'start_time': response_data['start_time'],
-            'url': 'http://testserver/time_slots/1',
-            'period': 'http://testserver/periods/1',
-            'users': [
-                'http://testserver/users/1',
-                'http://testserver/users/2'
-            ],
+            'url': f'http://testserver/time_slots/{self.time_slot.id}',
+            'period': f'http://testserver/periods/{self.period.id}',
             "workplace": {
                 "address_line1": "123 random street",
                 "address_line2": None,
                 "city": "",
                 "country": "Random country",
                 "details": "short_description",
-                "id": 1,
+                "id": self.workplace.id,
                 "latitude": None,
                 "longitude": None,
                 "name": "Blitz",
@@ -706,10 +670,15 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 'place_name': '',
                 "volunteers": [],
-                "url": "http://testserver/workplaces/1"
+                "url": f"http://testserver/workplaces/{self.workplace.id}"
             }
         }
 
+        self.assertCountEqual(response_data['reservations'],
+                              content['reservations'])
+
+        del response_data['reservations']
+        del content['reservations']
         self.assertEqual(response_data, content)
 
         self.reservation.refresh_from_db()
@@ -753,7 +722,7 @@ class TimeSlotTests(APITestCase):
     #     response = self.client.put(
     #         reverse(
     #             'timeslot-detail',
-    #             kwargs={'pk': 1},
+    #             kwargs={'pk': self.workplace.id},
     #         ),
     #         data,
     #         format='json',
@@ -787,7 +756,7 @@ class TimeSlotTests(APITestCase):
         response = self.client.put(
             reverse(
                 'timeslot-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.time_slot.id},
             ),
             data,
             format='json',
@@ -827,7 +796,7 @@ class TimeSlotTests(APITestCase):
         response = self.client.patch(
             reverse(
                 'timeslot-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.time_slot.id},
             ),
             data,
             format='json',
@@ -838,30 +807,28 @@ class TimeSlotTests(APITestCase):
             response_data['workplace']
         )
 
+        del response_data['users']
+
         content = {
-            'id': 1,
+            'id': self.time_slot.id,
             'end_time': response_data['end_time'],
             'price': '1000.00',
             'places_remaining': 40,
             'reservations': [],
             'reservations_canceled': [
-                'http://testserver/reservations/1',
-                'http://testserver/reservations/2'
+                f'http://testserver/reservations/{self.reservation_admin.id}',
+                f'http://testserver/reservations/{self.reservation.id}'
             ],
             'start_time': data['start_time'].isoformat(),
-            'url': 'http://testserver/time_slots/1',
-            'period': 'http://testserver/periods/1',
-            'users': [
-                'http://testserver/users/1',
-                'http://testserver/users/2'
-            ],
+            'url': f'http://testserver/time_slots/{self.time_slot.id}',
+            'period': f'http://testserver/periods/{self.period.id}',
             "workplace": {
                 "address_line1": "123 random street",
                 "address_line2": None,
                 "city": "",
                 "country": "Random country",
                 "details": "short_description",
-                "id": 1,
+                "id": self.workplace.id,
                 "latitude": None,
                 "longitude": None,
                 "name": "Blitz",
@@ -872,9 +839,15 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 'place_name': '',
                 "volunteers": [],
-                "url": "http://testserver/workplaces/1"
+                "url": f"http://testserver/workplaces/{self.workplace.id}"
             }
         }
+
+        self.assertCountEqual(response_data['reservations_canceled'],
+                              content['reservations_canceled'])
+
+        del response_data['reservations_canceled']
+        del content['reservations_canceled']
 
         self.assertEqual(response_data, content)
 
@@ -921,7 +894,7 @@ class TimeSlotTests(APITestCase):
         response = self.client.patch(
             reverse(
                 'timeslot-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.time_slot.id},
             ),
             data,
             format='json',
@@ -931,31 +904,28 @@ class TimeSlotTests(APITestCase):
         response_data['workplace'] = remove_translation_fields(
             response_data['workplace']
         )
+        del response_data['users']
 
         content = {
-            'id': 1,
+            'id': self.time_slot.id,
             'end_time': response_data['end_time'],
             'price': '1000.00',
             'places_remaining': 40,
             'reservations': [],
             'reservations_canceled': [
-                'http://testserver/reservations/1',
-                'http://testserver/reservations/2'
+                f'http://testserver/reservations/{self.reservation_admin.id}',
+                f'http://testserver/reservations/{self.reservation.id}'
             ],
             'start_time': data['start_time'].isoformat(),
-            'url': 'http://testserver/time_slots/1',
-            'period': 'http://testserver/periods/1',
-            'users': [
-                'http://testserver/users/1',
-                'http://testserver/users/2'
-            ],
+            'url': f'http://testserver/time_slots/{self.time_slot.id}',
+            'period': f'http://testserver/periods/{self.period.id}',
             "workplace": {
                 "address_line1": "123 random street",
                 "address_line2": None,
                 "city": "",
                 "country": "Random country",
                 "details": "short_description",
-                "id": 1,
+                "id": self.workplace.id,
                 "latitude": None,
                 "longitude": None,
                 "name": "Blitz",
@@ -966,9 +936,15 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 'place_name': '',
                 "volunteers": [],
-                "url": "http://testserver/workplaces/1"
+                "url": f"http://testserver/workplaces/{self.workplace.id}"
             }
         }
+
+        self.assertCountEqual(response_data['reservations_canceled'],
+                              content['reservations_canceled'])
+
+        del response_data['reservations_canceled']
+        del content['reservations_canceled']
 
         self.assertEqual(response_data, content)
 
@@ -1000,7 +976,7 @@ class TimeSlotTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'timeslot-detail',
-                kwargs={'pk': 2},
+                kwargs={'pk': self.time_slot_active.id},
             ),
             data,
             format='json'
@@ -1027,7 +1003,7 @@ class TimeSlotTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'timeslot-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.time_slot.id},
             ),
             data,
             format='json',
@@ -1071,7 +1047,7 @@ class TimeSlotTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'timeslot-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.time_slot.id},
             ),
             data,
             format='json',
@@ -1102,7 +1078,7 @@ class TimeSlotTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'timeslot-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.time_slot.id},
             ),
             data,
             format='json',
@@ -1137,15 +1113,16 @@ class TimeSlotTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                'id': 2,
+                'id': self.time_slot_active.id,
                 'end_time': data['results'][0]['end_time'],
                 'price': '3.00',
                 'places_remaining': 40,
                 'reservations': [],
                 'reservations_canceled': [],
                 'start_time': data['results'][0]['start_time'],
-                'url': 'http://testserver/time_slots/2',
-                'period': 'http://testserver/periods/2',
+                'url': f'http://testserver/time_slots/'
+                f'{self.time_slot_active.id}',
+                'period': f'http://testserver/periods/{self.period_active.id}',
                 'users': [],
                 "workplace": {
                     "address_line1": "123 random street",
@@ -1153,7 +1130,7 @@ class TimeSlotTests(APITestCase):
                     "city": "",
                     "country": "Random country",
                     "details": "short_description",
-                    "id": 2,
+                    "id": self.workplace2.id,
                     "latitude": None,
                     "longitude": None,
                     "name": "Blitz2",
@@ -1164,7 +1141,7 @@ class TimeSlotTests(APITestCase):
                     "timezone": None,
                     "place_name": '',
                     "volunteers": [],
-                    "url": "http://testserver/workplaces/2"
+                    "url": f"http://testserver/workplaces/{self.workplace2.id}"
                 }
             }]
         }
@@ -1189,35 +1166,33 @@ class TimeSlotTests(APITestCase):
             data['results'][idx]['workplace'] = remove_translation_fields(
                 obj['workplace']
             )
+            del data['results'][idx]['users']
 
         content = {
             'count': 2,
             'next': None,
             'previous': None,
             'results': [{
-                'id': 1,
+                'id': self.time_slot.id,
                 'end_time': data['results'][0]['end_time'],
-                'period': 'http://testserver/periods/1',
+                'period': f'http://testserver/periods/{self.period.id}',
                 'price': '3.00',
                 'places_remaining': 38,
                 'reservations': [
-                    'http://testserver/reservations/1',
-                    'http://testserver/reservations/2'
+                    f'http://testserver/reservations/'
+                    f'{self.reservation_admin.id}',
+                    f'http://testserver/reservations/{self.reservation.id}'
                 ],
                 'reservations_canceled': [],
                 'start_time': data['results'][0]['start_time'],
-                'url': 'http://testserver/time_slots/1',
-                'users': [
-                    'http://testserver/users/1',
-                    'http://testserver/users/2'
-                ],
+                'url': f'http://testserver/time_slots/{self.time_slot.id}',
                 "workplace": {
                     "address_line1": "123 random street",
                     "address_line2": None,
                     "city": "",
                     "country": "Random country",
                     "details": "short_description",
-                    "id": 1,
+                    "id": self.workplace.id,
                     "latitude": None,
                     "longitude": None,
                     "name": "Blitz",
@@ -1228,26 +1203,26 @@ class TimeSlotTests(APITestCase):
                     "timezone": None,
                     "place_name": '',
                     "volunteers": [],
-                    "url": "http://testserver/workplaces/1"
+                    "url": f"http://testserver/workplaces/{self.workplace.id}"
                 }
             }, {
-                'id': 2,
+                'id': self.time_slot_active.id,
                 'end_time': data['results'][1]['end_time'],
                 'price': '3.00',
                 'places_remaining': 40,
                 'reservations': [],
                 'reservations_canceled': [],
                 'start_time': data['results'][1]['start_time'],
-                'url': 'http://testserver/time_slots/2',
-                'period': 'http://testserver/periods/2',
-                'users': [],
+                'url': f'http://testserver/time_slots/'
+                f'{self.time_slot_active.id}',
+                'period': f'http://testserver/periods/{self.period_active.id}',
                 "workplace": {
                     "address_line1": "123 random street",
                     "address_line2": None,
                     "city": "",
                     "country": "Random country",
                     "details": "short_description",
-                    "id": 2,
+                    "id": self.workplace2.id,
                     "latitude": None,
                     "longitude": None,
                     "name": "Blitz2",
@@ -1258,10 +1233,22 @@ class TimeSlotTests(APITestCase):
                     "timezone": None,
                     "place_name": '',
                     "volunteers": [],
-                    "url": "http://testserver/workplaces/2"
+                    "url": f"http://testserver/workplaces/{self.workplace2.id}"
                 }
             }]
         }
+
+        self.assertCountEqual(data['results'][0]['reservations'],
+                              content['results'][0]['reservations'])
+
+        del data['results'][0]['reservations']
+        del content['results'][0]['reservations']
+
+        self.assertCountEqual(data['results'][1]['reservations'],
+                              content['results'][1]['reservations'])
+
+        del data['results'][1]['reservations']
+        del content['results'][1]['reservations']
 
         self.assertEqual(data, content)
 
@@ -1274,44 +1261,46 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
-            reverse('timeslot-list') + "?period__workplace=1",
+            reverse('timeslot-list'),
+            {'period__workplace': self.workplace.id},
             format='json',
         )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.content)
 
         data = json.loads(response.content)
         for idx, obj in enumerate(data['results']):
             data['results'][idx]['workplace'] = remove_translation_fields(
                 obj['workplace']
             )
+            del data['results'][idx]['users']
 
         content = {
             'count': 1,
             'next': None,
             'previous': None,
             'results': [{
-                'id': 1,
-                'end_time': data['results'][0]['end_time'],
-                'period': 'http://testserver/periods/1',
+                'id': self.time_slot.id,
+                'end_time': self.time_slot.end_time.isoformat(),
+                'period': f'http://testserver/periods/{self.period.id}',
                 'places_remaining': 38,
                 'reservations': [
-                    'http://testserver/reservations/1',
-                    'http://testserver/reservations/2'
+                    f'http://testserver/reservations/'
+                    f'{self.reservation_admin.id}',
+                    f'http://testserver/reservations/{self.reservation.id}'
                 ],
                 'reservations_canceled': [],
                 'price': '3.00',
-                'start_time': data['results'][0]['start_time'],
-                'url': 'http://testserver/time_slots/1',
-                'users': [
-                    'http://testserver/users/1',
-                    'http://testserver/users/2'
-                ],
+                'start_time': self.time_slot.start_time.isoformat(),
+                'url': f'http://testserver/time_slots/{self.time_slot.id}',
                 "workplace": {
                     "address_line1": "123 random street",
                     "address_line2": None,
                     "city": "",
                     "country": "Random country",
                     "details": "short_description",
-                    "id": 1,
+                    "id": self.workplace.id,
                     "latitude": None,
                     "longitude": None,
                     "name": "Blitz",
@@ -1322,14 +1311,20 @@ class TimeSlotTests(APITestCase):
                     "timezone": None,
                     "place_name": '',
                     "volunteers": [],
-                    "url": "http://testserver/workplaces/1"
+                    "url": f"http://testserver/workplaces/{self.workplace.id}"
                 }
             }]
         }
 
-        self.assertEqual(data, content)
+        self.assertEqual(data['count'], 1, json.dumps(data, indent=2))
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertCountEqual(data['results'][0]['reservations'],
+                              content['results'][0]['reservations'])
+
+        del data['results'][0]['reservations']
+        del content['results'][0]['reservations']
+
+        self.assertEqual(data, content)
 
     def test_list_filter_not_overiding_active(self):
         """
@@ -1365,22 +1360,22 @@ class TimeSlotTests(APITestCase):
         response = self.client.get(
             reverse(
                 'timeslot-detail',
-                kwargs={'pk': 2},
+                args=[self.time_slot_active.id],
             ),
         )
 
         data = json.loads(response.content)
 
         content = {
-            'id': 2,
-            'end_time': data['end_time'],
+            'id': self.time_slot_active.id,
+            'end_time': self.time_slot_active.end_time.isoformat(),
             'price': '3.00',
             'places_remaining': 40,
             'reservations': [],
             'reservations_canceled': [],
-            'start_time': data['start_time'],
-            'url': 'http://testserver/time_slots/2',
-            'period': 'http://testserver/periods/2',
+            'start_time': self.time_slot_active.start_time.isoformat(),
+            'url': f'http://testserver/time_slots/{self.time_slot_active.id}',
+            'period': f'http://testserver/periods/{self.period_active.id}',
             'users': [],
             "workplace": {
                 "address_line1": "123 random street",
@@ -1388,7 +1383,7 @@ class TimeSlotTests(APITestCase):
                 "city": "",
                 "country": "Random country",
                 "details": "short_description",
-                "id": 2,
+                "id": self.workplace2.id,
                 "latitude": None,
                 "longitude": None,
                 "name": "Blitz2",
@@ -1399,11 +1394,11 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 "place_name": '',
                 "volunteers": [],
-                "url": "http://testserver/workplaces/2"
+                "url": f"http://testserver/workplaces/{self.workplace2.id}"
             }
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(data, content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1415,7 +1410,7 @@ class TimeSlotTests(APITestCase):
         response = self.client.get(
             reverse(
                 'timeslot-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.time_slot.id},
             ),
         )
 
@@ -1434,7 +1429,7 @@ class TimeSlotTests(APITestCase):
         response = self.client.get(
             reverse(
                 'timeslot-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.time_slot.id},
             ),
         )
 
@@ -1442,61 +1437,28 @@ class TimeSlotTests(APITestCase):
         data['workplace'] = remove_translation_fields(
             data['workplace']
         )
-        data['users'] = [
-            remove_translation_fields(u) for u in data['users']
-        ]
+        del data['users']
 
         content = {
-            'id': 1,
+            'id': self.time_slot.id,
             'end_time': data['end_time'],
-            'period': 'http://testserver/periods/1',
+            'period': f'http://testserver/periods/{self.period.id}',
             'price': '3.00',
             'places_remaining': 38,
             'reservations': [
-                'http://testserver/reservations/1',
-                'http://testserver/reservations/2'
+                f'http://testserver/reservations/{self.reservation_admin.id}',
+                f'http://testserver/reservations/{self.reservation.id}'
             ],
             'reservations_canceled': [],
             'start_time': data['start_time'],
-            'url': 'http://testserver/time_slots/1',
-            'users': [{
-                "academic_field": None,
-                "academic_level": None,
-                "birthdate": None,
-                "date_joined": data['users'][0]['date_joined'],
-                "email": data['users'][0]['email'],
-                "first_name": data['users'][0]['first_name'],
-                "gender": None,
-                "groups": [],
-                "id": 1,
-                "is_active": True,
-                "is_staff": False,
-                "is_superuser": False,
-                "last_login": None,
-                "last_name": data['users'][0]['last_name'],
-                "membership": None,
-                "membership_end": None,
-                "other_phone": None,
-                "phone": None,
-                "tickets": 1,
-                "university": None,
-                "url": "http://testserver/users/1",
-                "user_permissions": [],
-                'city': None,
-                'personnal_restrictions': None,
-                'academic_program_code': None,
-                'faculty': None,
-                'student_number': None,
-                'volunteer_for_workplace': [],
-                }, data['users'][1]
-            ],
+            'url': f'http://testserver/time_slots/{self.time_slot.id}',
             "workplace": {
                 "address_line1": "123 random street",
                 "address_line2": None,
                 "city": "",
                 "country": "Random country",
                 "details": "short_description",
-                "id": 1,
+                "id": self.workplace.id,
                 "latitude": None,
                 "longitude": None,
                 "name": "Blitz",
@@ -1507,9 +1469,15 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 "place_name": '',
                 "volunteers": [],
-                "url": "http://testserver/workplaces/1"
+                "url": f"http://testserver/workplaces/{self.workplace.id}"
             }
         }
+
+        self.assertCountEqual(data['reservations'],
+                              content['reservations'])
+
+        del data['reservations']
+        del content['reservations']
 
         self.assertEqual(data, content)
 

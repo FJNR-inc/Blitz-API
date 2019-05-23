@@ -94,7 +94,7 @@ class OrderLineTests(APITestCase):
             'order': reverse('order-detail', args=[self.order.id]),
             'quantity': 2,
             'content_type': "package",
-            'object_id': 1,
+            'object_id': self.package.id,
         }
 
         response = self.client.post(
@@ -104,17 +104,20 @@ class OrderLineTests(APITestCase):
 
         content = {
             'content_type': 'package',
-            'id': 3,
-            'object_id': 1,
-            'order': 'http://testserver/orders/1',
+            'object_id': self.package.id,
+            'order': f'http://testserver/orders/{self.order.id}',
             'quantity': 2,
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': 2 * self.package.price,
-            'url': 'http://testserver/order_lines/3'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        response_content = json.loads(response.content)
+
+        del response_content['id']
+        del response_content['url']
+
+        self.assertEqual(response_content, content)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -129,7 +132,7 @@ class OrderLineTests(APITestCase):
             'order': reverse('order-detail', args=[self.order.id]),
             'quantity': 2,
             'content_type': "package",
-            'object_id': 1,
+            'object_id': self.package.id,
         }
 
         response = self.client.post(
@@ -219,7 +222,7 @@ class OrderLineTests(APITestCase):
             'order': reverse('order-detail', args=[self.order.id]),
             'quantity': 2,
             'content_type': "package",
-            'object_id': 1,
+            'object_id': self.package.id,
         }
 
         response = self.client.post(
@@ -232,17 +235,19 @@ class OrderLineTests(APITestCase):
 
         content = {
             'content_type': 'package',
-            'id': 3,
             'object_id': self.package.id,
-            'order': 'http://testserver/orders/1',
+            'order': f'http://testserver/orders/{self.order.id}',
             'quantity': 2,
             'coupon': None,
-            'coupon_real_value': 0.0,
-            'cost': 2 * self.package.price,
-            'url': 'http://testserver/order_lines/3'
+            'coupon_real_value': 0,
+            'cost': 2.0 * self.package.price,
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        response_content = json.loads(response.content)
+        del response_content['id']
+        del response_content['url']
+
+        self.assertEqual(response_content, content)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -268,15 +273,17 @@ class OrderLineTests(APITestCase):
             'content_type': 'membership',
             'coupon': None,
             'coupon_real_value': 0.0,
-            'id': 3,
             'object_id': self.membership.id,
-            'order': 'http://testserver/orders/1',
+            'order': f'http://testserver/orders/{self.order.id}',
             'quantity': 1,
             'cost': self.membership.price,
-            'url': 'http://testserver/order_lines/3'
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        response_content = json.loads(response.content)
+        del response_content['id']
+        del response_content['url']
+
+        self.assertEqual(response_content, content)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -380,13 +387,13 @@ class OrderLineTests(APITestCase):
             'order': reverse('order-detail', args=[self.order.id]),
             'quantity': 99,
             'content_type': "package",
-            'object_id': 1,
+            'object_id': self.package.id,
         }
 
         response = self.client.put(
             reverse(
                 'orderline-detail',
-                kwargs={'pk': 1},
+                args=[self.order_line.id]
             ),
             data,
             format='json',
@@ -394,14 +401,14 @@ class OrderLineTests(APITestCase):
 
         content = {
             'content_type': 'package',
-            'id': 1,
-            'object_id': 1,
-            'order': 'http://testserver/orders/1',
+            'id': self.order_line.id,
+            'object_id': self.package.id,
+            'order': f'http://testserver/orders/{self.order.id}',
             'quantity': 99,
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': 99 * self.package.price,
-            'url': 'http://testserver/order_lines/1'
+            'url': f'http://testserver/order_lines/{self.order_line.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -423,7 +430,7 @@ class OrderLineTests(APITestCase):
         response = self.client.patch(
             reverse(
                 'orderline-detail',
-                kwargs={'pk': 1},
+                args=[self.order_line.id]
             ),
             data,
             format='json',
@@ -433,14 +440,14 @@ class OrderLineTests(APITestCase):
 
         content = {
             'content_type': 'package',
-            'id': 1,
-            'object_id': 1,
-            'order': 'http://testserver/orders/1',
+            'id': self.order_line.id,
+            'object_id': self.package.id,
+            'order': f'http://testserver/orders/{self.order.id}',
             'quantity': 9,
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': 9 * self.package.price,
-            'url': 'http://testserver/order_lines/1'
+            'url': f'http://testserver/order_lines/{self.order_line.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -456,7 +463,7 @@ class OrderLineTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'orderline-detail',
-                kwargs={'pk': 1},
+                args=[self.order_line.id]
             ),
         )
 
@@ -477,7 +484,7 @@ class OrderLineTests(APITestCase):
         response = self.client.patch(
             reverse(
                 'orderline-detail',
-                kwargs={'pk': 1},
+                args=[self.order_line.id]
             ),
             data,
             format='json',
@@ -530,14 +537,14 @@ class OrderLineTests(APITestCase):
             'previous': None,
             'results': [{
                 'content_type': 'package',
-                'id': 1,
+                'id': self.order_line.id,
                 'object_id': self.package.id,
-                'order': 'http://testserver/orders/1',
+                'order': f'http://testserver/orders/{self.order.id}',
                 'quantity': 1,
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': self.package.price,
-                'url': 'http://testserver/order_lines/1'
+                'url': f'http://testserver/order_lines/{self.order_line.id}'
             }]
         }
 
@@ -564,24 +571,25 @@ class OrderLineTests(APITestCase):
             'previous': None,
             'results': [{
                 'content_type': 'package',
-                'id': 1,
+                'id': self.order_line.id,
                 'object_id': self.package.id,
-                'order': 'http://testserver/orders/1',
+                'order': f'http://testserver/orders/{self.order.id}',
                 'quantity': 1,
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': self.package.price,
-                'url': 'http://testserver/order_lines/1'
+                'url': f'http://testserver/order_lines/{self.order_line.id}'
             }, {
                 'content_type': 'package',
-                'id': 2,
+                'id': self.order_line_admin.id,
                 'object_id': self.package.id,
-                'order': 'http://testserver/orders/2',
+                'order': f'http://testserver/orders/{self.order_admin.id}',
                 'quantity': 99,
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 99 * self.package.price,
-                'url': 'http://testserver/order_lines/2'
+                'url':
+                    f'http://testserver/order_lines/{self.order_line_admin.id}'
             }]
         }
 
@@ -597,7 +605,7 @@ class OrderLineTests(APITestCase):
         response = self.client.get(
             reverse(
                 'orderline-detail',
-                kwargs={'pk': 1},
+                args=[self.order_line.id]
             ),
         )
 
@@ -616,20 +624,20 @@ class OrderLineTests(APITestCase):
         response = self.client.get(
             reverse(
                 'orderline-detail',
-                kwargs={'pk': 1},
+                args=[self.order_line.id]
             ),
         )
 
         content = {
             'content_type': 'package',
-            'id': 1,
+            'id': self.order_line.id,
             'object_id': self.package.id,
-            'order': 'http://testserver/orders/1',
+            'order': f'http://testserver/orders/{self.order.id}',
             'quantity': 1,
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': self.package.price,
-            'url': 'http://testserver/order_lines/1'
+            'url': f'http://testserver/order_lines/{self.order_line.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -664,20 +672,20 @@ class OrderLineTests(APITestCase):
         response = self.client.get(
             reverse(
                 'orderline-detail',
-                kwargs={'pk': 1},
+                args=[self.order_line.id]
             ),
         )
 
         content = {
             'content_type': 'package',
-            'id': 1,
+            'id': self.order_line.id,
             'object_id': self.package.id,
-            'order': 'http://testserver/orders/1',
+            'order': f'http://testserver/orders/{self.order.id}',
             'quantity': 1,
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': self.package.price,
-            'url': 'http://testserver/order_lines/1'
+            'url': f'http://testserver/order_lines/{self.order_line.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)

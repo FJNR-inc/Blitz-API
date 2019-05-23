@@ -136,19 +136,14 @@ WSGI_APPLICATION = 'blitz_api.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
-# Force sqlite3 during unittests. Temporary.
-if len(sys.argv) > 1 and sys.argv[1] == 'test':
-    DATABASES = {
-        'default': db_url('sqlite:///' + str(BASE_DIR.joinpath('db.sqlite3'))),
-    }
-else:
-    DATABASES = {
-        'default': config(
-            'DATABASE_URL',
-            default='sqlite:///' + str(BASE_DIR.joinpath('db.sqlite3')),
-            cast=db_url
-        )
-    }
+
+DATABASES = {
+    'default': config(
+        'DATABASE_URL',
+        default='sqlite:///' + str(BASE_DIR.joinpath('db.sqlite3')),
+        cast=db_url
+    )
+}
 
 # Custom user model
 

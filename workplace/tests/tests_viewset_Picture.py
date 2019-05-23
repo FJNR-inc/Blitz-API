@@ -82,15 +82,16 @@ class PictureTests(APITestCase):
         fname = self.picture_file.name.replace('\\', '/').split("/")[-1]
 
         content = {
-            'id': 2,
             'name': 'random_picture',
             'picture': 'http://testserver/media/workplaces/' + fname,
-            'url': 'http://testserver/pictures/2',
-            'workplace': 'http://testserver/workplaces/1'
+            'workplace': f'http://testserver/workplaces/{ self.workplace.id}'
         }
+        response_content = json.loads(response.content)
+        del response_content['id']
+        del response_content['url']
 
         self.assertEqual(
-            remove_translation_fields(json.loads(response.content)),
+            remove_translation_fields(response_content),
             content
         )
 
@@ -212,19 +213,19 @@ class PictureTests(APITestCase):
         response = self.client.put(
             reverse(
                 'picture-detail',
-                kwargs={'pk': 1},
+                args=[self.picture.id]
             ),
             data,
         )
 
         content = {
-            'id': 1,
+            'id': self.picture.id,
             'name': 'new_picture',
             'name_en': 'new_picture',
             'name_fr': None,
             'picture': 'http://testserver/media/workplaces/' + fname,
-            'url': 'http://testserver/pictures/1',
-            'workplace': 'http://testserver/workplaces/1'
+            'url': f'http://testserver/pictures/{self.picture.id}',
+            'workplace': f'http://testserver/workplaces/{ self.workplace.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -240,7 +241,7 @@ class PictureTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'picture-detail',
-                kwargs={'pk': 1},
+                args=[self.picture.id]
             ),
         )
 
@@ -261,11 +262,12 @@ class PictureTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                'id': 1,
+                'id': self.picture.id,
                 'name': 'random_picture',
                 'picture': 'http://testserver' + self.picture.picture.url,
-                'url': 'http://testserver/pictures/1',
-                'workplace': 'http://testserver/workplaces/1'
+                'url': f'http://testserver/pictures/{self.picture.id}',
+                'workplace': f'http://testserver/workplaces/'
+                f'{self.workplace.id}'
             }]
         }
 
@@ -281,16 +283,16 @@ class PictureTests(APITestCase):
         response = self.client.get(
             reverse(
                 'picture-detail',
-                kwargs={'pk': 1},
+                args=[self.picture.id]
             ),
         )
 
         content = {
-            'id': 1,
+            'id': self.picture.id,
             'name': 'random_picture',
             'picture': 'http://testserver' + self.picture.picture.url,
-            'url': 'http://testserver/pictures/1',
-            'workplace': 'http://testserver/workplaces/1'
+            'url': f'http://testserver/pictures/{self.picture.id}',
+            'workplace': f'http://testserver/workplaces/{ self.workplace.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)

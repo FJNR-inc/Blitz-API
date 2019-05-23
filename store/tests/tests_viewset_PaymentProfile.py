@@ -91,9 +91,9 @@ class PaymentProfileTests(APITestCase):
                     'payment_token': 'CIgbMO3P1j7HUiy',
                     'status': 'ACTIVE'
                 }],
-                'id': 1,
+                'id': self.payment_profile.id,
                 'name': 'Test profile',
-                'owner': 'http://testserver/users/1'
+                'owner': f'http://testserver/users/{self.user.id}'
             }]
         }
 
@@ -140,9 +140,9 @@ class PaymentProfileTests(APITestCase):
                     'payment_token': 'CIgbMO3P1j7HUiy',
                     'status': 'ACTIVE'
                 }],
-                'id': 1,
+                'id': self.payment_profile.id,
                 'name': 'Test profile',
-                'owner': 'http://testserver/users/1'
+                'owner': f'http://testserver/users/{self.user.id}'
             }, {
                 'cards': [{
                     'card_bin': '453091',
@@ -157,9 +157,9 @@ class PaymentProfileTests(APITestCase):
                     'payment_token': 'CIgbMO3P1j7HUiy',
                     'status': 'ACTIVE'
                 }],
-                'id': 2,
+                'id': self.payment_profile_admin.id,
                 'name': 'Test profile admin',
-                'owner': 'http://testserver/users/2'
+                'owner': f'http://testserver/users/{self.admin.id}'
             }]
         }
 
@@ -201,7 +201,7 @@ class PaymentProfileTests(APITestCase):
         response = self.client.get(
             reverse(
                 'paymentprofile-detail',
-                kwargs={'pk': 1},
+                args=[self.payment_profile.id]
             ),
         )
 
@@ -221,9 +221,9 @@ class PaymentProfileTests(APITestCase):
                 'payment_token': 'CIgbMO3P1j7HUiy',
                 'status': 'ACTIVE'
             }],
-            'id': 1,
+            'id': self.payment_profile.id,
             'name': 'Test profile',
-            'owner': 'http://testserver/users/1'
+            'owner': f'http://testserver/users/{self.user.id}'
         }
 
         self.assertEqual(data, content)
@@ -268,7 +268,7 @@ class PaymentProfileTests(APITestCase):
         response = self.client.get(
             reverse(
                 'paymentprofile-detail',
-                kwargs={'pk': 1},
+                args=[self.payment_profile.id]
             ),
         )
 
@@ -288,9 +288,9 @@ class PaymentProfileTests(APITestCase):
                 'payment_token': 'CIgbMO3P1j7HUiy',
                 'status': 'ACTIVE'
             }],
-            'id': 1,
+            'id': self.payment_profile.id,
             'name': 'Test profile',
-            'owner': 'http://testserver/users/1'
+            'owner': f'http://testserver/users/{self.user.id}'
         }
 
         self.assertEqual(data, content)

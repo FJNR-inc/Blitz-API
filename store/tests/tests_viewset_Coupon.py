@@ -116,6 +116,8 @@ class CouponTests(APITestCase):
         )
         cls.coupon.applicable_product_types.add(cls.package_type)
 
+        cls.maxDiff = None
+
     def test_create(self):
         """
         Ensure we can create a coupon if user has permission.
@@ -1071,7 +1073,7 @@ class CouponTests(APITestCase):
                     'name': 'basic_membership',
                     'price': '50.00',
                     'url': 'http://testserver/memberships/' +
-                    str(self.membership.id)
+                           str(self.membership.id)
                 }],
                 "applicable_packages": [{
                     'available': True,
@@ -1096,7 +1098,7 @@ class CouponTests(APITestCase):
                     'end_time': '2130-01-17T12:00:00-05:00',
                     'exclusive_memberships': [],
                     'form_url': None,
-                    'id': 1,
+                    'id': self.retirement.id,
                     'is_active': True,
                     'latitude': None,
                     'longitude': None,
@@ -1120,7 +1122,9 @@ class CouponTests(APITestCase):
                     'state_province': 'Random state',
                     'timezone': None,
                     'total_reservations': 0,
-                    'url': 'http://testserver/retirement/retirements/1',
+                    'url':
+                        f'http://testserver/retirement/retirements/'
+                        f'{self.retirement.id}',
                     'users': [],
                     'has_shared_rooms': True,
                 }],
@@ -1128,14 +1132,14 @@ class CouponTests(APITestCase):
                     'end_time': '2130-01-15T12:00:00-05:00',
                     'id': self.period.id,
                     'period': 'http://testserver/periods/' +
-                    str(self.period.id),
+                              str(self.period.id),
                     'places_remaining': 40,
                     'price': '1.00',
                     'reservations': [],
                     'reservations_canceled': [],
                     'start_time': '2130-01-15T08:00:00-05:00',
                     'url': 'http://testserver/time_slots/' +
-                    str(self.time_slot.id),
+                           str(self.time_slot.id),
                     'users': [],
                     'workplace': {
                         'address_line1': '123 random street',
@@ -1143,7 +1147,7 @@ class CouponTests(APITestCase):
                         'city': '',
                         'country': 'Random country',
                         'details': 'This is a description of the workplace.',
-                        'id': 1,
+                        'id': self.workplace.id,
                         'latitude': None,
                         'longitude': None,
                         'name': 'random_workplace',
@@ -1153,9 +1157,11 @@ class CouponTests(APITestCase):
                         'seats': 40,
                         'state_province': 'Random state',
                         'timezone': None,
-                        'volunteers': [],
-                        'url': 'http://testserver/workplaces/1'
-                    }
+                        'url':
+                            f'http://testserver/workplaces/'
+                            f'{self.workplace.id}',
+                        'volunteers': []
+                        }
                 }],
                 "users": []
             }]
@@ -1283,7 +1289,7 @@ class CouponTests(APITestCase):
                 'name': 'basic_membership',
                 'price': '50.00',
                 'url': 'http://testserver/memberships/' +
-                str(self.membership.id)
+                       str(self.membership.id)
             }],
             "applicable_packages": [{
                 'available': True,
@@ -1308,7 +1314,7 @@ class CouponTests(APITestCase):
                 'end_time': '2130-01-17T12:00:00-05:00',
                 'exclusive_memberships': [],
                 'form_url': None,
-                'id': 1,
+                'id': self.retirement.id,
                 'is_active': True,
                 'latitude': None,
                 'longitude': None,
@@ -1332,7 +1338,9 @@ class CouponTests(APITestCase):
                 'state_province': 'Random state',
                 'timezone': None,
                 'total_reservations': 0,
-                'url': 'http://testserver/retirement/retirements/1',
+                'url':
+                    f'http://testserver/retirement/retirements/'
+                    f'{self.retirement.id}',
                 'users': [],
                 'has_shared_rooms': True,
             }],
@@ -1346,7 +1354,7 @@ class CouponTests(APITestCase):
                 'reservations_canceled': [],
                 'start_time': '2130-01-15T08:00:00-05:00',
                 'url': 'http://testserver/time_slots/' +
-                str(self.time_slot.id),
+                       str(self.time_slot.id),
                 'users': [],
                 'workplace': {
                     'address_line1': '123 random street',
@@ -1354,7 +1362,7 @@ class CouponTests(APITestCase):
                     'city': '',
                     'country': 'Random country',
                     'details': 'This is a description of the workplace.',
-                    'id': 1,
+                    'id': self.workplace.id,
                     'latitude': None,
                     'longitude': None,
                     'name': 'random_workplace',
@@ -1365,7 +1373,7 @@ class CouponTests(APITestCase):
                     'state_province': 'Random state',
                     'timezone': None,
                     'volunteers': [],
-                    'url': 'http://testserver/workplaces/1'
+                    'url': f'http://testserver/workplaces/{self.workplace.id}'
                 }
             }],
             "users": []

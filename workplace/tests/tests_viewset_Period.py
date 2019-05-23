@@ -77,8 +77,11 @@ class PeriodTests(APITestCase):
         data = {
             'name': "random_period",
             'workplace': reverse('workplace-detail', args=[self.workplace.id]),
-            'start_date': timezone.now() + timedelta(weeks=5),
-            'end_date': timezone.now() + timedelta(weeks=10),
+            'start_date': LOCAL_TIMEZONE.localize(
+                datetime.now() +
+                timedelta(weeks=5)),
+            'end_date': LOCAL_TIMEZONE.localize(
+                datetime.now() + timedelta(weeks=10)),
             'price': '3.00',
             'is_active': True,
         }
@@ -90,19 +93,22 @@ class PeriodTests(APITestCase):
         )
 
         content = {
-            'id': 3,
-            'end_date': data['end_date'].astimezone().isoformat(),
+            'end_date': data['end_date'].isoformat(),
             'is_active': True,
             'name': 'random_period',
             'price': '3.00',
             'total_reservations': 0,
-            'start_date': data['start_date'].astimezone().isoformat(),
-            'url': 'http://testserver/periods/3',
-            'workplace': 'http://testserver/workplaces/1'
+            'start_date': data['start_date'].isoformat(),
+            'workplace': f'http://testserver/workplaces/{self.workplace.id}'
         }
 
+        response_content = json.loads(response.content)
+
+        del response_content['id']
+        del response_content['url']
+
         self.assertEqual(
-            remove_translation_fields(json.loads(response.content)),
+            remove_translation_fields(response_content),
             content
         )
 
@@ -343,8 +349,10 @@ class PeriodTests(APITestCase):
         data = {
             'name': "new_period",
             'workplace': reverse('workplace-detail', args=[self.workplace.id]),
-            'start_date': timezone.now() + timedelta(weeks=5),
-            'end_date': timezone.now() + timedelta(weeks=10),
+            'start_date': LOCAL_TIMEZONE.localize(
+                datetime.now() + timedelta(weeks=5)),
+            'end_date': LOCAL_TIMEZONE.localize(
+                datetime.now() + timedelta(weeks=10)),
             'price': '3.00',
             'is_active': True,
         }
@@ -352,22 +360,22 @@ class PeriodTests(APITestCase):
         response = self.client.put(
             reverse(
                 'period-detail',
-                kwargs={'pk': 1},
+                args=[self.period.id]
             ),
             data,
             format='json',
         )
 
         content = {
-            'id': 1,
-            'end_date': data['end_date'].astimezone().isoformat(),
+            'id': self.period.id,
+            'end_date': data['end_date'].isoformat(),
             'is_active': True,
             'name': 'new_period',
             'price': '3.00',
             'total_reservations': 0,
-            'start_date': data['start_date'].astimezone().isoformat(),
-            'url': 'http://testserver/periods/1',
-            'workplace': 'http://testserver/workplaces/1'
+            'start_date': data['start_date'].isoformat(),
+            'url': f'http://testserver/periods/{self.period.id}',
+            'workplace': f'http://testserver/workplaces/{self.workplace.id}'
         }
 
         self.assertEqual(
@@ -396,7 +404,7 @@ class PeriodTests(APITestCase):
         response = self.client.put(
             reverse(
                 'period-detail',
-                kwargs={'pk': 2},
+                args=[self.period_active.id]
             ),
             data,
             format='json',
@@ -420,14 +428,15 @@ class PeriodTests(APITestCase):
 
         data = {
             'name': "updated_period",
-            'start_date': timezone.now() + timedelta(weeks=1),
+            'start_date': LOCAL_TIMEZONE.localize(
+                datetime.now() + timedelta(weeks=1)),
             'price': '2000.00',
         }
 
         response = self.client.patch(
             reverse(
                 'period-detail',
-                kwargs={'pk': 1},
+                args=[self.period.id]
             ),
             data,
             format='json',
@@ -436,15 +445,15 @@ class PeriodTests(APITestCase):
         response_data = json.loads(response.content)
 
         content = {
-            'id': 1,
+            'id': self.period.id,
             'is_active': False,
             'name': 'updated_period',
             'price': '2000.00',
             'total_reservations': 0,
             'end_date': response_data['end_date'],
-            'start_date': data['start_date'].astimezone().isoformat(),
-            'url': 'http://testserver/periods/1',
-            'workplace': 'http://testserver/workplaces/1'
+            'start_date': data['start_date'].isoformat(),
+            'url': f'http://testserver/periods/{self.period.id}',
+            'workplace': f'http://testserver/workplaces/{self.workplace.id}'
         }
 
         self.assertEqual(
@@ -475,7 +484,7 @@ class PeriodTests(APITestCase):
         response = self.client.patch(
             reverse(
                 'period-detail',
-                kwargs={'pk': 2},
+                args=[self.period_active.id]
             ),
             data,
             format='json',
@@ -508,7 +517,7 @@ class PeriodTests(APITestCase):
         response = self.client.patch(
             reverse(
                 'period-detail',
-                kwargs={'pk': 1},
+                args=[self.period.id]
             ),
             data,
             format='json',
@@ -534,7 +543,7 @@ class PeriodTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'period-detail',
-                kwargs={'pk': 1},
+                args=[self.period.id]
             ),
         )
 
@@ -559,7 +568,7 @@ class PeriodTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'period-detail',
-                kwargs={'pk': 2},
+                args=[self.period_active.id]
             ),
             data,
             format='json',
@@ -609,7 +618,7 @@ class PeriodTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'period-detail',
-                kwargs={'pk': 2},
+                args=[self.period_active.id]
             ),
             data,
             format='json',
@@ -640,7 +649,7 @@ class PeriodTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'period-detail',
-                kwargs={'pk': 1},
+                args=[self.period.id]
             ),
             data,
             format='json',
@@ -675,15 +684,16 @@ class PeriodTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                'id': 2,
+                'id': self.period_active.id,
                 'end_date': data['results'][0]['end_date'],
                 'is_active': True,
                 'name': 'random_period_active',
                 'price': '3.00',
                 'total_reservations': 1,
                 'start_date': data['results'][0]['start_date'],
-                'url': 'http://testserver/periods/2',
-                'workplace': 'http://testserver/workplaces/1'
+                'url': f'http://testserver/periods/{self.period_active.id}',
+                'workplace': f'http://testserver/workplaces/'
+                f'{self.workplace.id}'
             }]
         }
 
@@ -712,25 +722,27 @@ class PeriodTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                'id': 1,
+                'id': self.period.id,
                 'end_date': data['results'][0]['end_date'],
                 'is_active': False,
                 'name': 'random_period',
                 'price': '3.00',
                 'total_reservations': 0,
                 'start_date': data['results'][0]['start_date'],
-                'url': 'http://testserver/periods/1',
-                'workplace': 'http://testserver/workplaces/1'
+                'url': f'http://testserver/periods/{self.period.id}',
+                'workplace':
+                    f'http://testserver/workplaces/{self.workplace.id}'
             }, {
-                'id': 2,
+                'id': self.period_active.id,
                 'end_date': data['results'][1]['end_date'],
                 'is_active': True,
                 'name': 'random_period_active',
                 'price': '3.00',
                 'total_reservations': 1,
                 'start_date': data['results'][1]['start_date'],
-                'url': 'http://testserver/periods/2',
-                'workplace': 'http://testserver/workplaces/1'
+                'url': f'http://testserver/periods/{self.period_active.id}',
+                'workplace':
+                    f'http://testserver/workplaces/{self.workplace.id}'
             }]
         }
 
@@ -746,22 +758,22 @@ class PeriodTests(APITestCase):
         response = self.client.get(
             reverse(
                 'period-detail',
-                kwargs={'pk': 2},
+                args=[self.period_active.id]
             ),
         )
 
         data = json.loads(response.content)
 
         content = {
-            'id': 2,
+            'id': self.period_active.id,
             'end_date': data['end_date'],
             'is_active': True,
             'name': 'random_period_active',
             'price': '3.00',
             'total_reservations': 1,
             'start_date': data['start_date'],
-            'url': 'http://testserver/periods/2',
-            'workplace': 'http://testserver/workplaces/1'
+            'url': f'http://testserver/periods/{self.period_active.id}',
+            'workplace': f'http://testserver/workplaces/{self.workplace.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -777,22 +789,22 @@ class PeriodTests(APITestCase):
         response = self.client.get(
             reverse(
                 'period-detail',
-                kwargs={'pk': 1},
+                args=[self.period.id]
             ),
         )
 
         data = json.loads(response.content)
 
         content = {
-            'id': 1,
+            'id': self.period.id,
             'end_date': data['end_date'],
             'is_active': False,
             'name': 'random_period',
             'price': '3.00',
             'total_reservations': 0,
             'start_date': data['start_date'],
-            'url': 'http://testserver/periods/1',
-            'workplace': 'http://testserver/workplaces/1'
+            'url': f'http://testserver/periods/{self.period.id}',
+            'workplace': f'http://testserver/workplaces/{self.workplace.id}'
         }
 
         self.assertEqual(
@@ -810,7 +822,7 @@ class PeriodTests(APITestCase):
         response = self.client.get(
             reverse(
                 'period-detail',
-                kwargs={'pk': 1},
+                args=[self.period.id]
             ),
         )
 
