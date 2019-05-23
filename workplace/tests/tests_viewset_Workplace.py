@@ -52,7 +52,7 @@ class WorkplaceTests(APITestCase):
             'postal_code': 'RAN_DOM',
             'state_province': 'Random_State',
             'timezone': "America/Montreal",
-            'volunteers': ["http://testserver/users/1"],
+            'volunteers': [f"http://testserver/users/{self.user.id}"],
         }
 
         response = self.client.post(
@@ -61,9 +61,13 @@ class WorkplaceTests(APITestCase):
             format='json',
         )
 
+        response_content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED,
+                         response.content)
+
         content = {
             'details': 'short_description',
-            'id': 2,
             'address_line1': 'random_address_1',
             'address_line2': None,
             'city': 'random_city',
@@ -78,17 +82,17 @@ class WorkplaceTests(APITestCase):
             'timezone': "America/Montreal",
             'place_name': '',
             'volunteers': [
-                'http://testserver/users/1'
+                f'http://testserver/users/{self.user.id}'
             ],
-            'url': 'http://testserver/workplaces/2'
         }
 
+        del response_content['id']
+        del response_content['url']
+
         self.assertEqual(
-            remove_translation_fields(json.loads(response.content)),
+            remove_translation_fields(response_content),
             content
         )
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_create_without_permission(self):
         """
@@ -249,7 +253,7 @@ class WorkplaceTests(APITestCase):
         response = self.client.put(
             reverse(
                 'workplace-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.workplace.id},
             ),
             data,
             format='json',
@@ -257,7 +261,7 @@ class WorkplaceTests(APITestCase):
 
         content = {
             'details': 'new_short_description',
-            'id': 1,
+            'id': self.workplace.id,
             'longitude': None,
             'latitude': None,
             'address_line1': 'new_address',
@@ -272,7 +276,7 @@ class WorkplaceTests(APITestCase):
             'timezone': 'America/Montreal',
             'place_name': '',
             'volunteers': [],
-            'url': 'http://testserver/workplaces/1'
+            'url': f'http://testserver/workplaces/{self.workplace.id}'
         }
 
         self.assertEqual(
@@ -291,7 +295,7 @@ class WorkplaceTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'workplace-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.workplace.id},
             ),
         )
 
@@ -313,7 +317,7 @@ class WorkplaceTests(APITestCase):
             'previous': None,
             'results': [{
                 'details': 'short_description',
-                'id': 1,
+                'id': self.workplace.id,
                 'latitude': None,
                 'longitude': None,
                 'address_line1': 'random_address_1',
@@ -328,7 +332,7 @@ class WorkplaceTests(APITestCase):
                 'timezone': 'America/Montreal',
                 'place_name': '',
                 'volunteers': [],
-                'url': 'http://testserver/workplaces/1'
+                'url': f'http://testserver/workplaces/{self.workplace.id}'
             }]
         }
 
@@ -344,18 +348,17 @@ class WorkplaceTests(APITestCase):
         response = self.client.get(
             reverse(
                 'workplace-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.workplace.id},
             ),
         )
 
         content = {
             'details': 'short_description',
-            'id': 1,
+            'id': self.workplace.id,
             'address_line1': 'random_address_1',
             'address_line2': None,
             'city': 'random_city',
             'country': 'Random_Country',
-            'id': 1,
             'longitude': None,
             'latitude': None,
             'postal_code': 'RAN_DOM',
@@ -366,7 +369,7 @@ class WorkplaceTests(APITestCase):
             'place_name': '',
             'timezone': 'America/Montreal',
             'volunteers': [],
-            'url': 'http://testserver/workplaces/1'
+            'url': f'http://testserver/workplaces/{self.workplace.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)

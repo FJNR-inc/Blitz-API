@@ -1,28 +1,41 @@
 import json
+
+import pytz
 import responses
+from django.conf import settings
 
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.test.utils import override_settings
+from django.utils import timezone
 
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from datetime import datetime, timedelta
+
 from blitz_api.factories import UserFactory
 
-from .paysafe_sample_responses import (UNKNOWN_EXCEPTION,
-                                       SAMPLE_INVALID_PAYMENT_TOKEN,
-                                       SAMPLE_PROFILE_RESPONSE,)
+from .paysafe_sample_responses import (
+    UNKNOWN_EXCEPTION,
+    SAMPLE_INVALID_PAYMENT_TOKEN,
+    SAMPLE_PROFILE_RESPONSE,
+)
 
 from ..exceptions import PaymentAPIError
-from ..models import PaymentProfile
-from ..services import (charge_payment,
-                        get_external_payment_profile,
-                        create_external_payment_profile,
-                        update_external_card,
-                        delete_external_card,
-                        create_external_card,)
+from ..models import PaymentProfile, Order, Coupon, Package, OrderLine
+from ..services import (
+    charge_payment,
+    get_external_payment_profile,
+    create_external_payment_profile,
+    update_external_card,
+    delete_external_card,
+    create_external_card,
+    validate_coupon_for_order,
+)
 
 User = get_user_model()
+LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 PAYMENT_TOKEN = "CIgbMO3P1j7HUiy"
 SINGLE_USE_TOKEN = "ASDG3e3gs3vrBTR"
@@ -40,16 +53,84 @@ SINGLE_USE_TOKEN = "ASDG3e3gs3vrBTR"
 )
 class ServicesTests(APITestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(ServicesTests, cls).setUpClass()
-        cls.user = UserFactory()
-        cls.payment_profile = PaymentProfile.objects.create(
+    def setUp(self):
+        self.user = UserFactory()
+        self.payment_profile = PaymentProfile.objects.create(
             name="Test profile",
-            owner=cls.user,
+            owner=self.user,
             external_api_id="123",
             external_api_url="https://api.test.paysafe.com/customervault/v1/"
                              "profiles/",
+        )
+
+        self.order = Order.objects.create(
+            user=self.user,
+            transaction_date=timezone.now(),
+            authorization_id=1,
+            settlement_id=1,
+            reference_number=751,
+        )
+
+        self.coupon = Coupon.objects.create(
+            value=13,
+            code="ABCDEFGH",
+            start_time=LOCAL_TIMEZONE.localize(
+                datetime.now() -
+                timedelta(weeks=5)
+            ),
+            end_time=LOCAL_TIMEZONE.localize(
+                datetime.now() +
+                timedelta(weeks=5)
+            ),
+            max_use=100,
+            max_use_per_user=2,
+            details="Any package for clients",
+            owner=self.user,
+        )
+        self.package_type = ContentType.objects.get_for_model(Package)
+        self.package = Package.objects.create(
+            name="extreme_package",
+            details="100 reservations package",
+            available=True,
+            price=600,
+            reservations=100,
+        )
+        self.package_2 = Package.objects.create(
+            name="extreme_package",
+            details="100 reservations package",
+            available=True,
+            price=400,
+            reservations=100,
+        )
+        self.package_most_exp_product = Package.objects.create(
+            name="extreme_package",
+            details="100 reservations package",
+            available=True,
+            price=9999,
+            reservations=100,
+        )
+        self.package_less_exp_product = Package.objects.create(
+            name="extreme_package",
+            details="100 reservations package",
+            available=True,
+            price=1,
+            reservations=100,
+        )
+        self.coupon.applicable_product_types.add(self.package_type)
+
+        self.order_line = OrderLine.objects.create(
+            order=self.order,
+            quantity=1,
+            content_type=self.package_type,
+            object_id=self.package.id,
+            cost=self.package.price,
+        )
+        self.order_line_2 = OrderLine.objects.create(
+            order=self.order,
+            quantity=1,
+            content_type=self.package_type,
+            object_id=self.package_2.id,
+            cost=self.package_2.price,
         )
 
     @responses.activate
@@ -291,3 +372,36 @@ class ServicesTests(APITestCase):
             get_external_payment_profile,
             self.payment_profile.external_api_id
         )
+
+    def test_validate_coupon_for_order_with_most_exp_product(self):
+
+        self.user.faculty = "Random faculty"
+        self.user.student_number = "Random code"
+        self.user.academic_program_code = "Random code"
+        self.user.save()
+
+        order_line_most_exp_product = OrderLine.objects.create(
+            order=self.order,
+            quantity=1,
+            content_type=self.package_type,
+            object_id=self.package_most_exp_product.id,
+            cost=self.package_most_exp_product.price,
+        )
+        order_line_les_exp_product = OrderLine.objects.create(
+            order=self.order,
+            quantity=1,
+            content_type=self.package_type,
+            object_id=self.package_less_exp_product.id,
+            cost=self.package_less_exp_product.price,
+        )
+
+        coupon_info = validate_coupon_for_order(self.coupon, self.order)
+
+        error = coupon_info.get('error')
+
+        self.assertIsNone(error)
+
+        coupon_info_order_line = coupon_info.get('orderline')
+        self.assertIsNotNone(coupon_info_order_line)
+        self.assertEqual(coupon_info_order_line.id,
+                         order_line_most_exp_product.id)

@@ -1,3 +1,4 @@
+from django.db import IntegrityError, transaction
 from rest_framework.test import APITestCase
 
 from ..models import Domain, Organization
@@ -20,18 +21,3 @@ class DomainTests(APITestCase):
         )
 
         self.assertEqual(domain.__str__(), "random_domain")
-
-    def test_create_invalid_organization(self):
-        """
-        Ensure that we can create a domain with an invalid organization.
-        """
-        domain = Domain.objects.create(
-            name="random_domain",
-            organization_id=9999
-        )
-
-        try:
-            domain.organization
-            return False
-        except Organization.DoesNotExist:
-            return True

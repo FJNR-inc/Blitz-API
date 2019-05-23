@@ -49,14 +49,12 @@ TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 )
 class ReservationTests(APITestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(ReservationTests, cls).setUpClass()
-        cls.client = APIClient()
-        cls.user = UserFactory()
-        cls.admin = AdminFactory()
-        cls.retirement_type = ContentType.objects.get_for_model(Retirement)
-        cls.retirement = Retirement.objects.create(
+    def setUp(self):
+        self.client = APIClient()
+        self.user = UserFactory()
+        self.admin = AdminFactory()
+        self.retirement_type = ContentType.objects.get_for_model(Retirement)
+        self.retirement = Retirement.objects.create(
             name="mega_retirement",
             details="This is a description of the mega retirement.",
             seats=400,
@@ -78,7 +76,7 @@ class ReservationTests(APITestCase):
             review_url='example3.com',
             has_shared_rooms=True,
         )
-        cls.retirement2 = Retirement.objects.create(
+        self.retirement2 = Retirement.objects.create(
             name="random_retirement",
             details="This is a description of the retirement.",
             seats=40,
@@ -99,7 +97,7 @@ class ReservationTests(APITestCase):
             review_url='example3.com',
             has_shared_rooms=True,
         )
-        cls.retirement_overlap = Retirement.objects.create(
+        self.retirement_overlap = Retirement.objects.create(
             name="ultra_retirement",
             details="This is a description of the ultra retirement.",
             seats=400,
@@ -120,48 +118,50 @@ class ReservationTests(APITestCase):
             review_url='example3.com',
             has_shared_rooms=True,
         )
-        cls.order = Order.objects.create(
-            user=cls.user,
+        self.order = Order.objects.create(
+            user=self.user,
             transaction_date=timezone.now(),
             authorization_id=1,
             settlement_id=1,
         )
-        cls.order_line = OrderLine.objects.create(
-            order=cls.order,
+        self.order_line = OrderLine.objects.create(
+            order=self.order,
             quantity=1,
-            content_type=cls.retirement_type,
-            object_id=cls.retirement.id,
-            cost=cls.retirement.price,
+            content_type=self.retirement_type,
+            object_id=self.retirement.id,
+            cost=self.retirement.price,
         )
-        cls.reservation = Reservation.objects.create(
-            user=cls.user,
-            retirement=cls.retirement,
-            order_line=cls.order_line,
+        self.reservation = Reservation.objects.create(
+            user=self.user,
+            retirement=self.retirement,
+            order_line=self.order_line,
             is_active=True,
         )
-        cls.reservation_expected_payload = {
-            'id': cls.reservation.id,
+        self.reservation_expected_payload = {
+            'id': self.reservation.id,
             'is_active': True,
             'is_present': False,
             'retirement': 'http://testserver/retirement/retirements/' +
-                          str(cls.reservation.retirement.id),
+                          str(self.reservation.retirement.id),
             'url': 'http://testserver/retirement/reservations/' +
-                   str(cls.reservation.id),
-            'user': 'http://testserver/users/' + str(cls.user.id),
+                   str(self.reservation.id),
+            'user': 'http://testserver/users/' + str(self.user.id),
             'order_line': 'http://testserver/order_lines/' +
-                          str(cls.order_line.id),
+                          str(self.order_line.id),
             'cancelation_date': None,
             'cancelation_action': None,
             'cancelation_reason': None,
             'refundable': True,
             'exchangeable': True,
         }
-        cls.reservation_admin = Reservation.objects.create(
-            user=cls.admin,
-            retirement=cls.retirement2,
-            order_line=cls.order_line,
+        self.reservation_admin = Reservation.objects.create(
+            user=self.admin,
+            retirement=self.retirement2,
+            order_line=self.order_line,
             is_active=True,
         )
+
+        self.maxDiff = None
 
     def test_create(self):
         """
@@ -226,7 +226,6 @@ class ReservationTests(APITestCase):
                 'notification_interval': '1 00:00:00',
                 'price': '199.00',
                 'start_time': '2130-02-15T08:00:00-05:00',
-                'url': 'http://testserver/retirement/retirements/1',
                 'users': [
                     'http://testserver/users/' + str(self.admin.id),
                     'http://testserver/users/' + str(self.user.id)
@@ -288,6 +287,12 @@ class ReservationTests(APITestCase):
                 'volunteer_for_workplace': [],
             }
         }
+
+        self.assertCountEqual(response_data['retirement_details']['users'],
+                              content['retirement_details']['users'])
+
+        del response_data['retirement_details']['users']
+        del content['retirement_details']['users']
 
         self.assertEqual(response_data, content)
 
@@ -867,7 +872,7 @@ class ReservationTests(APITestCase):
 
         # 1 mail for the refund
         # X mails to every admin
-        self.assertTrue(len(mail.outbox) > 1, "Invalid sent mail count")
+        self.assertGreater(len(mail.outbox), 1, "Invalid sent mail count")
 
         self.retirement2.seats = 400
         self.retirement2.save()

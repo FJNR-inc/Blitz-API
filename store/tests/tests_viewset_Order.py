@@ -23,17 +23,20 @@ from blitz_api.models import AcademicLevel
 from workplace.models import TimeSlot, Period, Workplace
 from retirement.models import Retirement, WaitQueueNotification, WaitQueue
 
-from .paysafe_sample_responses import (SAMPLE_PROFILE_RESPONSE,
-                                       SAMPLE_PAYMENT_RESPONSE,
-                                       SAMPLE_CARD_RESPONSE,
-                                       SAMPLE_INVALID_PAYMENT_TOKEN,
-                                       SAMPLE_INVALID_SINGLE_USE_TOKEN,
-                                       SAMPLE_CARD_ALREADY_EXISTS,
-                                       SAMPLE_CARD_REFUSED,)
+from .paysafe_sample_responses import (
+    SAMPLE_PROFILE_RESPONSE,
+    SAMPLE_PAYMENT_RESPONSE,
+    SAMPLE_CARD_RESPONSE,
+    SAMPLE_INVALID_PAYMENT_TOKEN,
+    SAMPLE_INVALID_SINGLE_USE_TOKEN,
+    SAMPLE_CARD_ALREADY_EXISTS,
+    SAMPLE_CARD_REFUSED,
+)
 
-
-from ..models import (Package, Order, OrderLine, Membership, PaymentProfile,
-                      Coupon, CouponUser, )
+from ..models import (
+    Package, Order, OrderLine, Membership, PaymentProfile,
+    Coupon, CouponUser,
+)
 
 User = get_user_model()
 
@@ -52,71 +55,69 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 )
 class OrderTests(APITestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(OrderTests, cls).setUpClass()
-        cls.client = APIClient()
-        cls.user = UserFactory()
-        cls.user.city = "Current city"
-        cls.user.phone = "123-456-7890"
-        cls.user.save()
-        cls.admin = AdminFactory()
-        cls.admin.city = "Current city"
-        cls.admin.phone = "123-456-7890"
-        cls.admin.faculty = "Random faculty"
-        cls.admin.student_number = "Random code"
-        cls.admin.academic_program_code = "Random code"
-        cls.admin.save()
-        cls.membership = Membership.objects.create(
+    def setUp(self):
+        self.client = APIClient()
+        self.user = UserFactory()
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.save()
+        self.admin = AdminFactory()
+        self.admin.city = "Current city"
+        self.admin.phone = "123-456-7890"
+        self.admin.faculty = "Random faculty"
+        self.admin.student_number = "Random code"
+        self.admin.academic_program_code = "Random code"
+        self.admin.save()
+        self.membership = Membership.objects.create(
             name="basic_membership",
             details="1-Year student membership",
             available=True,
             price=50,
             duration=timedelta(days=365),
         )
-        cls.package_type = ContentType.objects.get_for_model(Package)
-        cls.package = Package.objects.create(
+        self.package_type = ContentType.objects.get_for_model(Package)
+        self.package = Package.objects.create(
             name="extreme_package",
             details="100 reservations package",
             available=True,
             price=40,
             reservations=100,
         )
-        cls.package2 = Package.objects.create(
+        self.package2 = Package.objects.create(
             name="extreme_package2",
             details="1000 reservations package",
             available=True,
             price=4000,
             reservations=1000,
         )
-        cls.order = Order.objects.create(
-            user=cls.user,
+        self.order = Order.objects.create(
+            user=self.user,
             transaction_date=timezone.now(),
             authorization_id=1,
             settlement_id=1,
             reference_number=751,
         )
-        cls.order_admin = Order.objects.create(
-            user=cls.admin,
+        self.order_admin = Order.objects.create(
+            user=self.admin,
             transaction_date=timezone.now(),
             authorization_id=2,
             settlement_id=2,
             reference_number=751,
         )
-        cls.order_line = OrderLine.objects.create(
-            order=cls.order,
+        self.order_line = OrderLine.objects.create(
+            order=self.order,
             quantity=1,
-            content_type=cls.package_type,
-            object_id=1,
-            cost=cls.package.price,
+            content_type=self.package_type,
+            object_id=self.package.id,
+            cost=self.package.price,
         )
-        cls.payment_profile = PaymentProfile.objects.create(
+        self.payment_profile = PaymentProfile.objects.create(
             name="payment_api_name",
-            owner=cls.admin,
+            owner=self.admin,
             external_api_id="123",
             external_api_url="https://example.com/customervault/v1/profiles"
         )
-        cls.workplace = Workplace.objects.create(
+        self.workplace = Workplace.objects.create(
             name="random_workplace",
             details="This is a description of the workplace.",
             seats=40,
@@ -125,7 +126,7 @@ class OrderTests(APITestCase):
             state_province="Random state",
             country="Random country",
         )
-        cls.workplace_no_seats = Workplace.objects.create(
+        self.workplace_no_seats = Workplace.objects.create(
             name="random_workplace",
             details="This is a description of the workplace.",
             seats=0,
@@ -134,37 +135,37 @@ class OrderTests(APITestCase):
             state_province="Random state",
             country="Random country",
         )
-        cls.period = Period.objects.create(
+        self.period = Period.objects.create(
             name="random_period_active",
-            workplace=cls.workplace,
+            workplace=self.workplace,
             start_date=timezone.now(),
             end_date=timezone.now() + timedelta(weeks=4),
             price=3,
             is_active=True,
         )
-        cls.period_no_seats = Period.objects.create(
+        self.period_no_seats = Period.objects.create(
             name="random_period_active",
-            workplace=cls.workplace_no_seats,
+            workplace=self.workplace_no_seats,
             start_date=timezone.now(),
             end_date=timezone.now() + timedelta(weeks=4),
             price=3,
             is_active=True,
         )
-        cls.time_slot = TimeSlot.objects.create(
+        self.time_slot = TimeSlot.objects.create(
             name="morning_time_slot",
-            period=cls.period,
+            period=self.period,
             price=1,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
-        cls.time_slot_no_seats = TimeSlot.objects.create(
+        self.time_slot_no_seats = TimeSlot.objects.create(
             name="no_place_left_timeslot",
-            period=cls.period_no_seats,
+            period=self.period_no_seats,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
-        cls.retirement = Retirement.objects.create(
+        self.retirement = Retirement.objects.create(
             name="mega_retirement",
             seats=400,
             details="This is a description of the mega retirement.",
@@ -184,7 +185,7 @@ class OrderTests(APITestCase):
             reserved_seats=1,
             has_shared_rooms=True,
         )
-        cls.retirement_no_seats = Retirement.objects.create(
+        self.retirement_no_seats = Retirement.objects.create(
             name="no_place_left_retirement",
             seats=0,
             details="This is a description of the full retirement.",
@@ -203,21 +204,23 @@ class OrderTests(APITestCase):
             accessibility=True,
             has_shared_rooms=True,
         )
-        cls.coupon = Coupon.objects.create(
+        self.coupon = Coupon.objects.create(
             code="ABCD1234",
             start_time=LOCAL_TIMEZONE.localize(datetime(2000, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             value=10,
             max_use_per_user=0,
             max_use=0,
-            owner=cls.admin,
+            owner=self.admin,
         )
-        cls.coupon.applicable_product_types.set([cls.package_type])
-        cls.coupon_user = CouponUser.objects.create(
-            user=cls.admin,
+        self.coupon.applicable_product_types.set([self.package_type])
+        self.coupon_user = CouponUser.objects.create(
+            user=self.admin,
             uses=5,
-            coupon=cls.coupon,
+            coupon=self.coupon,
         )
+
+        self.maxDiff = None
 
     @responses.activate
     def test_create_with_payment_token(self):
@@ -322,12 +325,17 @@ class OrderTests(APITestCase):
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
             }],
-            'user': 'http://testserver/users/' + str(self.admin.id),
+            'user': f'http://testserver/users/{self.admin.id}',
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
             'reference_number': '751',
         }
+
+        self.assertCountEqual(response_data['order_lines'],
+                              content['order_lines'])
+        del response_data['order_lines']
+        del content['order_lines']
 
         self.assertEqual(response_data, content)
 
@@ -1496,6 +1504,12 @@ class OrderTests(APITestCase):
             format='json',
         )
 
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
@@ -1509,12 +1523,6 @@ class OrderTests(APITestCase):
         del response_data['order_lines'][1]['object_id']
         del response_data['order_lines'][1]['url']
         del response_data['order_lines'][1]['id']
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_201_CREATED,
-            response.content,
-        )
 
         content = {
             'order_lines': [{
@@ -1767,17 +1775,11 @@ class OrderTests(APITestCase):
             'order_lines': [{
                 'content_type': 'membership',
                 'object_id': self.membership.id,
-                'order': 'http://testserver/orders/' + str(self.order.id),
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/' +
-                       str(self.order_line.id)
             }, {
                 'content_type': 'package',
                 'object_id': self.package.id,
-                'order': 'http://testserver/orders/' + str(self.order.id),
-                'quantity': 2,
-                'url': 'http://testserver/order_lines/' +
-                       str(self.order_line.id)
+                'quantity': 2
             }],
         }
 
@@ -1830,15 +1832,10 @@ class OrderTests(APITestCase):
 
         self.assertEqual(response_data, content)
 
-        admin = self.admin
-        admin.refresh_from_db()
+        self.admin.refresh_from_db()
 
-        self.assertEqual(admin.tickets, self.package.reservations * 2 + 1)
-        self.assertEqual(admin.membership, self.membership)
-
-        admin.tickets = 1
-        admin.membership = None
-        admin.save()
+        self.assertEqual(self.admin.tickets, self.package.reservations * 2 + 1)
+        self.assertEqual(self.admin.membership, self.membership)
 
     def test_create_missing_payment_details(self):
         """
@@ -1988,8 +1985,6 @@ class OrderTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
-        del response_data['order_lines'][0]['id']
-        del response_data['order_lines'][0]['url']
 
         content = {
             'id': self.order.id,
@@ -2000,15 +1995,22 @@ class OrderTests(APITestCase):
             'settlement_id': '1',
             'reference_number': '751',
             'order_lines': [{
+                'url': f'http://testserver/order_lines/{self.order_line.id}',
+                'id': self.order_line.id,
                 'content_type': 'package',
-                'object_id': self.package.id,
-                'order': 'http://testserver/orders/' + str(self.order.id),
-                'quantity': 99,
-                'coupon': None,
                 'coupon_real_value': 0.0,
-                'cost': 99 * self.package.price
+                'cost': 99.0 * self.package.price,
+                'coupon': None,
+                'object_id': self.package.id,
+                'quantity': 99,
+                'order': 'http://testserver/orders/' + str(self.order.id)
             }],
         }
+
+        self.assertCountEqual(response_data['order_lines'],
+                              content['order_lines'])
+        del response_data['order_lines']
+        del content['order_lines']
 
         self.assertEqual(response_data, content)
 
@@ -2072,7 +2074,7 @@ class OrderTests(APITestCase):
                 'order_lines': [{
                     'content_type': 'package',
                     'id': self.order_line.id,
-                    'object_id': 1,
+                    'object_id': self.package.id,
                     'order': 'http://testserver/orders/' + str(self.order.id),
                     'quantity': 1,
                     'url': 'http://testserver/order_lines/' +
@@ -2116,11 +2118,11 @@ class OrderTests(APITestCase):
                 'order_lines': [{
                     'content_type': 'package',
                     'id': self.order_line.id,
-                    'object_id': 1,
+                    'object_id': self.package.id,
                     'order': 'http://testserver/orders/' + str(self.order.id),
                     'quantity': 1,
                     'url': 'http://testserver/order_lines/' +
-                    str(self.order_line.id),
+                           str(self.order_line.id),
                     'coupon': None,
                     'coupon_real_value': 0.0,
                     'cost': self.package.price,
@@ -2185,7 +2187,7 @@ class OrderTests(APITestCase):
             'order_lines': [{
                 'content_type': 'package',
                 'id': self.order_line.id,
-                'object_id': 1,
+                'object_id': self.package.id,
                 'order': 'http://testserver/orders/' + str(self.order.id),
                 'quantity': 1,
                 'url': 'http://testserver/order_lines/' +
@@ -2245,7 +2247,7 @@ class OrderTests(APITestCase):
             'order_lines': [{
                 'content_type': 'package',
                 'id': self.order_line.id,
-                'object_id': 1,
+                'object_id': self.package.id,
                 'order': 'http://testserver/orders/' + str(self.order.id),
                 'quantity': 1,
                 'url': 'http://testserver/order_lines/' +
@@ -2388,7 +2390,7 @@ class OrderTests(APITestCase):
         content = {
             'orderline': {
                 'content_type': 'package',
-                'object_id': 2,
+                'object_id': self.package2.id,
                 'quantity': 1
             },
             'value': 4000.0
