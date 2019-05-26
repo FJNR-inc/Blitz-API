@@ -3,6 +3,7 @@ from datetime import datetime
 import pytz
 from django.conf import settings
 from django.core.files.base import ContentFile
+from import_export.resources import ModelResource
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser
@@ -18,6 +19,8 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 class ExportMixin(object):
 
+    export_resource: ModelResource = None
+
     @action(detail=False, permission_classes=[IsAdminUser])
     def export(self, request):
         # Use custom paginator (by page, min/max 1000 objects/page)
@@ -27,7 +30,7 @@ class ExportMixin(object):
         # Paginate queryset using custom paginator
         page = self.paginate_queryset(queryset)
         # Build dataset using paginated queryset
-        dataset = UserResource().export(page)
+        dataset = self.export_resource.export(page)
 
         date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
             .strftime("%Y%m%d-%H%M%S")

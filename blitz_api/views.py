@@ -77,6 +77,8 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
     search_fields = ('first_name', 'last_name', 'email')
     ordering = ('email',)
 
+    export_resource = UserResource()
+
     def get_serializer_class(self):
         if (self.action == 'update') | (self.action == 'partial_update'):
             return serializers.UserUpdateSerializer
@@ -461,6 +463,8 @@ class OrganizationViewSet(ExportMixin, viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrReadOnly,)
     ordering = ('name',)
 
+    export_resource = OrganizationResource()
+
 
 class ObtainTemporaryAuthToken(ObtainAuthToken):
     """
@@ -531,6 +535,8 @@ class AcademicLevelViewSet(ExportMixin, viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrReadOnly,)
     ordering = ('name',)
 
+    export_resource = AcademicLevelResource()
+
 
 class AcademicFieldViewSet(ExportMixin, viewsets.ModelViewSet):
     """
@@ -547,6 +553,8 @@ class AcademicFieldViewSet(ExportMixin, viewsets.ModelViewSet):
     queryset = AcademicField.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
     ordering = ('name',)
+
+    export_resource = AcademicFieldResource()
 
 
 class ExportMediaViewSet(viewsets.ModelViewSet):

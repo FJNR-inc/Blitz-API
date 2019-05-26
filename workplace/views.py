@@ -54,6 +54,8 @@ class WorkplaceViewSet(ExportMixin, viewsets.ModelViewSet):
     filter_fields = '__all__'
     ordering = ('name',)
 
+    export_resource = WorkplaceResource()
+
 
 class PictureViewSet(viewsets.ModelViewSet):
     """
@@ -93,6 +95,8 @@ class PeriodViewSet(ExportMixin, viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_fields = '__all__'
     ordering = ('name',)
+
+    export_resource = PeriodResource()
 
     def get_queryset(self):
         """
@@ -222,6 +226,8 @@ class TimeSlotViewSet(ExportMixin, viewsets.ModelViewSet):
         'start_time': ['exact', 'gte', 'lte'],
         'end_time': ['exact', 'gte', 'lte'],
     }
+
+    export_resource = TimeSlotResource()
 
     @action(methods=['post'], detail=False, permission_classes=[IsAdminUser])
     def batch_create(self, request):
@@ -408,6 +414,8 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         'timeslot__start_time',
         'timeslot__end_time',
     )
+
+    export_resource = ReservationResource()
 
     def get_queryset(self):
         """
