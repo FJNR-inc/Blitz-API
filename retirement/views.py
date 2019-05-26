@@ -68,6 +68,8 @@ class RetirementViewSet(ExportMixin, viewsets.ModelViewSet):
     }
     ordering = ('name', 'start_time', 'end_time')
 
+    export_resource = RetirementResource()
+
     def get_queryset(self):
         """
         This viewset should return active retirements except if
@@ -183,6 +185,8 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         'retirement__start_time',
         'retirement__end_time',
     )
+
+    export_resource = ReservationResource()
 
     def get_queryset(self):
         """
@@ -429,6 +433,8 @@ class WaitQueueViewSet(ExportMixin, viewsets.ModelViewSet):
         'retirement__end_time',
     )
 
+    export_resource = WaitQueueResource()
+
     def get_queryset(self):
         """
         This viewset should return the request user's wait_queue except if
@@ -474,6 +480,8 @@ class WaitQueueNotificationViewSet(ExportMixin, mixins.ListModelMixin,
         'retirement__start_time',
         'retirement__end_time',
     )
+
+    export_resource = WaitQueueNotificationResource()
 
     def get_queryset(self):
         """

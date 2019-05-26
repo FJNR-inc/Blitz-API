@@ -55,6 +55,8 @@ class MembershipViewSet(ExportMixin, viewsets.ModelViewSet):
     }
     ordering = ('name',)
 
+    export_resource = MembershipResource()
+
     def get_queryset(self):
         """
         This viewset should return available memberships except if
@@ -97,6 +99,8 @@ class PackageViewSet(ExportMixin, viewsets.ModelViewSet):
         'price': ['exact', 'gte', 'lte'],
     }
     ordering = ('name',)
+
+    export_resource = PackageResource()
 
     def get_queryset(self):
         """
@@ -176,6 +180,8 @@ class OrderViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.OrderSerializer
     queryset = Order.objects.all()
     permission_classes = (permissions.IsAdminOrCreateReadOnly, IsAuthenticated)
+
+    export_resource = OrderResource()
 
     @action(
         methods=['post'], detail=False, permission_classes=[IsAuthenticated])
@@ -264,6 +270,8 @@ class OrderLineViewSet(ExportMixin, viewsets.ModelViewSet):
     queryset = OrderLine.objects.all()
     permission_classes = (IsAuthenticated,)
 
+    export_resource = OrderLineResource()
+
     def get_queryset(self):
         """
         This viewset should return owned order lines except if
@@ -289,6 +297,8 @@ class CustomPaymentViewSet(ExportMixin, viewsets.ModelViewSet):
     queryset = CustomPayment.objects.all()
     permission_classes = (IsAuthenticated, permissions.IsAdminOrReadOnly)
     filter_fields = '__all__'
+
+    export_resource = CustomPaymentResource()
 
     def get_queryset(self):
         """
@@ -318,6 +328,8 @@ class CouponViewSet(ExportMixin, viewsets.ModelViewSet):
     queryset = Coupon.objects.all()
     permission_classes = (IsAuthenticated, permissions.IsAdminOrReadOnly)
     filter_fields = '__all__'
+
+    export_resource = CouponResource()
 
     @action(methods=['post'], detail=True, permission_classes=[IsOwner])
     def notify(self, request, pk=None):
@@ -389,6 +401,8 @@ class CouponUserViewSet(ExportMixin, viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, IsAdminUser)
     filter_fields = '__all__'
 
+    export_resource = CouponUserResource()
+
     def get_queryset(self):
         """
         This viewset should return owned coupons except if
@@ -413,6 +427,8 @@ class RefundViewSet(ExportMixin, viewsets.GenericViewSet,
     queryset = Refund.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
     filter_fields = '__all__'
+
+    export_resource = RefundResource()
 
     def get_queryset(self):
         """

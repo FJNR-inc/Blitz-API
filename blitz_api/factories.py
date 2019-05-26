@@ -100,3 +100,4 @@ class RetirementFactory(factory.DjangoModelFactory):
     is_active = factory.Faker('boolean', chance_of_getting_true=50)
     email_content = factory.Faker('email')
     accessibility = factory.Faker('boolean', chance_of_getting_true=50)
+    has_shared_rooms = factory.Faker('boolean', chance_of_getting_true=50)
