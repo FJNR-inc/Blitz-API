@@ -27,7 +27,7 @@ from retirement.models import WaitQueueNotification, Retirement
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
                      PaymentProfile, CustomPayment, Coupon, CouponUser, Refund,
-                     )
+                     MembershipCoupon,)
 from .services import (charge_payment,
                        create_external_payment_profile,
                        create_external_card,
@@ -506,6 +506,35 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         timezone.now().date() + user.membership.duration
                 )
                 user.save()
+
+                membership_coupons = MembershipCoupon.objects.filter(
+                    membership__pk=membership_orderlines[0].content_object.pk
+                )
+
+                for membership_coupon in membership_coupons:
+                    coupon = Coupon.objects.create(
+                        value=membership_coupon.value,
+                        percent_off=membership_coupon.percent_off,
+                        max_use=membership_coupon.max_use,
+                        max_use_per_user=membership_coupon.max_use_per_user,
+                        details=membership_coupon.details,
+                        start_time=timezone.now(),
+                        end_time=timezone.now() +
+                        membership_orderlines[0].content_object.duration,
+                        owner=user)
+                    coupon.applicable_retirements.set(
+                        membership_coupon.applicable_retirements.all())
+                    coupon.applicable_timeslots.set(
+                        membership_coupon.applicable_timeslots.all())
+                    coupon.applicable_packages.set(
+                        membership_coupon.applicable_packages.all())
+                    coupon.applicable_memberships.set(
+                        membership_coupon.applicable_memberships.all())
+                    coupon.applicable_product_types.set(
+                        membership_coupon.applicable_product_types.all())
+                    coupon.generate_code()
+                    coupon.save()
+
             if package_orderlines:
                 need_transaction = True
                 for package_orderline in package_orderlines:
