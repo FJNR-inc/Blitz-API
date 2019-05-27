@@ -986,6 +986,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
 class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     created_at = serializers.ReadOnlyField()
+    list_size = serializers.SerializerMethodField()
 
     def validate_user(self, obj):
         """
@@ -1008,6 +1009,9 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
                 'view_name': 'retirement:waitqueue-detail',
             },
         }
+
+    def get_list_size(self, obj):
+        return WaitQueue.objects.filter(retirement=obj.retirement).count()
 
 
 class WaitQueueNotificationSerializer(serializers.HyperlinkedModelSerializer):

@@ -85,6 +85,7 @@ class WaitQueueTests(APITestCase):
         )
 
         content = {
+            'list_size': 2,
             'retirement': 'http://testserver/retirement/retirements/' +
                           str(self.retirement.id),
             'user': ''.join(['http://testserver/users/', str(self.user.id)]),
@@ -127,6 +128,7 @@ class WaitQueueTests(APITestCase):
         )
 
         content = {
+            'list_size': 2,
             'retirement': 'http://testserver/retirement/retirements/' +
                           str(self.retirement.id),
             'user': ''.join(['http://testserver/users/', str(self.user.id)]),
@@ -349,6 +351,7 @@ class WaitQueueTests(APITestCase):
             'results': [{
                 'created_at': response_data['results'][0]['created_at'],
                 'id': self.wait_queue_subscription.id,
+                'list_size': 1,
                 'retirement':
                     'http://testserver/retirement/retirements/' +
                     str(self.retirement.id),
@@ -396,6 +399,7 @@ class WaitQueueTests(APITestCase):
 
         content = {
             'id': self.wait_queue_subscription.id,
+            'list_size': 1,
             'retirement':
                 'http://testserver/retirement/retirements/' +
                 str(self.retirement.id),
@@ -448,6 +452,7 @@ class WaitQueueTests(APITestCase):
 
         content = {
             'id': self.wait_queue_subscription.id,
+            'list_size': 1,
             'retirement':
                 'http://testserver/retirement/retirements/' +
                 str(self.retirement.id),
