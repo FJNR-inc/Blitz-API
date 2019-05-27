@@ -1,4 +1,6 @@
 import decimal
+import random
+import string
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
@@ -365,12 +367,12 @@ class PaymentProfile(models.Model):
         return self.name
 
 
-class Coupon(SafeDeleteModel):
+class AbstractCoupon(SafeDeleteModel):
     """
-    Represents a coupon that provides a discount on various products.
-    The "owner" of the instance is the buyer of the coupon, but not necessarily
-    the one that will use it.
+    Common fields for Coupons and MembershipCoupons
     """
+
+    # is zero if percent_off is not
     value = models.DecimalField(
         max_digits=6,
         decimal_places=2,
@@ -378,33 +380,15 @@ class Coupon(SafeDeleteModel):
         null=True,
     )
 
+    # is zero if value is not
     percent_off = models.PositiveIntegerField(
         verbose_name=_("Percentage off"),
         null=True,
     )
 
-    # Code generator:
-    # ''.join(random.choices(string.ascii_uppercase.replace("O", "")
-    #                           + string.digits.replace("0", ""), k=8))
-    code = models.CharField(
-        verbose_name=_("Code"),
-        max_length=253,
-    )
-
-    start_time = models.DateTimeField(verbose_name=_("Start time"), )
-
-    end_time = models.DateTimeField(verbose_name=_("End time"), )
-
     max_use = models.PositiveIntegerField()
 
     max_use_per_user = models.PositiveIntegerField()
-
-    owner = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name=_("User"),
-        related_name='coupons',
-    )
 
     details = models.TextField(
         verbose_name=_("Details"),
@@ -415,28 +399,28 @@ class Coupon(SafeDeleteModel):
 
     applicable_retirements = models.ManyToManyField(
         'retirement.Retirement',
-        related_name="applicable_coupons",
+        related_name="applicable_%(class)ss",
         verbose_name=_("Applicable retirements"),
         blank=True,
     )
 
     applicable_timeslots = models.ManyToManyField(
         'workplace.TimeSlot',
-        related_name="applicable_coupons",
+        related_name="applicable_%(class)ss",
         verbose_name=_("Applicable timeslots"),
         blank=True,
     )
 
     applicable_packages = models.ManyToManyField(
         Package,
-        related_name="applicable_coupons",
+        related_name="applicable_%(class)ss",
         verbose_name=_("Applicable packages"),
         blank=True,
     )
 
     applicable_memberships = models.ManyToManyField(
         Membership,
-        related_name="applicable_coupons",
+        related_name="applicable_%(class)ss",
         verbose_name=_("Applicable memberships"),
         blank=True,
     )
@@ -448,6 +432,33 @@ class Coupon(SafeDeleteModel):
     applicable_product_types = models.ManyToManyField(
         ContentType,
         blank=True,
+    )
+
+    class Meta:
+        abstract = True
+
+
+class Coupon(AbstractCoupon):
+    """
+    Represents a coupon that provides a discount on various products.
+    """
+
+    start_time = models.DateTimeField(verbose_name=_("Start time"), )
+
+    end_time = models.DateTimeField(verbose_name=_("End time"), )
+
+    code = models.CharField(
+        verbose_name=_("Code"),
+        max_length=253,
+    )
+
+    #  The "owner" of the instance is the buyer of the coupon, but not
+    #  necessarily the one that will use it.
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_("User"),
+        related_name='coupons',
     )
 
     users = models.ManyToManyField(
@@ -462,6 +473,23 @@ class Coupon(SafeDeleteModel):
 
     def __str__(self):
         return self.code
+
+    def generate_code(self):
+        self.code = ''.join(random.choices(
+            string.ascii_uppercase.replace("O", "") +
+            string.digits.replace("0", ""), k=8))
+
+
+class MembershipCoupon(AbstractCoupon):
+    """
+    Represents a coupon that should be automatically generated when
+    subscribing to a membership
+    """
+
+    # membership with which this coupon is given
+    membership = models.ForeignKey(Membership, on_delete=models.CASCADE)
+
+    history = HistoricalRecords()
 
 
 class CouponUser(SafeDeleteModel):

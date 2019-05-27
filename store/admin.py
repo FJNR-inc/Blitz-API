@@ -6,7 +6,8 @@ from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 from simple_history.admin import SimpleHistoryAdmin
 
 from .models import (Membership, Order, OrderLine, Package, PaymentProfile,
-                     CustomPayment, Coupon, CouponUser, Refund, )
+                     CustomPayment, Coupon, MembershipCoupon, CouponUser,
+                     Refund, )
 from .resources import (MembershipResource, OrderResource, OrderLineResource,
                         PackageResource, CustomPaymentResource, CouponResource,
                         CouponUserResource, RefundResource, )
@@ -196,5 +197,6 @@ admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderLine, OrderLineAdmin)
 admin.site.register(PaymentProfile, PaymentProfileAdmin)
 admin.site.register(Coupon, CouponAdmin)
+admin.site.register(MembershipCoupon)
 admin.site.register(CouponUser, CouponUserAdmin)
 admin.site.register(Refund, RefundAdmin)

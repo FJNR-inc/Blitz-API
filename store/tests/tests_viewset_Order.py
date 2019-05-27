@@ -33,10 +33,8 @@ from .paysafe_sample_responses import (
     SAMPLE_CARD_REFUSED,
 )
 
-from ..models import (
-    Package, Order, OrderLine, Membership, PaymentProfile,
-    Coupon, CouponUser,
-)
+from ..models import (Package, Order, OrderLine, Membership, PaymentProfile,
+                      Coupon, CouponUser, MembershipCoupon)
 
 User = get_user_model()
 
@@ -1959,6 +1957,104 @@ class OrderTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @responses.activate
+    def test_create_with_membership_coupon(self):
+        """
+        Ensure we can order a membership that includes a membership coupon
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        membership_coupon = MembershipCoupon.objects.create(
+            value=100,
+            percent_off=0,
+            max_use=4,
+            max_use_per_user=4,
+            details="",
+            membership=self.membership,
+        )
+
+        membership_coupon.applicable_product_types.set(
+            [ContentType.objects.get_for_model(Membership)]
+        )
+
+        membership_coupon.save()
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'quantity': 1,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+
+        del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['order']
+
+        content = {
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'quantity': 1,
+                'coupon': None,
+                'coupon_real_value': 0.0,
+                'cost': 50.0,
+            }],
+            'user': 'http://testserver/users/' + str(self.admin.id),
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '1',
+            'settlement_id': '1',
+            'reference_number': '751',
+        }
+
+        self.assertEqual(response_data, content)
+
+        coupon = Coupon.objects.create(
+            value=100,
+            percent_off=0,
+            max_use=4,
+            max_use_per_user=4,
+            details="",
+            start_time=timezone.now(),
+            end_time=timezone.now()+self.membership.duration,
+            owner=self.user
+        )
+
+        coupon.applicable_product_types.set(
+            [ContentType.objects.get_for_model(Membership)]
+        )
+
+        self.assertEqual(self.user.coupons.all().count(), 1)
+        self.assertEqual(self.user.coupons.all()[0], coupon)
 
     def test_update(self):
         """
