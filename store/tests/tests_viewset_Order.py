@@ -1965,6 +1965,8 @@ class OrderTests(APITestCase):
         """
         self.client.force_authenticate(user=self.admin)
 
+        nb_coupon_start = self.admin.coupons.all().count()
+
         membership_coupon = MembershipCoupon.objects.create(
             value=100,
             percent_off=0,
@@ -2038,23 +2040,27 @@ class OrderTests(APITestCase):
 
         self.assertEqual(response_data, content)
 
-        coupon = Coupon.objects.create(
-            value=100,
-            percent_off=0,
-            max_use=4,
-            max_use_per_user=4,
-            details="",
-            start_time=timezone.now(),
-            end_time=timezone.now()+self.membership.duration,
-            owner=self.user
+        self.assertEqual(self.admin.coupons.all().count(), 1 + nb_coupon_start)
+
+        new_coupon = self.admin.coupons.all()[0]
+
+        self.assertEqual(new_coupon.value, 100)
+        self.assertEqual(new_coupon.percent_off, 0)
+        self.assertEqual(new_coupon.max_use, 4)
+        self.assertEqual(new_coupon.max_use_per_user, 4)
+        self.assertEqual(new_coupon.details, "")
+
+        self.assertTrue(
+            timezone.now() - timedelta(minutes=1) <
+            new_coupon.start_time <
+            timezone.now()
         )
 
-        coupon.applicable_product_types.set(
-            [ContentType.objects.get_for_model(Membership)]
+        self.assertTrue(
+            timezone.now() + self.membership.duration - timedelta(minutes=1) <
+            new_coupon.end_time <
+            timezone.now() + self.membership.duration
         )
-
-        self.assertEqual(self.user.coupons.all().count(), 1)
-        self.assertEqual(self.user.coupons.all()[0], coupon)
 
     def test_update(self):
         """
