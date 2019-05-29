@@ -818,6 +818,7 @@ class ReservationTests(APITestCase):
         self.reservation.save()
 
     @responses.activate
+    @override_settings(ADMINS=[("You", "you@example.com")])
     def test_delete_scheduler_error(self):
         """
         Ensure emails were sent to admins if the API fails to schedule
