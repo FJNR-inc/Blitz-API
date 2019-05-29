@@ -25,7 +25,7 @@ script:
 after_success:
   - docker-compose run -e TRAVIS_JOB_ID -e TRAVIS_BRANCH -e TRAVIS api coveralls
   - python utils/write_secure_env.py
-  - docker-compose run api bash utils/deploy.sh
+  - bash utils/deploy.sh
 env:
   global:
   - DEBUG=True
