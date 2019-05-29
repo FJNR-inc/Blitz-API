@@ -4,9 +4,9 @@ services:
   db:
     image: postgres:latest
     environment:
-      POSTGRES_DB: ${DATABASE_NAME}
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: blitz
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: my_password
     volumes:
       - db:/var/lib/postgresql/data
     ports:
