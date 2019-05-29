@@ -89,7 +89,7 @@ class TimeSlotTests(APITestCase):
         cls.time_slot_active = TimeSlot.objects.create(
             name="evening_time_slot_active",
             period=cls.period_active,
-            price=3,
+            price=None,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 18)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 22)),
         )
@@ -121,6 +121,7 @@ class TimeSlotTests(APITestCase):
         )
 
         content = {
+            'billing_price': 10,
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
             'places_remaining': 0,
@@ -170,6 +171,7 @@ class TimeSlotTests(APITestCase):
         del response_data['url']
 
         content = {
+            'billing_price': 3,
             'end_time': data['end_time'].isoformat(),
             'price': '3.00',
             'places_remaining': 40,
@@ -494,6 +496,7 @@ class TimeSlotTests(APITestCase):
             'id': self.time_slot_active.id,
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
+            'billing_price': 10,
             'places_remaining': 40,
             'reservations': [],
             'reservations_canceled': [],
@@ -571,6 +574,7 @@ class TimeSlotTests(APITestCase):
             'id': self.time_slot.id,
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
+            'billing_price': 10.00,
             'places_remaining': 40,
             'reservations': [],
             'reservations_canceled': [
@@ -644,6 +648,7 @@ class TimeSlotTests(APITestCase):
             'id': self.time_slot.id,
             'end_time': response_data['end_time'],
             'price': '1000.00',
+            'billing_price': 1000,
             'places_remaining': 38,
             'reservations': [
                 f'http://testserver/reservations/{self.reservation_admin.id}',
@@ -813,6 +818,7 @@ class TimeSlotTests(APITestCase):
             'id': self.time_slot.id,
             'end_time': response_data['end_time'],
             'price': '1000.00',
+            'billing_price': 1000,
             'places_remaining': 40,
             'reservations': [],
             'reservations_canceled': [
@@ -910,6 +916,7 @@ class TimeSlotTests(APITestCase):
             'id': self.time_slot.id,
             'end_time': response_data['end_time'],
             'price': '1000.00',
+            'billing_price': 1000,
             'places_remaining': 40,
             'reservations': [],
             'reservations_canceled': [
@@ -1115,7 +1122,8 @@ class TimeSlotTests(APITestCase):
             'results': [{
                 'id': self.time_slot_active.id,
                 'end_time': data['results'][0]['end_time'],
-                'price': '3.00',
+                'price': None,
+                'billing_price': 3,
                 'places_remaining': 40,
                 'reservations': [],
                 'reservations_canceled': [],
@@ -1177,6 +1185,7 @@ class TimeSlotTests(APITestCase):
                 'end_time': data['results'][0]['end_time'],
                 'period': f'http://testserver/periods/{self.period.id}',
                 'price': '3.00',
+                'billing_price': 3.0,
                 'places_remaining': 38,
                 'reservations': [
                     f'http://testserver/reservations/'
@@ -1208,7 +1217,8 @@ class TimeSlotTests(APITestCase):
             }, {
                 'id': self.time_slot_active.id,
                 'end_time': data['results'][1]['end_time'],
-                'price': '3.00',
+                'price': None,
+                'billing_price': 3.0,
                 'places_remaining': 40,
                 'reservations': [],
                 'reservations_canceled': [],
@@ -1292,6 +1302,7 @@ class TimeSlotTests(APITestCase):
                 ],
                 'reservations_canceled': [],
                 'price': '3.00',
+                "billing_price": 3,
                 'start_time': self.time_slot.start_time.isoformat(),
                 'url': f'http://testserver/time_slots/{self.time_slot.id}',
                 "workplace": {
@@ -1369,7 +1380,8 @@ class TimeSlotTests(APITestCase):
         content = {
             'id': self.time_slot_active.id,
             'end_time': self.time_slot_active.end_time.isoformat(),
-            'price': '3.00',
+            'price': None,
+            'billing_price': 3,
             'places_remaining': 40,
             'reservations': [],
             'reservations_canceled': [],
@@ -1444,6 +1456,7 @@ class TimeSlotTests(APITestCase):
             'end_time': data['end_time'],
             'period': f'http://testserver/periods/{self.period.id}',
             'price': '3.00',
+            'billing_price': 3,
             'places_remaining': 38,
             'reservations': [
                 f'http://testserver/reservations/{self.reservation_admin.id}',

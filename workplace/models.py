@@ -198,6 +198,13 @@ class TimeSlot(SafeDeleteModel):
     def __str__(self):
         return str(self.start_time) + " - " + str(self.end_time)
 
+    @property
+    def billing_price(self):
+        if self.price:
+            return self.price
+        else:
+            return self.period.price
+
 
 class Reservation(SafeDeleteModel):
     """Represents a user registration to a TimeSlot"""
