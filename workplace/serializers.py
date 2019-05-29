@@ -283,6 +283,7 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
 
 class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
+    billing_price = serializers.ReadOnlyField()
     places_remaining = serializers.SerializerMethodField()
     reservations = serializers.SerializerMethodField()
     reservations_canceled = serializers.SerializerMethodField()

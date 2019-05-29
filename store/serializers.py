@@ -548,7 +548,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     timeslot = reservation_orderline.content_object
                     reservations = timeslot.reservations.filter(is_active=True)
                     reserved = reservations.count()
-                    if timeslot.price > user.tickets:
+                    if timeslot.billing_price > user.tickets:
                         raise serializers.ValidationError({
                             'non_field_errors': [_(
                                 "You don't have enough tickets to make this "

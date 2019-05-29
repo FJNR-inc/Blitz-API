@@ -46,3 +46,39 @@ class TimeSlotTests(APITestCase):
             time_slot.__str__(),
             str(time_slot.start_time) + " - " + str(time_slot.end_time)
         )
+
+    def test_billing_price(self):
+        """
+        Ensure we get the price attribute if it is not None when calling
+        get_price_or_default()
+        """
+
+        time_slot = TimeSlot.objects.create(
+            name="random_time_slot",
+            period=self.period,
+            price=1,
+            start_time=timezone.now(),
+            end_time=timezone.now() + timedelta(hours=4),
+        )
+
+        # For this test to make sense, the period price and the timeslot
+        # price must not be equal
+        self.assertNotEqual(self.period.price, time_slot.price)
+
+        self.assertEqual(time_slot.billing_price, time_slot.price)
+
+    def test_billing_price__price_none(self):
+        """
+        Ensure we get the period's price if the price attribute is None when
+        calling get_price_or_default()
+        """
+
+        time_slot = TimeSlot.objects.create(
+            name="random_time_slot",
+            period=self.period,
+            price=None,
+            start_time=timezone.now(),
+            end_time=timezone.now() + timedelta(hours=4),
+        )
+
+        self.assertEqual(time_slot.billing_price, self.period.price)

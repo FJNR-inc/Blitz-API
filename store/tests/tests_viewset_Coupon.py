@@ -1129,6 +1129,7 @@ class CouponTests(APITestCase):
                     'has_shared_rooms': True,
                 }],
                 "applicable_timeslots": [{
+                    'billing_price': 1.0,
                     'end_time': '2130-01-15T12:00:00-05:00',
                     'id': self.period.id,
                     'period': 'http://testserver/periods/' +
@@ -1345,6 +1346,7 @@ class CouponTests(APITestCase):
                 'has_shared_rooms': True,
             }],
             "applicable_timeslots": [{
+                'billing_price': 1.0,
                 'end_time': '2130-01-15T12:00:00-05:00',
                 'id': self.period.id,
                 'period': 'http://testserver/periods/' + str(self.period.id),
