@@ -21,7 +21,8 @@ from rest_framework.validators import UniqueValidator
 
 from blitz_api.serializers import UserSerializer
 from blitz_api.services import (check_if_translated_field,
-                                remove_translation_fields)
+                                remove_translation_fields,
+                                getMessageTranslate)
 from store.exceptions import PaymentAPIError
 from store.models import Order, OrderLine, PaymentProfile, Refund
 from store.services import (charge_payment,
@@ -127,17 +128,17 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
     def validate(self, attr):
         err = {}
         if not check_if_translated_field('name', attr):
-            err['name'] = _("This field is required.")
+            err.update(getMessageTranslate('name', attr, True))
         if not check_if_translated_field('details', attr):
-            err['details'] = _("This field is required.")
+            err.update(getMessageTranslate('details', attr, True))
         if not check_if_translated_field('country', attr):
-            err['country'] = _("This field is required.")
+            err.update(getMessageTranslate('country', attr, True))
         if not check_if_translated_field('state_province', attr):
-            err['state_province'] = _("This field is required.")
+            err.update(getMessageTranslate('state_province', attr, True))
         if not check_if_translated_field('city', attr):
-            err['city'] = _("This field is required.")
+            err.update(getMessageTranslate('city', attr, True))
         if not check_if_translated_field('address_line1', attr):
-            err['address_line1'] = _("This field is required.")
+            err.update(getMessageTranslate('address_line1', attr, True))
         if not check_if_translated_field('timezone', attr):
             err['timezone'] = _("This field is required.")
         if not check_if_translated_field('postal_code', attr):
