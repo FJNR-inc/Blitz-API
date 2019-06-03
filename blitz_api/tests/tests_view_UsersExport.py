@@ -1,4 +1,5 @@
 import json
+import re
 
 from rest_framework import status
 from rest_framework.response import Response
@@ -24,6 +25,7 @@ class UsersTests(APITestCase):
         cls.client = APIClient()
         cls.client_authenticate = APIClient()
         cls.export_url = reverse('user-export')
+        cls.regex_file_name = f'({settings.MEDIA_ROOT}.*\\.xls)'
 
     def setUp(self):
         self.user = UserFactory()
@@ -62,26 +64,16 @@ class UsersTests(APITestCase):
             1000,
         )
 
-        """
-        response_export_file: Response = self.client.get(
-            export_response['file_url']
-        )
+        self.assertIn(settings.MEDIA_ROOT,
+                      export_response['file_url'],
+                      export_response['file_url'])
 
-        self.assertNotEqual(
-            response_export_file.status_code,
-            status.HTTP_404_NOT_FOUND,
-            export_response['file_url']
-        )
+        file_path = re.findall(self.regex_file_name,
+                               export_response['file_url'])[0]
 
-        self.assertEqual(
-            response_export_file.status_code,
-            status.HTTP_200_OK,
-            response_export_file.content
-        )
+        wb = open_workbook(file_path)
 
-        wb = open_workbook(file_contents=response.content)
-
-        first_sheet: Sheet = wb.sheets[0]
+        first_sheet: Sheet = wb.sheets()[0]
 
         col_infos = []
 
@@ -89,15 +81,15 @@ class UsersTests(APITestCase):
             try:
                 col_infos.append({
                     'col_number': col_number,
-                    'col_name': first_sheet.cell(1, col_number).value
+                    'col_name': first_sheet.cell(0, col_number).value
                 })
 
-            except:
+            except Exception:
                 pass
 
         users = []
 
-        for row in range(first_sheet.nrows):
+        for row in range(1, first_sheet.nrows):
             user_data = dict()
             try:
                 for col_info in col_infos:
@@ -107,7 +99,7 @@ class UsersTests(APITestCase):
                         col_info['col_number']).value
                     user_data[col_info['col_name']] = user_info
 
-            except:
+            except Exception:
                 pass
 
             users.append(user_data)
@@ -120,4 +112,4 @@ class UsersTests(APITestCase):
             users[0]['first_name'],
             user_0.first_name,
             users[0]
-        )"""
+        )
