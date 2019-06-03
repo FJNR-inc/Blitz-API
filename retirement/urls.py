@@ -28,11 +28,11 @@ class OptionalSlashSimpleRouter(SimpleRouter):
         self.trailing_slash = '/?'
 
 
-app_name = "retirement"
+app_name = "retreat"
 
 # Create a router and register our viewsets with it.
 router = OptionalSlashSimpleRouter()
-router.register('retirements', views.RetirementViewSet)
+router.register('retreats', views.RetreatViewSet)
 router.register('pictures', views.PictureViewSet)
 router.register('reservations', views.ReservationViewSet)
 router.register('wait_queues', views.WaitQueueViewSet)

@@ -14,13 +14,13 @@ from store.services import (PAYSAFE_EXCEPTION,
 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
-def notify_reserved_retirement_seat(user, retirement):
+def notify_reserved_retreat_seat(user, retreat):
     """
     This function sends an email to notify a user that he has a reserved seat
-    to a retirement for 24h hours.
+    to a retreat for 24h hours.
     """
 
-    merge_data = {'RETIREMENT_NAME': retirement.name}
+    merge_data = {'RETREAT_NAME': retreat.name}
 
     plain_msg = render_to_string("reserved_place.txt", merge_data)
     msg_html = render_to_string("reserved_place.html", merge_data)
@@ -34,13 +34,13 @@ def notify_reserved_retirement_seat(user, retirement):
     )
 
 
-def send_retirement_7_days_email(user, retirement):
+def send_retreat_7_days_email(user, retreat):
     """
-    This function sends an email to notify a user that a retirement in which he
+    This function sends an email to notify a user that a retreat in which he
     has bought a seat is starting in 7 days.
     """
 
-    merge_data = {'RETIREMENT': retirement}
+    merge_data = {'RETREAT': retreat}
 
     plain_msg = render_to_string("reminder.txt", merge_data)
     msg_html = render_to_string("reminder.html", merge_data)
@@ -54,14 +54,14 @@ def send_retirement_7_days_email(user, retirement):
     )
 
 
-def send_post_retirement_email(user, retirement):
+def send_post_retreat_email(user, retreat):
     """
-    This function sends an email to get back to a user after a retirement has
+    This function sends an email to get back to a user after a retreat has
     ended.
     """
 
     merge_data = {
-        'RETIREMENT': retirement,
+        'RETREAT': retreat,
         'USER': user,
     }
 
@@ -77,7 +77,7 @@ def send_post_retirement_email(user, retirement):
     )
 
 
-def refund_retirement(reservation, refund_rate, refund_reason):
+def refund_retreat(reservation, refund_rate, refund_reason):
     """
     reservation: Reservation model instance
     refund_rate: integer from 0 to 100 defining percentage of amount refunded
@@ -89,7 +89,7 @@ def refund_retirement(reservation, refund_rate, refund_reason):
     """
     orderline = reservation.order_line
     user = orderline.order.user
-    retirement = reservation.retirement
+    retreat = reservation.retreat
     previous_refunds = orderline.refunds
     refunded_amount = Decimal(0)
 
@@ -98,7 +98,7 @@ def refund_retirement(reservation, refund_rate, refund_reason):
             previous_refunds.all().values_list('amount', flat=True)
         )
 
-    amount_to_refund = (retirement.price - refunded_amount) * refund_rate
+    amount_to_refund = (retreat.price - refunded_amount) * refund_rate
 
     tax = round(amount_to_refund * Decimal(TAX_RATE), 2)
     amount_to_refund *= Decimal(TAX_RATE + 1)

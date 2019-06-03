@@ -527,8 +527,8 @@ def validate_coupon_for_order(coupon, order):
         | Q(content_type__model='membership',
             object_id__in=coupon.applicable_memberships.all().
             values_list('id', flat=True))
-        | Q(content_type__model='retirement',
-            object_id__in=coupon.applicable_retirements.all().
+        | Q(content_type__model='retreat',
+            object_id__in=coupon.applicable_retreats.all().
             values_list('id', flat=True))
     )
     if not applicable_orderlines:

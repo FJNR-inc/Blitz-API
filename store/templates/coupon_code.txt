@@ -14,7 +14,7 @@ Vous avez été sélectionné pour recevoir un code promotionnel. Vous pourrez a
 {% else %} 	* Nombre d'utilisation accordées: illimité tant que disponible
 {% endif %} 	* Produit(s) applicable(s): {%for item in COUPON.applicable_product_types.all%}
 
-Tous les {{item.name|lower}}s {% endfor %} {%for item in COUPON.applicable_retirements.all%}
+Tous les {{item.name|lower}}s {% endfor %} {%for item in COUPON.applicable_retreats.all%}
 
 Retraite: {{item.name}} {% endfor %} {%for item in COUPON.applicable_packages.all%}
 

@@ -62,7 +62,7 @@ class Order(models.Model):
         orderlines = self.order_lines.filter(
             models.Q(content_type__model='membership') |
             models.Q(content_type__model='package') |
-            models.Q(content_type__model='retirement')
+            models.Q(content_type__model='retreat')
         )
         for orderline in orderlines:
             cost += orderline.cost * orderline.quantity
@@ -397,10 +397,10 @@ class AbstractCoupon(SafeDeleteModel):
         blank=True,
     )
 
-    applicable_retirements = models.ManyToManyField(
-        'retirement.Retirement',
+    applicable_retreats = models.ManyToManyField(
+        'retirement.Retreat',
         related_name="applicable_%(class)ss",
-        verbose_name=_("Applicable retirements"),
+        verbose_name=_("Applicable retreats"),
         blank=True,
     )
 

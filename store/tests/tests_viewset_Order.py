@@ -21,7 +21,7 @@ from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.models import AcademicLevel
 
 from workplace.models import TimeSlot, Period, Workplace
-from retirement.models import Retirement, WaitQueueNotification, WaitQueue
+from retirement.models import Retreat, WaitQueueNotification, WaitQueue
 
 from .paysafe_sample_responses import (
     SAMPLE_PROFILE_RESPONSE,
@@ -163,10 +163,10 @@ class OrderTests(APITestCase):
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
-        self.retirement = Retirement.objects.create(
-            name="mega_retirement",
+        self.retreat = Retreat.objects.create(
+            name="mega_retreat",
             seats=400,
-            details="This is a description of the mega retirement.",
+            details="This is a description of the mega retreat.",
             address_line1="123 random street",
             postal_code="123 456",
             state_province="Random state",
@@ -183,10 +183,10 @@ class OrderTests(APITestCase):
             reserved_seats=1,
             has_shared_rooms=True,
         )
-        self.retirement_no_seats = Retirement.objects.create(
-            name="no_place_left_retirement",
+        self.retreat_no_seats = Retreat.objects.create(
+            name="no_place_left_retreat",
             seats=0,
-            details="This is a description of the full retirement.",
+            details="This is a description of the full retreat.",
             address_line1="123 random street",
             postal_code="123 456",
             state_province="Random state",
@@ -252,8 +252,8 @@ class OrderTests(APITestCase):
                 'object_id': self.time_slot.id,
                 'quantity': 1,
             }, {
-                'content_type': 'retirement',
-                'object_id': self.retirement.id,
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -316,8 +316,8 @@ class OrderTests(APITestCase):
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
             }, {
-                'content_type': 'retirement',
-                'object_id': self.retirement.id,
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
                 'quantity': 1,
                 'coupon': None,
                 'coupon_real_value': 0.0,
@@ -355,13 +355,13 @@ class OrderTests(APITestCase):
         admin.save()
 
         # Validate that reserved_seats count is decremented
-        self.retirement.refresh_from_db()
-        self.assertFalse(self.retirement.reserved_seats)
-        self.retirement.reserved_seats = 1
-        self.retirement.save()
+        self.retreat.refresh_from_db()
+        self.assertFalse(self.retreat.reserved_seats)
+        self.retreat.reserved_seats = 1
+        self.retreat.save()
 
         # 1 email for the order details
-        # 1 email for the retirement informations
+        # 1 email for the retreat informations
         self.assertEqual(len(mail.outbox), 2)
 
     @responses.activate
@@ -935,10 +935,10 @@ class OrderTests(APITestCase):
         self.assertEqual(admin.membership, None)
 
     @responses.activate
-    def test_create_no_place_left_retirement(self):
+    def test_create_no_place_left_retreat(self):
         """
         Ensure we can't create an order with reservations if the requested
-        retirement has no place left.
+        retreat has no place left.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -960,8 +960,8 @@ class OrderTests(APITestCase):
                 'object_id': self.package.id,
                 'quantity': 2,
             }, {
-                'content_type': 'retirement',
-                'object_id': self.retirement_no_seats.id,
+                'content_type': 'retreat',
+                'object_id': self.retreat_no_seats.id,
                 'quantity': 1,
             }],
         }
@@ -976,7 +976,7 @@ class OrderTests(APITestCase):
 
         content = {
             'non_field_errors': [
-                "There are no places left in the requested retirement."
+                "There are no places left in the requested retreat."
             ]
         }
 
@@ -991,16 +991,16 @@ class OrderTests(APITestCase):
         self.assertEqual(admin.membership, None)
 
     @responses.activate
-    def test_create_reserved_retirement_not_authorized(self):
+    def test_create_reserved_retreat_not_authorized(self):
         """
         Ensure we can't create an order with reservations if the requested
-        retirement has only reserved seats and the user has not been notified
+        retreat has only reserved seats and the user has not been notified
         (not on the mailing list).
         """
         self.client.force_authenticate(user=self.user)
 
-        self.retirement_no_seats.reserved_seats = 1
-        self.retirement_no_seats.save()
+        self.retreat_no_seats.reserved_seats = 1
+        self.retreat_no_seats.save()
 
         responses.add(
             responses.POST,
@@ -1012,8 +1012,8 @@ class OrderTests(APITestCase):
         data = {
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
-                'content_type': 'retirement',
-                'object_id': self.retirement_no_seats.id,
+                'content_type': 'retreat',
+                'object_id': self.retreat_no_seats.id,
                 'quantity': 1,
             }],
         }
@@ -1028,7 +1028,7 @@ class OrderTests(APITestCase):
 
         content = {
             'non_field_errors': [
-                "There are no places left in the requested retirement."
+                "There are no places left in the requested retreat."
             ]
         }
 
@@ -1037,26 +1037,26 @@ class OrderTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     @responses.activate
-    def test_create_reserved_retirement(self):
+    def test_create_reserved_retreat(self):
         """
         Ensure we can create an order with reservations if the requested
-        retirement has reserved seats and the user has been notified
+        retreat has reserved seats and the user has been notified
         (on the mailing list).
         """
         self.client.force_authenticate(user=self.user)
 
-        self.retirement_no_seats.reserved_seats = 1
-        self.retirement_no_seats.save()
+        self.retreat_no_seats.reserved_seats = 1
+        self.retreat_no_seats.save()
         # The API checks if the user has been notified for a reserved seat in
-        # the specified retirement in the past.
+        # the specified retreat in the past.
         WaitQueueNotification.objects.create(
             user=self.user,
-            retirement=self.retirement_no_seats
+            retreat=self.retreat_no_seats
         )
         # The API should unsubscribe the user from the mailing list.
         WaitQueue.objects.create(
             user=self.user,
-            retirement=self.retirement_no_seats,
+            retreat=self.retreat_no_seats,
         )
 
         responses.add(
@@ -1069,8 +1069,8 @@ class OrderTests(APITestCase):
         data = {
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
-                'content_type': 'retirement',
-                'object_id': self.retirement_no_seats.id,
+                'content_type': 'retreat',
+                'object_id': self.retreat_no_seats.id,
                 'quantity': 1,
             }],
         }
@@ -1097,7 +1097,7 @@ class OrderTests(APITestCase):
 
         content = {
             'order_lines': [{
-                'content_type': 'retirement',
+                'content_type': 'retreat',
                 'quantity': 1,
                 'coupon': None,
                 'coupon_real_value': 0.0,
@@ -1113,13 +1113,13 @@ class OrderTests(APITestCase):
         self.assertEqual(response_data, content)
 
         # 1 email for the order details
-        # 1 email for the retirement informations
+        # 1 email for the retreat informations
         self.assertEqual(len(mail.outbox), 2)
 
     @responses.activate
-    def test_create_retirement_twice(self):
+    def test_create_retreat_twice(self):
         """
-        Ensure we can't create an order with a reservation for a retirement
+        Ensure we can't create an order with a reservation for a retreat
         to which the user is already registered.
         """
         self.client.force_authenticate(user=self.user)
@@ -1138,8 +1138,8 @@ class OrderTests(APITestCase):
         data = {
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
-                'content_type': 'retirement',
-                'object_id': self.retirement.id,
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
                 'quantity': 1,
             }],
         }
@@ -1166,7 +1166,7 @@ class OrderTests(APITestCase):
 
         content = {
             'order_lines': [{
-                'content_type': 'retirement',
+                'content_type': 'retreat',
                 'quantity': 1,
                 'coupon': None,
                 'coupon_real_value': 0.0,
@@ -1182,7 +1182,7 @@ class OrderTests(APITestCase):
         self.assertEqual(response_data, content)
 
         # 1 email for the order details
-        # 1 email for the retirement informations
+        # 1 email for the retreat informations
         self.assertEqual(len(mail.outbox), 2)
 
         # Duplicate order
@@ -1202,8 +1202,8 @@ class OrderTests(APITestCase):
 
         content = {
             'non_field_errors': [
-                "You already are registered to this retirement: {0}.".format(
-                    str(self.retirement)
+                "You already are registered to this retreat: {0}.".format(
+                    str(self.retreat)
                 )
             ]
         }
@@ -1211,7 +1211,7 @@ class OrderTests(APITestCase):
         self.assertEqual(response_data, content)
 
     @responses.activate
-    def test_create_retirement_missing_user_info(self):
+    def test_create_retreat_missing_user_info(self):
         """
         Ensure we can't create an order with reservations if the requesting
         user has an incomplete profile.
@@ -1232,8 +1232,8 @@ class OrderTests(APITestCase):
                 'object_id': self.package.id,
                 'quantity': 2,
             }, {
-                'content_type': 'retirement',
-                'object_id': self.retirement_no_seats.id,
+                'content_type': 'retreat',
+                'object_id': self.retreat_no_seats.id,
                 'quantity': 1,
             }],
         }
@@ -1249,7 +1249,7 @@ class OrderTests(APITestCase):
         content = {
             'non_field_errors': [
                 "Incomplete user profile. 'phone' and 'city' field must "
-                "be filled in the user profile to book a retirement."
+                "be filled in the user profile to book a retreat."
             ]
         }
 
@@ -2407,8 +2407,8 @@ class OrderTests(APITestCase):
                 'object_id': self.time_slot.id,
                 'quantity': 1,
             }, {
-                'content_type': 'retirement',
-                'object_id': self.retirement.id,
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -2464,8 +2464,8 @@ class OrderTests(APITestCase):
                 'object_id': self.time_slot.id,
                 'quantity': 1,
             }, {
-                'content_type': 'retirement',
-                'object_id': self.retirement.id,
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
