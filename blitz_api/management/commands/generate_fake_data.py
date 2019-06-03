@@ -3,7 +3,7 @@ from blitz_api.factories import UserFactory, OrganizationFactory, \
 from django.core.management.base import BaseCommand
 
 from blitz_api.models import User, Organization, Address
-from retirement.models import Retirement
+from retirement.models import Retreat
 
 
 class Command(BaseCommand):
@@ -33,7 +33,7 @@ class Command(BaseCommand):
             f"Orga(s) in database"))
 
         RetirementFactory.create_batch(nb_user)
-        nb_organization_in_db = Retirement.objects.all().count()
+        nb_organization_in_db = Retreat.objects.all().count()
         self.stdout.write(self.style.SUCCESS(
             f"{nb_organization_in_db} "
             f"Retirement(s) in database"))

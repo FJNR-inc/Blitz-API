@@ -17,7 +17,7 @@ from rest_framework.test import APIClient, APITestCase
 from blitz_api.factories import AdminFactory, UserFactory
 from blitz_api.services import remove_translation_fields
 
-from ..models import Retirement
+from ..models import Retreat
 
 User = get_user_model()
 
@@ -34,9 +34,9 @@ class RetirementTests(APITestCase):
         cls.admin = AdminFactory()
 
     def setUp(self):
-        self.retirement = Retirement.objects.create(
-            name="mega_retirement",
-            details="This is a description of the mega retirement.",
+        self.retreat = Retreat.objects.create(
+            name="mega_retreat",
+            details="This is a description of the mega retreat.",
             seats=400,
             address_line1="123 random street",
             postal_code="123 456",
@@ -57,9 +57,9 @@ class RetirementTests(APITestCase):
             has_shared_rooms=True,
         )
 
-        self.retirement2 = Retirement.objects.create(
-            name="ultra_retirement",
-            details="This is a description of the ultra retirement.",
+        self.retreat2 = Retreat.objects.create(
+            name="ultra_retreat",
+            details="This is a description of the ultra retreat.",
             seats=400,
             address_line1="123 random street",
             postal_code="123 456",
@@ -90,7 +90,7 @@ class RetirementTests(APITestCase):
     @responses.activate
     def test_create(self):
         """
-        Ensure we can create a retirement if user has permission.
+        Ensure we can create a retreat if user has permission.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -108,7 +108,7 @@ class RetirementTests(APITestCase):
         )
 
         data = {
-            'name': "random_retirement",
+            'name': "random_retreat",
             'seats': 40,
             'details': "short_description",
             'address_line1': 'random_address_1',
@@ -132,7 +132,7 @@ class RetirementTests(APITestCase):
         }
 
         response = self.client.post(
-            reverse('retirement:retirement-list'),
+            reverse('retreat:retreat-list'),
             data,
             format='json',
         )
@@ -154,7 +154,7 @@ class RetirementTests(APITestCase):
             'state_province': 'Random_State',
             'latitude': None,
             'longitude': None,
-            'name': 'random_retirement',
+            'name': 'random_retreat',
             'next_user_notified': 0,
             'notification_interval': '1 00:00:00',
             'pictures': [],
@@ -194,13 +194,13 @@ class RetirementTests(APITestCase):
 
     def test_create_invalid_refund_rate(self):
         """
-        Ensure we can't create a retirement if refund_rate is not between
+        Ensure we can't create a retreat if refund_rate is not between
         0 and 100%.
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': "random_retirement",
+            'name': "random_retreat",
             'seats': 40,
             'details': "short_description",
             'address_line1': 'random_address_1',
@@ -223,7 +223,7 @@ class RetirementTests(APITestCase):
         }
 
         response = self.client.post(
-            reverse('retirement:retirement-list'),
+            reverse('retreat:retreat-list'),
             data,
             format='json',
         )
@@ -240,12 +240,12 @@ class RetirementTests(APITestCase):
 
     def test_create_without_permission(self):
         """
-        Ensure we can't create a retirement if user has no permission.
+        Ensure we can't create a retreat if user has no permission.
         """
         self.client.force_authenticate(user=self.user)
 
         data = {
-            'name': "random_retirement",
+            'name': "random_retreat",
             'seats': 40,
             'details': "short_description",
             'address_line1': 'random_address_1',
@@ -257,7 +257,7 @@ class RetirementTests(APITestCase):
         }
 
         response = self.client.post(
-            reverse('retirement:retirement-list'),
+            reverse('retreat:retreat-list'),
             data,
             format='json',
         )
@@ -272,12 +272,12 @@ class RetirementTests(APITestCase):
 
     def test_create_duplicate_name(self):
         """
-        Ensure we can't create a retirement with same name.
+        Ensure we can't create a retreat with same name.
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': "mega_retirement",
+            'name': "mega_retreat",
             'seats': 40,
             'details': "short_description",
             'address_line1': 'random_address_1',
@@ -300,7 +300,7 @@ class RetirementTests(APITestCase):
         }
 
         response = self.client.post(
-            reverse('retirement:retirement-list'),
+            reverse('retreat:retreat-list'),
             data,
             format='json',
         )
@@ -313,14 +313,14 @@ class RetirementTests(APITestCase):
 
     def test_create_missing_field(self):
         """
-        Ensure we can't create a retirement when required field are missing.
+        Ensure we can't create a retreat when required field are missing.
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {}
 
         response = self.client.post(
-            reverse('retirement:retirement-list'),
+            reverse('retreat:retreat-list'),
             data,
             format='json',
         )
@@ -351,7 +351,7 @@ class RetirementTests(APITestCase):
 
     def test_create_invalid_field(self):
         """
-        Ensure we can't create a retirement with invalid fields.
+        Ensure we can't create a retreat with invalid fields.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -381,7 +381,7 @@ class RetirementTests(APITestCase):
         }
 
         response = self.client.post(
-            reverse('retirement:retirement-list'),
+            reverse('retreat:retreat-list'),
             data,
             format='json',
         )
@@ -423,7 +423,7 @@ class RetirementTests(APITestCase):
 
     def test_update(self):
         """
-        Ensure we can update a retirement.
+        Ensure we can update a retreat.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -452,8 +452,8 @@ class RetirementTests(APITestCase):
 
         response = self.client.put(
             reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement.id},
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat.id},
             ),
             data,
             format='json',
@@ -463,7 +463,7 @@ class RetirementTests(APITestCase):
             'details': 'short_description',
             'email_content': None,
             'activity_language': 'FR',
-            'id': self.retirement.id,
+            'id': self.retreat.id,
             'address_line1': 'random_address_1',
             'address_line2': None,
             'city': 'New city',
@@ -497,8 +497,8 @@ class RetirementTests(APITestCase):
             'review_url': 'example3.com',
             'place_name': '',
             'users': [],
-            'url': 'http://testserver/retirement/retirements/' +
-                   str(self.retirement.id),
+            'url': 'http://testserver/retreat/retreats/' +
+                   str(self.retreat.id),
             'has_shared_rooms': True,
         }
 
@@ -511,14 +511,14 @@ class RetirementTests(APITestCase):
 
     def test_delete(self):
         """
-        Ensure we can delete a retirement (setting is_active to false).
+        Ensure we can delete a retreat (setting is_active to false).
         """
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.delete(
             reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement.id},
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat.id},
             ),
         )
 
@@ -528,22 +528,22 @@ class RetirementTests(APITestCase):
             response.content,
         )
 
-        self.retirement.refresh_from_db()
-        self.assertFalse(self.retirement.is_active)
+        self.retreat.refresh_from_db()
+        self.assertFalse(self.retreat.is_active)
 
-        self.retirement.is_active = True
+        self.retreat.is_active = True
 
     def test_list(self):
         """
-        Ensure we can list retirements as an unauthenticated user.
-        Only if retirement is_active == True.
+        Ensure we can list retreats as an unauthenticated user.
+        Only if retreat is_active == True.
         """
 
-        self.retirement2.is_active = False
-        self.retirement2.save()
+        self.retreat2.is_active = False
+        self.retreat2.save()
 
         response = self.client.get(
-            reverse('retirement:retirement-list'),
+            reverse('retreat:retreat-list'),
             format='json',
         )
 
@@ -554,9 +554,9 @@ class RetirementTests(APITestCase):
             'results': [
                 {
                     'activity_language': 'FR',
-                    'details': 'This is a description of the mega retirement.',
+                    'details': 'This is a description of the mega retreat.',
                     'email_content': None,
-                    'id': self.retirement.id,
+                    'id': self.retreat.id,
                     'address_line1': '123 random street',
                     'address_line2': None,
                     'city': '',
@@ -565,7 +565,7 @@ class RetirementTests(APITestCase):
                     'state_province': 'Random state',
                     'latitude': None,
                     'longitude': None,
-                    'name': 'mega_retirement',
+                    'name': 'mega_retreat',
                     'pictures': [],
                     'start_time': '2130-01-15T08:00:00-05:00',
                     'end_time': '2130-01-17T12:00:00-05:00',
@@ -590,8 +590,8 @@ class RetirementTests(APITestCase):
                     'review_url': 'example3.com',
                     'place_name': '',
                     'users': [],
-                    'url': 'http://testserver/retirement/retirements/' +
-                           str(self.retirement.id),
+                    'url': 'http://testserver/retreat/retreats/' +
+                           str(self.retreat.id),
                     'has_shared_rooms': True,
                 }
             ]
@@ -603,12 +603,12 @@ class RetirementTests(APITestCase):
 
     def test_list_filtered_by_end_time_gte(self):
         """
-        Ensure we can list retirements filtered by end_time greater
+        Ensure we can list retreats filtered by end_time greater
         than a given date.
         """
 
         response = self.client.get(
-            reverse('retirement:retirement-list') +
+            reverse('retreat:retreat-list') +
             "?end_time__gte=2139-01-01T00:00:00",
             format='json',
         )
@@ -619,9 +619,9 @@ class RetirementTests(APITestCase):
             'previous': None,
             'results': [{
                 'activity_language': 'FR',
-                'details': 'This is a description of the ultra retirement.',
+                'details': 'This is a description of the ultra retreat.',
                 'email_content': None,
-                'id': self.retirement2.id,
+                'id': self.retreat2.id,
                 'address_line1': '123 random street',
                 'address_line2': None,
                 'city': '',
@@ -630,7 +630,7 @@ class RetirementTests(APITestCase):
                 'state_province': 'Random state',
                 'latitude': None,
                 'longitude': None,
-                'name': 'ultra_retirement',
+                'name': 'ultra_retreat',
                 'pictures': [],
                 'start_time': '2140-01-15T08:00:00-05:00',
                 'end_time': '2140-01-17T12:00:00-05:00',
@@ -655,8 +655,8 @@ class RetirementTests(APITestCase):
                 'review_url': 'example3.com',
                 'place_name': '',
                 'users': [],
-                'url': 'http://testserver/retirement/retirements/' +
-                       str(self.retirement2.id),
+                'url': 'http://testserver/retreat/retreats/' +
+                       str(self.retreat2.id),
                 'has_shared_rooms': True,
             }]
         }
@@ -667,21 +667,21 @@ class RetirementTests(APITestCase):
 
     def test_read(self):
         """
-        Ensure we can read a retirement as an unauthenticated user.
+        Ensure we can read a retreat as an unauthenticated user.
         """
 
         response = self.client.get(
             reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement.id},
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat.id},
             ),
         )
 
         content = {
-            'details': 'This is a description of the mega retirement.',
+            'details': 'This is a description of the mega retreat.',
             'email_content': None,
             'activity_language': 'FR',
-            'id': self.retirement.id,
+            'id': self.retreat.id,
             'address_line1': '123 random street',
             'address_line2': None,
             'city': '',
@@ -690,7 +690,7 @@ class RetirementTests(APITestCase):
             'state_province': 'Random state',
             'latitude': None,
             'longitude': None,
-            'name': 'mega_retirement',
+            'name': 'mega_retreat',
             'pictures': [],
             'start_time': '2130-01-15T08:00:00-05:00',
             'end_time': '2130-01-17T12:00:00-05:00',
@@ -715,8 +715,8 @@ class RetirementTests(APITestCase):
             'review_url': 'example3.com',
             'place_name': '',
             'users': [],
-            'url': 'http://testserver/retirement/retirements/' +
-                   str(self.retirement.id),
+            'url': 'http://testserver/retreat/retreats/' +
+                   str(self.retreat.id),
             'has_shared_rooms': True,
         }
 
@@ -726,14 +726,14 @@ class RetirementTests(APITestCase):
 
     def test_read_as_admin(self):
         """
-        Ensure we can read a retirement as an admin user.
+        Ensure we can read a retreat as an admin user.
         """
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
             reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement.id},
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat.id},
             ),
         )
 
@@ -744,10 +744,10 @@ class RetirementTests(APITestCase):
         response_data = remove_translation_fields(response_data)
 
         content = {
-            'details': 'This is a description of the mega retirement.',
+            'details': 'This is a description of the mega retreat.',
             'activity_language': 'FR',
             'email_content': None,
-            'id': self.retirement.id,
+            'id': self.retreat.id,
             'address_line1': '123 random street',
             'address_line2': None,
             'city': '',
@@ -756,7 +756,7 @@ class RetirementTests(APITestCase):
             'state_province': 'Random state',
             'latitude': None,
             'longitude': None,
-            'name': 'mega_retirement',
+            'name': 'mega_retreat',
             'pictures': [],
             'start_time': '2130-01-15T08:00:00-05:00',
             'end_time': '2130-01-17T12:00:00-05:00',
@@ -781,8 +781,8 @@ class RetirementTests(APITestCase):
             'review_url': 'example3.com',
             'place_name': '',
             'users': [],
-            'url': 'http://testserver/retirement/retirements/' +
-                   str(self.retirement.id),
+            'url': 'http://testserver/retreat/retreats/' +
+                   str(self.retreat.id),
             'has_shared_rooms': True,
         }
 
@@ -790,15 +790,15 @@ class RetirementTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_read_non_existent_retirement(self):
+    def test_read_non_existent_retreat(self):
         """
-        Ensure we get not found when asking for a retirement that doesn't
+        Ensure we get not found when asking for a retreat that doesn't
         exist.
         """
 
         response = self.client.get(
             reverse(
-                'retirement:retirement-detail',
+                'retreat:retreat-detail',
                 kwargs={'pk': 999},
             ),
         )
@@ -812,16 +812,16 @@ class RetirementTests(APITestCase):
     def test_reminder_email(self):
         """
         Ensure emails are sent to every user that has a reservation to the
-        targeted retirement.
+        targeted retreat.
         """
 
         with mock.patch(
                 'retirement.views.timezone.now',
-                return_value=self.retirement.start_time):
+                return_value=self.retreat.start_time):
             response = self.client.get(
                 reverse(
-                    'retirement:retirement-remind-users',
-                    kwargs={'pk': self.retirement.id},
+                    'retreat:retreat-remind-users',
+                    kwargs={'pk': self.retreat.id},
                 ),
             )
 
@@ -833,7 +833,7 @@ class RetirementTests(APITestCase):
 
         self.assertEqual(
             len(mail.outbox),
-            self.retirement.reservations.filter(is_active=True).count()
+            self.retreat.reservations.filter(is_active=True).count()
         )
 
     def test_reminder_email_too_early(self):
@@ -841,14 +841,14 @@ class RetirementTests(APITestCase):
         Ensure we can't send emails too early. Prevents spamming by anonymous
         users.
         """
-        FIXED_TIME = self.retirement.start_time - timedelta(days=9)
+        FIXED_TIME = self.retreat.start_time - timedelta(days=9)
 
         with mock.patch(
                 'retirement.views.timezone.now', return_value=FIXED_TIME):
             response = self.client.get(
                 reverse(
-                    'retirement:retirement-remind-users',
-                    kwargs={'pk': self.retirement.id},
+                    'retreat:retreat-remind-users',
+                    kwargs={'pk': self.retreat.id},
                 ),
             )
 
@@ -863,16 +863,16 @@ class RetirementTests(APITestCase):
     def test_recap_email(self):
         """
         Ensure emails are sent to every user that has a reservation to the
-        targeted retirement.
+        targeted retreat.
         """
 
         with mock.patch(
                 'retirement.views.timezone.now',
-                return_value=self.retirement.end_time):
+                return_value=self.retreat.end_time):
             response = self.client.get(
                 reverse(
-                    'retirement:retirement-recap',
-                    kwargs={'pk': self.retirement.id},
+                    'retreat:retreat-recap',
+                    kwargs={'pk': self.retreat.id},
                 ),
             )
 
@@ -884,7 +884,7 @@ class RetirementTests(APITestCase):
 
         self.assertEqual(
             len(mail.outbox),
-            self.retirement.reservations.filter(is_active=True).count()
+            self.retreat.reservations.filter(is_active=True).count()
         )
 
     def test_recap_email_too_early(self):
@@ -892,14 +892,14 @@ class RetirementTests(APITestCase):
         Ensure we can't send emails too early. Prevents spamming by anonymous
         users.
         """
-        FIXED_TIME = self.retirement.end_time - timedelta(days=2)
+        FIXED_TIME = self.retreat.end_time - timedelta(days=2)
 
         with mock.patch(
                 'retirement.views.timezone.now', return_value=FIXED_TIME):
             response = self.client.get(
                 reverse(
-                    'retirement:retirement-recap',
-                    kwargs={'pk': self.retirement.id},
+                    'retreat:retreat-recap',
+                    kwargs={'pk': self.retreat.id},
                 ),
             )
 

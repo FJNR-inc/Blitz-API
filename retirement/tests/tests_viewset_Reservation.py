@@ -29,7 +29,7 @@ from store.tests.paysafe_sample_responses import (SAMPLE_REFUND_RESPONSE,
                                                   SAMPLE_CARD_RESPONSE,
                                                   UNKNOWN_EXCEPTION, )
 
-from ..models import Retirement, Reservation
+from ..models import Retreat, Reservation
 
 User = get_user_model()
 
@@ -53,10 +53,10 @@ class ReservationTests(APITestCase):
         self.client = APIClient()
         self.user = UserFactory()
         self.admin = AdminFactory()
-        self.retirement_type = ContentType.objects.get_for_model(Retirement)
-        self.retirement = Retirement.objects.create(
-            name="mega_retirement",
-            details="This is a description of the mega retirement.",
+        self.retreat_type = ContentType.objects.get_for_model(Retreat)
+        self.retreat = Retreat.objects.create(
+            name="mega_retreat",
+            details="This is a description of the mega retreat.",
             seats=400,
             address_line1="123 random street",
             postal_code="123 456",
@@ -76,9 +76,9 @@ class ReservationTests(APITestCase):
             review_url='example3.com',
             has_shared_rooms=True,
         )
-        self.retirement2 = Retirement.objects.create(
-            name="random_retirement",
-            details="This is a description of the retirement.",
+        self.retreat2 = Retreat.objects.create(
+            name="random_retreat",
+            details="This is a description of the retreat.",
             seats=40,
             address_line1="123 random street",
             postal_code="123 456",
@@ -97,9 +97,9 @@ class ReservationTests(APITestCase):
             review_url='example3.com',
             has_shared_rooms=True,
         )
-        self.retirement_overlap = Retirement.objects.create(
-            name="ultra_retirement",
-            details="This is a description of the ultra retirement.",
+        self.retreat_overlap = Retreat.objects.create(
+            name="ultra_retreat",
+            details="This is a description of the ultra retreat.",
             seats=400,
             address_line1="1234 random street",
             postal_code="654 321",
@@ -127,13 +127,13 @@ class ReservationTests(APITestCase):
         self.order_line = OrderLine.objects.create(
             order=self.order,
             quantity=1,
-            content_type=self.retirement_type,
-            object_id=self.retirement.id,
-            cost=self.retirement.price,
+            content_type=self.retreat_type,
+            object_id=self.retreat.id,
+            cost=self.retreat.price,
         )
         self.reservation = Reservation.objects.create(
             user=self.user,
-            retirement=self.retirement,
+            retreat=self.retreat,
             order_line=self.order_line,
             is_active=True,
         )
@@ -141,9 +141,9 @@ class ReservationTests(APITestCase):
             'id': self.reservation.id,
             'is_active': True,
             'is_present': False,
-            'retirement': 'http://testserver/retirement/retirements/' +
-                          str(self.reservation.retirement.id),
-            'url': 'http://testserver/retirement/reservations/' +
+            'retreat': 'http://testserver/retreat/retreats/' +
+                       str(self.reservation.retreat.id),
+            'url': 'http://testserver/retreat/reservations/' +
                    str(self.reservation.id),
             'user': 'http://testserver/users/' + str(self.user.id),
             'order_line': 'http://testserver/order_lines/' +
@@ -156,7 +156,7 @@ class ReservationTests(APITestCase):
         }
         self.reservation_admin = Reservation.objects.create(
             user=self.admin,
-            retirement=self.retirement2,
+            retreat=self.retreat2,
             order_line=self.order_line,
             is_active=True,
         )
@@ -166,19 +166,19 @@ class ReservationTests(APITestCase):
     def test_create(self):
         """
         Ensure we can create a reservation if user has permission.
-        It is possible to create reservations for INACTIVE retirements.
+        It is possible to create reservations for INACTIVE retreats.
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement2.id]
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat2.id]
             ),
             'user': reverse('user-detail', args=[self.user.id]),
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
@@ -190,8 +190,8 @@ class ReservationTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
-        response_data['retirement_details'] = remove_translation_fields(
-            response_data['retirement_details']
+        response_data['retreat_details'] = remove_translation_fields(
+            response_data['retreat_details']
         )
         response_data['user_details'] = remove_translation_fields(
             response_data['user_details']
@@ -200,7 +200,7 @@ class ReservationTests(APITestCase):
         del response_data['user_details']["last_name"]
         del response_data['user_details']["email"]
         del response_data['user_details']['date_joined']
-        del response_data['retirement_details']['reservations']
+        del response_data['retreat_details']['reservations']
         del response_data['id']
         del response_data['url']
 
@@ -213,13 +213,13 @@ class ReservationTests(APITestCase):
             'cancelation_reason': None,
             'refundable': False,
             'exchangeable': False,
-            'retirement': 'http://testserver/retirement/retirements/' +
-                          str(self.retirement2.id),
+            'retreat': 'http://testserver/retreat/retreats/' +
+                       str(self.retreat2.id),
             'order_line': None,
-            'retirement_details': {
+            'retreat_details': {
                 'activity_language': None,
                 'end_time': '2130-02-17T12:00:00-05:00',
-                'id': self.retirement2.id,
+                'id': self.retreat2.id,
                 'exclusive_memberships': [],
                 'places_remaining': 38,
                 'next_user_notified': 0,
@@ -234,11 +234,11 @@ class ReservationTests(APITestCase):
                 'address_line2': None,
                 'city': '',
                 'country': 'Random country',
-                'details': 'This is a description of the retirement.',
+                'details': 'This is a description of the retreat.',
                 'email_content': None,
                 'latitude': None,
                 'longitude': None,
-                'name': 'random_retirement',
+                'name': 'random_retreat',
                 'pictures': [],
                 'postal_code': '123 456',
                 'reserved_seats': 0,
@@ -256,8 +256,8 @@ class ReservationTests(APITestCase):
                 'carpool_url': 'example2.com',
                 'review_url': 'example3.com',
                 'place_name': '',
-                'url': 'http://testserver/retirement/retirements/' +
-                       str(self.retirement2.id),
+                'url': 'http://testserver/retreat/retreats/' +
+                       str(self.retreat2.id),
                 'has_shared_rooms': True,
             },
             'user_details': {
@@ -288,11 +288,11 @@ class ReservationTests(APITestCase):
             }
         }
 
-        self.assertCountEqual(response_data['retirement_details']['users'],
-                              content['retirement_details']['users'])
+        self.assertCountEqual(response_data['retreat_details']['users'],
+                              content['retreat_details']['users'])
 
-        del response_data['retirement_details']['users']
-        del content['retirement_details']['users']
+        del response_data['retreat_details']['users']
+        del content['retreat_details']['users']
 
         self.assertEqual(response_data, content)
 
@@ -303,8 +303,8 @@ class ReservationTests(APITestCase):
         self.client.force_authenticate(user=self.user)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement.id]
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat.id]
             ),
             'user': reverse('user-detail', args=[self.user.id]),
             'order_line': reverse(
@@ -313,7 +313,7 @@ class ReservationTests(APITestCase):
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
@@ -328,15 +328,15 @@ class ReservationTests(APITestCase):
 
     def test_create_overlapping(self):
         """
-        Ensure we can't create reservations with overlapping retirement for the
+        Ensure we can't create reservations with overlapping retreat for the
         same user.
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                args=[self.retirement_overlap.id]
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                args=[self.retreat_overlap.id]
             ),
             'user': reverse('user-detail', args=[self.user.id]),
             'order_line': reverse(
@@ -345,7 +345,7 @@ class ReservationTests(APITestCase):
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
@@ -369,8 +369,8 @@ class ReservationTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement.id]
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat.id]
             ),
             'user': reverse('user-detail', args=[self.user.id]),
             'order_line': reverse(
@@ -379,7 +379,7 @@ class ReservationTests(APITestCase):
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
@@ -397,26 +397,26 @@ class ReservationTests(APITestCase):
 
     def test_create_non_existent_period_user(self):
         """
-        Ensure we can't create a reservation with a non-existent retirement or
+        Ensure we can't create a reservation with a non-existent retreat or
         user.
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'retirement': reverse('retirement:retirement-detail', args=[999]),
+            'retreat': reverse('retreat:retreat-detail', args=[999]),
             'user': reverse('user-detail', args=[999]),
             'order_line': reverse('orderline-detail', args=[999]),
             'is_active': True,
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
 
         content = {
-            'retirement': ['Invalid hyperlink - Object does not exist.'],
+            'retreat': ['Invalid hyperlink - Object does not exist.'],
             'user': ['Invalid hyperlink - Object does not exist.'],
             'order_line': ['Invalid hyperlink - Object does not exist.']
         }
@@ -434,14 +434,14 @@ class ReservationTests(APITestCase):
         data = {}
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
 
         content = {
             'user': ['This field is required.'],
-            'retirement': ['This field is required.'],
+            'retreat': ['This field is required.'],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -456,20 +456,20 @@ class ReservationTests(APITestCase):
 
         data = {
             'user': None,
-            'retirement': None,
+            'retreat': None,
             'order_line': None,
             'is_active': None,
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
 
         content = {
             'user': ['This field may not be null.'],
-            'retirement': ['This field may not be null.'],
+            'retreat': ['This field may not be null.'],
             'is_active': ['This field may not be null.'],
         }
 
@@ -485,20 +485,20 @@ class ReservationTests(APITestCase):
 
         data = {
             'user': "invalid",
-            'retirement': "invalid",
+            'retreat': "invalid",
             'order_line': "invalid",
             'is_active': "invalid",
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
 
         content = {
             'user': ['Invalid hyperlink - No URL match.'],
-            'retirement': ['Invalid hyperlink - No URL match.'],
+            'retreat': ['Invalid hyperlink - No URL match.'],
             'order_line': ['Invalid hyperlink - No URL match.'],
             'is_active': ['Must be a valid boolean.'],
         }
@@ -514,12 +514,12 @@ class ReservationTests(APITestCase):
 
         self.client.force_authenticate(user=self.admin)
 
-        self.retirement2.seats = 0
-        self.retirement2.save()
+        self.retreat2.seats = 0
+        self.retreat2.save()
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement2.id]
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat2.id]
             ),
             'user': reverse('user-detail', args=[self.user.id]),
             'order_line': reverse(
@@ -528,14 +528,14 @@ class ReservationTests(APITestCase):
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
 
         content = {
             'non_field_errors': [
-                "This retirement doesn't have available places. Please "
+                "This retreat doesn't have available places. Please "
                 'check number of seats available and reserved seats.'
             ]
         }
@@ -551,16 +551,16 @@ class ReservationTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             format='json',
         )
 
         data = json.loads(response.content)
 
         del data['results'][0]['user_details']
-        del data['results'][0]['retirement_details']
+        del data['results'][0]['retreat_details']
         del data['results'][1]['user_details']
-        del data['results'][1]['retirement_details']
+        del data['results'][1]['retreat_details']
 
         content = {
             'count': 2,
@@ -572,9 +572,9 @@ class ReservationTests(APITestCase):
                     'id': self.reservation_admin.id,
                     'is_active': True,
                     'is_present': False,
-                    'retirement': 'http://testserver/retirement/retirements/' +
-                                  str(self.retirement2.id),
-                    'url': 'http://testserver/retirement/reservations/' +
+                    'retreat': 'http://testserver/retreat/retreats/' +
+                               str(self.retreat2.id),
+                    'url': 'http://testserver/retreat/reservations/' +
                            str(self.reservation_admin.id),
                     'user': 'http://testserver/users/' + str(self.admin.id),
                     'order_line': 'http://testserver/order_lines/' +
@@ -596,19 +596,19 @@ class ReservationTests(APITestCase):
         """
         Ensure that a user can list its reservations.
         Be wary: a user can see the list of user ID that are associated with
-                 the reservation's retirement.
+                 the reservation's retreat.
         """
         self.client.force_authenticate(user=self.user)
 
         response = self.client.get(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             format='json',
         )
 
         data = json.loads(response.content)
 
         del data['results'][0]['user_details']
-        del data['results'][0]['retirement_details']
+        del data['results'][0]['retreat_details']
 
         content = {
             'count': 1,
@@ -629,7 +629,7 @@ class ReservationTests(APITestCase):
 
         response = self.client.get(
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 kwargs={'pk': self.reservation.id},
             ),
         )
@@ -637,7 +637,7 @@ class ReservationTests(APITestCase):
         response_data = json.loads(response.content)
 
         del response_data['user_details']
-        del response_data['retirement_details']
+        del response_data['retreat_details']
 
         self.assertEqual(response_data, self.reservation_expected_payload)
 
@@ -651,7 +651,7 @@ class ReservationTests(APITestCase):
 
         response = self.client.get(
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 kwargs={'pk': self.reservation_admin.id},
             ),
         )
@@ -670,7 +670,7 @@ class ReservationTests(APITestCase):
 
         response = self.client.get(
             reverse(
-                'retirement:retirement-detail',
+                'retreat:retreat-detail',
                 kwargs={'pk': 999},
             ),
         )
@@ -684,7 +684,7 @@ class ReservationTests(APITestCase):
     @responses.activate
     def test_delete(self):
         """
-        Ensure that a user can cancel one of his retirement reservations.
+        Ensure that a user can cancel one of his retreat reservations.
         By canceling 'min_day_refund' days or more before the event, the user
          will be refunded 'refund_rate'% of the price paid.
         The user will receive an email confirming the refund or inviting the
@@ -709,7 +709,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.delete(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.id},
                 ),
             )
@@ -735,7 +735,7 @@ class ReservationTests(APITestCase):
 
     def test_delete_late(self):
         """
-        Ensure that a user can cancel one of his retirement reservations.
+        Ensure that a user can cancel one of his retreat reservations.
         This cancelation does not respect 'min_day_refund', thus the user
          will not be refunded.
         The user won't receive any email.
@@ -748,7 +748,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.delete(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.id},
                 ),
             )
@@ -774,7 +774,7 @@ class ReservationTests(APITestCase):
 
     def test_delete_non_refundable(self):
         """
-        Ensure that a user can cancel one of his retirement reservations.
+        Ensure that a user can cancel one of his retreat reservations.
         This cancelation does not respect 'refundable', thus the user
          will not be refunded.
         The user won't receive any email.
@@ -790,7 +790,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.delete(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.pk},
                 ),
             )
@@ -826,8 +826,8 @@ class ReservationTests(APITestCase):
         """
         self.client.force_authenticate(user=self.admin)
 
-        self.retirement2.seats = self.retirement2.total_reservations
-        self.retirement2.save()
+        self.retreat2.seats = self.retreat2.total_reservations
+        self.retreat2.save()
 
         responses.add(
             responses.POST,
@@ -849,7 +849,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.delete(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation_admin.id},
                 ),
             )
@@ -875,8 +875,8 @@ class ReservationTests(APITestCase):
         # X mails to every admin
         self.assertGreater(len(mail.outbox), 1, "Invalid sent mail count")
 
-        self.retirement2.seats = 400
-        self.retirement2.save()
+        self.retreat2.seats = 400
+        self.retreat2.save()
 
     def test_delete_not_owner(self):
         """
@@ -886,7 +886,7 @@ class ReservationTests(APITestCase):
 
         response = self.client.delete(
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 kwargs={'pk': self.reservation_admin.id},
             ),
         )
@@ -905,7 +905,7 @@ class ReservationTests(APITestCase):
 
         response = self.client.delete(
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 kwargs={'pk': self.reservation_admin.id},
             ),
         )
@@ -939,7 +939,7 @@ class ReservationTests(APITestCase):
 
         response = self.client.delete(
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 kwargs={'pk': self.reservation.id},
             ),
         )
@@ -984,7 +984,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.delete(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.id},
                 ),
             )
@@ -1018,7 +1018,7 @@ class ReservationTests(APITestCase):
     @responses.activate
     def test_delete_refund_error(self):
         """
-        Ensure that a user can cancel one of his retirement reservations.
+        Ensure that a user can cancel one of his retreat reservations.
         By canceling 'min_day_refund' days or more before the event, the user
          will be refunded 'refund_rate'% of the price paid.
         The user will receive an email confirming the refund or inviting the
@@ -1043,7 +1043,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.delete(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.id},
                 ),
             )

@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 
 from blitz_api.models import Organization, AcademicLevel, AcademicField, \
     Address
-from retirement.models import Retirement
+from retirement.models import Retreat
 
 from faker import Faker
 
@@ -64,7 +64,7 @@ class AcademicFieldFactory(factory.DjangoModelFactory):
 
 class RetirementFactory(factory.DjangoModelFactory):
     class Meta:
-        model = Retirement
+        model = Retreat
         django_get_or_create = ('name',)
 
     name = factory.sequence(lambda n: f'Retirement {n}')
@@ -84,7 +84,7 @@ class RetirementFactory(factory.DjangoModelFactory):
     reserved_seats = 0
     next_user_notified = 0
     notification_interval = timedelta(hours=24)
-    activity_language = factory.fuzzy.FuzzyChoice(Retirement.ACTIVITY_LANGUAGE)
+    activity_language = factory.fuzzy.FuzzyChoice(Retreat.ACTIVITY_LANGUAGE)
     price = factory.fuzzy.FuzzyDecimal(0, 9999, 2)
     start_time = factory.Faker('date_time_between',
                                start_date="+10d", end_date="+30d",

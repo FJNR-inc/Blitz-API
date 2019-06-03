@@ -32,13 +32,13 @@ from store.models import Refund
 from store.services import refund_amount, PAYSAFE_EXCEPTION
 
 from . import permissions, serializers
-from .models import (Picture, Reservation, Retirement, WaitQueue,
+from .models import (Picture, Reservation, Retreat, WaitQueue,
                      WaitQueueNotification)
-from .resources import (ReservationResource, RetirementResource,
+from .resources import (ReservationResource, RetreatResource,
                         WaitQueueNotificationResource, WaitQueueResource)
-from .services import (notify_reserved_retirement_seat,
-                       send_retirement_7_days_email,
-                       send_post_retirement_email, )
+from .services import (notify_reserved_retreat_seat,
+                       send_retreat_7_days_email,
+                       send_post_retreat_email, )
 
 User = get_user_model()
 
@@ -47,19 +47,19 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 TAX = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
-class RetirementViewSet(ExportMixin, viewsets.ModelViewSet):
+class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
-    Return the given retirement.
+    Return the given retreat.
 
     list:
-    Return a list of all the existing retirements.
+    Return a list of all the existing retreats.
 
     create:
-    Create a new retirement instance.
+    Create a new retreat instance.
     """
-    serializer_class = serializers.RetirementSerializer
-    queryset = Retirement.objects.all()
+    serializer_class = serializers.RetreatSerializer
+    queryset = Retreat.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_fields = {
         'start_time': ['exact', 'gte', 'lte'],
@@ -68,16 +68,16 @@ class RetirementViewSet(ExportMixin, viewsets.ModelViewSet):
     }
     ordering = ('name', 'start_time', 'end_time')
 
-    export_resource = RetirementResource()
+    export_resource = RetreatResource()
 
     def get_queryset(self):
         """
-        This viewset should return active retirements except if
+        This viewset should return active retreats except if
         the currently authenticated user is an admin (is_staff).
         """
         if self.request.user.is_staff:
-            return Retirement.objects.all()
-        return Retirement.objects.filter(is_active=True)
+            return Retreat.objects.all()
+        return Retreat.objects.filter(is_active=True)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -90,12 +90,12 @@ class RetirementViewSet(ExportMixin, viewsets.ModelViewSet):
     def remind_users(self, request, pk=None):
         """
         That custom action allows an admin (or automated task) to notify
-        users who will attend the retirement.
+        users who will attend the retreat.
         """
-        retirement = self.get_object()
+        retreat = self.get_object()
         # This is a hard-coded limitation to allow anonymous users to call
         # the function.
-        time_limit = retirement.start_time - timedelta(days=8)
+        time_limit = retreat.start_time - timedelta(days=8)
         if timezone.now() < time_limit:
             response_data = {
                 'detail': "Retirement takes place in more than 8 days."
@@ -103,8 +103,8 @@ class RetirementViewSet(ExportMixin, viewsets.ModelViewSet):
             return Response(response_data, status=status.HTTP_200_OK)
 
         # Notify a user for every reserved seat
-        for reservation in retirement.reservations.filter(is_active=True):
-            send_retirement_7_days_email(reservation.user, retirement)
+        for reservation in retreat.reservations.filter(is_active=True):
+            send_retreat_7_days_email(reservation.user, retreat)
 
         response_data = {
             'stop': True,
@@ -115,12 +115,12 @@ class RetirementViewSet(ExportMixin, viewsets.ModelViewSet):
     def recap(self, request, pk=None):
         """
         That custom action allows an admin (or automated task) to notify
-        users who has attended the retirement.
+        users who has attended the retreat.
         """
-        retirement = self.get_object()
+        retreat = self.get_object()
         # This is a hard-coded limitation to allow anonymous users to call
         # the function.
-        time_limit = retirement.end_time - timedelta(days=1)
+        time_limit = retreat.end_time - timedelta(days=1)
         if timezone.now() < time_limit:
             response_data = {
                 'detail': "Retirement ends in more than 1 day."
@@ -128,8 +128,8 @@ class RetirementViewSet(ExportMixin, viewsets.ModelViewSet):
             return Response(response_data, status=status.HTTP_200_OK)
 
         # Notify a user for every reserved seat
-        for reservation in retirement.reservations.filter(is_active=True):
-            send_post_retirement_email(reservation.user, retirement)
+        for reservation in retreat.reservations.filter(is_active=True):
+            send_post_retreat_email(reservation.user, retreat)
 
         response_data = {
             'stop': True,
@@ -155,7 +155,7 @@ class PictureViewSet(viewsets.ModelViewSet):
     # filter fields manually here.
     filter_fields = {
         'name',
-        'retirement',
+        'retreat',
     }
 
 
@@ -182,8 +182,8 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         'cancelation_date',
         'cancelation_reason',
         'cancelation_action',
-        'retirement__start_time',
-        'retirement__end_time',
+        'retreat__start_time',
+        'retreat__end_time',
     )
 
     export_resource = ReservationResource()
@@ -224,7 +224,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         empty response as if it was deleted, but will instead modify specific
         fields to keep a track of events. Subsequent delete request won't do
         anything, but will return a success.
-        User will be refund the retirement's "refund_rate" if we're at least
+        User will be refund the retreat's "refund_rate" if we're at least
         "min_day_refund" days before the event.
 
         By canceling 'min_day_refund' days or more before the event, the user
@@ -239,15 +239,15 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         """
 
         instance = self.get_object()
-        retirement = instance.retirement
+        retreat = instance.retreat
         user = instance.user
         order_line = instance.order_line
         order = order_line.order
         reservation_active = instance.is_active
 
         respects_minimum_days = (
-                (retirement.start_time - timezone.now()) >=
-                timedelta(days=retirement.min_day_refund))
+                (retreat.start_time - timezone.now()) >=
+                timedelta(days=retreat.min_day_refund))
 
         with transaction.atomic():
             # No need to check for previous refunds because a refunded
@@ -263,10 +263,10 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                     })
                 if respects_minimum_days and instance.refundable:
                     try:
-                        amount = retirement.price
+                        amount = retreat.price
                         # The refund_rate converts in cents at the same time
                         amount_no_tax = Decimal(
-                            amount * retirement.refund_rate
+                            amount * retreat.refund_rate
                         )
                         amount_tax = Decimal(TAX) * amount_no_tax
                         total_amount = round(Decimal(
@@ -311,9 +311,9 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                 instance.cancelation_date = timezone.now()
                 instance.save()
 
-                free_seats = retirement.seats - retirement.total_reservations
-                if (retirement.reserved_seats or free_seats == 1):
-                    retirement.reserved_seats += 1
+                free_seats = retreat.seats - retreat.total_reservations
+                if (retreat.reserved_seats or free_seats == 1):
+                    retreat.reserved_seats += 1
                 # Ask the external scheduler to start calling /notify if the
                 # reserved_seats count == 1. Otherwise, the scheduler should
                 # already be calling /notify at specified intervals.
@@ -321,7 +321,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                 # Since we are in the context of a cancelation, if
                 # reserved_seats equals 1, that means that this is the first
                 # cancelation.
-                if retirement.reserved_seats == 1:
+                if retreat.reserved_seats == 1:
                     scheduler_url = '{0}'.format(
                         settings.EXTERNAL_SCHEDULER['URL'],
                     )
@@ -332,7 +332,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                         "url": '{0}{1}'.format(
                             request.build_absolute_uri(
                                 reverse(
-                                    'retirement:waitqueuenotification-list'
+                                    'retreat:waitqueuenotification-list'
                                 )
                             ),
                             "/notify"
@@ -368,17 +368,17 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                             traceback.format_exc()
                         )
 
-                retirement.save()
+                retreat.save()
 
         # Send an email if a refund has been issued
         if reservation_active and instance.cancelation_action == 'R':
             # Here the price takes the applied coupon into account, if
             # applicable.
-            old_retirement = {
-                'price': (amount * retirement.refund_rate) / 100,
+            old_retreat = {
+                'price': (amount * retreat.refund_rate) / 100,
                 'name': "{0}: {1}".format(
-                    _("Retirement"),
-                    retirement.name
+                    _("Retreat"),
+                    retreat.name
                 )
             }
 
@@ -390,7 +390,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                 'CUSTOMER_EMAIL': user.email,
                 'CUSTOMER_NUMBER': user.id,
                 'TYPE': "Remboursement",
-                'OLD_RETIREMENT': old_retirement,
+                'OLD_RETIREMENT': old_retreat,
                 'COST': round(total_amount / 100, 2),
                 'TAX': round(Decimal(amount_tax / 100), 2),
             }
@@ -429,8 +429,8 @@ class WaitQueueViewSet(ExportMixin, viewsets.ModelViewSet):
     filter_fields = '__all__'
     ordering_fields = (
         'created_at',
-        'retirement__start_time',
-        'retirement__end_time',
+        'retreat__start_time',
+        'retreat__end_time',
     )
 
     export_resource = WaitQueueResource()
@@ -449,15 +449,15 @@ class WaitQueueViewSet(ExportMixin, viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        retirement = instance.retirement
-        wait_queue = retirement.wait_queue.all().order_by('created_at')
+        retreat = instance.retreat
+        wait_queue = retreat.wait_queue.all().order_by('created_at')
         for index, item in enumerate(wait_queue):
             if item == instance:
                 wait_queue_pos = index
                 break
-        if wait_queue_pos < retirement.next_user_notified:
-            retirement.next_user_notified -= 1
-            retirement.save()
+        if wait_queue_pos < retreat.next_user_notified:
+            retreat.next_user_notified -= 1
+            retreat.save()
         return super(WaitQueueViewSet, self).destroy(request, *args, **kwargs)
 
 
@@ -477,8 +477,8 @@ class WaitQueueNotificationViewSet(ExportMixin, mixins.ListModelMixin,
     filter_fields = '__all__'
     ordering_fields = (
         'created_at',
-        'retirement__start_time',
-        'retirement__end_time',
+        'retreat__start_time',
+        'retreat__end_time',
     )
 
     export_resource = WaitQueueNotificationResource()
@@ -495,8 +495,8 @@ class WaitQueueNotificationViewSet(ExportMixin, mixins.ListModelMixin,
     def notify(self, request):
         """
         That custom action allows anyone to notify
-        users in wait queues of every retirement.
-        For each retirement, there will be as many users notified as there are
+        users in wait queues of every retreat.
+        For each retreat, there will be as many users notified as there are
         reserved seats.
         At the same time, this clears older notification logs. That part should
         be moved somewhere else.
@@ -507,9 +507,9 @@ class WaitQueueNotificationViewSet(ExportMixin, mixins.ListModelMixin,
         # Keep a 5 minutes gap.
         time_limit = timezone.now() - timedelta(hours=23, minutes=55)
         notified_someone = False
-        ready_retirements = False
+        ready_retreats = False
 
-        retirements_to_notify = Retirement.objects.filter(
+        retreats_to_notify = Retreat.objects.filter(
             reserved_seats__gt=0,
             start_time__gt=timezone.now(),
             is_active=True,
@@ -525,47 +525,47 @@ class WaitQueueNotificationViewSet(ExportMixin, mixins.ListModelMixin,
             created_at__lt=remove_before
         ).delete()
 
-        for retirement in retirements_to_notify:
-            if retirement.wait_queue_notifications.filter(
+        for retreat in retreats_to_notify:
+            if retreat.wait_queue_notifications.filter(
                     created_at__gt=time_limit):
                 # Next iteration, since this wait_queue has been notified less
                 # than 24h ago.
                 continue
-            ready_retirements = True
+            ready_retreats = True
             # Get the wait queue with elements ordered by ascending date
-            wait_queue = retirement.wait_queue.all().order_by('created_at')
+            wait_queue = retreat.wait_queue.all().order_by('created_at')
             # Get number of waiting users
             nb_waiting_users = wait_queue.count()
             # If all users have already been notified, free all reserved seats
-            if retirement.next_user_notified >= nb_waiting_users:
-                retirement.reserved_seats = 0
-                retirement.next_user_notified = 0
+            if retreat.next_user_notified >= nb_waiting_users:
+                retreat.reserved_seats = 0
+                retreat.next_user_notified = 0
             # Else notify a user for every reserved seat
-            for seat in range(retirement.reserved_seats):
-                if retirement.next_user_notified >= nb_waiting_users:
-                    retirement.reserved_seats -= 1
+            for seat in range(retreat.reserved_seats):
+                if retreat.next_user_notified >= nb_waiting_users:
+                    retreat.reserved_seats -= 1
                 else:
-                    user = wait_queue[retirement.next_user_notified].user
-                    notify_reserved_retirement_seat(
+                    user = wait_queue[retreat.next_user_notified].user
+                    notify_reserved_retreat_seat(
                         user,
-                        retirement,
+                        retreat,
                     )
-                    retirement.next_user_notified += 1
+                    retreat.next_user_notified += 1
                     WaitQueueNotification.objects.create(
                         user=user,
-                        retirement=retirement,
+                        retreat=retreat,
                     )
                     notified_someone = True
-            retirement.save()
+            retreat.save()
 
-        if retirements_to_notify.count() == 0:
+        if retreats_to_notify.count() == 0:
             response_data = {
                 'detail': "No reserved seats.",
                 'stop': True,
             }
             return Response(response_data, status=status.HTTP_200_OK)
 
-        if not ready_retirements:
+        if not ready_retreats:
             response_data = {
                 'detail': "Last notification was sent less than 24h ago."
             }

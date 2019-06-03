@@ -29,7 +29,7 @@ from store.tests.paysafe_sample_responses import (SAMPLE_REFUND_RESPONSE,
                                                   SAMPLE_CARD_RESPONSE,
                                                   UNKNOWN_EXCEPTION, )
 
-from ..models import Retirement, Reservation
+from ..models import Retreat, Reservation
 
 User = get_user_model()
 
@@ -55,10 +55,10 @@ class ReservationTests(APITestCase):
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()
-        cls.retirement_type = ContentType.objects.get_for_model(Retirement)
-        cls.retirement = Retirement.objects.create(
-            name="mega_retirement",
-            details="This is a description of the mega retirement.",
+        cls.retreat_type = ContentType.objects.get_for_model(Retreat)
+        cls.retreat = Retreat.objects.create(
+            name="mega_retreat",
+            details="This is a description of the mega retreat.",
             seats=400,
             address_line1="123 random street",
             postal_code="123 456",
@@ -78,9 +78,9 @@ class ReservationTests(APITestCase):
             review_url='example3.com',
             has_shared_rooms=True,
         )
-        cls.retirement2 = Retirement.objects.create(
-            name="random_retirement",
-            details="This is a description of the retirement.",
+        cls.retreat2 = Retreat.objects.create(
+            name="random_retreat",
+            details="This is a description of the retreat.",
             seats=40,
             address_line1="123 random street",
             postal_code="123 456",
@@ -99,9 +99,9 @@ class ReservationTests(APITestCase):
             review_url='example3.com',
             has_shared_rooms=True,
         )
-        cls.retirement_overlap = Retirement.objects.create(
-            name="ultra_retirement",
-            details="This is a description of the ultra retirement.",
+        cls.retreat_overlap = Retreat.objects.create(
+            name="ultra_retreat",
+            details="This is a description of the ultra retreat.",
             seats=400,
             address_line1="1234 random street",
             postal_code="654 321",
@@ -129,13 +129,13 @@ class ReservationTests(APITestCase):
         cls.order_line = OrderLine.objects.create(
             order=cls.order,
             quantity=1,
-            content_type=cls.retirement_type,
-            object_id=cls.retirement.id,
-            cost=cls.retirement.price,
+            content_type=cls.retreat_type,
+            object_id=cls.retreat.id,
+            cost=cls.retreat.price,
         )
         cls.reservation = Reservation.objects.create(
             user=cls.user,
-            retirement=cls.retirement,
+            retreat=cls.retreat,
             order_line=cls.order_line,
             is_active=True,
         )
@@ -143,9 +143,9 @@ class ReservationTests(APITestCase):
             'id': cls.reservation.id,
             'is_active': True,
             'is_present': False,
-            'retirement': 'http://testserver/retirement/retirements/' +
-                          str(cls.reservation.retirement.id),
-            'url': 'http://testserver/retirement/reservations/' +
+            'retreat': 'http://testserver/retreat/retreats/' +
+                          str(cls.reservation.retreat.id),
+            'url': 'http://testserver/retreat/reservations/' +
                    str(cls.reservation.id),
             'user': 'http://testserver/users/' +
                     str(cls.user.id),
@@ -159,7 +159,7 @@ class ReservationTests(APITestCase):
         }
         cls.reservation_non_exchangeable = Reservation.objects.create(
             user=cls.admin,
-            retirement=cls.retirement,
+            retreat=cls.retreat,
             order_line=cls.order_line,
             is_active=True,
             exchangeable=False,
@@ -172,8 +172,8 @@ class ReservationTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement.id]
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat.id]
             ),
             'user': reverse('user-detail', args=[self.user.id]),
             'is_active': False,
@@ -181,7 +181,7 @@ class ReservationTests(APITestCase):
 
         response = self.client.put(
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 kwargs={'pk': 1},
             ),
             data,
@@ -196,11 +196,11 @@ class ReservationTests(APITestCase):
     def test_update_partial(self):
         """
         Ensure we can partially update a reservation (is_present field and
-        retirement field only).
-        The retirement can be changed if we're at least 'min_day_exchange' days
-        before the event and if the new retirement is cheaper/same price.
+        retreat field only).
+        The retreat can be changed if we're at least 'min_day_exchange' days
+        before the event and if the new retreat is cheaper/same price.
         Otherwise, only 'is_present' can be updated.
-        Sends an email to the user with the new retirement's info.
+        Sends an email to the user with the new retreat's info.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -208,9 +208,9 @@ class ReservationTests(APITestCase):
 
         data = {
             'is_present': True,
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement2.id},
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat2.id},
             ),
         }
 
@@ -218,7 +218,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.patch(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.id},
                 ),
                 data,
@@ -234,13 +234,13 @@ class ReservationTests(APITestCase):
         response_data = json.loads(response.content)
 
         del response_data['user_details']
-        del response_data['retirement_details']
+        del response_data['retreat_details']
 
         content = self.reservation_expected_payload.copy()
         content['is_present'] = True
-        content['retirement'] = 'http://testserver' + reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement2.id},
+        content['retreat'] = 'http://testserver' + reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat2.id},
             )
 
         self.assertEqual(response_data, content)
@@ -251,11 +251,11 @@ class ReservationTests(APITestCase):
         self.assertEqual(canceled_reservation.cancelation_action, 'E')
         self.assertEqual(canceled_reservation.cancelation_reason, 'U')
         self.assertEqual(canceled_reservation.cancelation_date, FIXED_TIME)
-        self.assertEqual(canceled_reservation.retirement, self.retirement)
+        self.assertEqual(canceled_reservation.retreat, self.retreat)
         self.assertEqual(canceled_reservation.order_line, self.order_line)
 
         # 1 email confirming the exchange
-        # 1 email confirming participation to the new retirement
+        # 1 email confirming participation to the new retreat
         self.assertEqual(len(mail.outbox), 2)
 
     def test_update_partial_is_present(self):
@@ -274,7 +274,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.patch(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.id},
                 ),
                 data,
@@ -290,7 +290,7 @@ class ReservationTests(APITestCase):
         response_data = json.loads(response.content)
 
         del response_data['user_details']
-        del response_data['retirement_details']
+        del response_data['retreat_details']
 
         content = self.reservation_expected_payload.copy()
         content['is_present'] = True
@@ -313,9 +313,9 @@ class ReservationTests(APITestCase):
 
         data = {
             'is_present': True,
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement2.id},
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat2.id},
             ),
         }
 
@@ -323,7 +323,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.patch(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.id},
                 ),
                 data,
@@ -349,21 +349,21 @@ class ReservationTests(APITestCase):
 
     def test_update_partial_no_place_left(self):
         """
-        Ensure we can't update a reservation if the new retirement has no free
+        Ensure we can't update a reservation if the new retreat has no free
         place left.
         """
         self.client.force_authenticate(user=self.admin)
 
-        self.retirement2.seats = 0
-        self.retirement2.save()
+        self.retreat2.seats = 0
+        self.retreat2.save()
 
         FIXED_TIME = datetime(2030, 1, 10, tzinfo=LOCAL_TIMEZONE)
 
         data = {
             'is_present': True,
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement2.id},
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat2.id},
             ),
         }
 
@@ -371,7 +371,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.patch(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.id},
                 ),
                 data,
@@ -388,15 +388,15 @@ class ReservationTests(APITestCase):
 
         content = {
             'non_field_errors': [
-                "There are no places left in the requested retirement."
+                "There are no places left in the requested retreat."
             ]
         }
 
         self.assertEqual(response_data, content)
 
-    def test_update_partial_same_retirement(self):
+    def test_update_partial_same_retreat(self):
         """
-        Ensure we can't update a reservation if the new retirement has no free
+        Ensure we can't update a reservation if the new retreat has no free
         place left.
         """
         self.client.force_authenticate(user=self.admin)
@@ -405,9 +405,9 @@ class ReservationTests(APITestCase):
 
         data = {
             'is_present': True,
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement.id},
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat.id},
             ),
         }
 
@@ -415,7 +415,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.patch(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.id},
                 ),
                 data,
@@ -431,8 +431,8 @@ class ReservationTests(APITestCase):
         response_data = json.loads(response.content)
 
         content = {
-            'retirement': [
-                "That retirement is already assigned to this object."
+            'retreat': [
+                "That retreat is already assigned to this object."
             ]
         }
 
@@ -450,7 +450,7 @@ class ReservationTests(APITestCase):
 
         response = self.client.patch(
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 kwargs={'pk': self.reservation.id},
             ),
             data,
@@ -461,7 +461,7 @@ class ReservationTests(APITestCase):
 
         content = {
             'non_field_errors': [
-                "Only is_present and retirement can be updated. To change "
+                "Only is_present and retreat can be updated. To change "
                 "other fields, delete this reservation and create a new one."
             ]
         }
@@ -472,16 +472,16 @@ class ReservationTests(APITestCase):
 
     def test_update_partial_not_in_min_day_exchange(self):
         """
-        Ensure we can't change retirement if not respecting min_day_refund.
+        Ensure we can't change retreat if not respecting min_day_refund.
         """
         self.client.force_authenticate(user=self.admin)
 
         FIXED_TIME = datetime(2130, 1, 10, tzinfo=LOCAL_TIMEZONE)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement2.id},
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat2.id},
             ),
         }
 
@@ -489,7 +489,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.patch(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.id},
                 ),
                 data,
@@ -514,28 +514,28 @@ class ReservationTests(APITestCase):
 
     def test_update_partial_overlapping(self):
         """
-        Ensure we can't change retirement if it overlaps with another
+        Ensure we can't change retreat if it overlaps with another
         reservation.
         """
         self.client.force_authenticate(user=self.admin)
 
         reservation_user = Reservation.objects.create(
             user=self.user,
-            retirement=self.retirement2,
+            retreat=self.retreat2,
             order_line=self.order_line,
             is_active=True,
         )
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement_overlap.id},
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat_overlap.id},
             ),
         }
 
         response = self.client.patch(
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 kwargs={'pk': reservation_user.id},
             ),
             data,
@@ -559,26 +559,26 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(response_data, content)
 
-    def test_update_partial_more_expensive_retirement_missing_info(self):
+    def test_update_partial_more_expensive_retreat_missing_info(self):
         """
-        Ensure we can't change retirement if the new one is more expensive and
+        Ensure we can't change retreat if the new one is more expensive and
         no payment_token or single_use_token is provided.
         """
         self.client.force_authenticate(user=self.admin)
 
-        self.retirement2.price = 999
-        self.retirement2.save()
+        self.retreat2.price = 999
+        self.retreat2.save()
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement2.id},
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat2.id},
             ),
         }
 
         response = self.client.patch(
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 kwargs={'pk': self.reservation.id},
             ),
             data,
@@ -595,7 +595,7 @@ class ReservationTests(APITestCase):
 
         content = {
             'non_field_errors': [
-                "The new retirement is more expensive than the current one. "
+                "The new retreat is more expensive than the current one. "
                 "Provide a payment_token or single_use_token to charge the "
                 "balance."
             ]
@@ -603,19 +603,19 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(response_data, content)
 
-        self.retirement2.price = 199
-        self.retirement2.save()
+        self.retreat2.price = 199
+        self.retreat2.save()
 
     @responses.activate
-    def test_update_partial_more_expensive_retirement(self):
+    def test_update_partial_more_expensive_retreat(self):
         """
-        Ensure we can change retirement if the new one is more expensive and
+        Ensure we can change retreat if the new one is more expensive and
         a payment_token or single_use_token is provided.
         """
         self.client.force_authenticate(user=self.user)
 
-        self.retirement2.price = 999
-        self.retirement2.save()
+        self.retreat2.price = 999
+        self.retreat2.save()
 
         responses.add(
             responses.POST,
@@ -635,9 +635,9 @@ class ReservationTests(APITestCase):
         FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement2.id},
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat2.id},
             ),
             'payment_token': "valid_token"
         }
@@ -646,7 +646,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.patch(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.id},
                 ),
                 data,
@@ -666,8 +666,8 @@ class ReservationTests(APITestCase):
 
         self.assertFalse(self.order_line == new_orderline)
         self.assertEqual(new_orderline.order, new_order)
-        self.assertEqual(new_orderline.object_id, self.retirement2.id)
-        self.assertEqual(new_orderline.content_type.model, "retirement")
+        self.assertEqual(new_orderline.object_id, self.retreat2.id)
+        self.assertEqual(new_orderline.content_type.model, "retreat")
         self.assertEqual(new_orderline.quantity, 1)
 
         # Validate the response
@@ -680,12 +680,12 @@ class ReservationTests(APITestCase):
         response_data = json.loads(response.content)
 
         del response_data['user_details']
-        del response_data['retirement_details']
+        del response_data['retreat_details']
 
         content = self.reservation_expected_payload.copy()
-        content['retirement'] = 'http://testserver' + reverse(
-            'retirement:retirement-detail',
-            kwargs={'pk': self.retirement2.id},
+        content['retreat'] = 'http://testserver' + reverse(
+            'retreat:retreat-detail',
+            kwargs={'pk': self.retreat2.id},
         )
         content['order_line'] = 'http://testserver/order_lines/' + \
                                 str(new_orderline.id)
@@ -699,7 +699,7 @@ class ReservationTests(APITestCase):
         self.assertEqual(canceled_reservation.cancelation_action, 'E')
         self.assertEqual(canceled_reservation.cancelation_reason, 'U')
         self.assertEqual(canceled_reservation.cancelation_date, FIXED_TIME)
-        self.assertEqual(canceled_reservation.retirement, self.retirement)
+        self.assertEqual(canceled_reservation.retreat, self.retreat)
         self.assertEqual(canceled_reservation.order_line, self.order_line)
 
         # Validate the full refund on old orderline
@@ -707,7 +707,7 @@ class ReservationTests(APITestCase):
 
         self.assertTrue(refund)
 
-        refund_amount = self.retirement.price * (Decimal(TAX_RATE) + 1)
+        refund_amount = self.retreat.price * (Decimal(TAX_RATE) + 1)
 
         self.assertEqual(
             refund.amount,
@@ -716,23 +716,23 @@ class ReservationTests(APITestCase):
         self.assertEqual(refund.refund_date, FIXED_TIME)
 
         # 1 mail confirming the exchange
-        # 1 mail confirming the participation to the new retirement
+        # 1 mail confirming the participation to the new retreat
         # 1 mail confirming the new order
         self.assertEqual(len(mail.outbox), 3)
 
-        self.retirement2.price = 199
-        self.retirement2.save()
+        self.retreat2.price = 199
+        self.retreat2.save()
 
     @responses.activate
-    def test_update_partial_more_expensive_retirement_single_use_token(self):
+    def test_update_partial_more_expensive_retreat_single_use_token(self):
         """
-        Ensure we can change retirement if the new one is more expensive and
+        Ensure we can change retreat if the new one is more expensive and
         a payment_token or single_use_token is provided.
         """
         self.client.force_authenticate(user=self.user)
 
-        self.retirement2.price = 999
-        self.retirement2.save()
+        self.retreat2.price = 999
+        self.retreat2.save()
 
         responses.add(
             responses.POST,
@@ -766,9 +766,9 @@ class ReservationTests(APITestCase):
         FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement2.id},
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat2.id},
             ),
             'single_use_token': "valid_token"
         }
@@ -777,7 +777,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.patch(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.id},
                 ),
                 data,
@@ -797,8 +797,8 @@ class ReservationTests(APITestCase):
 
         self.assertFalse(self.order_line == new_orderline)
         self.assertEqual(new_orderline.order, new_order)
-        self.assertEqual(new_orderline.object_id, self.retirement2.id)
-        self.assertEqual(new_orderline.content_type.model, "retirement")
+        self.assertEqual(new_orderline.object_id, self.retreat2.id)
+        self.assertEqual(new_orderline.content_type.model, "retreat")
         self.assertEqual(new_orderline.quantity, 1)
 
         # Validate response
@@ -811,12 +811,12 @@ class ReservationTests(APITestCase):
         response_data = json.loads(response.content)
 
         del response_data['user_details']
-        del response_data['retirement_details']
+        del response_data['retreat_details']
 
         content = self.reservation_expected_payload.copy()
-        content['retirement'] = 'http://testserver' + reverse(
-            'retirement:retirement-detail',
-            kwargs={'pk': self.retirement2.id},
+        content['retreat'] = 'http://testserver' + reverse(
+            'retreat:retreat-detail',
+            kwargs={'pk': self.retreat2.id},
         )
         content['order_line'] = 'http://testserver/order_lines/' + \
                                 str(new_orderline.id)
@@ -828,7 +828,7 @@ class ReservationTests(APITestCase):
         self.assertEqual(canceled_reservation.cancelation_action, 'E')
         self.assertEqual(canceled_reservation.cancelation_reason, 'U')
         self.assertEqual(canceled_reservation.cancelation_date, FIXED_TIME)
-        self.assertEqual(canceled_reservation.retirement, self.retirement)
+        self.assertEqual(canceled_reservation.retreat, self.retreat)
         self.assertEqual(canceled_reservation.order_line, self.order_line)
 
         # Validate the full refund on old orderline
@@ -836,7 +836,7 @@ class ReservationTests(APITestCase):
 
         self.assertTrue(refund)
 
-        refund_amount = self.retirement.price * (Decimal(TAX_RATE) + 1)
+        refund_amount = self.retreat.price * (Decimal(TAX_RATE) + 1)
 
         self.assertEqual(
             refund.amount,
@@ -845,23 +845,23 @@ class ReservationTests(APITestCase):
         self.assertEqual(refund.refund_date, FIXED_TIME)
 
         # 1 mail confirming the exchange
-        # 1 mail confirming the participation to the new retirement
+        # 1 mail confirming the participation to the new retreat
         # 1 mail confirming the new order
         self.assertEqual(len(mail.outbox), 3)
 
-        self.retirement2.price = 199
-        self.retirement2.save()
+        self.retreat2.price = 199
+        self.retreat2.save()
 
     @responses.activate
-    def test_update_partial_less_expensive_retirement(self):
+    def test_update_partial_less_expensive_retreat(self):
         """
-        Ensure we can change retirement if the new one is less expensive. A
+        Ensure we can change retreat if the new one is less expensive. A
         refund will be issued.
         """
         self.client.force_authenticate(user=self.user)
 
-        self.retirement2.price = 99
-        self.retirement2.save()
+        self.retreat2.price = 99
+        self.retreat2.save()
 
         responses.add(
             responses.POST,
@@ -874,9 +874,9 @@ class ReservationTests(APITestCase):
         FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement2.id},
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat2.id},
             ),
         }
 
@@ -884,7 +884,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.patch(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.id},
                 ),
                 data,
@@ -900,12 +900,12 @@ class ReservationTests(APITestCase):
         response_data = json.loads(response.content)
 
         del response_data['user_details']
-        del response_data['retirement_details']
+        del response_data['retreat_details']
 
         content = self.reservation_expected_payload.copy()
-        content['retirement'] = 'http://testserver' + reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement2.id},
+        content['retreat'] = 'http://testserver' + reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat2.id},
             )
 
         self.assertEqual(response_data, content)
@@ -917,7 +917,7 @@ class ReservationTests(APITestCase):
         self.assertEqual(canceled_reservation.cancelation_action, 'E')
         self.assertEqual(canceled_reservation.cancelation_reason, 'U')
         self.assertEqual(canceled_reservation.cancelation_date, FIXED_TIME)
-        self.assertEqual(canceled_reservation.retirement, self.retirement)
+        self.assertEqual(canceled_reservation.retreat, self.retreat)
         self.assertEqual(canceled_reservation.order_line, self.order_line)
 
         # Validate that the refund object has been created
@@ -927,7 +927,7 @@ class ReservationTests(APITestCase):
 
         self.assertTrue(refund)
         tax_rate = Decimal(TAX_RATE + 1)
-        amount = (self.retirement.price - self.retirement2.price) * tax_rate
+        amount = (self.retreat.price - self.retreat2.price) * tax_rate
         self.assertEqual(
             refund.amount,
             amount.quantize(Decimal('.01'), rounding=ROUND_HALF_UP)
@@ -935,12 +935,12 @@ class ReservationTests(APITestCase):
         self.assertEqual(refund.refund_date, FIXED_TIME)
 
         # 1 mail confirming the exchange
-        # 1 mail confirming the participation to the new retirement
+        # 1 mail confirming the participation to the new retreat
         # 1 mail confirming the refund
         self.assertEqual(len(mail.outbox), 3)
 
-        self.retirement2.price = 199
-        self.retirement2.save()
+        self.retreat2.price = 199
+        self.retreat2.save()
 
     def test_update_partial_with_forbidden_fields(self):
         """
@@ -955,7 +955,7 @@ class ReservationTests(APITestCase):
 
         response = self.client.patch(
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 kwargs={'pk': self.reservation.id},
             ),
             data,
@@ -966,7 +966,7 @@ class ReservationTests(APITestCase):
 
         content = {
             'non_field_errors': [
-                "Only is_present and retirement can be updated. To change "
+                "Only is_present and retreat can be updated. To change "
                 "other fields, delete this reservation and create a new one."
             ]
         }
@@ -977,21 +977,21 @@ class ReservationTests(APITestCase):
 
     def test_update_partial_non_exchangeable(self):
         """
-        Ensure we can't change a reservation's retirement if the reservation
+        Ensure we can't change a reservation's retreat if the reservation
         is marked as non-exchangeable.
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': self.retirement2.id},
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat2.id},
             ),
         }
 
         response = self.client.patch(
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 kwargs={'pk': self.reservation_non_exchangeable.pk},
             ),
             data,

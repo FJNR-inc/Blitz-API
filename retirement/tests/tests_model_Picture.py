@@ -7,7 +7,7 @@ from django.conf import settings
 from django.test import override_settings
 from rest_framework.test import APITestCase
 
-from ..models import Picture, Retirement
+from ..models import Picture, Retreat
 
 
 def get_test_image_file():
@@ -25,9 +25,9 @@ class PictureTests(APITestCase):
     @classmethod
     def setUpClass(cls):
         super(PictureTests, cls).setUpClass()
-        cls.retirement = Retirement.objects.create(
-            name="random_retirement",
-            details="This is a description of the retirement.",
+        cls.retreat = Retreat.objects.create(
+            name="random_retreat",
+            details="This is a description of the retreat.",
             seats=40,
             address_line1="123 random street",
             postal_code="123 456",
@@ -59,7 +59,7 @@ class PictureTests(APITestCase):
         picture = Picture.objects.create(
             name="random_picture",
             picture=get_test_image_file().name,
-            retirement=self.retirement,
+            retreat=self.retreat,
         )
 
         self.assertEqual(picture.__str__(), "random_picture")
@@ -71,7 +71,7 @@ class PictureTests(APITestCase):
         picture = Picture.objects.create(
             name="random_picture",
             picture=get_test_image_file().name,
-            retirement=self.retirement,
+            retreat=self.retreat,
         )
 
         self.assertEqual(
