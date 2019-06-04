@@ -5,7 +5,7 @@
 Bonjour {{USER.first_name}}
 
 Voici quelques informations essentielles pour profiter de la
-{{RETIREMENT.name}} des retraites de rédaction Thèsez-vous.
+{{RETREAT.name}} des retraites de rédaction Thèsez-vous.
 
 =====================================
 Planifier votre retraite de rédaction
@@ -27,12 +27,12 @@ C'est un rendez-vous!
 =====================
 
 C'est donc un rendez-vous le
-{{RETIREMENT.start_time|date:"l j F Y "|capfirst}},
+{{RETREAT.start_time|date:"l j F Y "|capfirst}},
 au
-{{RETIREMENT.place_name}}.
+{{RETREAT.place_name}}.
 
 L'atelier d'introduction débutera à
-{{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}.
+{{RETREAT.start_time|date:"G"}}h{{RETREAT.start_time|date:"i"}}.
 
 * La literie et les serviettes sont fournies.
 * Pensez à apporter votre tapis pour prendre part au yoga
@@ -52,7 +52,7 @@ nous contacter à l'adresse suivante: info@thesez-vous.com.
 
 Faire une annonce :
 
-{{RETIREMENT.carpool_url}}
+{{RETREAT.carpool_url}}
 
 ---
 
@@ -69,7 +69,7 @@ Annie-Pier et toute l'équipe de Thèsez-Vous?
 
 Hello {{USER.first_name}},
 
-The {{RETIREMENT.name}} of Thèsez-Vous? retreats arrives in a few days and
+The {{RETREAT.name}} of Thèsez-Vous? retreats arrives in a few days and
 we want to send you important informations for the functioning of it.
 
 =================
@@ -95,11 +95,11 @@ It's a "rendez-vous"!
 =====================
 
 It is therefore a “rendez-vous” on
-{{RETIREMENT.start_time|date:"l j F Y "|capfirst}},
+{{RETREAT.start_time|date:"l j F Y "|capfirst}},
 from
-{{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}
+{{RETREAT.start_time|date:"G"}}h{{RETREAT.start_time|date:"i"}}
 at the
-{{RETIREMENT.place_name}}.
+{{RETREAT.place_name}}.
 
 * Bedding and towels are included
 * Remember to bring your yoga mat to take part in yoga.
@@ -117,7 +117,7 @@ carpool offer / request.
 
 Make an announcement:
 
-{{RETIREMENT.carpool_url}}
+{{RETREAT.carpool_url}}
 
 ---
 

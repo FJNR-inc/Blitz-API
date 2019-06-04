@@ -21,7 +21,7 @@ from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,
                                 getMessageTranslate)
 from workplace.models import Reservation
-from retirement.models import Reservation as RetirementReservation
+from retirement.models import Reservation as RetreatReservation
 from retirement.models import WaitQueueNotification, Retreat
 
 from .exceptions import PaymentAPIError
@@ -613,7 +613,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                                 and WaitQueueNotification.objects.filter(
                                         user=user, retreat=retreat))):
                         retreat_reservations.append(
-                            RetirementReservation.objects.create(
+                            RetreatReservation.objects.create(
                                 user=user,
                                 retreat=retreat,
                                 order_line=retreat_orderline,
@@ -718,7 +718,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         orderline.content_object.name
                     ),
                     # Removed details section because it was only used
-                    # for retreats. Retirements instead have another
+                    # for retreats. Retreats instead have another
                     # unique email containing details of the event.
                     # 'details':
                     #    orderline.content_object.email_content if hasattr(
@@ -764,7 +764,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         for retreat_reservation in retreat_reservations:
             # Send info email
             merge_data = {
-                'RETIREMENT': retreat_reservation.retreat,
+                'RETREAT': retreat_reservation.retreat,
                 'USER': user,
             }
 

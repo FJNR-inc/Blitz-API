@@ -17,8 +17,8 @@ class PictureAdminInline(admin.TabularInline):
     readonly_fields = ('picture_tag', )
 
 
-class RetirementAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
-                      ExportActionModelAdmin):
+class RetreatAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
+                   ExportActionModelAdmin):
     resource_class = RetreatResource
     inlines = (PictureAdminInline, )
     list_display = (
@@ -95,7 +95,7 @@ class WaitQueueNotificationAdmin(SimpleHistoryAdmin):
     )
 
 
-admin.site.register(Retreat, RetirementAdmin)
+admin.site.register(Retreat, RetreatAdmin)
 admin.site.register(Picture, PictureAdmin)
 admin.site.register(Reservation, ReservationAdmin)
 admin.site.register(WaitQueue, WaitQueueAdmin)

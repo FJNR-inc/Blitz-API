@@ -1345,7 +1345,9 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.user)
 
         response = self.client.get(
-            reverse('timeslot-list') + "?period__workplace=1",
+            reverse('timeslot-list') +
+            "?period__workplace=" +
+            str(self.workplace.id),
             format='json',
         )
 

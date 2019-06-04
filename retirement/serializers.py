@@ -72,6 +72,9 @@ class RetreatSerializer(serializers.HyperlinkedModelSerializer):
     state_province = serializers.CharField(required=False, )
     city = serializers.CharField(required=False, )
     address_line1 = serializers.CharField(required=False, )
+    has_shared_rooms = serializers.BooleanField(required=False, )
+    is_active = serializers.BooleanField(required=False, )
+    accessibility = serializers.BooleanField(required=False, )
 
     # June 7th 2018
     # The SlugRelatedField serializer can't get a field's attributes.
@@ -161,6 +164,8 @@ class RetreatSerializer(serializers.HyperlinkedModelSerializer):
             err['is_active'] = _("This field is required.")
         if not check_if_translated_field('accessibility', attr):
             err['accessibility'] = _("This field is required.")
+        if not check_if_translated_field('has_shared_rooms', attr):
+            err['has_shared_rooms'] = _("This field is required.")
         if err:
             raise serializers.ValidationError(err)
         return super(RetreatSerializer, self).validate(attr)
@@ -193,7 +198,7 @@ class RetreatSerializer(serializers.HyperlinkedModelSerializer):
                 ),
                 "/remind_users"
             ),
-            "description": "Retirement 7-days reminder notification"
+            "description": "Retreat 7-days reminder notification"
         }
 
         try:
@@ -219,7 +224,7 @@ class RetreatSerializer(serializers.HyperlinkedModelSerializer):
                 requests.exceptions.ConnectionError) as err:
             mail_admins(
                 "Thèsez-vous: external scheduler error",
-                "{0}\nRetirement:{1}\nException:\n{2}\n".format(
+                "{0}\nRetreat:{1}\nException:\n{2}\n".format(
                     "Pre-event email task scheduling failed!",
                     retreat.__dict__,
                     traceback.format_exc(),
@@ -244,7 +249,7 @@ class RetreatSerializer(serializers.HyperlinkedModelSerializer):
                 ),
                 "/recap"
             ),
-            "description": "Retirement post-event notification"
+            "description": "Retreat post-event notification"
         }
 
         try:
@@ -271,7 +276,7 @@ class RetreatSerializer(serializers.HyperlinkedModelSerializer):
                 requests.exceptions.ConnectionError) as err:
             mail_admins(
                 "Thèsez-vous: external scheduler error",
-                "{0}\nRetirement:{1}\nException:\n{2}\n".format(
+                "{0}\nRetreat:{1}\nException:\n{2}\n".format(
                     "Post-event email task scheduling failed!",
                     retreat.__dict__,
                     traceback.format_exc(),
@@ -349,7 +354,7 @@ class PictureSerializer(serializers.HyperlinkedModelSerializer):
         fields = '__all__'
         extra_kwargs = {
             'retreat': {
-                'help_text': _("Retirement represented by the picture."),
+                'help_text': _("Retreat represented by the picture."),
                 'view_name': 'retreat:retreat-detail',
             },
             'url': {
@@ -802,7 +807,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         ),
                         "/notify"
                     ),
-                    "description": "Retirement wait queue notification"
+                    "description": "Retreat wait queue notification"
                 }
 
                 try:
@@ -900,8 +905,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 'CUSTOMER_EMAIL': user.email,
                 'CUSTOMER_NUMBER': user.id,
                 'TYPE': "Remboursement",
-                'NEW_RETIREMENT': new_retreat,
-                'OLD_RETIREMENT': old_retreat,
+                'NEW_RETREAT': new_retreat,
+                'OLD_RETREAT': old_retreat,
                 'SUBTOTAL':
                 old_retreat.price - new_retreat.price,
                 'COST': round(amount/100, 2),
@@ -927,8 +932,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 'CUSTOMER_EMAIL': user.email,
                 'CUSTOMER_NUMBER': user.id,
                 'TYPE': "Échange",
-                'NEW_RETIREMENT': new_retreat,
-                'OLD_RETIREMENT': old_retreat,
+                'NEW_RETREAT': new_retreat,
+                'OLD_RETREAT': old_retreat,
             }
 
             plain_msg = render_to_string("exchange.txt", merge_data)
@@ -943,7 +948,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             )
 
             merge_data = {
-                'RETIREMENT': new_retreat,
+                'RETREAT': new_retreat,
                 'USER': instance.user,
             }
 
@@ -971,7 +976,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         exclude = ('deleted', )
         extra_kwargs = {
             'retreat': {
-                'help_text': _("Retirement represented by the picture."),
+                'help_text': _("Retreat represented by the picture."),
                 'view_name': 'retreat:retreat-detail',
             },
             'is_active': {

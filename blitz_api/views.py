@@ -54,25 +54,25 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
     Sets the user inactive.
     """
     queryset = User.objects.all()
-    filter_fields = {
-        'email': '__all__',
-        'phone': '__all__',
-        'other_phone': '__all__',
-        'academic_field': '__all__',
-        'university': '__all__',
-        'academic_level': '__all__',
-        'membership': '__all__',
-        'last_login': '__all__',
-        'first_name': '__all__',
-        'last_name': '__all__',
-        'is_active': '__all__',
-        'date_joined': '__all__',
-        'birthdate': '__all__',
-        'gender': '__all__',
-        'membership_end': '__all__',
-        'tickets': '__all__',
-        'groups': '__all__',
-        'user_permissions': '__all__'
+    filterset_fields = {
+        'email',
+        'phone',
+        'other_phone',
+        'academic_field',
+        'university',
+        'academic_level',
+        'membership',
+        'last_login',
+        'first_name',
+        'last_name',
+        'is_active',
+        'date_joined',
+        'birthdate',
+        'gender',
+        'membership_end',
+        'tickets',
+        'groups',
+        'user_permissions',
     }
     search_fields = ('first_name', 'last_name', 'email')
     ordering = ('email',)

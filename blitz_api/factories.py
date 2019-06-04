@@ -62,12 +62,12 @@ class AcademicFieldFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: f'AcademicField {n}')
 
 
-class RetirementFactory(factory.DjangoModelFactory):
+class RetreatFactory(factory.DjangoModelFactory):
     class Meta:
         model = Retreat
         django_get_or_create = ('name',)
 
-    name = factory.sequence(lambda n: f'Retirement {n}')
+    name = factory.sequence(lambda n: f'Retreat {n}')
 
     place_name = ''
     country = ''

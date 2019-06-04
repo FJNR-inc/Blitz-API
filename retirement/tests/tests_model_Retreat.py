@@ -9,7 +9,7 @@ from ..models import Retreat
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
-class RetirementTests(APITestCase):
+class RetreatTests(APITestCase):
     def test_create(self):
         """
         Ensure that we can create a retreat.

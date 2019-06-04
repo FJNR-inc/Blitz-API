@@ -51,7 +51,7 @@ class WorkplaceViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.WorkplaceSerializer
     queryset = Workplace.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
-    filter_fields = '__all__'
+    filterset_fields = '__all__'
     ordering = ('name',)
 
     export_resource = WorkplaceResource()
@@ -73,7 +73,7 @@ class PictureViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrReadOnly,)
     # It is impossible to filter Imagefield by default. This is why we declare
     # filter fields manually here.
-    filter_fields = {
+    filterset_fields = {
         'name',
         'workplace',
     }
@@ -93,7 +93,7 @@ class PeriodViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.PeriodSerializer
     queryset = Period.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
-    filter_fields = '__all__'
+    filterset_fields = '__all__'
     ordering = ('name',)
 
     export_resource = PeriodResource()
@@ -216,7 +216,7 @@ class TimeSlotViewSet(ExportMixin, viewsets.ModelViewSet):
     # We need to find a way to use '__all__' without excluding nested
     # attributes through FKs such as period__workplace. For now, we declare
     # each fields one by one.
-    filter_fields = {
+    filterset_fields = {
         'period__workplace': ['exact'],
         'period__is_active': ['exact'],
         'period': ['exact'],
@@ -405,7 +405,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     serializer_class = serializers.ReservationSerializer
     queryset = Reservation.objects.all()
-    filter_fields = '__all__'
+    filterset_fields = '__all__'
     ordering_fields = (
         'is_active',
         'is_present',

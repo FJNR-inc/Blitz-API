@@ -5,7 +5,7 @@ from . import models
 
 
 @register(models.Retreat)
-class RetirementTranslationOptions(TranslationOptions):
+class RetreatTranslationOptions(TranslationOptions):
     fields = (
         'name',
         'details',

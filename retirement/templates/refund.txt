@@ -30,13 +30,13 @@ Ceci est un reçu pour votre remboursement. Merci d'en garder une copie.
 ** SOMMAIRE DU REMBOURSEMENT
 ------------------------------------------------------------
 
-{% if OLD_RETIREMENT %}
+{% if OLD_RETREAT %}
 
-{{OLD_RETIREMENT.price}}$ CAD
-{{OLD_RETIREMENT.name}} {% endif %} {% if NEW_RETIREMENT %}
+{{OLD_RETREAT.price}}$ CAD
+{{OLD_RETREAT.name}} {% endif %} {% if NEW_RETREAT %}
 
--{{NEW_RETIREMENT.price}}$ CAD
-{{NEW_RETIREMENT.name}} {% endif %}
+-{{NEW_RETREAT.price}}$ CAD
+{{NEW_RETREAT.name}} {% endif %}
 {% if SUBTOTAL %}
 
 {{SUBTOTAL}}$ CAD

@@ -1,5 +1,5 @@
 from blitz_api.factories import UserFactory, OrganizationFactory, \
-    RetirementFactory
+    RetreatFactory
 from django.core.management.base import BaseCommand
 
 from blitz_api.models import User, Organization, Address
@@ -32,8 +32,8 @@ class Command(BaseCommand):
             f"{nb_organization_in_db} "
             f"Orga(s) in database"))
 
-        RetirementFactory.create_batch(nb_user)
+        RetreatFactory.create_batch(nb_user)
         nb_organization_in_db = Retreat.objects.all().count()
         self.stdout.write(self.style.SUCCESS(
             f"{nb_organization_in_db} "
-            f"Retirement(s) in database"))
+            f"Retreat(s) in database"))
