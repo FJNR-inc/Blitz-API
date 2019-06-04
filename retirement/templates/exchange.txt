@@ -28,19 +28,19 @@ Ceci est une confirmation d'échange. Merci d'en garder une copie.
 ** ANCIENNE RETRAITE
 ------------------------------------------------------------
 
-{{OLD_RETIREMENT.name}}
+{{OLD_RETREAT.name}}
 
- * Date et heure de début: {{OLD_RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{OLD_RETIREMENT.start_time|date:"G"}}h{{OLD_RETIREMENT.start_time|date:"i"}}
- * Date et heure de fin: {{OLD_RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{OLD_RETIREMENT.end_time|date:"G"}}h{{OLD_RETIREMENT.end_time|date:"i"}}
+ * Date et heure de début: {{OLD_RETREAT.start_time|date:"l j F Y "|capfirst}}{{OLD_RETREAT.start_time|date:"G"}}h{{OLD_RETREAT.start_time|date:"i"}}
+ * Date et heure de fin: {{OLD_RETREAT.end_time|date:"l j F Y "|capfirst}}{{OLD_RETREAT.end_time|date:"G"}}h{{OLD_RETREAT.end_time|date:"i"}}
 
  
 ** NOUVELLE RETRAITE
 ------------------------------------------------------------
 
-{{NEW_RETIREMENT.name}}
+{{NEW_RETREAT.name}}
 
- * Date et heure de début: {{NEW_RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{NEW_RETIREMENT.start_time|date:"G"}}h{{NEW_RETIREMENT.start_time|date:"i"}}
- * Date et heure de fin: {{NEW_RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{NEW_RETIREMENT.end_time|date:"G"}}h{{NEW_RETIREMENT.end_time|date:"i"}}
+ * Date et heure de début: {{NEW_RETREAT.start_time|date:"l j F Y "|capfirst}}{{NEW_RETREAT.start_time|date:"G"}}h{{NEW_RETREAT.start_time|date:"i"}}
+ * Date et heure de fin: {{NEW_RETREAT.end_time|date:"l j F Y "|capfirst}}{{NEW_RETREAT.end_time|date:"G"}}h{{NEW_RETREAT.end_time|date:"i"}}
 
  
 ** L'ÉQUIPE THÈSEZ-VOUS

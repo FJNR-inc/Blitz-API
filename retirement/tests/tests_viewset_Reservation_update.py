@@ -144,7 +144,7 @@ class ReservationTests(APITestCase):
             'is_active': True,
             'is_present': False,
             'retreat': 'http://testserver/retreat/retreats/' +
-                          str(cls.reservation.retreat.id),
+                       str(cls.reservation.retreat.id),
             'url': 'http://testserver/retreat/reservations/' +
                    str(cls.reservation.id),
             'user': 'http://testserver/users/' +

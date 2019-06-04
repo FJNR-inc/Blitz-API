@@ -227,7 +227,7 @@ class RefundTests(APITestCase):
         response = self.client.get(
             reverse(
                 'refund-detail',
-                kwargs={'pk': 2},
+                kwargs={'pk': self.refund_admin.id},
             ),
         )
 

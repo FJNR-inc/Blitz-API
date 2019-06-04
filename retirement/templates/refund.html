@@ -122,24 +122,24 @@
         </h2>
         <div class="email__content__summary">
           <!--Repeat the item section in function of the list of items on the order received by the API -->
-          {% if OLD_RETIREMENT %}
+          {% if OLD_RETREAT %}
           <div class="email__content__summary__item">
             <div class="email__content__summary__item__price">
-              {{OLD_RETIREMENT.price}}$ CAD
+              {{OLD_RETREAT.price}}$ CAD
             </div>
             <div class="email__content__summary__item__name">
-              {{OLD_RETIREMENT.name}}
+              {{OLD_RETREAT.name}}
             </div>
           </div>
           {% endif %}
 
-          {% if NEW_RETIREMENT %}
+          {% if NEW_RETREAT %}
           <div class="email__content__summary__item">
             <div class="email__content__summary__item__price">
-              -{{NEW_RETIREMENT.price}}$ CAD
+              -{{NEW_RETREAT.price}}$ CAD
             </div>
             <div class="email__content__summary__item__name">
-              {{NEW_RETIREMENT.name}}
+              {{NEW_RETREAT.name}}
             </div>
           </div>
           {% endif %}

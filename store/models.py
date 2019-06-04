@@ -428,7 +428,7 @@ class AbstractCoupon(SafeDeleteModel):
     # This M2M field make a whole product family (ie: memberships) applicable
     # to a coupon. This overrides specific products.
     # For example, a coupon can be applied to "Membership 2", "Package 12" and
-    # all "Retirement".
+    # all "Retreat".
     applicable_product_types = models.ManyToManyField(
         ContentType,
         blank=True,

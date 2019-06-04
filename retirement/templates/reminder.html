@@ -81,22 +81,22 @@
           Plus qu'une semaine avant la retraite!
         </h1>
         <p>
-          Nous sommes heureux de vous compter parmi nous à la retraite {{RETIREMENT.name}}. Nous profitons de ce rappel pour vous recommuniquer les informations relatives à l'événement!
+          Nous sommes heureux de vous compter parmi nous à la retraite {{RETREAT.name}}. Nous profitons de ce rappel pour vous recommuniquer les informations relatives à l'événement!
         </p>
 
         {% language 'fr' %}
         <ul>
-          <li><b>Date et heure de début: </b>{{RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}</li>
-          <li><b>Date et heure de fin: </b>{{RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{RETIREMENT.end_time|date:"G"}}h{{RETIREMENT.end_time|date:"i"}}</li>
+          <li><b>Date et heure de début: </b>{{RETREAT.start_time|date:"l j F Y "|capfirst}}{{RETREAT.start_time|date:"G"}}h{{RETREAT.start_time|date:"i"}}</li>
+          <li><b>Date et heure de fin: </b>{{RETREAT.end_time|date:"l j F Y "|capfirst}}{{RETREAT.end_time|date:"G"}}h{{RETREAT.end_time|date:"i"}}</li>
         </ul>
         {% endlanguage %}
 
-        {% if RETIREMENT.email_content %}
+        {% if RETREAT.email_content %}
         <h2 class="email__content__subtitle">
           Ce que vous devez savoir
         </h2>
         <p>
-          {{RETIREMENT.email_content}}
+          {{RETREAT.email_content}}
         </p>
         {% endif %}
 
@@ -124,7 +124,7 @@
                       <table border="0" cellpadding="0" cellspacing="0" style="margin:0 auto;">
                         <tr>
                           <td align="center" bgcolor="#142823" width="150" style="-moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px;">
-                            <a href={{RETIREMENT.form_url}} style="padding: 10px;width:150px;display: block;text-decoration: none;border:0;text-align: center;font-weight: bold;font-size: 15px;font-family: sans-serif;color: #F7EDD9;background: #142823;border: 1px solid #142823;-moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px;line-height:17px;" class="button_link">
+                            <a href={{RETREAT.form_url}} style="padding: 10px;width:150px;display: block;text-decoration: none;border:0;text-align: center;font-weight: bold;font-size: 15px;font-family: sans-serif;color: #F7EDD9;background: #142823;border: 1px solid #142823;-moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px;line-height:17px;" class="button_link">
                               Formulaire
                             </a>
                           </td>

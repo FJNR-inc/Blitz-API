@@ -4,7 +4,7 @@
 
 Bonjour {{USER.first_name}}
 
-Merci pour votre participation à la {{RETIREMENT.name}}
+Merci pour votre participation à la {{RETREAT.name}}
 des retraites de rédaction Thèsez-vous.
 
 ===================================
@@ -33,7 +33,7 @@ année, alors que nous procédons à l’évaluation d’impact de nos services.
 
 Remplir le questionnaire:
 
-{{RETIREMENT.review_url}}
+{{RETREAT.review_url}}
 
 ==============
 Besoin d'aide?
@@ -125,7 +125,7 @@ time and sharing your ideas for the next retreats.
 
 Fill the assessment form:
 
-{{RETIREMENT.review_url}}
+{{RETREAT.review_url}}
 
 ==========
 Need help?

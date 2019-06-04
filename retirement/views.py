@@ -61,7 +61,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.RetreatSerializer
     queryset = Retreat.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
-    filter_fields = {
+    filterset_fields = {
         'start_time': ['exact', 'gte', 'lte'],
         'end_time': ['exact', 'gte', 'lte'],
         'is_active': ['exact'],
@@ -98,7 +98,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         time_limit = retreat.start_time - timedelta(days=8)
         if timezone.now() < time_limit:
             response_data = {
-                'detail': "Retirement takes place in more than 8 days."
+                'detail': "Retreat takes place in more than 8 days."
             }
             return Response(response_data, status=status.HTTP_200_OK)
 
@@ -123,7 +123,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         time_limit = retreat.end_time - timedelta(days=1)
         if timezone.now() < time_limit:
             response_data = {
-                'detail': "Retirement ends in more than 1 day."
+                'detail': "Retreat ends in more than 1 day."
             }
             return Response(response_data, status=status.HTTP_200_OK)
 
@@ -153,7 +153,7 @@ class PictureViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrReadOnly,)
     # It is impossible to filter Imagefield by default. This is why we declare
     # filter fields manually here.
-    filter_fields = {
+    filterset_fields = {
         'name',
         'retreat',
     }
@@ -175,7 +175,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     serializer_class = serializers.ReservationSerializer
     queryset = Reservation.objects.all()
-    filter_fields = '__all__'
+    filterset_fields = '__all__'
     ordering_fields = (
         'is_active',
         'is_present',
@@ -337,7 +337,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                             ),
                             "/notify"
                         ),
-                        "description": "Retirement wait queue notification"
+                        "description": "Retreat wait queue notification"
                     }
 
                     try:
@@ -390,7 +390,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                 'CUSTOMER_EMAIL': user.email,
                 'CUSTOMER_NUMBER': user.id,
                 'TYPE': "Remboursement",
-                'OLD_RETIREMENT': old_retreat,
+                'OLD_RETREAT': old_retreat,
                 'COST': round(total_amount / 100, 2),
                 'TAX': round(Decimal(amount_tax / 100), 2),
             }
@@ -426,7 +426,7 @@ class WaitQueueViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.WaitQueueSerializer
     queryset = WaitQueue.objects.all()
     permission_classes = (IsAuthenticated,)
-    filter_fields = '__all__'
+    filterset_fields = '__all__'
     ordering_fields = (
         'created_at',
         'retreat__start_time',
@@ -474,7 +474,7 @@ class WaitQueueNotificationViewSet(ExportMixin, mixins.ListModelMixin,
     serializer_class = serializers.WaitQueueNotificationSerializer
     queryset = WaitQueueNotification.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
-    filter_fields = '__all__'
+    filterset_fields = '__all__'
     ordering_fields = (
         'created_at',
         'retreat__start_time',
@@ -518,7 +518,7 @@ class WaitQueueNotificationViewSet(ExportMixin, mixins.ListModelMixin,
         # Remove older notifications
         remove_before = timezone.now() - timedelta(
             days=settings.LOCAL_SETTINGS[
-                'RETIREMENT_NOTIFICATION_LIFETIME_DAYS'
+                'RETREAT_NOTIFICATION_LIFETIME_DAYS'
             ]
         )
         WaitQueueNotification.objects.filter(

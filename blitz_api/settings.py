@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'rest_framework_filters',
     'safedelete',
     'import_export',
+    'django_filters'
 ]
 
 MIDDLEWARE = [
@@ -238,7 +239,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_FILTER_BACKENDS': (
-        'rest_framework_filters.backends.DjangoFilterBackend',
+        'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter'
     ),
@@ -317,8 +318,8 @@ LOCAL_SETTINGS = {
                                       default='https://example.com/reset-password/{{token}}'),
     },
     'SELLING_TAX': 0.14975,
-    'RETIREMENT_NOTIFICATION_LIFETIME_DAYS': config(
-        'RETIREMENT_NOTIFICATION_LIFETIME_DAYS', default=30),
+    'RETREAT_NOTIFICATION_LIFETIME_DAYS': config(
+        'RETREAT_NOTIFICATION_LIFETIME_DAYS', default=30),
 }
 
 # Payment settings

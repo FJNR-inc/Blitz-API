@@ -24,11 +24,11 @@ User = get_user_model()
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
-class RetirementTests(APITestCase):
+class RetreatTests(APITestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(RetirementTests, cls).setUpClass()
+        super(RetreatTests, cls).setUpClass()
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()
@@ -220,6 +220,7 @@ class RetirementTests(APITestCase):
             'form_url': "example.com",
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
+            'has_shared_rooms': True,
         }
 
         response = self.client.post(
@@ -297,6 +298,7 @@ class RetirementTests(APITestCase):
             'form_url': "example.com",
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
+            'has_shared_rooms': True,
         }
 
         response = self.client.post(
@@ -317,7 +319,7 @@ class RetirementTests(APITestCase):
         """
         self.client.force_authenticate(user=self.admin)
 
-        data = {}
+        data = dict()
 
         response = self.client.post(
             reverse('retreat:retreat-list'),
@@ -343,6 +345,7 @@ class RetirementTests(APITestCase):
             "min_day_exchange": ["This field is required."],
             "is_active": ["This field is required."],
             "accessibility": ["This field is required."],
+            "has_shared_rooms": ["This field is required."],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -378,6 +381,7 @@ class RetirementTests(APITestCase):
             'carpool_url': (1,),
             'review_url': (1,),
             'place_name': (1,),
+            'has_shared_rooms': "",
         }
 
         response = self.client.post(
@@ -414,6 +418,7 @@ class RetirementTests(APITestCase):
             'form_url': ['Not a valid string.'],
             'carpool_url': ['Not a valid string.'],
             'review_url': ['Not a valid string.'],
+            'has_shared_rooms': ['Must be a valid boolean.'],
             'place_name': ['Not a valid string.'],
         }
 
@@ -448,6 +453,7 @@ class RetirementTests(APITestCase):
             'form_url': "example.com",
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
+            'has_shared_rooms': True,
         }
 
         response = self.client.put(
@@ -852,7 +858,7 @@ class RetirementTests(APITestCase):
                 ),
             )
 
-        content = {'detail': "Retirement takes place in more than 8 days."}
+        content = {'detail': "Retreat takes place in more than 8 days."}
 
         self.assertEqual(json.loads(response.content), content)
 
@@ -903,7 +909,7 @@ class RetirementTests(APITestCase):
                 ),
             )
 
-        content = {'detail': "Retirement ends in more than 1 day."}
+        content = {'detail': "Retreat ends in more than 1 day."}
 
         self.assertEqual(json.loads(response.content), content)
 
