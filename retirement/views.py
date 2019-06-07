@@ -288,10 +288,10 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                     except PaymentAPIError as err:
                         if str(err) == PAYSAFE_EXCEPTION['3406']:
                             raise rest_framework_serializers.ValidationError({
-                                'non_field_errors': _(
+                                'non_field_errors': [_(
                                     "The order has not been charged yet. Try "
                                     "again later."
-                                )
+                                )],
                             })
                         raise rest_framework_serializers.ValidationError(
                             {
