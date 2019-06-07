@@ -52,6 +52,7 @@ class ReservationTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = UserFactory()
+        self.user2 = UserFactory()
         self.admin = AdminFactory()
         self.retreat_type = ContentType.objects.get_for_model(Retreat)
         self.retreat = Retreat.objects.create(
@@ -154,14 +155,33 @@ class ReservationTests(APITestCase):
             'refundable': True,
             'exchangeable': True,
         }
+        self.reservation2 = Reservation.objects.create(
+            user=self.user2,
+            retreat=self.retreat,
+            is_active=True,
+        )
+        self.reservation2_expected_payload = {
+            'id': self.reservation2.id,
+            'is_active': True,
+            'is_present': False,
+            'retreat': 'http://testserver/retreat/retreats/' +
+                       str(self.reservation2.retreat.id),
+            'url': 'http://testserver/retreat/reservations/' +
+                   str(self.reservation2.id),
+            'user': 'http://testserver/users/' + str(self.user2.id),
+            'order_line': None,
+            'cancelation_date': None,
+            'cancelation_action': None,
+            'cancelation_reason': None,
+            'refundable': True,
+            'exchangeable': True,
+        }
         self.reservation_admin = Reservation.objects.create(
             user=self.admin,
             retreat=self.retreat2,
             order_line=self.order_line,
             is_active=True,
         )
-
-        self.maxDiff = None
 
     def test_create(self):
         """
@@ -549,7 +569,7 @@ class ReservationTests(APITestCase):
         Ensure we can list reservations as an admin.
         """
         self.client.force_authenticate(user=self.admin)
-
+        self.maxDiff = None
         response = self.client.get(
             reverse('retreat:reservation-list'),
             format='json',
@@ -561,13 +581,16 @@ class ReservationTests(APITestCase):
         del data['results'][0]['retreat_details']
         del data['results'][1]['user_details']
         del data['results'][1]['retreat_details']
+        del data['results'][2]['user_details']
+        del data['results'][2]['retreat_details']
 
         content = {
-            'count': 2,
+            'count': 3,
             'next': None,
             'previous': None,
             'results': [
                 self.reservation_expected_payload,
+                self.reservation2_expected_payload,
                 {
                     'id': self.reservation_admin.id,
                     'is_active': True,
@@ -817,6 +840,101 @@ class ReservationTests(APITestCase):
         self.reservation.refundable = True
         self.reservation.save()
 
+    def test_delete_retirement_refundable_created_by_administrator(self):
+        """
+        Ensure that a user can cancel one of his retreat reservations
+        created by an administrator.
+        Since the user didn't bought this reservation via the platform
+        via a manual administratior action he will not be automatically
+        refund.
+        The user won't receive any email.
+
+        Test when refundable is True, but we will not refund
+        """
+        self.client.force_authenticate(user=self.user2)
+
+        FIXED_TIME = datetime(2000, 1, 10, tzinfo=LOCAL_TIMEZONE)
+
+        self.assertTrue(self.reservation2.refundable)
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'retreat:reservation-detail',
+                    kwargs={'pk': self.reservation2.pk},
+                ),
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content
+        )
+
+        self.reservation2.refresh_from_db()
+
+        self.assertFalse(self.reservation2.is_active)
+        self.assertEqual(self.reservation2.cancelation_reason, 'U')
+        self.assertEqual(self.reservation2.cancelation_action, 'N')
+        self.assertEqual(self.reservation2.cancelation_date, FIXED_TIME)
+
+        self.reservation2.is_active = True
+        self.reservation2.cancelation_date = None
+        self.reservation2.cancelation_reason = None
+
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_delete_retirement_not_refundable_created_by_administrator(self):
+        """
+        Ensure that a user can cancel one of his retreat reservations
+        created by an administrator.
+        Since the user didn't bought this reservation via the platform
+        via a manual administratior action he will not be automatically
+        refund.
+        The user won't receive any email.
+
+        Test when refundable is False, but we will not refund
+        """
+        self.client.force_authenticate(user=self.user2)
+
+        FIXED_TIME = datetime(2000, 1, 10, tzinfo=LOCAL_TIMEZONE)
+
+        self.reservation2.refundable = False
+        self.reservation2.save()
+
+        self.reservation2.refresh_from_db()
+
+        self.assertFalse(self.reservation2.refundable)
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'retreat:reservation-detail',
+                    kwargs={'pk': self.reservation2.pk},
+                ),
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content
+        )
+
+        self.reservation2.refresh_from_db()
+
+        self.assertFalse(self.reservation2.is_active)
+        self.assertEqual(self.reservation2.cancelation_reason, 'U')
+        self.assertEqual(self.reservation2.cancelation_action, 'N')
+        self.assertEqual(self.reservation2.cancelation_date, FIXED_TIME)
+
+        self.reservation2.is_active = True
+        self.reservation2.cancelation_date = None
+        self.reservation2.cancelation_reason = None
+
+        self.assertEqual(len(mail.outbox), 0)
+
     @responses.activate
     @override_settings(ADMINS=[("You", "you@example.com")])
     def test_delete_scheduler_error(self):
@@ -996,8 +1114,9 @@ class ReservationTests(APITestCase):
         )
 
         content = {
-            'non_field_errors': "The order has not been charged yet. Try "
-                                "again later."
+            'non_field_errors': [
+                "The order has not been charged yet. Try again later."
+            ]
         }
 
         self.assertEqual(json.loads(response.content), content)
