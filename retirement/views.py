@@ -241,9 +241,15 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         instance = self.get_object()
         retreat = instance.retreat
         user = instance.user
-        order_line = instance.order_line
-        order = order_line.order
         reservation_active = instance.is_active
+        order_line = instance.order_line
+
+        if order_line:
+            order = order_line.order
+            refundable = instance.refundable
+        else:
+            order = None
+            refundable = False
 
         respects_minimum_days = (
                 (retreat.start_time - timezone.now()) >=
@@ -253,7 +259,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
             # No need to check for previous refunds because a refunded
             # reservation == canceled reservation, thus not active.
             if reservation_active:
-                if order_line.quantity > 1:
+                if order_line and order_line.quantity > 1:
                     raise rest_framework_serializers.ValidationError({
                         'non_field_errors': [_(
                             "The order containing this reservation has a "
@@ -261,7 +267,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                             "support team."
                         )]
                     })
-                if respects_minimum_days and instance.refundable:
+                if respects_minimum_days and refundable:
                     try:
                         amount = retreat.price
                         # The refund_rate converts in cents at the same time
@@ -372,40 +378,52 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
 
         # Send an email if a refund has been issued
         if reservation_active and instance.cancelation_action == 'R':
-            # Here the price takes the applied coupon into account, if
-            # applicable.
-            old_retreat = {
-                'price': (amount * retreat.refund_rate) / 100,
-                'name': "{0}: {1}".format(
-                    _("Retreat"),
-                    retreat.name
-                )
-            }
-
-            # Send order confirmation email
-            merge_data = {
-                'DATETIME': timezone.localtime().strftime("%x %X"),
-                'ORDER_ID': order.id,
-                'CUSTOMER_NAME': user.first_name + " " + user.last_name,
-                'CUSTOMER_EMAIL': user.email,
-                'CUSTOMER_NUMBER': user.id,
-                'TYPE': "Remboursement",
-                'OLD_RETREAT': old_retreat,
-                'COST': round(total_amount / 100, 2),
-                'TAX': round(Decimal(amount_tax / 100), 2),
-            }
-
-            plain_msg = render_to_string("refund.txt", merge_data)
-            msg_html = render_to_string("refund.html", merge_data)
-
-            django_send_mail(
-                "Confirmation de remboursement",
-                plain_msg,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                html_message=msg_html,
+            self.send_refund_confirmation_email(
+                amount=amount,
+                retreat=retreat,
+                order=order,
+                user=user,
+                total_amount=total_amount,
+                amount_tax=amount_tax,
             )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def send_refund_confirmation_email(self, amount, retreat, order, user,
+                                       total_amount, amount_tax):
+        # Here the price takes the applied coupon into account, if
+        # applicable.
+        old_retreat = {
+            'price': (amount * retreat.refund_rate) / 100,
+            'name': "{0}: {1}".format(
+                _("Retreat"),
+                retreat.name
+            )
+        }
+
+        # Send order confirmation email
+        merge_data = {
+            'DATETIME': timezone.localtime().strftime("%x %X"),
+            'ORDER_ID': order.id,
+            'CUSTOMER_NAME': user.first_name + " " + user.last_name,
+            'CUSTOMER_EMAIL': user.email,
+            'CUSTOMER_NUMBER': user.id,
+            'TYPE': "Remboursement",
+            'OLD_RETREAT': old_retreat,
+            'COST': round(total_amount / 100, 2),
+            'TAX': round(Decimal(amount_tax / 100), 2),
+        }
+
+        plain_msg = render_to_string("refund.txt", merge_data)
+        msg_html = render_to_string("refund.html", merge_data)
+
+        django_send_mail(
+            "Confirmation de remboursement",
+            plain_msg,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            html_message=msg_html,
+        )
 
 
 class WaitQueueViewSet(ExportMixin, viewsets.ModelViewSet):
