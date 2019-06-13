@@ -17,7 +17,7 @@ class PictureAdminInline(admin.TabularInline):
     readonly_fields = ('picture_tag', )
 
 
-class RetreatAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
+class RetreatAdmin(SimpleHistoryAdmin, TranslationAdmin,
                    ExportActionModelAdmin):
     resource_class = RetreatResource
     inlines = (PictureAdminInline, )
