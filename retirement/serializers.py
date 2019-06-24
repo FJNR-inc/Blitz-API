@@ -697,10 +697,10 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     except PaymentAPIError as err:
                         if str(err) == PAYSAFE_EXCEPTION['3406']:
                             raise serializers.ValidationError({
-                                'non_field_errors': _(
+                                'non_field_errors': [_(
                                     "The order has not been charged yet. "
                                     "Try again later."
-                                )
+                                )]
                             })
                         raise serializers.ValidationError({
                             'message': str(err)
@@ -775,10 +775,10 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     except PaymentAPIError as err:
                         if str(err) == PAYSAFE_EXCEPTION['3406']:
                             raise serializers.ValidationError({
-                                'non_field_errors': _(
+                                'non_field_errors': [_(
                                     "The order has not been charged yet. "
                                     "Try again later."
-                                )
+                                )]
                             })
                         raise serializers.ValidationError({
                             'message': str(err)
