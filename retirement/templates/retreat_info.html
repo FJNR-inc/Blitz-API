@@ -145,21 +145,21 @@
             Bonjour {{USER.first_name}},
         </h4>
         <h4>
-            Voici quelques informations essentielles pour profiter de la {{RETIREMENT.name}} des retraites de rédaction Thèsez-vous.
+            Voici quelques informations essentielles pour profiter de la {{RETREAT.name}} des retraites de rédaction Thèsez-vous.
         </h4>
 
         <div class="email__content__details">
             <div class="email__content__details__picture">
             </div>
             <div class="email__content__details__text">
-                <h4>{{RETIREMENT.name}}</h4>
+                <h4>{{RETREAT.name}}</h4>
 
                 <div class="email__content__details__text__info">
                     <span class="email__content__details__text__info__label">
                         Lieu:
                     </span>
                     <span class="email__content__details__text__info__value">
-                        {{RETIREMENT.place_name}}
+                        {{RETREAT.place_name}}
                     </span>
                 </div>
 
@@ -168,7 +168,7 @@
                         Début:
                     </span>
                     <span class="email__content__details__text__info__value">
-                        {{RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}
+                        {{RETREAT.start_time|date:"l j F Y "|capfirst}}{{RETREAT.start_time|date:"G"}}h{{RETREAT.start_time|date:"i"}}
                     </span>
                 </div>
 
@@ -177,7 +177,7 @@
                         Fin:
                     </span>
                     <span class="email__content__details__text__info__value">
-                        {{RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{RETIREMENT.end_time|date:"G"}}h{{RETIREMENT.end_time|date:"i"}}
+                        {{RETREAT.end_time|date:"l j F Y "|capfirst}}{{RETREAT.end_time|date:"G"}}h{{RETREAT.end_time|date:"i"}}
                     </span>
                 </div>
 
@@ -186,7 +186,7 @@
                         Animation:
                     </span>
                     <span class="email__content__details__text__info__value">
-                        {{RETIREMENT.animation}}
+                        {{RETREAT.animation}}
                     </span>
                 </div>
             </div>
@@ -215,8 +215,8 @@
             C'est un rendez-vous!
         </div>
         <div class="email__content__content">
-            C'est donc un rendez-vous le {{RETIREMENT.start_time|date:"l j F Y "|capfirst}}, au {{RETIREMENT.place_name}}. L'atelier d'introduction
-            débutera à {{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}. Arrivez au moins 15 minutes à l'avance pour vous installer!
+            C'est donc un rendez-vous le {{RETREAT.start_time|date:"l j F Y "|capfirst}}, au {{RETREAT.place_name}}. L'atelier d'introduction
+            débutera à {{RETREAT.start_time|date:"G"}}h{{RETREAT.start_time|date:"i"}}. Arrivez au moins 15 minutes à l'avance pour vous installer!
         </div>
 
         <div class="email__content__boxs">
@@ -248,7 +248,7 @@
             votre offre/demande de covoiturage auprès des autres participant.e.s à la retraite.
         </div>
         <div class="email__content__button">
-            <a href="{{RETIREMENT.carpool_url}}" class="button">
+            <a href="{{RETREAT.carpool_url}}" class="button">
                 Faire une annonce
             </a>
         </div>
@@ -282,7 +282,7 @@
             Hello {{USER.first_name}},
         </h4>
         <h4>
-            The {{RETIREMENT.name}} of Thèsez-Vous? retreats arrives in a few days and we want to send you
+            The {{RETREAT.name}} of Thèsez-Vous? retreats arrives in a few days and we want to send you
             important informations for the functioning of it.
         </h4>
 
@@ -290,14 +290,14 @@
             <div class="email__content__details__picture">
             </div>
             <div class="email__content__details__text">
-                <h4>{{RETIREMENT.name}}</h4>
+                <h4>{{RETREAT.name}}</h4>
 
                 <div class="email__content__details__text__info">
                     <span class="email__content__details__text__info__label">
                         Place:
                     </span>
                     <span class="email__content__details__text__info__value">
-                        {{RETIREMENT.place_name}}
+                        {{RETREAT.place_name}}
                     </span>
                 </div>
 
@@ -306,8 +306,8 @@
                         Start:
                     </span>
                     <span class="email__content__details__text__info__value">
-                        {{RETIREMENT.start_time|date:"l j F Y "|capfirst}}
-                        {{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}
+                        {{RETREAT.start_time|date:"l j F Y "|capfirst}}
+                        {{RETREAT.start_time|date:"G"}}h{{RETREAT.start_time|date:"i"}}
                     </span>
                 </div>
 
@@ -316,8 +316,8 @@
                         End:
                     </span>
                     <span class="email__content__details__text__info__value">
-                        {{RETIREMENT.end_time|date:"l j F Y "|capfirst}}
-                        {{RETIREMENT.end_time|date:"G"}}h{{RETIREMENT.end_time|date:"i"}}
+                        {{RETREAT.end_time|date:"l j F Y "|capfirst}}
+                        {{RETREAT.end_time|date:"G"}}h{{RETREAT.end_time|date:"i"}}
                     </span>
                 </div>
 
@@ -326,7 +326,7 @@
                         Animation:
                     </span>
                     <span class="email__content__details__text__info__value">
-                        {{RETIREMENT.animation}}
+                        {{RETREAT.animation}}
                     </span>
                 </div>
             </div>
@@ -340,14 +340,14 @@
         <div class="email__content__content">
             <p>
                 The details of this Thèsez-Vous? Edition, including valuable tips for setting realistic writing goals,
-                based on the retirement schedule, as well as details of the material to be provided, are now
+                based on the retreat schedule, as well as details of the material to be provided, are now
                 available via the link “s’y préparer”.
             </p>
             <p>
                 You will also find a preliminary schedule (slight modifications possible).
             </p>
             <p>
-                * Note: if you take the time to plan your retirement and your writing goals, you will benefit more!
+                * Note: if you take the time to plan your retreat and your writing goals, you will benefit more!
             </p>
 
         </div>
@@ -363,9 +363,9 @@
             It's a "rendez-vous"!
         </div>
         <div class="email__content__content">
-            It is therefore a “rendez-vous” on  {{RETIREMENT.start_time|date:"l j F Y "|capfirst}},
-            from {{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}} at the
-            {{RETIREMENT.place_name}}.
+            It is therefore a “rendez-vous” on  {{RETREAT.start_time|date:"l j F Y "|capfirst}},
+            from {{RETREAT.start_time|date:"G"}}h{{RETREAT.start_time|date:"i"}} at the
+            {{RETREAT.place_name}}.
         </div>
 
         <div class="email__content__boxs">
@@ -398,7 +398,7 @@
             </p>
         </div>
         <div class="email__content__button">
-            <a href="{{RETIREMENT.carpool_url}}" class="button">
+            <a href="{{RETREAT.carpool_url}}" class="button">
                 Create an announce
             </a>
         </div>

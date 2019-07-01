@@ -1,21 +1,27 @@
 
 
 {% load static %}
+{% load i18n %}
 
  
 ** PLUS QU'UNE SEMAINE AVANT LA RETRAITE!
 ------------------------------------------------------------
 
-Nous sommes heureux de vous compter parmi nous à la retraite {{RETIREMENT.name}}. Nous profitons de ce rappel pour vous recommuniquer les informations relatives à l'événement!
+Nous sommes heureux de vous compter parmi nous à la retraite {{RETREAT.name}}. Nous profitons de ce rappel pour vous recommuniquer les informations relatives à l'événement!
 
- * Date et heure de début: {{RETIREMENT.start_time|date:"l j F Y "|capfirst}}{{RETIREMENT.start_time|date:"G"}}h{{RETIREMENT.start_time|date:"i"}}
- * Date et heure de fin: {{RETIREMENT.end_time|date:"l j F Y "|capfirst}}{{RETIREMENT.end_time|date:"G"}}h{{RETIREMENT.end_time|date:"i"}}
 
- 
+{% language 'fr' %}
+ * Date et heure de début: {{RETREAT.start_time|date:"l j F Y "|capfirst}}{{RETREAT.start_time|date:"G"}}h{{RETREAT.start_time|date:"i"}}
+ * Date et heure de fin: {{RETREAT.end_time|date:"l j F Y "|capfirst}}{{RETREAT.end_time|date:"G"}}h{{RETREAT.end_time|date:"i"}}
+{% endlanguage %}
+
+
+{% if RETREAT.email_content %} 
 ** CE QUE VOUS DEVEZ SAVOIR
 ------------------------------------------------------------
 
-{{RETIREMENT.email_content}}
+{{RETREAT.email_content}}
+{% endif %}
 
  
 ** FORMULAIRE
@@ -25,7 +31,7 @@ Si ce n'est pas déjà fait, veuillez remplir le formulaire suivant afin que nou
 
  
 
-Formulaire ({{RETIREMENT.form_url}})
+Formulaire ({{RETREAT.form_url}})
 
  
 ** L'ÉQUIPE THÈSEZ-VOUS

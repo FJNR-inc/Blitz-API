@@ -140,93 +140,18 @@ class ReservationTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
-        response_data['timeslot_details'] = remove_translation_fields(
-            response_data['timeslot_details']
-        )
-        response_data['timeslot_details'][
-            'workplace'] = remove_translation_fields(
-                response_data['timeslot_details']['workplace']
-            )
-        response_data['user_details'] = remove_translation_fields(
-            response_data['user_details']
-        )
-        del response_data['user_details']["first_name"]
-        del response_data['user_details']["last_name"]
-        del response_data['user_details']["email"]
-        del response_data['user_details']['date_joined']
+        del response_data['user_details']
+        del response_data['timeslot_details']
+        del response_data['id']
+        del response_data['url']
 
         content = {
-            'id': 4,
             'is_active': True,
             'is_present': False,
-            'timeslot': 'http://testserver/time_slots/1',
-            'url': 'http://testserver/reservations/4',
-            'user': 'http://testserver/users/1',
+            'timeslot': f'http://testserver/time_slots/{self.time_slot.id}',
+            'user': f'http://testserver/users/{self.user.id}',
             'cancelation_date': None,
             'cancelation_reason': None,
-            'timeslot_details': {
-                'end_time': '2130-01-15T12:00:00-05:00',
-                'id': 1,
-                'period': 'http://testserver/periods/1',
-                'places_remaining': 38,
-                'reservations': [
-                    'http://testserver/reservations/2',
-                    'http://testserver/reservations/4',
-                ],
-                'reservations_canceled': [],
-                'price': '3.00',
-                'start_time': '2130-01-15T08:00:00-05:00',
-                'url': 'http://testserver/time_slots/1',
-                'users': [
-                    'http://testserver/users/1',
-                    'http://testserver/users/1'
-                ],
-                'workplace': {
-                    'address_line1': '123 random street',
-                    'address_line2': None,
-                    'city': '',
-                    'country': 'Random country',
-                    'details': 'short_description',
-                    'id': 1,
-                    'latitude': None,
-                    'longitude': None,
-                    'name': 'Blitz',
-                    'pictures': [],
-                    'postal_code': '123 456',
-                    'seats': 40,
-                    'state_province': 'Random state',
-                    'timezone': None,
-                    'place_name': '',
-                    'volunteers': ['http://testserver/users/1'],
-                    'url': 'http://testserver/workplaces/1'
-                }
-            },
-            'user_details': {
-                'academic_field': None,
-                'academic_level': None,
-                'birthdate': None,
-                'gender': None,
-                'groups': [],
-                'id': 1,
-                'is_active': True,
-                'is_staff': False,
-                'is_superuser': False,
-                'last_login': None,
-                'membership': None,
-                'membership_end': None,
-                'other_phone': None,
-                'phone': None,
-                'tickets': 1,
-                'university': None,
-                'url': 'http://testserver/users/1',
-                'user_permissions': [],
-                'city': None,
-                'personnal_restrictions': None,
-                'academic_program_code': None,
-                'faculty': None,
-                'student_number': None,
-                'volunteer_for_workplace': ['http://testserver/workplaces/1'],
-            }
         }
 
         self.assertEqual(response_data, content)
@@ -315,95 +240,20 @@ class ReservationTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
-        response_data['timeslot_details'] = remove_translation_fields(
-            response_data['timeslot_details']
-        )
-        response_data['timeslot_details'][
-            'workplace'] = remove_translation_fields(
-                response_data['timeslot_details']['workplace']
-            )
-        response_data['user_details'] = remove_translation_fields(
-            response_data['user_details']
-        )
-        del response_data['user_details']["first_name"]
-        del response_data['user_details']["last_name"]
-        del response_data['user_details']["email"]
-        del response_data['user_details']['date_joined']
+
+        del response_data['timeslot_details']
+        del response_data['user_details']
+        del response_data['id']
+        del response_data['url']
 
         content = {
-            'id': 4,
             'is_active': True,
             'is_present': False,
-            'timeslot': 'http://testserver/time_slots/2',
-            'url': 'http://testserver/reservations/4',
-            'user': 'http://testserver/users/1',
+            'timeslot': f'http://testserver/time_slots/'
+            f'{self.time_slot_active.id}',
+            'user': f'http://testserver/users/{self.user.id}',
             'cancelation_date': None,
             'cancelation_reason': None,
-            'timeslot_details': {
-                'end_time': '2130-01-15T22:00:00-05:00',
-                'id': 2,
-                'period': 'http://testserver/periods/2',
-                'places_remaining': -2,
-                'reservations': [
-                    'http://testserver/reservations/1',
-                    'http://testserver/reservations/3',
-                    'http://testserver/reservations/4',
-                ],
-                'reservations_canceled': [],
-                'price': '3.00',
-                'start_time': '2130-01-15T18:00:00-05:00',
-                'url': 'http://testserver/time_slots/2',
-                'users': [
-                    'http://testserver/users/1',
-                    'http://testserver/users/2',
-                    'http://testserver/users/1'
-                ],
-                'workplace': {
-                    'address_line1': '123 random street',
-                    'address_line2': None,
-                    'city': '',
-                    'country': 'Random country',
-                    'details': 'short_description',
-                    'id': 2,
-                    'latitude': None,
-                    'longitude': None,
-                    'name': 'Blitz2',
-                    'pictures': [],
-                    'postal_code': '123 456',
-                    'seats': 1,
-                    'state_province': 'Random state',
-                    'timezone': None,
-                    'place_name': '',
-                    'volunteers': [],
-                    'url': 'http://testserver/workplaces/2'
-                }
-            },
-            'user_details': {
-                'academic_field': None,
-                'academic_level': None,
-                'birthdate': None,
-                'gender': None,
-                'groups': [],
-                'id': 1,
-                'is_active': True,
-                'is_staff': False,
-                'is_superuser': False,
-                'last_login': None,
-                'membership': None,
-                'membership_end': None,
-                'other_phone': None,
-                'phone': None,
-                'tickets': 1,
-                'university': None,
-                'url': 'http://testserver/users/1',
-                'user_permissions': [],
-                'city': None,
-                'personnal_restrictions': None,
-                'academic_program_code': None,
-                'faculty': None,
-                'student_number': None,
-                'volunteer_for_workplace': ['http://testserver/workplaces/1'],
-            }
         }
 
         self.assertEqual(response_data, content)
@@ -566,7 +416,7 @@ class ReservationTests(APITestCase):
         response = self.client.put(
             reverse(
                 'reservation-detail',
-                kwargs={'pk': 1},
+                args=[self.reservation.id]
             ),
             data,
             format='json',
@@ -590,7 +440,7 @@ class ReservationTests(APITestCase):
         response = self.client.patch(
             reverse(
                 'reservation-detail',
-                kwargs={'pk': 1},
+                args=[self.reservation.id]
             ),
             data,
             format='json',
@@ -602,12 +452,13 @@ class ReservationTests(APITestCase):
         del response_data['timeslot_details']
 
         content = {
-            'id': 1,
+            'id': self.reservation.id,
             'is_active': True,
             'is_present': True,
-            'timeslot': 'http://testserver/time_slots/2',
-            'url': 'http://testserver/reservations/1',
-            'user': 'http://testserver/users/1',
+            'timeslot': f'http://testserver/time_slots/'
+            f'{self.time_slot_active.id}',
+            'url': f'http://testserver/reservations/{self.reservation.id}',
+            'user': f'http://testserver/users/{self.user.id}',
             'cancelation_date': None,
             'cancelation_reason': None
         }
@@ -648,12 +499,13 @@ class ReservationTests(APITestCase):
         del response_data['timeslot_details']
 
         content = {
-            'id': 2,
+            'id': self.reservation_volunteer.id,
             'is_active': True,
             'is_present': True,
-            'timeslot': 'http://testserver/time_slots/1',
-            'url': 'http://testserver/reservations/2',
-            'user': 'http://testserver/users/1',
+            'timeslot': f'http://testserver/time_slots/{self.time_slot.id}',
+            'url': f'http://testserver/reservations/'
+            f'{self.reservation_volunteer.id}',
+            'user': f'http://testserver/users/{self.user.id}',
             'cancelation_date': None,
             'cancelation_reason': None
         }
@@ -698,12 +550,12 @@ class ReservationTests(APITestCase):
         del response_data['timeslot_details']
 
         content = {
-            'id': 4,
+            'id': reservation_admin.id,
             'is_active': True,
             'is_present': True,
-            'timeslot': 'http://testserver/time_slots/1',
-            'url': 'http://testserver/reservations/4',
-            'user': 'http://testserver/users/2',
+            'timeslot': f'http://testserver/time_slots/{self.time_slot.id}',
+            'url': f'http://testserver/reservations/{reservation_admin.id}',
+            'user': f'http://testserver/users/{self.admin.id}',
             'cancelation_date': None,
             'cancelation_reason': None
         }
@@ -756,7 +608,7 @@ class ReservationTests(APITestCase):
         response = self.client.patch(
             reverse(
                 'reservation-detail',
-                kwargs={'pk': 1},
+                args=[self.reservation.id]
             ),
             data,
             format='json',
@@ -821,7 +673,7 @@ class ReservationTests(APITestCase):
         response = self.client.patch(
             reverse(
                 'reservation-detail',
-                kwargs={'pk': 1},
+                args=[self.reservation.id]
             ),
             data,
             format='json',
@@ -855,7 +707,7 @@ class ReservationTests(APITestCase):
         response = self.client.patch(
             reverse(
                 'reservation-detail',
-                kwargs={'pk': 1},
+                args=[self.reservation.id]
             ),
             data,
             format='json',
@@ -900,30 +752,35 @@ class ReservationTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                'id': 1,
+                'id': self.reservation.id,
                 'is_active': True,
                 'is_present': False,
-                'timeslot': 'http://testserver/time_slots/2',
-                'url': 'http://testserver/reservations/1',
-                'user': 'http://testserver/users/1',
+                'timeslot': f'http://testserver/time_slots/'
+                f'{self.time_slot_active.id}',
+                'url': f'http://testserver/reservations/{self.reservation.id}',
+                'user': f'http://testserver/users/{self.user.id}',
                 'cancelation_date': None,
                 'cancelation_reason': None
             }, {
-                'id': 2,
+                'id': self.reservation_volunteer.id,
                 'is_active': True,
                 'is_present': False,
-                'timeslot': 'http://testserver/time_slots/1',
-                'url': 'http://testserver/reservations/2',
-                'user': 'http://testserver/users/1',
+                'timeslot': f'http://testserver/time_slots/'
+                f'{self.time_slot.id}',
+                'url': f'http://testserver/reservations/'
+                f'{self.reservation_volunteer.id}',
+                'user': f'http://testserver/users/{self.user.id}',
                 'cancelation_date': None,
                 'cancelation_reason': None
             }, {
-                'id': 3,
+                'id': self.reservation_admin.id,
                 'is_active': True,
                 'is_present': False,
-                'timeslot': 'http://testserver/time_slots/2',
-                'url': 'http://testserver/reservations/3',
-                'user': 'http://testserver/users/2',
+                'timeslot': f'http://testserver/time_slots/'
+                f'{self.time_slot_active.id}',
+                'url': f'http://testserver/reservations/'
+                f'{self.reservation_admin.id}',
+                'user': f'http://testserver/users/{self.admin.id}',
                 'cancelation_date': None,
                 'cancelation_reason': None
             }]
@@ -958,21 +815,24 @@ class ReservationTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                'id': 1,
+                'id': self.reservation.id,
                 'is_active': True,
                 'is_present': False,
-                'timeslot': 'http://testserver/time_slots/2',
-                'url': 'http://testserver/reservations/1',
-                'user': 'http://testserver/users/1',
+                'timeslot': f'http://testserver/time_slots/'
+                f'{self.time_slot_active.id}',
+                'url': f'http://testserver/reservations/{self.reservation.id}',
+                'user': f'http://testserver/users/{self.user.id}',
                 'cancelation_date': None,
                 'cancelation_reason': None
             }, {
-                'id': 2,
+                'id': self.reservation_volunteer.id,
                 'is_active': True,
                 'is_present': False,
-                'timeslot': 'http://testserver/time_slots/1',
-                'url': 'http://testserver/reservations/2',
-                'user': 'http://testserver/users/1',
+                'timeslot': f'http://testserver/time_slots/'
+                f'{self.time_slot.id}',
+                'url': f'http://testserver/reservations/'
+                f'{self.reservation_volunteer.id}',
+                'user': f'http://testserver/users/{self.user.id}',
                 'cancelation_date': None,
                 'cancelation_reason': None
             }]
@@ -991,7 +851,7 @@ class ReservationTests(APITestCase):
         response = self.client.get(
             reverse(
                 'reservation-detail',
-                kwargs={'pk': 1},
+                args=[self.reservation.id]
             ),
         )
 
@@ -1001,12 +861,13 @@ class ReservationTests(APITestCase):
         del response_data['timeslot_details']
 
         content = {
-            'id': 1,
+            'id': self.reservation.id,
             'is_active': True,
             'is_present': False,
-            'timeslot': 'http://testserver/time_slots/2',
-            'url': 'http://testserver/reservations/1',
-            'user': 'http://testserver/users/1',
+            'timeslot': f'http://testserver/time_slots/'
+            f'{self.time_slot_active.id}',
+            'url': f'http://testserver/reservations/{self.reservation.id}',
+            'user': f'http://testserver/users/{self.user.id}',
             'cancelation_date': None,
             'cancelation_reason': None
         }
@@ -1066,7 +927,7 @@ class ReservationTests(APITestCase):
             response = self.client.delete(
                 reverse(
                     'reservation-detail',
-                    kwargs={'pk': 1},
+                    args=[self.reservation.id]
                 ),
             )
 
@@ -1095,7 +956,7 @@ class ReservationTests(APITestCase):
             response = self.client.delete(
                 reverse(
                     'reservation-detail',
-                    kwargs={'pk': 1},
+                    args=[self.reservation.id]
                 ),
             )
 
@@ -1139,14 +1000,14 @@ class ReservationTests(APITestCase):
             response = self.client.delete(
                 reverse(
                     'reservation-detail',
-                    kwargs={'pk': 1},
+                    args=[self.reservation.id]
                 ),
             )
 
         response = self.client.delete(
             reverse(
                 'reservation-detail',
-                kwargs={'pk': 1},
+                args=[self.reservation.id]
             ),
         )
 

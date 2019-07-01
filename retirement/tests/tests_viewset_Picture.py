@@ -13,7 +13,7 @@ from rest_framework.test import APIClient, APITestCase
 from blitz_api.factories import AdminFactory, UserFactory
 from blitz_api.services import remove_translation_fields
 
-from ..models import Picture, Retirement
+from ..models import Picture, Retreat
 
 User = get_user_model()
 MEDIA_ROOT = tempfile.mkdtemp()
@@ -45,9 +45,9 @@ class PictureTests(APITestCase):
         cls.admin = AdminFactory()
 
     def setUp(self):
-        self.retirement = Retirement.objects.create(
-            name="random_retirement",
-            details="This is a description of the retirement.",
+        self.retreat = Retreat.objects.create(
+            name="random_retreat",
+            details="This is a description of the retreat.",
             seats=40,
             address_line1="123 random street",
             postal_code="123 456",
@@ -64,11 +64,12 @@ class PictureTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True,
         )
         self.picture = Picture.objects.create(
             name="random_picture",
             picture=self.get_test_image_file().name,
-            retirement=self.retirement,
+            retreat=self.retreat,
         )
         self.picture_file = self._create_image()
 
@@ -83,28 +84,33 @@ class PictureTests(APITestCase):
 
         data = {
             'name': "random_picture",
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement.id]),
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat.id]),
             'picture': self.picture_file,
         }
 
         response = self.client.post(
-            reverse('retirement:picture-list'),
+            reverse('retreat:picture-list'),
             data,
         )
 
         fname = self.picture_file.name.replace('\\', '/').split("/")[-1]
 
         content = {
-            'id': 2,
             'name': 'random_picture',
-            'picture': 'http://testserver/media/retirements/' + fname,
-            'url': 'http://testserver/retirement/pictures/2',
-            'retirement': 'http://testserver/retirement/retirements/1'
+            'picture': 'http://testserver/media/retreats/' + fname,
+            'retreat': 'http://testserver/retreat/retreats/' +
+                       str(self.retreat.id)
         }
 
+        response_data = remove_translation_fields(json.loads(response.content))
+        del response_data['url']
+        del response_data['id']
+
         self.assertEqual(
-            remove_translation_fields(json.loads(response.content)), content)
+            response_data,
+            content
+        )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -116,13 +122,13 @@ class PictureTests(APITestCase):
 
         data = {
             'name': "random_picture",
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement.id]),
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat.id]),
             'picture': self.picture_file,
         }
 
         response = self.client.post(
-            reverse('retirement:picture-list'),
+            reverse('retreat:picture-list'),
             data,
         )
 
@@ -136,23 +142,23 @@ class PictureTests(APITestCase):
 
     def test_create_non_existent_workplace(self):
         """
-        Ensure we can't create a picture with a non-existent retirement.
+        Ensure we can't create a picture with a non-existent retreat.
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
             'name': "random_picture",
-            'retirement': reverse('retirement:retirement-detail', args=[999]),
+            'retreat': reverse('retreat:retreat-detail', args=[999]),
             'picture': self.picture_file,
         }
 
         response = self.client.post(
-            reverse('retirement:picture-list'),
+            reverse('retreat:picture-list'),
             data,
         )
 
         content = {
-            'retirement': ['Invalid hyperlink - Object does not exist.']
+            'retreat': ['Invalid hyperlink - Object does not exist.']
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -167,13 +173,13 @@ class PictureTests(APITestCase):
 
         data = {
             'name': "random_picture",
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement.id]),
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat.id]),
             'picture': "invalid",
         }
 
         response = self.client.post(
-            reverse('retirement:picture-list'),
+            reverse('retreat:picture-list'),
             data,
         )
 
@@ -197,7 +203,7 @@ class PictureTests(APITestCase):
         data = {}
 
         response = self.client.post(
-            reverse('retirement:picture-list'),
+            reverse('retreat:picture-list'),
             data,
             format='json',
         )
@@ -221,27 +227,29 @@ class PictureTests(APITestCase):
 
         data = {
             'name': "new_picture",
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement.id]),
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat.id]),
             'picture': self.picture_file,
         }
 
         response = self.client.put(
             reverse(
-                'retirement:picture-detail',
-                kwargs={'pk': 1},
+                'retreat:picture-detail',
+                kwargs={'pk': self.picture.id},
             ),
             data,
         )
 
         content = {
-            'id': 1,
+            'id': self.picture.id,
             'name': 'new_picture',
             'name_en': 'new_picture',
             'name_fr': None,
-            'picture': 'http://testserver/media/retirements/' + fname,
-            'url': 'http://testserver/retirement/pictures/1',
-            'retirement': 'http://testserver/retirement/retirements/1'
+            'picture': 'http://testserver/media/retreats/' + fname,
+            'url': 'http://testserver/retreat/pictures/' +
+                   str(self.picture.id),
+            'retreat': 'http://testserver/retreat/retreats/' +
+                       str(self.retreat.id)
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -256,8 +264,8 @@ class PictureTests(APITestCase):
 
         response = self.client.delete(
             reverse(
-                'retirement:picture-detail',
-                kwargs={'pk': 1},
+                'retreat:picture-detail',
+                kwargs={'pk': self.picture.id},
             ), )
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -268,7 +276,7 @@ class PictureTests(APITestCase):
         """
 
         response = self.client.get(
-            reverse('retirement:picture-list'),
+            reverse('retreat:picture-list'),
             format='json',
         )
 
@@ -280,16 +288,13 @@ class PictureTests(APITestCase):
             'previous':
             None,
             'results': [{
-                'id':
-                1,
-                'name':
-                'random_picture',
-                'picture':
-                'http://testserver' + self.picture.picture.url,
-                'url':
-                'http://testserver/retirement/pictures/1',
-                'retirement':
-                'http://testserver/retirement/retirements/1'
+                'id': self.picture.id,
+                'name': 'random_picture',
+                'picture': 'http://testserver' + self.picture.picture.url,
+                'url': 'http://testserver/retreat/pictures/' +
+                       str(self.picture.id),
+                'retreat': 'http://testserver/retreat/retreats/' +
+                           str(self.retreat.id)
             }]
         }
 
@@ -304,16 +309,18 @@ class PictureTests(APITestCase):
 
         response = self.client.get(
             reverse(
-                'retirement:picture-detail',
-                kwargs={'pk': 1},
+                'retreat:picture-detail',
+                kwargs={'pk': self.picture.id},
             ), )
 
         content = {
-            'id': 1,
+            'id': self.picture.id,
             'name': 'random_picture',
             'picture': 'http://testserver' + self.picture.picture.url,
-            'url': 'http://testserver/retirement/pictures/1',
-            'retirement': 'http://testserver/retirement/retirements/1'
+            'url': 'http://testserver/retreat/pictures/' +
+                   str(self.picture.id),
+            'retreat': 'http://testserver/retreat/retreats/' +
+                       str(self.retreat.id)
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -327,7 +334,7 @@ class PictureTests(APITestCase):
 
         response = self.client.get(
             reverse(
-                'retirement:picture-detail',
+                'retreat:picture-detail',
                 kwargs={'pk': 999},
             ), )
 

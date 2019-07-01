@@ -84,6 +84,24 @@ def check_if_translated_field(field_name, data_dict):
     return False
 
 
+def getMessageTranslate(field_name, data_dict, only_one_required=False):
+    err = {}
+    messageError = _("This field is required.")
+    err[field_name] = messageError
+    if only_one_required:
+        messageError = _(
+            "One of the two fields %(field)s must be completed."
+        ) % {'field': field_name}
+
+    for lang in settings.LANGUAGES:
+        field_name_lang = ''.join([field_name, "_", lang[0]])
+        for key in data_dict:
+            if key == field_name_lang:
+                err[field_name_lang] = messageError
+                break
+    return err
+
+
 def get_model_from_name(model_name):
     """
     Used to get a model instance when you only have its name.

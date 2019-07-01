@@ -22,7 +22,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from blitz_api.serializers import UserSerializer
 from blitz_api.services import (remove_translation_fields,
-                                check_if_translated_field,)
+                                check_if_translated_field,
+                                getMessageTranslate,)
 
 from .models import Workplace, Picture, Period, TimeSlot, Reservation
 from .fields import TimezoneField
@@ -84,17 +85,17 @@ class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
     def validate(self, attr):
         err = {}
         if not check_if_translated_field('name', attr):
-            err['name'] = _("This field is required.")
+            err.update(getMessageTranslate('name', attr, True))
         if not check_if_translated_field('details', attr):
-            err['details'] = _("This field is required.")
+            err.update(getMessageTranslate('details', attr, True))
         if not check_if_translated_field('country', attr):
-            err['country'] = _("This field is required.")
+            err.update(getMessageTranslate('country', attr, True))
         if not check_if_translated_field('state_province', attr):
-            err['state_province'] = _("This field is required.")
+            err.update(getMessageTranslate('state_province', attr, True))
         if not check_if_translated_field('city', attr):
-            err['city'] = _("This field is required.")
+            err.update(getMessageTranslate('city', attr, True))
         if not check_if_translated_field('address_line1', attr):
-            err['address_line1'] = _("This field is required.")
+            err.update(getMessageTranslate('address_line1', attr, True))
         if not check_if_translated_field('timezone', attr):
             err['timezone'] = _("This field is required.")
         if not check_if_translated_field('postal_code', attr):
@@ -282,6 +283,7 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
 
 class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
+    billing_price = serializers.ReadOnlyField()
     places_remaining = serializers.SerializerMethodField()
     reservations = serializers.SerializerMethodField()
     reservations_canceled = serializers.SerializerMethodField()

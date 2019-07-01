@@ -13,7 +13,10 @@ from django.db.models.base import ObjectDoesNotExist
 
 from .models import (
     Domain, Organization, ActionToken, AcademicField, AcademicLevel,
+    ExportMedia
 )
+from .services import remove_translation_fields, \
+    check_if_translated_field, getMessageTranslate
 from .services import remove_translation_fields, check_if_translated_field
 from . import services
 from store.serializers import MembershipSerializer
@@ -312,7 +315,7 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
             # use this SendinBlue template
             message.template_id = settings.ANYMAIL[
                 "TEMPLATES"
-            ]["CONFIRM_SIGN_UP"]
+            ]["CONFIRM_CHANGE_EMAIL"]
             message.merge_global_data = context
             response = message.send()  # returns number of sent emails
 
@@ -590,3 +593,10 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     token = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
+
+class ExportMediaSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = ExportMedia
+        fields = '__all__'

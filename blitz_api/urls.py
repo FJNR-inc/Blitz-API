@@ -40,7 +40,7 @@ router = OptionalSlashDefaultRouter()
 
 # External workplace application
 # Their urls are directly appended to the main router
-# The retirement app is not included here because we needed a url prefix, thus
+# The retreat app is not included here because we needed a url prefix, thus
 #   it is included separately at the bottom of this file.
 router.registry.extend(workplace_router.registry)
 router.registry.extend(store_router.registry)
@@ -56,6 +56,8 @@ router.register(
     views.TemporaryTokenDestroy,
     base_name="authentication",
 )
+
+router.register('export_media', views.ExportMediaViewSet)
 
 urlpatterns = [
     path(
@@ -100,10 +102,10 @@ urlpatterns = [
     ),
     path('api-auth/', include('rest_framework.urls')),
     path('', include(router.urls)),  # includes router generated URL
-    # The retirement app must be namespaced due to conflicting resources names
+    # The retreat app must be namespaced due to conflicting resources names
     #   (reservations & pictures)
     path(
-        'retirement/',
-        include((retirement_router.urls, 'retirement'), namespace='retirement')
+        'retreat/',
+        include((retirement_router.urls, 'retreat'), namespace='retreat')
     ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

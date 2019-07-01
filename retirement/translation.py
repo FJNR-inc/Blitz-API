@@ -4,8 +4,8 @@ from modeltranslation.translator import TranslationOptions, register
 from . import models
 
 
-@register(models.Retirement)
-class RetirementTranslationOptions(TranslationOptions):
+@register(models.Retreat)
+class RetreatTranslationOptions(TranslationOptions):
     fields = (
         'name',
         'details',
@@ -22,5 +22,5 @@ class PictureTranslationOptions(TranslationOptions):
     fields = ('name', )
 
 
-simple_history.register(models.Retirement, inherit=True)
+simple_history.register(models.Retreat, inherit=True)
 simple_history.register(models.Picture, inherit=True)

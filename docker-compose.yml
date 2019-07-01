@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: blitz
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: my_password
+    volumes:
+      - db:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  api:
+    build:
+      context: .
+    env_file: .env.docker
+    volumes:
+      - .:/opt/project
+      - /opt/project/src
+      - ~/.aws/:/root/.aws
+    depends_on:
+      - db
+    # See dockerfile for runserver command
+    command: python -u manage.py runserver 0.0.0.0:8000
+    ports:
+      - 8000:8000
+
+volumes:
+  db:

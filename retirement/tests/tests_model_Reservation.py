@@ -10,7 +10,7 @@ from blitz_api.factories import UserFactory
 
 from store.models import Order, OrderLine
 
-from ..models import Reservation, Retirement
+from ..models import Reservation, Retreat
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
@@ -20,10 +20,10 @@ class ReservationTests(APITestCase):
     def setUpClass(cls):
         super(ReservationTests, cls).setUpClass()
         cls.user = UserFactory()
-        cls.retirement_type = ContentType.objects.get_for_model(Retirement)
-        cls.retirement = Retirement.objects.create(
-            name="random_retirement",
-            details="This is a description of the retirement.",
+        cls.retreat_type = ContentType.objects.get_for_model(Retreat)
+        cls.retreat = Retreat.objects.create(
+            name="random_retreat",
+            details="This is a description of the retreat.",
             seats=40,
             address_line1="123 random street",
             postal_code="123 456",
@@ -40,6 +40,7 @@ class ReservationTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True
         )
         cls.order = Order.objects.create(
             user=cls.user,
@@ -50,7 +51,7 @@ class ReservationTests(APITestCase):
         cls.order_line = OrderLine.objects.create(
             order=cls.order,
             quantity=999,
-            content_type=cls.retirement_type,
+            content_type=cls.retreat_type,
             object_id=1,
         )
 
@@ -60,7 +61,7 @@ class ReservationTests(APITestCase):
         """
         reservation = Reservation.objects.create(
             user=self.user,
-            retirement=self.retirement,
+            retreat=self.retreat,
             order_line=self.order_line,
             is_active=True,
         )

@@ -21,19 +21,20 @@ from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.models import AcademicLevel
 
 from workplace.models import TimeSlot, Period, Workplace
-from retirement.models import Retirement, WaitQueueNotification, WaitQueue
+from retirement.models import Retreat, WaitQueueNotification, WaitQueue
 
-from .paysafe_sample_responses import (SAMPLE_PROFILE_RESPONSE,
-                                       SAMPLE_PAYMENT_RESPONSE,
-                                       SAMPLE_CARD_RESPONSE,
-                                       SAMPLE_INVALID_PAYMENT_TOKEN,
-                                       SAMPLE_INVALID_SINGLE_USE_TOKEN,
-                                       SAMPLE_CARD_ALREADY_EXISTS,
-                                       SAMPLE_CARD_REFUSED,)
-
+from .paysafe_sample_responses import (
+    SAMPLE_PROFILE_RESPONSE,
+    SAMPLE_PAYMENT_RESPONSE,
+    SAMPLE_CARD_RESPONSE,
+    SAMPLE_INVALID_PAYMENT_TOKEN,
+    SAMPLE_INVALID_SINGLE_USE_TOKEN,
+    SAMPLE_CARD_ALREADY_EXISTS,
+    SAMPLE_CARD_REFUSED,
+)
 
 from ..models import (Package, Order, OrderLine, Membership, PaymentProfile,
-                      Coupon, CouponUser, )
+                      Coupon, CouponUser, MembershipCoupon)
 
 User = get_user_model()
 
@@ -52,71 +53,69 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 )
 class OrderTests(APITestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(OrderTests, cls).setUpClass()
-        cls.client = APIClient()
-        cls.user = UserFactory()
-        cls.user.city = "Current city"
-        cls.user.phone = "123-456-7890"
-        cls.user.save()
-        cls.admin = AdminFactory()
-        cls.admin.city = "Current city"
-        cls.admin.phone = "123-456-7890"
-        cls.admin.faculty = "Random faculty"
-        cls.admin.student_number = "Random code"
-        cls.admin.academic_program_code = "Random code"
-        cls.admin.save()
-        cls.membership = Membership.objects.create(
+    def setUp(self):
+        self.client = APIClient()
+        self.user = UserFactory()
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.save()
+        self.admin = AdminFactory()
+        self.admin.city = "Current city"
+        self.admin.phone = "123-456-7890"
+        self.admin.faculty = "Random faculty"
+        self.admin.student_number = "Random code"
+        self.admin.academic_program_code = "Random code"
+        self.admin.save()
+        self.membership = Membership.objects.create(
             name="basic_membership",
             details="1-Year student membership",
             available=True,
             price=50,
             duration=timedelta(days=365),
         )
-        cls.package_type = ContentType.objects.get_for_model(Package)
-        cls.package = Package.objects.create(
+        self.package_type = ContentType.objects.get_for_model(Package)
+        self.package = Package.objects.create(
             name="extreme_package",
             details="100 reservations package",
             available=True,
             price=40,
             reservations=100,
         )
-        cls.package2 = Package.objects.create(
+        self.package2 = Package.objects.create(
             name="extreme_package2",
             details="1000 reservations package",
             available=True,
             price=4000,
             reservations=1000,
         )
-        cls.order = Order.objects.create(
-            user=cls.user,
+        self.order = Order.objects.create(
+            user=self.user,
             transaction_date=timezone.now(),
             authorization_id=1,
             settlement_id=1,
             reference_number=751,
         )
-        cls.order_admin = Order.objects.create(
-            user=cls.admin,
+        self.order_admin = Order.objects.create(
+            user=self.admin,
             transaction_date=timezone.now(),
             authorization_id=2,
             settlement_id=2,
             reference_number=751,
         )
-        cls.order_line = OrderLine.objects.create(
-            order=cls.order,
+        self.order_line = OrderLine.objects.create(
+            order=self.order,
             quantity=1,
-            content_type=cls.package_type,
-            object_id=1,
-            cost=cls.package.price,
+            content_type=self.package_type,
+            object_id=self.package.id,
+            cost=self.package.price,
         )
-        cls.payment_profile = PaymentProfile.objects.create(
+        self.payment_profile = PaymentProfile.objects.create(
             name="payment_api_name",
-            owner=cls.admin,
+            owner=self.admin,
             external_api_id="123",
             external_api_url="https://example.com/customervault/v1/profiles"
         )
-        cls.workplace = Workplace.objects.create(
+        self.workplace = Workplace.objects.create(
             name="random_workplace",
             details="This is a description of the workplace.",
             seats=40,
@@ -125,7 +124,7 @@ class OrderTests(APITestCase):
             state_province="Random state",
             country="Random country",
         )
-        cls.workplace_no_seats = Workplace.objects.create(
+        self.workplace_no_seats = Workplace.objects.create(
             name="random_workplace",
             details="This is a description of the workplace.",
             seats=0,
@@ -134,40 +133,40 @@ class OrderTests(APITestCase):
             state_province="Random state",
             country="Random country",
         )
-        cls.period = Period.objects.create(
+        self.period = Period.objects.create(
             name="random_period_active",
-            workplace=cls.workplace,
+            workplace=self.workplace,
             start_date=timezone.now(),
             end_date=timezone.now() + timedelta(weeks=4),
             price=3,
             is_active=True,
         )
-        cls.period_no_seats = Period.objects.create(
+        self.period_no_seats = Period.objects.create(
             name="random_period_active",
-            workplace=cls.workplace_no_seats,
+            workplace=self.workplace_no_seats,
             start_date=timezone.now(),
             end_date=timezone.now() + timedelta(weeks=4),
             price=3,
             is_active=True,
         )
-        cls.time_slot = TimeSlot.objects.create(
+        self.time_slot = TimeSlot.objects.create(
             name="morning_time_slot",
-            period=cls.period,
+            period=self.period,
             price=1,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
-        cls.time_slot_no_seats = TimeSlot.objects.create(
+        self.time_slot_no_seats = TimeSlot.objects.create(
             name="no_place_left_timeslot",
-            period=cls.period_no_seats,
+            period=self.period_no_seats,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
-        cls.retirement = Retirement.objects.create(
-            name="mega_retirement",
+        self.retreat = Retreat.objects.create(
+            name="mega_retreat",
             seats=400,
-            details="This is a description of the mega retirement.",
+            details="This is a description of the mega retreat.",
             address_line1="123 random street",
             postal_code="123 456",
             state_province="Random state",
@@ -182,11 +181,12 @@ class OrderTests(APITestCase):
             activity_language='FR',
             accessibility=True,
             reserved_seats=1,
+            has_shared_rooms=True,
         )
-        cls.retirement_no_seats = Retirement.objects.create(
-            name="no_place_left_retirement",
+        self.retreat_no_seats = Retreat.objects.create(
+            name="no_place_left_retreat",
             seats=0,
-            details="This is a description of the full retirement.",
+            details="This is a description of the full retreat.",
             address_line1="123 random street",
             postal_code="123 456",
             state_province="Random state",
@@ -200,22 +200,25 @@ class OrderTests(APITestCase):
             is_active=True,
             activity_language='FR',
             accessibility=True,
+            has_shared_rooms=True,
         )
-        cls.coupon = Coupon.objects.create(
+        self.coupon = Coupon.objects.create(
             code="ABCD1234",
             start_time=LOCAL_TIMEZONE.localize(datetime(2000, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             value=10,
             max_use_per_user=0,
             max_use=0,
-            owner=cls.admin,
+            owner=self.admin,
         )
-        cls.coupon.applicable_product_types.set([cls.package_type])
-        cls.coupon_user = CouponUser.objects.create(
-            user=cls.admin,
+        self.coupon.applicable_product_types.set([self.package_type])
+        self.coupon_user = CouponUser.objects.create(
+            user=self.admin,
             uses=5,
-            coupon=cls.coupon,
+            coupon=self.coupon,
         )
+
+        self.maxDiff = None
 
     @responses.activate
     def test_create_with_payment_token(self):
@@ -238,19 +241,19 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }, {
                 'content_type': 'timeslot',
-                'object_id': 1,
+                'object_id': self.time_slot.id,
                 'quantity': 1,
             }, {
-                'content_type': 'retirement',
-                'object_id': 1,
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -265,6 +268,24 @@ class OrderTests(APITestCase):
             )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+
+        del response_data['order_lines'][1]['order']
+        del response_data['order_lines'][1]['url']
+        del response_data['order_lines'][1]['id']
+
+        del response_data['order_lines'][2]['order']
+        del response_data['order_lines'][2]['url']
+        del response_data['order_lines'][2]['id']
+
+        del response_data['order_lines'][3]['order']
+        del response_data['order_lines'][3]['url']
+        del response_data['order_lines'][3]['id']
 
         self.assertEqual(
             response.status_code,
@@ -273,55 +294,46 @@ class OrderTests(APITestCase):
         )
 
         content = {
-            'id': 3,
             'order_lines': [{
                 'content_type': 'membership',
-                'id': 2,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
+                'object_id': self.membership.id,
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
             }, {
                 'content_type': 'package',
-                'id': 3,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
+                'object_id': self.package.id,
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/3',
                 'coupon': "ABCD1234",
                 'coupon_real_value': 10.0,
                 'cost': 2 * self.package.price - 10,
             }, {
                 'content_type': 'timeslot',
-                'id': 4,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
+                'object_id': self.time_slot.id,
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/4',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
             }, {
-                'content_type': 'retirement',
-                'id': 5,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
-                'url': 'http://testserver/order_lines/5',
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
                 'quantity': 1,
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
             }],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/2',
+            'user': f'http://testserver/users/{self.admin.id}',
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
             'reference_number': '751',
         }
+
+        self.assertCountEqual(response_data['order_lines'],
+                              content['order_lines'])
+        del response_data['order_lines']
+        del content['order_lines']
 
         self.assertEqual(response_data, content)
 
@@ -343,13 +355,13 @@ class OrderTests(APITestCase):
         admin.save()
 
         # Validate that reserved_seats count is decremented
-        self.retirement.refresh_from_db()
-        self.assertFalse(self.retirement.reserved_seats)
-        self.retirement.reserved_seats = 1
-        self.retirement.save()
+        self.retreat.refresh_from_db()
+        self.assertFalse(self.retreat.reserved_seats)
+        self.retreat.reserved_seats = 1
+        self.retreat.save()
 
         # 1 email for the order details
-        # 1 email for the retirement informations
+        # 1 email for the retreat informations
         self.assertEqual(len(mail.outbox), 2)
 
     @responses.activate
@@ -371,7 +383,7 @@ class OrderTests(APITestCase):
         data = {
             'order_lines': [{
                 'content_type': 'timeslot',
-                'object_id': 1,
+                'object_id': self.time_slot.id,
                 'quantity': 1,
             }],
         }
@@ -385,22 +397,22 @@ class OrderTests(APITestCase):
             )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
 
         content = {
-            'id': 3,
             'order_lines': [{
                 'content_type': 'timeslot',
-                'id': 2,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
             }],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/2',
+            'user': 'http://testserver/users/' + str(self.admin.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '0',
             'settlement_id': '0',
@@ -438,7 +450,7 @@ class OrderTests(APITestCase):
         data = {
             'order_lines': [{
                 'content_type': 'timeslot',
-                'object_id': 1,
+                'object_id': self.time_slot.id,
                 'quantity': 1,
             }],
         }
@@ -458,22 +470,22 @@ class OrderTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
 
         content = {
-            'id': 3,
             'order_lines': [{
                 'content_type': 'timeslot',
-                'id': 2,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
             }],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/2',
+            'user': 'http://testserver/users/' + str(self.admin.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '0',
             'settlement_id': '0',
@@ -530,7 +542,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
         }
@@ -586,11 +598,11 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }, {
                 'content_type': 'timeslot',
@@ -633,7 +645,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "INVALID",
@@ -675,7 +687,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -727,7 +739,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -779,7 +791,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -834,7 +846,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -884,7 +896,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -923,10 +935,10 @@ class OrderTests(APITestCase):
         self.assertEqual(admin.membership, None)
 
     @responses.activate
-    def test_create_no_place_left_retirement(self):
+    def test_create_no_place_left_retreat(self):
         """
         Ensure we can't create an order with reservations if the requested
-        retirement has no place left.
+        retreat has no place left.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -941,15 +953,15 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }, {
-                'content_type': 'retirement',
-                'object_id': self.retirement_no_seats.id,
+                'content_type': 'retreat',
+                'object_id': self.retreat_no_seats.id,
                 'quantity': 1,
             }],
         }
@@ -964,7 +976,7 @@ class OrderTests(APITestCase):
 
         content = {
             'non_field_errors': [
-                "There are no places left in the requested retirement."
+                "There are no places left in the requested retreat."
             ]
         }
 
@@ -979,16 +991,16 @@ class OrderTests(APITestCase):
         self.assertEqual(admin.membership, None)
 
     @responses.activate
-    def test_create_reserved_retirement_not_authorized(self):
+    def test_create_reserved_retreat_not_authorized(self):
         """
         Ensure we can't create an order with reservations if the requested
-        retirement has only reserved seats and the user has not been notified
+        retreat has only reserved seats and the user has not been notified
         (not on the mailing list).
         """
         self.client.force_authenticate(user=self.user)
 
-        self.retirement_no_seats.reserved_seats = 1
-        self.retirement_no_seats.save()
+        self.retreat_no_seats.reserved_seats = 1
+        self.retreat_no_seats.save()
 
         responses.add(
             responses.POST,
@@ -1000,8 +1012,8 @@ class OrderTests(APITestCase):
         data = {
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
-                'content_type': 'retirement',
-                'object_id': self.retirement_no_seats.id,
+                'content_type': 'retreat',
+                'object_id': self.retreat_no_seats.id,
                 'quantity': 1,
             }],
         }
@@ -1016,7 +1028,7 @@ class OrderTests(APITestCase):
 
         content = {
             'non_field_errors': [
-                "There are no places left in the requested retirement."
+                "There are no places left in the requested retreat."
             ]
         }
 
@@ -1025,26 +1037,26 @@ class OrderTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     @responses.activate
-    def test_create_reserved_retirement(self):
+    def test_create_reserved_retreat(self):
         """
         Ensure we can create an order with reservations if the requested
-        retirement has reserved seats and the user has been notified
+        retreat has reserved seats and the user has been notified
         (on the mailing list).
         """
         self.client.force_authenticate(user=self.user)
 
-        self.retirement_no_seats.reserved_seats = 1
-        self.retirement_no_seats.save()
+        self.retreat_no_seats.reserved_seats = 1
+        self.retreat_no_seats.save()
         # The API checks if the user has been notified for a reserved seat in
-        # the specified retirement in the past.
+        # the specified retreat in the past.
         WaitQueueNotification.objects.create(
             user=self.user,
-            retirement=self.retirement_no_seats
+            retreat=self.retreat_no_seats
         )
         # The API should unsubscribe the user from the mailing list.
         WaitQueue.objects.create(
             user=self.user,
-            retirement=self.retirement_no_seats,
+            retreat=self.retreat_no_seats,
         )
 
         responses.add(
@@ -1057,8 +1069,8 @@ class OrderTests(APITestCase):
         data = {
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
-                'content_type': 'retirement',
-                'object_id': self.retirement_no_seats.id,
+                'content_type': 'retreat',
+                'object_id': self.retreat_no_seats.id,
                 'quantity': 1,
             }],
         }
@@ -1076,22 +1088,22 @@ class OrderTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
 
         content = {
-            'id': 3,
             'order_lines': [{
-                'content_type': 'retirement',
-                'id': 2,
-                'object_id': 2,
-                'order': 'http://testserver/orders/3',
+                'content_type': 'retreat',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
             }],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/1',
+            'user': 'http://testserver/users/' + str(self.user.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -1101,13 +1113,13 @@ class OrderTests(APITestCase):
         self.assertEqual(response_data, content)
 
         # 1 email for the order details
-        # 1 email for the retirement informations
+        # 1 email for the retreat informations
         self.assertEqual(len(mail.outbox), 2)
 
     @responses.activate
-    def test_create_retirement_twice(self):
+    def test_create_retreat_twice(self):
         """
-        Ensure we can't create an order with a reservation for a retirement
+        Ensure we can't create an order with a reservation for a retreat
         to which the user is already registered.
         """
         self.client.force_authenticate(user=self.user)
@@ -1126,8 +1138,8 @@ class OrderTests(APITestCase):
         data = {
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
-                'content_type': 'retirement',
-                'object_id': self.retirement.id,
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
                 'quantity': 1,
             }],
         }
@@ -1145,22 +1157,22 @@ class OrderTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
 
         content = {
-            'id': 3,
             'order_lines': [{
-                'content_type': 'retirement',
-                'id': 2,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
+                'content_type': 'retreat',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
             }],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/1',
+            'user': 'http://testserver/users/' + str(self.user.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -1170,7 +1182,7 @@ class OrderTests(APITestCase):
         self.assertEqual(response_data, content)
 
         # 1 email for the order details
-        # 1 email for the retirement informations
+        # 1 email for the retreat informations
         self.assertEqual(len(mail.outbox), 2)
 
         # Duplicate order
@@ -1190,8 +1202,8 @@ class OrderTests(APITestCase):
 
         content = {
             'non_field_errors': [
-                "You already are registered to this retirement: {0}.".format(
-                    str(self.retirement)
+                "You already are registered to this retreat: {0}.".format(
+                    str(self.retreat)
                 )
             ]
         }
@@ -1199,7 +1211,7 @@ class OrderTests(APITestCase):
         self.assertEqual(response_data, content)
 
     @responses.activate
-    def test_create_retirement_missing_user_info(self):
+    def test_create_retreat_missing_user_info(self):
         """
         Ensure we can't create an order with reservations if the requesting
         user has an incomplete profile.
@@ -1213,15 +1225,15 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }, {
-                'content_type': 'retirement',
-                'object_id': self.retirement_no_seats.id,
+                'content_type': 'retreat',
+                'object_id': self.retreat_no_seats.id,
                 'quantity': 1,
             }],
         }
@@ -1237,7 +1249,7 @@ class OrderTests(APITestCase):
         content = {
             'non_field_errors': [
                 "Incomplete user profile. 'phone' and 'city' field must "
-                "be filled in the user profile to book a retirement."
+                "be filled in the user profile to book a retreat."
             ]
         }
 
@@ -1267,7 +1279,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'timeslot',
@@ -1322,11 +1334,11 @@ class OrderTests(APITestCase):
             'payment_token': "invalid",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }],
         }
@@ -1389,11 +1401,11 @@ class OrderTests(APITestCase):
             'single_use_token': "SChsxyprFn176yhD",
             'order_lines': [{
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }, {
                 'content_type': 'timeslot',
-                'object_id': 1,
+                'object_id': self.time_slot.id,
                 'quantity': 1,
             }],
         }
@@ -1405,32 +1417,34 @@ class OrderTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+
+        del response_data['order_lines'][1]['order']
+        del response_data['order_lines'][1]['object_id']
+        del response_data['order_lines'][1]['url']
+        del response_data['order_lines'][1]['id']
 
         content = {
-            'id': 3,
             'order_lines': [{
                 'content_type': 'package',
-                'id': 2,
-                'object_id': 1,
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/2',
-                'order': 'http://testserver/orders/3',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
             }, {
                 'content_type': 'timeslot',
-                'id': 3,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/3',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
             }],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/1',
+            'user': 'http://testserver/users/' + str(self.user.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -1473,11 +1487,11 @@ class OrderTests(APITestCase):
             'single_use_token': "SChsxyprFn176yhD",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }],
         }
@@ -1488,46 +1502,48 @@ class OrderTests(APITestCase):
             format='json',
         )
 
-        response_data = json.loads(response.content)
-
         self.assertEqual(
             response.status_code,
             status.HTTP_201_CREATED,
             response.content,
         )
 
+        response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+
+        del response_data['order_lines'][1]['order']
+        del response_data['order_lines'][1]['object_id']
+        del response_data['order_lines'][1]['url']
+        del response_data['order_lines'][1]['id']
+
         content = {
-            'id': 3,
             'order_lines': [{
                 'content_type': 'membership',
-                'id': 2,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
             }, {
                 'content_type': 'package',
-                'id': 3,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/3',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
             }],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/2',
+            'user': 'http://testserver/users/' + str(self.admin.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
             'reference_number': '751',
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
         admin = self.admin
         admin.refresh_from_db()
@@ -1558,11 +1574,11 @@ class OrderTests(APITestCase):
             'single_use_token': "invalid",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }],
         }
@@ -1610,11 +1626,11 @@ class OrderTests(APITestCase):
             'single_use_token': "invalid",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }],
         }
@@ -1625,7 +1641,7 @@ class OrderTests(APITestCase):
             format='json',
         )
 
-        content = content = {
+        content = {
             'non_field_errors': [
                 "An error occured while processing the payment: "
                 "invalid payment or single-use token."
@@ -1674,11 +1690,11 @@ class OrderTests(APITestCase):
             'single_use_token': "invalid",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }],
         }
@@ -1756,16 +1772,12 @@ class OrderTests(APITestCase):
             'transaction_date': timezone.now(),
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
-                'order': 'http://testserver/orders/1',
+                'object_id': self.membership.id,
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/1'
             }, {
                 'content_type': 'package',
-                'object_id': 1,
-                'order': 'http://testserver/orders/1',
-                'quantity': 2,
-                'url': 'http://testserver/order_lines/1'
+                'object_id': self.package.id,
+                'quantity': 2
             }],
         }
 
@@ -1782,27 +1794,30 @@ class OrderTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+
+        del response_data['order_lines'][1]['order']
+        del response_data['order_lines'][1]['object_id']
+        del response_data['order_lines'][1]['url']
+        del response_data['order_lines'][1]['id']
 
         content = {
             'authorization_id': '1',
-            'id': 3,
             'order_lines': [{
                 'content_type': 'membership',
-                'id': 2,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/2',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
             }, {
                 'content_type': 'package',
-                'id': 3,
-                'object_id': 1,
-                'order': 'http://testserver/orders/3',
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/3',
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
@@ -1810,21 +1825,15 @@ class OrderTests(APITestCase):
             'settlement_id': '1',
             'reference_number': '751',
             'transaction_date': response_data['transaction_date'],
-            'url': 'http://testserver/orders/3',
-            'user': 'http://testserver/users/2',
+            'user': 'http://testserver/users/' + str(self.admin.id),
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response_data, content)
 
-        admin = self.admin
-        admin.refresh_from_db()
+        self.admin.refresh_from_db()
 
-        self.assertEqual(admin.tickets, self.package.reservations * 2 + 1)
-        self.assertEqual(admin.membership, self.membership)
-
-        admin.tickets = 1
-        admin.membership = None
-        admin.save()
+        self.assertEqual(self.admin.tickets, self.package.reservations * 2 + 1)
+        self.assertEqual(self.admin.membership, self.membership)
 
     def test_create_missing_payment_details(self):
         """
@@ -1837,16 +1846,18 @@ class OrderTests(APITestCase):
             'transaction_date': timezone.now(),
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
-                'order': 'http://testserver/orders/1',
+                'object_id': self.membership.id,
+                'order': 'http://testserver/orders/' + str(self.order.id),
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/1'
+                'url': 'http://testserver/order_lines/' +
+                       str(self.order_line.id)
             }, {
                 'content_type': 'package',
-                'object_id': 1,
-                'order': 'http://testserver/orders/1',
+                'object_id': self.package.id,
+                'order': 'http://testserver/orders/' + str(self.order.id),
                 'quantity': 2,
-                'url': 'http://testserver/order_lines/1'
+                'url': 'http://testserver/order_lines/' +
+                       str(self.order_line.id)
             }],
         }
 
@@ -1947,6 +1958,110 @@ class OrderTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    @responses.activate
+    def test_create_with_membership_coupon(self):
+        """
+        Ensure we can order a membership that includes a membership coupon
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        nb_coupon_start = self.admin.coupons.all().count()
+
+        membership_coupon = MembershipCoupon.objects.create(
+            value=100,
+            percent_off=0,
+            max_use=4,
+            max_use_per_user=4,
+            details="",
+            membership=self.membership,
+        )
+
+        membership_coupon.applicable_product_types.set(
+            [ContentType.objects.get_for_model(Membership)]
+        )
+
+        membership_coupon.save()
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'quantity': 1,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+
+        del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['order']
+
+        content = {
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'quantity': 1,
+                'coupon': None,
+                'coupon_real_value': 0.0,
+                'cost': 50.0,
+            }],
+            'user': 'http://testserver/users/' + str(self.admin.id),
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '1',
+            'settlement_id': '1',
+            'reference_number': '751',
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(self.admin.coupons.all().count(), 1 + nb_coupon_start)
+
+        new_coupon = self.admin.coupons.all()[0]
+
+        self.assertEqual(new_coupon.value, 100)
+        self.assertEqual(new_coupon.percent_off, 0)
+        self.assertEqual(new_coupon.max_use, 4)
+        self.assertEqual(new_coupon.max_use_per_user, 4)
+        self.assertEqual(new_coupon.details, "")
+
+        self.assertTrue(
+            timezone.now() - timedelta(minutes=1) <
+            new_coupon.start_time <
+            timezone.now()
+        )
+
+        self.assertTrue(
+            timezone.now() + self.membership.duration - timedelta(minutes=1) <
+            new_coupon.end_time <
+            timezone.now() + self.membership.duration
+        )
+
     def test_update(self):
         """
         Ensure we can update an order.
@@ -1957,7 +2072,7 @@ class OrderTests(APITestCase):
         data = {
             'order_lines': [{
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 99,
             }],
         }
@@ -1965,7 +2080,7 @@ class OrderTests(APITestCase):
         response = self.client.put(
             reverse(
                 'order-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.order.id},
             ),
             data,
             format='json',
@@ -1974,25 +2089,30 @@ class OrderTests(APITestCase):
         response_data = json.loads(response.content)
 
         content = {
-            'id': 1,
-            'url': 'http://testserver/orders/1',
-            'user': 'http://testserver/users/1',
+            'id': self.order.id,
+            'url': 'http://testserver/orders/' + str(self.order.id),
+            'user': 'http://testserver/users/' + str(self.user.id),
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
             'reference_number': '751',
             'order_lines': [{
+                'url': f'http://testserver/order_lines/{self.order_line.id}',
+                'id': self.order_line.id,
                 'content_type': 'package',
-                'id': 1,
-                'object_id': 1,
-                'order': 'http://testserver/orders/1',
-                'quantity': 99,
-                'url': 'http://testserver/order_lines/1',
-                'coupon': None,
                 'coupon_real_value': 0.0,
-                'cost': 99 * self.package.price
+                'cost': 99.0 * self.package.price,
+                'coupon': None,
+                'object_id': self.package.id,
+                'quantity': 99,
+                'order': 'http://testserver/orders/' + str(self.order.id)
             }],
         }
+
+        self.assertCountEqual(response_data['order_lines'],
+                              content['order_lines'])
+        del response_data['order_lines']
+        del content['order_lines']
 
         self.assertEqual(response_data, content)
 
@@ -2007,7 +2127,7 @@ class OrderTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'order-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.order.id},
             ),
         )
 
@@ -2048,24 +2168,25 @@ class OrderTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                'id': 1,
+                'id': self.order.id,
                 'transaction_date': data['results'][0]['transaction_date'],
                 'authorization_id': '1',
                 'settlement_id': '1',
                 'reference_number': '751',
                 'order_lines': [{
                     'content_type': 'package',
-                    'id': 1,
-                    'object_id': 1,
-                    'order': 'http://testserver/orders/1',
+                    'id': self.order_line.id,
+                    'object_id': self.package.id,
+                    'order': 'http://testserver/orders/' + str(self.order.id),
                     'quantity': 1,
-                    'url': 'http://testserver/order_lines/1',
+                    'url': 'http://testserver/order_lines/' +
+                           str(self.order_line.id),
                     'coupon': None,
                     'coupon_real_value': 0.0,
                     'cost': self.package.price,
                 }],
-                'url': 'http://testserver/orders/1',
-                'user': 'http://testserver/users/1',
+                'url': 'http://testserver/orders/' + str(self.order.id),
+                'user': 'http://testserver/users/' + str(self.user.id),
             }]
         }
 
@@ -2091,33 +2212,34 @@ class OrderTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                'id': 1,
+                'id': self.order.id,
                 'transaction_date': data['results'][0]['transaction_date'],
                 'authorization_id': '1',
                 'settlement_id': '1',
                 'reference_number': '751',
                 'order_lines': [{
                     'content_type': 'package',
-                    'id': 1,
-                    'object_id': 1,
-                    'order': 'http://testserver/orders/1',
+                    'id': self.order_line.id,
+                    'object_id': self.package.id,
+                    'order': 'http://testserver/orders/' + str(self.order.id),
                     'quantity': 1,
-                    'url': 'http://testserver/order_lines/1',
+                    'url': 'http://testserver/order_lines/' +
+                           str(self.order_line.id),
                     'coupon': None,
                     'coupon_real_value': 0.0,
                     'cost': self.package.price,
                 }],
-                'url': 'http://testserver/orders/1',
-                'user': 'http://testserver/users/1',
+                'url': 'http://testserver/orders/' + str(self.order.id),
+                'user': 'http://testserver/users/' + str(self.user.id),
             }, {
-                'id': 2,
+                'id': self.order_admin.id,
                 'transaction_date': data['results'][1]['transaction_date'],
                 'authorization_id': '2',
                 'settlement_id': '2',
                 'reference_number': '751',
                 'order_lines': [],
-                'url': 'http://testserver/orders/2',
-                'user': 'http://testserver/users/2',
+                'url': 'http://testserver/orders/' + str(self.order_admin.id),
+                'user': 'http://testserver/users/' + str(self.admin.id),
             }]
         }
 
@@ -2133,7 +2255,7 @@ class OrderTests(APITestCase):
         response = self.client.get(
             reverse(
                 'order-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.order.id},
             ),
         )
 
@@ -2152,31 +2274,32 @@ class OrderTests(APITestCase):
         response = self.client.get(
             reverse(
                 'order-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.order.id},
             ),
         )
 
         data = json.loads(response.content)
 
         content = {
-            'id': 1,
+            'id': self.order.id,
             'transaction_date': data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
             'reference_number': '751',
             'order_lines': [{
                 'content_type': 'package',
-                'id': 1,
-                'object_id': 1,
-                'order': 'http://testserver/orders/1',
+                'id': self.order_line.id,
+                'object_id': self.package.id,
+                'order': 'http://testserver/orders/' + str(self.order.id),
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/1',
+                'url': 'http://testserver/order_lines/' +
+                       str(self.order_line.id),
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': self.package.price,
             }],
-            'url': 'http://testserver/orders/1',
-            'user': 'http://testserver/users/1',
+            'url': 'http://testserver/orders/' + str(self.order.id),
+            'user': 'http://testserver/users/' + str(self.user.id),
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -2211,31 +2334,32 @@ class OrderTests(APITestCase):
         response = self.client.get(
             reverse(
                 'order-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.order.id},
             ),
         )
 
         data = json.loads(response.content)
 
         content = {
-            'id': 1,
+            'id': self.order.id,
             'transaction_date': data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
             'reference_number': '751',
             'order_lines': [{
                 'content_type': 'package',
-                'id': 1,
-                'object_id': 1,
-                'order': 'http://testserver/orders/1',
+                'id': self.order_line.id,
+                'object_id': self.package.id,
+                'order': 'http://testserver/orders/' + str(self.order.id),
                 'quantity': 1,
-                'url': 'http://testserver/order_lines/1',
+                'url': 'http://testserver/order_lines/' +
+                       str(self.order_line.id),
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': self.package.price,
             }],
-            'url': 'http://testserver/orders/1',
-            'user': 'http://testserver/users/1',
+            'url': 'http://testserver/orders/' + str(self.order.id),
+            'user': 'http://testserver/users/' + str(self.user.id),
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -2272,19 +2396,19 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }, {
                 'content_type': 'timeslot',
-                'object_id': 1,
+                'object_id': self.time_slot.id,
                 'quantity': 1,
             }, {
-                'content_type': 'retirement',
-                'object_id': 1,
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -2307,7 +2431,7 @@ class OrderTests(APITestCase):
         content = {
             'orderline': {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2
             },
             'value': 10.0
@@ -2329,23 +2453,23 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 1,
+                'object_id': self.package.id,
                 'quantity': 2,
             }, {
                 'content_type': 'timeslot',
-                'object_id': 1,
+                'object_id': self.time_slot.id,
                 'quantity': 1,
             }, {
-                'content_type': 'retirement',
-                'object_id': 1,
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
                 'quantity': 1,
             }, {
                 'content_type': 'package',
-                'object_id': 2,
+                'object_id': self.package2.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -2368,7 +2492,7 @@ class OrderTests(APITestCase):
         content = {
             'orderline': {
                 'content_type': 'package',
-                'object_id': 2,
+                'object_id': self.package2.id,
                 'quantity': 1
             },
             'value': 4000.0
@@ -2389,7 +2513,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "INVALID",
@@ -2421,7 +2545,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
         }
@@ -2456,7 +2580,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -2497,7 +2621,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -2538,7 +2662,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -2579,7 +2703,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",
@@ -2615,7 +2739,7 @@ class OrderTests(APITestCase):
             'payment_token': "CZgD1NlBzPuSefg",
             'order_lines': [{
                 'content_type': 'membership',
-                'object_id': 1,
+                'object_id': self.membership.id,
                 'quantity': 1,
             }],
             'coupon': "ABCD1234",

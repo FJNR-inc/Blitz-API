@@ -12,7 +12,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from ..models import Retirement, WaitQueue, WaitQueueNotification
+from ..models import Retreat, WaitQueue, WaitQueueNotification
 
 User = get_user_model()
 
@@ -30,9 +30,9 @@ class WaitQueueNotificationTests(APITestCase):
         cls.admin = AdminFactory()
 
     def setUp(self):
-        self.retirement = Retirement.objects.create(
-            name="mega_retirement",
-            details="This is a description of the mega retirement.",
+        self.retreat = Retreat.objects.create(
+            name="mega_retreat",
+            details="This is a description of the mega retreat.",
             seats=400,
             address_line1="123 random street",
             postal_code="123 456",
@@ -51,6 +51,7 @@ class WaitQueueNotificationTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True,
         )
 
         FIXED_TIME = datetime(2000, 1, 10, tzinfo=LOCAL_TIMEZONE)
@@ -58,7 +59,7 @@ class WaitQueueNotificationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             self.wait_queue_notif = WaitQueueNotification.objects.create(
                 user=self.user2,
-                retirement=self.retirement,
+                retreat=self.retreat,
             )
 
     def test_create(self):
@@ -68,15 +69,15 @@ class WaitQueueNotificationTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement.id]
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat.id]
             ),
             'user': reverse('user-detail', args=[self.user2.id]),
         }
 
         response = self.client.post(
             reverse(
-                'retirement:waitqueuenotification-list',
+                'retreat:waitqueuenotification-list',
             ),
             data,
             format='json',
@@ -94,15 +95,15 @@ class WaitQueueNotificationTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement.id]
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat.id]
             ),
             'user': reverse('user-detail', args=[self.user2.id]),
         }
 
         response = self.client.put(
             reverse(
-                'retirement:waitqueuenotification-detail',
+                'retreat:waitqueuenotification-detail',
                 kwargs={'pk': 1},
             ),
             data,
@@ -121,15 +122,15 @@ class WaitQueueNotificationTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement.id]
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat.id]
             ),
             'user': reverse('user-detail', args=[self.user2.id]),
         }
 
         response = self.client.put(
             reverse(
-                'retirement:waitqueuenotification-detail',
+                'retreat:waitqueuenotification-detail',
                 kwargs={'pk': 1},
             ),
             data,
@@ -149,7 +150,7 @@ class WaitQueueNotificationTests(APITestCase):
 
         response = self.client.delete(
             reverse(
-                'retirement:waitqueuenotification-detail',
+                'retreat:waitqueuenotification-detail',
                 kwargs={'pk': 1},
             ),
         )
@@ -166,7 +167,7 @@ class WaitQueueNotificationTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
-            reverse('retirement:waitqueuenotification-list'),
+            reverse('retreat:waitqueuenotification-list'),
             format='json',
         )
 
@@ -178,11 +179,14 @@ class WaitQueueNotificationTests(APITestCase):
             'previous': None,
             'results': [{
                 'created_at': response_data['results'][0]['created_at'],
-                'id': 1,
-                'retirement': 'http://testserver/retirement/retirements/1',
-                'url': 'http://testserver/retirement/'
-                       'wait_queue_notifications/1',
-                'user': 'http://testserver/users/2'
+                'id': self.wait_queue_notif.id,
+                'retreat':
+                    'http://testserver/retreat/retreats/' +
+                    str(self.retreat.id),
+                'url': 'http://testserver/retreat/'
+                       'wait_queue_notifications/' +
+                       str(self.wait_queue_notif.id),
+                'user': 'http://testserver/users/' + str(self.user2.id)
             }]
         }
 
@@ -197,7 +201,7 @@ class WaitQueueNotificationTests(APITestCase):
         self.client.force_authenticate(user=self.user2)
 
         response = self.client.get(
-            reverse('retirement:waitqueuenotification-list'),
+            reverse('retreat:waitqueuenotification-list'),
             format='json',
         )
 
@@ -209,11 +213,14 @@ class WaitQueueNotificationTests(APITestCase):
             'previous': None,
             'results': [{
                 'created_at': response_data['results'][0]['created_at'],
-                'id': 1,
-                'retirement': 'http://testserver/retirement/retirements/1',
-                'url': 'http://testserver/retirement/'
-                       'wait_queue_notifications/1',
-                'user': 'http://testserver/users/2'
+                'id': self.wait_queue_notif.id,
+                'retreat':
+                    'http://testserver/retreat/retreats/' +
+                    str(self.retreat.id),
+                'url': 'http://testserver/retreat/'
+                       'wait_queue_notifications/' +
+                       str(self.wait_queue_notif.id),
+                'user': 'http://testserver/users/' + str(self.user2.id)
             }]
         }
 
@@ -228,7 +235,7 @@ class WaitQueueNotificationTests(APITestCase):
         self.client.force_authenticate(user=self.user)
 
         response = self.client.get(
-            reverse('retirement:waitqueuenotification-list'),
+            reverse('retreat:waitqueuenotification-list'),
             format='json',
         )
 
@@ -245,11 +252,11 @@ class WaitQueueNotificationTests(APITestCase):
 
     def test_list_not_authenticated(self):
         """
-        Ensure we can't list subscriptions to retirement waitqueues as an
+        Ensure we can't list subscriptions to retreat waitqueues as an
         unauthenticated user.
         """
         response = self.client.get(
-            reverse('retirement:waitqueuenotification-list'),
+            reverse('retreat:waitqueuenotification-list'),
             format='json',
         )
 
@@ -267,15 +274,19 @@ class WaitQueueNotificationTests(APITestCase):
 
         response = self.client.get(
             reverse(
-                'retirement:waitqueuenotification-detail',
-                kwargs={'pk': 1},
+                'retreat:waitqueuenotification-detail',
+                kwargs={'pk': self.wait_queue_notif.id},
             ),
         )
 
         content = {
-            'id': 1,
-            'retirement': 'http://testserver/retirement/retirements/1',
-            'url': 'http://testserver/retirement/wait_queue_notifications/1',
+            'id': self.wait_queue_notif.id,
+            'retreat':
+                'http://testserver/retreat/retreats/' +
+                str(self.retreat.id),
+            'url':
+                'http://testserver/retreat/wait_queue_notifications/' +
+                str(self.wait_queue_notif.id),
             'user': ''.join(['http://testserver/users/', str(self.user2.id)]),
             'created_at': json.loads(response.content)['created_at'],
         }
@@ -292,15 +303,19 @@ class WaitQueueNotificationTests(APITestCase):
 
         response = self.client.get(
             reverse(
-                'retirement:waitqueuenotification-detail',
-                kwargs={'pk': 1},
+                'retreat:waitqueuenotification-detail',
+                kwargs={'pk': self.wait_queue_notif.id},
             ),
         )
 
         content = {
-            'id': 1,
-            'retirement': 'http://testserver/retirement/retirements/1',
-            'url': 'http://testserver/retirement/wait_queue_notifications/1',
+            'id': self.wait_queue_notif.id,
+            'retreat':
+                'http://testserver/retreat/retreats/' +
+                str(self.retreat.id),
+            'url':
+                'http://testserver/retreat/wait_queue_notifications/' +
+                str(self.wait_queue_notif.id),
             'user': ''.join(['http://testserver/users/', str(self.user2.id)]),
             'created_at': json.loads(response.content)['created_at'],
         }
@@ -317,7 +332,7 @@ class WaitQueueNotificationTests(APITestCase):
 
         response = self.client.get(
             reverse(
-                'retirement:waitqueuenotification-detail',
+                'retreat:waitqueuenotification-detail',
                 kwargs={'pk': 1},
             ),
         )
@@ -330,7 +345,7 @@ class WaitQueueNotificationTests(APITestCase):
         """
         response = self.client.get(
             reverse(
-                'retirement:waitqueuenotification-detail',
+                'retreat:waitqueuenotification-detail',
                 kwargs={'pk': 1},
             ),
             format='json',
@@ -344,14 +359,14 @@ class WaitQueueNotificationTests(APITestCase):
 
     def test_read_non_existent(self):
         """
-        Ensure we get not found when asking for a subscription to a retirement
+        Ensure we get not found when asking for a subscription to a retreat
         that doesn't exist.
         """
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
             reverse(
-                'retirement:waitqueuenotification-detail',
+                'retreat:waitqueuenotification-detail',
                 kwargs={'pk': 999},
             ),
         )
@@ -375,34 +390,34 @@ class WaitQueueNotificationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             WaitQueueNotification.objects.create(
                 user=self.user,
-                retirement=self.retirement,
+                retreat=self.retreat,
             )
 
         waiting_user = WaitQueue.objects.create(
             user=self.user,
-            retirement=self.retirement,
+            retreat=self.retreat,
         )
 
         waiting_user2 = WaitQueue.objects.create(
             user=self.user2,
-            retirement=self.retirement,
+            retreat=self.retreat,
         )
 
         notification_count = WaitQueueNotification.objects.all().count()
 
         response = self.client.get(
             '/'.join([
-                reverse('retirement:waitqueuenotification-list'),
+                reverse('retreat:waitqueuenotification-list'),
                 'notify',
             ])
         )
 
-        self.retirement.refresh_from_db()
+        self.retreat.refresh_from_db()
 
         # Assert that the wait queue index is updated
         # All users (2) are notified since there are more (4) reserved_seats
         self.assertEqual(
-            self.retirement.next_user_notified,
+            self.retreat.next_user_notified,
             2,
             "next_user_notified index invalid"
         )
@@ -410,7 +425,7 @@ class WaitQueueNotificationTests(APITestCase):
         # Assert that only 2 reserved seats remain (since only 2 users are
         # waiting)
         self.assertEqual(
-            self.retirement.reserved_seats,
+            self.retreat.reserved_seats,
             2,
             "reserved_seats index invalid"
         )
@@ -433,33 +448,33 @@ class WaitQueueNotificationTests(APITestCase):
     def test_notify_reached_end_of_wait_queue(self):
         """
         Ensure we get a proper response if no users remain in any
-        retirements' wait_queue.
+        retreats' wait_queue.
         """
         # self.client.force_authenticate(user=self.admin)
 
         notification_count = WaitQueueNotification.objects.all().count()
 
-        self.retirement.next_user_notified = 2
-        self.retirement.save()
+        self.retreat.next_user_notified = 2
+        self.retreat.save()
 
         response = self.client.get(
             '/'.join([
-                reverse('retirement:waitqueuenotification-list'),
+                reverse('retreat:waitqueuenotification-list'),
                 'notify',
             ])
         )
 
-        self.retirement.refresh_from_db()
+        self.retreat.refresh_from_db()
 
         self.assertEqual(
-            self.retirement.next_user_notified,
+            self.retreat.next_user_notified,
             0,
             "next_user_notified index invalid"
         )
 
         # Assert that 0 reserved seats remain (since 0 users are waiting)
         self.assertEqual(
-            self.retirement.reserved_seats,
+            self.retreat.reserved_seats,
             0,
             "reserved_seats index invalid"
         )
@@ -492,16 +507,16 @@ class WaitQueueNotificationTests(APITestCase):
     def test_notify_no_reserved_seats(self):
         """
         Ensure we get a proper response if no reserved seats remain in any
-        retirement.
+        retreat.
         """
         # self.client.force_authenticate(user=self.admin)
 
-        self.retirement.reserved_seats = 0
-        self.retirement.save()
+        self.retreat.reserved_seats = 0
+        self.retreat.save()
 
         response = self.client.get(
             '/'.join([
-                reverse('retirement:waitqueuenotification-list'),
+                reverse('retreat:waitqueuenotification-list'),
                 'notify',
             ])
         )
@@ -530,12 +545,12 @@ class WaitQueueNotificationTests(APITestCase):
 
         self.wait_queue_notif = WaitQueueNotification.objects.create(
             user=self.user2,
-            retirement=self.retirement,
+            retreat=self.retreat,
         )
 
         response = self.client.get(
             '/'.join([
-                reverse('retirement:waitqueuenotification-list'),
+                reverse('retreat:waitqueuenotification-list'),
                 'notify',
             ])
         )

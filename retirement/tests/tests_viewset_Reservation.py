@@ -29,7 +29,7 @@ from store.tests.paysafe_sample_responses import (SAMPLE_REFUND_RESPONSE,
                                                   SAMPLE_CARD_RESPONSE,
                                                   UNKNOWN_EXCEPTION, )
 
-from ..models import Retirement, Reservation
+from ..models import Retreat, Reservation
 
 User = get_user_model()
 
@@ -49,16 +49,15 @@ TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 )
 class ReservationTests(APITestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(ReservationTests, cls).setUpClass()
-        cls.client = APIClient()
-        cls.user = UserFactory()
-        cls.admin = AdminFactory()
-        cls.retirement_type = ContentType.objects.get_for_model(Retirement)
-        cls.retirement = Retirement.objects.create(
-            name="mega_retirement",
-            details="This is a description of the mega retirement.",
+    def setUp(self):
+        self.client = APIClient()
+        self.user = UserFactory()
+        self.user2 = UserFactory()
+        self.admin = AdminFactory()
+        self.retreat_type = ContentType.objects.get_for_model(Retreat)
+        self.retreat = Retreat.objects.create(
+            name="mega_retreat",
+            details="This is a description of the mega retreat.",
             seats=400,
             address_line1="123 random street",
             postal_code="123 456",
@@ -76,10 +75,11 @@ class ReservationTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True,
         )
-        cls.retirement2 = Retirement.objects.create(
-            name="random_retirement",
-            details="This is a description of the retirement.",
+        self.retreat2 = Retreat.objects.create(
+            name="random_retreat",
+            details="This is a description of the retreat.",
             seats=40,
             address_line1="123 random street",
             postal_code="123 456",
@@ -96,10 +96,11 @@ class ReservationTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True,
         )
-        cls.retirement_overlap = Retirement.objects.create(
-            name="ultra_retirement",
-            details="This is a description of the ultra retirement.",
+        self.retreat_overlap = Retreat.objects.create(
+            name="ultra_retreat",
+            details="This is a description of the ultra retreat.",
             seats=400,
             address_line1="1234 random street",
             postal_code="654 321",
@@ -116,49 +117,88 @@ class ReservationTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True,
         )
-        cls.order = Order.objects.create(
-            user=cls.user,
+        self.order = Order.objects.create(
+            user=self.user,
             transaction_date=timezone.now(),
             authorization_id=1,
             settlement_id=1,
         )
-        cls.order_line = OrderLine.objects.create(
-            order=cls.order,
+        self.order_line = OrderLine.objects.create(
+            order=self.order,
             quantity=1,
-            content_type=cls.retirement_type,
-            object_id=cls.retirement.id,
-            cost=cls.retirement.price,
+            content_type=self.retreat_type,
+            object_id=self.retreat.id,
+            cost=self.retreat.price,
         )
-        cls.reservation = Reservation.objects.create(
-            user=cls.user,
-            retirement=cls.retirement,
-            order_line=cls.order_line,
+        self.reservation = Reservation.objects.create(
+            user=self.user,
+            retreat=self.retreat,
+            order_line=self.order_line,
             is_active=True,
         )
-        cls.reservation_admin = Reservation.objects.create(
-            user=cls.admin,
-            retirement=cls.retirement2,
-            order_line=cls.order_line,
+        self.reservation_expected_payload = {
+            'id': self.reservation.id,
+            'is_active': True,
+            'is_present': False,
+            'retreat': 'http://testserver/retreat/retreats/' +
+                       str(self.reservation.retreat.id),
+            'url': 'http://testserver/retreat/reservations/' +
+                   str(self.reservation.id),
+            'user': 'http://testserver/users/' + str(self.user.id),
+            'order_line': 'http://testserver/order_lines/' +
+                          str(self.order_line.id),
+            'cancelation_date': None,
+            'cancelation_action': None,
+            'cancelation_reason': None,
+            'refundable': True,
+            'exchangeable': True,
+        }
+        self.reservation2 = Reservation.objects.create(
+            user=self.user2,
+            retreat=self.retreat,
+            is_active=True,
+        )
+        self.reservation2_expected_payload = {
+            'id': self.reservation2.id,
+            'is_active': True,
+            'is_present': False,
+            'retreat': 'http://testserver/retreat/retreats/' +
+                       str(self.reservation2.retreat.id),
+            'url': 'http://testserver/retreat/reservations/' +
+                   str(self.reservation2.id),
+            'user': 'http://testserver/users/' + str(self.user2.id),
+            'order_line': None,
+            'cancelation_date': None,
+            'cancelation_action': None,
+            'cancelation_reason': None,
+            'refundable': True,
+            'exchangeable': True,
+        }
+        self.reservation_admin = Reservation.objects.create(
+            user=self.admin,
+            retreat=self.retreat2,
+            order_line=self.order_line,
             is_active=True,
         )
 
     def test_create(self):
         """
         Ensure we can create a reservation if user has permission.
-        It is possible to create reservations for INACTIVE retirements.
+        It is possible to create reservations for INACTIVE retreats.
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement2.id]
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat2.id]
             ),
             'user': reverse('user-detail', args=[self.user.id]),
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
@@ -170,8 +210,8 @@ class ReservationTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
-        response_data['retirement_details'] = remove_translation_fields(
-            response_data['retirement_details']
+        response_data['retreat_details'] = remove_translation_fields(
+            response_data['retreat_details']
         )
         response_data['user_details'] = remove_translation_fields(
             response_data['user_details']
@@ -180,54 +220,51 @@ class ReservationTests(APITestCase):
         del response_data['user_details']["last_name"]
         del response_data['user_details']["email"]
         del response_data['user_details']['date_joined']
+        del response_data['retreat_details']['reservations']
+        del response_data['id']
+        del response_data['url']
 
         content = {
-            'id': 3,
             'is_active': True,
             'is_present': False,
-            'url': 'http://testserver/retirement/reservations/3',
-            'user': 'http://testserver/users/1',
+            'user': 'http://testserver/users/' + str(self.user.id),
             'cancelation_action': None,
             'cancelation_date': None,
             'cancelation_reason': None,
             'refundable': False,
             'exchangeable': False,
-            'retirement': 'http://testserver/retirement/retirements/2',
+            'retreat': 'http://testserver/retreat/retreats/' +
+                       str(self.retreat2.id),
             'order_line': None,
-            'retirement_details': {
+            'retreat_details': {
                 'activity_language': None,
                 'end_time': '2130-02-17T12:00:00-05:00',
-                'id': 2,
+                'id': self.retreat2.id,
                 'exclusive_memberships': [],
                 'places_remaining': 38,
                 'next_user_notified': 0,
                 'notification_interval': '1 00:00:00',
                 'price': '199.00',
                 'start_time': '2130-02-15T08:00:00-05:00',
-                'url': 'http://testserver/retirement/retirements/1',
                 'users': [
-                    'http://testserver/users/2',
-                    'http://testserver/users/1'
+                    'http://testserver/users/' + str(self.admin.id),
+                    'http://testserver/users/' + str(self.user.id)
                 ],
                 'address_line1': '123 random street',
                 'address_line2': None,
                 'city': '',
                 'country': 'Random country',
-                'details': 'This is a description of the retirement.',
+                'details': 'This is a description of the retreat.',
                 'email_content': None,
                 'latitude': None,
                 'longitude': None,
-                'name': 'random_retirement',
+                'name': 'random_retreat',
                 'pictures': [],
                 'postal_code': '123 456',
                 'reserved_seats': 0,
                 'seats': 40,
                 'state_province': 'Random state',
                 'timezone': None,
-                'reservations': [
-                    'http://testserver/retirement/reservations/2',
-                    'http://testserver/retirement/reservations/3'
-                ],
                 'reservations_canceled': [],
                 'total_reservations': 2,
                 'refund_rate': 100,
@@ -239,7 +276,9 @@ class ReservationTests(APITestCase):
                 'carpool_url': 'example2.com',
                 'review_url': 'example3.com',
                 'place_name': '',
-                'url': 'http://testserver/retirement/retirements/2'
+                'url': 'http://testserver/retreat/retreats/' +
+                       str(self.retreat2.id),
+                'has_shared_rooms': True,
             },
             'user_details': {
                 'academic_field': None,
@@ -247,7 +286,7 @@ class ReservationTests(APITestCase):
                 'birthdate': None,
                 'gender': None,
                 'groups': [],
-                'id': 1,
+                'id': self.user.id,
                 'is_active': True,
                 'is_staff': False,
                 'is_superuser': False,
@@ -258,7 +297,7 @@ class ReservationTests(APITestCase):
                 'phone': None,
                 'tickets': 1,
                 'university': None,
-                'url': 'http://testserver/users/1',
+                'url': 'http://testserver/users/' + str(self.user.id),
                 'user_permissions': [],
                 'city': None,
                 'personnal_restrictions': None,
@@ -269,6 +308,12 @@ class ReservationTests(APITestCase):
             }
         }
 
+        self.assertCountEqual(response_data['retreat_details']['users'],
+                              content['retreat_details']['users'])
+
+        del response_data['retreat_details']['users']
+        del content['retreat_details']['users']
+
         self.assertEqual(response_data, content)
 
     def test_create_without_permission(self):
@@ -278,8 +323,8 @@ class ReservationTests(APITestCase):
         self.client.force_authenticate(user=self.user)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement.id]
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat.id]
             ),
             'user': reverse('user-detail', args=[self.user.id]),
             'order_line': reverse(
@@ -288,7 +333,7 @@ class ReservationTests(APITestCase):
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
@@ -303,15 +348,15 @@ class ReservationTests(APITestCase):
 
     def test_create_overlapping(self):
         """
-        Ensure we can't create reservations with overlapping retirement for the
+        Ensure we can't create reservations with overlapping retreat for the
         same user.
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                args=[self.retirement_overlap.id]
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                args=[self.retreat_overlap.id]
             ),
             'user': reverse('user-detail', args=[self.user.id]),
             'order_line': reverse(
@@ -320,7 +365,7 @@ class ReservationTests(APITestCase):
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
@@ -338,14 +383,14 @@ class ReservationTests(APITestCase):
 
     def test_create_duplicate(self):
         """
-        Ensure we can create the same reservation multiple times. This does
-        not duplicate the entry and instead returns the existing one.
+        Ensure we cannot create the same reservation multiple times.
+        Overlapping reservation error is sent
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement2.id]
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat.id]
             ),
             'user': reverse('user-detail', args=[self.user.id]),
             'order_line': reverse(
@@ -354,137 +399,44 @@ class ReservationTests(APITestCase):
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
 
-        response_data = json.loads(response.content)
-        response_data['retirement_details'] = remove_translation_fields(
-            response_data['retirement_details']
-        )
-        response_data['user_details'] = remove_translation_fields(
-            response_data['user_details']
-        )
-        del response_data['user_details']["first_name"]
-        del response_data['user_details']["last_name"]
-        del response_data['user_details']["email"]
-        del response_data['user_details']['date_joined']
-
         content = {
-            'id': 3,
-            'is_active': True,
-            'is_present': False,
-            'url': 'http://testserver/retirement/reservations/3',
-            'user': 'http://testserver/users/1',
-            'cancelation_action': None,
-            'cancelation_date': None,
-            'cancelation_reason': None,
-            'refundable': False,
-            'exchangeable': False,
-            'retirement': 'http://testserver/retirement/retirements/2',
-            'order_line': 'http://testserver/order_lines/1',
-            'retirement_details': {
-                'activity_language': None,
-                'end_time': '2130-02-17T12:00:00-05:00',
-                'id': 2,
-                'exclusive_memberships': [],
-                'places_remaining': 38,
-                'next_user_notified': 0,
-                'notification_interval': '1 00:00:00',
-                'price': '199.00',
-                'start_time': '2130-02-15T08:00:00-05:00',
-                'url': 'http://testserver/retirement/retirements/1',
-                'users': [
-                    'http://testserver/users/2',
-                    'http://testserver/users/1'
-                ],
-                'address_line1': '123 random street',
-                'address_line2': None,
-                'city': '',
-                'country': 'Random country',
-                'details': 'This is a description of the retirement.',
-                'email_content': None,
-                'latitude': None,
-                'longitude': None,
-                'name': 'random_retirement',
-                'pictures': [],
-                'postal_code': '123 456',
-                'reserved_seats': 0,
-                'seats': 40,
-                'state_province': 'Random state',
-                'timezone': None,
-                'reservations': [
-                    'http://testserver/retirement/reservations/2',
-                    'http://testserver/retirement/reservations/3'
-                ],
-                'reservations_canceled': [],
-                'total_reservations': 2,
-                'refund_rate': 100,
-                'min_day_refund': 7,
-                'min_day_exchange': 7,
-                'is_active': False,
-                'accessibility': True,
-                'form_url': "example.com",
-                'carpool_url': 'example2.com',
-                'review_url': 'example3.com',
-                'place_name': '',
-                'url': 'http://testserver/retirement/retirements/2'
-            },
-            'user_details': {
-                'academic_field': None,
-                'academic_level': None,
-                'birthdate': None,
-                'gender': None,
-                'groups': [],
-                'id': 1,
-                'is_active': True,
-                'is_staff': False,
-                'is_superuser': False,
-                'last_login': None,
-                'membership': None,
-                'membership_end': None,
-                'other_phone': None,
-                'phone': None,
-                'tickets': 1,
-                'university': None,
-                'url': 'http://testserver/users/1',
-                'user_permissions': [],
-                'city': None,
-                'personnal_restrictions': None,
-                'academic_program_code': None,
-                'faculty': None,
-                'student_number': None,
-                'volunteer_for_workplace': [],
-            }
+            'non_field_errors': [
+                'This reservation overlaps with another active reservations '
+                'for this user.'
+            ]
         }
 
-        self.assertEqual(response_data, content)
+        self.assertEqual(json.loads(response.content), content)
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_non_existent_period_user(self):
         """
-        Ensure we can't create a reservation with a non-existent retirement or
+        Ensure we can't create a reservation with a non-existent retreat or
         user.
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'retirement': reverse('retirement:retirement-detail', args=[999]),
+            'retreat': reverse('retreat:retreat-detail', args=[999]),
             'user': reverse('user-detail', args=[999]),
             'order_line': reverse('orderline-detail', args=[999]),
             'is_active': True,
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
 
         content = {
-            'retirement': ['Invalid hyperlink - Object does not exist.'],
+            'retreat': ['Invalid hyperlink - Object does not exist.'],
             'user': ['Invalid hyperlink - Object does not exist.'],
             'order_line': ['Invalid hyperlink - Object does not exist.']
         }
@@ -502,14 +454,14 @@ class ReservationTests(APITestCase):
         data = {}
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
 
         content = {
             'user': ['This field is required.'],
-            'retirement': ['This field is required.'],
+            'retreat': ['This field is required.'],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -524,20 +476,20 @@ class ReservationTests(APITestCase):
 
         data = {
             'user': None,
-            'retirement': None,
+            'retreat': None,
             'order_line': None,
             'is_active': None,
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
 
         content = {
             'user': ['This field may not be null.'],
-            'retirement': ['This field may not be null.'],
+            'retreat': ['This field may not be null.'],
             'is_active': ['This field may not be null.'],
         }
 
@@ -553,20 +505,20 @@ class ReservationTests(APITestCase):
 
         data = {
             'user': "invalid",
-            'retirement': "invalid",
+            'retreat': "invalid",
             'order_line': "invalid",
             'is_active': "invalid",
         }
 
         response = self.client.post(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
 
         content = {
             'user': ['Invalid hyperlink - No URL match.'],
-            'retirement': ['Invalid hyperlink - No URL match.'],
+            'retreat': ['Invalid hyperlink - No URL match.'],
             'order_line': ['Invalid hyperlink - No URL match.'],
             'is_active': ['Must be a valid boolean.'],
         }
@@ -575,950 +527,88 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_update(self):
+    def test_create_no_place_left(self):
         """
-        Ensure we can't update a reservation.
+        Ensure we can't create a reservation if there is no place left
         """
+
         self.client.force_authenticate(user=self.admin)
 
+        self.retreat2.seats = 0
+        self.retreat2.save()
+
         data = {
-            'retirement': reverse(
-                'retirement:retirement-detail', args=[self.retirement.id]
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat2.id]
             ),
             'user': reverse('user-detail', args=[self.user.id]),
-            'is_active': False,
+            'order_line': reverse(
+                'orderline-detail', args=[self.order_line.id]),
+            'is_active': True,
         }
 
-        response = self.client.put(
-            reverse(
-                'retirement:reservation-detail',
-                kwargs={'pk': 1},
-            ),
+        response = self.client.post(
+            reverse('retreat:reservation-list'),
             data,
             format='json',
         )
 
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_405_METHOD_NOT_ALLOWED
-        )
-
-    def test_update_partial(self):
-        """
-        Ensure we can partially update a reservation (is_present field and
-        retirement field only).
-        The retirement can be changed if we're at least 'min_day_exchange' days
-        before the event and if the new retirement is cheaper/same price.
-        Otherwise, only 'is_present' can be updated.
-        Sends an email to the user with the new retirement's info.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        FIXED_TIME = datetime(2030, 1, 10, tzinfo=LOCAL_TIMEZONE)
-
-        data = {
-            'is_present': True,
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': 2},
-            ),
-        }
-
-        with mock.patch(
-                'django.utils.timezone.now', return_value=FIXED_TIME):
-            response = self.client.patch(
-                reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 1},
-                ),
-                data,
-                format='json',
-            )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_200_OK,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-
-        del response_data['user_details']
-        del response_data['retirement_details']
-
-        content = {
-            'id': 1,
-            'is_active': True,
-            'is_present': True,
-            'retirement': 'http://testserver/retirement/retirements/2',
-            'url': 'http://testserver/retirement/reservations/1',
-            'user': 'http://testserver/users/1',
-            'order_line': 'http://testserver/order_lines/1',
-            'cancelation_date': None,
-            'cancelation_action': None,
-            'cancelation_reason': None,
-            'exchangeable': True,
-            'refundable': True,
-        }
-
-        self.assertEqual(response_data, content)
-
-        canceled_reservation = Reservation.objects.filter(is_active=False)[0]
-
-        self.assertTrue(canceled_reservation)
-        self.assertEqual(canceled_reservation.cancelation_action, 'E')
-        self.assertEqual(canceled_reservation.cancelation_reason, 'U')
-        self.assertEqual(canceled_reservation.cancelation_date, FIXED_TIME)
-        self.assertEqual(canceled_reservation.retirement, self.retirement)
-        self.assertEqual(canceled_reservation.order_line, self.order_line)
-
-        # 1 email confirming the exchange
-        # 1 email confirming participation to the new retirement
-        self.assertEqual(len(mail.outbox), 2)
-
-    def test_update_partial_is_present(self):
-        """
-        Ensure we can partially update a reservation (is_present).
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        FIXED_TIME = datetime(2030, 1, 10, tzinfo=LOCAL_TIMEZONE)
-
-        data = {
-            'is_present': True,
-        }
-
-        with mock.patch(
-                'django.utils.timezone.now', return_value=FIXED_TIME):
-            response = self.client.patch(
-                reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 1},
-                ),
-                data,
-                format='json',
-            )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_200_OK,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-
-        del response_data['user_details']
-        del response_data['retirement_details']
-
-        content = {
-            'id': 1,
-            'is_active': True,
-            'is_present': True,
-            'retirement': 'http://testserver/retirement/retirements/1',
-            'url': 'http://testserver/retirement/reservations/1',
-            'user': 'http://testserver/users/1',
-            'order_line': 'http://testserver/order_lines/1',
-            'cancelation_date': None,
-            'cancelation_action': None,
-            'cancelation_reason': None,
-            'refundable': True,
-            'exchangeable': True,
-        }
-
-        self.assertEqual(response_data, content)
-
-        self.assertEqual(len(mail.outbox), 0)
-
-    def test_update_partial_ordered_more_than_1(self):
-        """
-        Ensure we can't update a reservation if it has more implication than
-        predicted. (order.quantity > 1)
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        self.order_line.quantity = 2
-        self.order_line.save()
-
-        FIXED_TIME = datetime(2030, 1, 10, tzinfo=LOCAL_TIMEZONE)
-
-        data = {
-            'is_present': True,
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': 2},
-            ),
-        }
-
-        with mock.patch(
-                'django.utils.timezone.now', return_value=FIXED_TIME):
-            response = self.client.patch(
-                reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 1},
-                ),
-                data,
-                format='json',
-            )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_400_BAD_REQUEST,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-
         content = {
             'non_field_errors': [
-                "The order containing this reservation has a quantity "
-                "bigger than 1. Please contact the support team."
+                "This retreat doesn't have available places. Please "
+                'check number of seats available and reserved seats.'
             ]
         }
 
-        self.assertEqual(response_data, content)
-
-    def test_update_partial_no_place_left(self):
-        """
-        Ensure we can't update a reservation if the new retirement has no free
-        place left.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        self.retirement2.seats = 0
-        self.retirement2.save()
-
-        FIXED_TIME = datetime(2030, 1, 10, tzinfo=LOCAL_TIMEZONE)
-
-        data = {
-            'is_present': True,
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': 2},
-            ),
-        }
-
-        with mock.patch(
-                'django.utils.timezone.now', return_value=FIXED_TIME):
-            response = self.client.patch(
-                reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 1},
-                ),
-                data,
-                format='json',
-            )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_400_BAD_REQUEST,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-
-        content = {
-            'non_field_errors': [
-                "There are no places left in the requested retirement."
-            ]
-        }
-
-        self.assertEqual(response_data, content)
-
-    def test_update_partial_same_retirement(self):
-        """
-        Ensure we can't update a reservation if the new retirement has no free
-        place left.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        FIXED_TIME = datetime(2030, 1, 10, tzinfo=LOCAL_TIMEZONE)
-
-        data = {
-            'is_present': True,
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': 1},
-            ),
-        }
-
-        with mock.patch(
-                'django.utils.timezone.now', return_value=FIXED_TIME):
-            response = self.client.patch(
-                reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 1},
-                ),
-                data,
-                format='json',
-            )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_400_BAD_REQUEST,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-
-        content = {
-            'retirement': [
-                "That retirement is already assigned to this object."
-            ]
-        }
-
-        self.assertEqual(response_data, content)
-
-    def test_update_partial_without_proper_fields(self):
-        """
-        Ensure we can't partially update a reservation (other fields).
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        data = {
-            'is_active': False,
-        }
-
-        response = self.client.patch(
-            reverse(
-                'retirement:reservation-detail',
-                kwargs={'pk': 1},
-            ),
-            data,
-            format='json',
-        )
-
-        response_data = json.loads(response.content)
-
-        content = {
-            'non_field_errors': [
-                "Only is_present and retirement can be updated. To change "
-                "other fields, delete this reservation and create a new one."
-            ]
-        }
-
-        self.assertEqual(response_data, content)
+        self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_update_partial_not_in_min_day_exchange(self):
-        """
-        Ensure we can't change retirement if not respecting min_day_refund.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        FIXED_TIME = datetime(2130, 1, 10, tzinfo=LOCAL_TIMEZONE)
-
-        data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': 2},
-            ),
-        }
-
-        with mock.patch(
-                'django.utils.timezone.now', return_value=FIXED_TIME):
-            response = self.client.patch(
-                reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 1},
-                ),
-                data,
-                format='json',
-            )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_400_BAD_REQUEST,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-
-        content = {
-            'non_field_errors': [
-                "Maximum exchange date exceeded."
-            ]
-        }
-
-        self.assertEqual(response_data, content)
-
-    def test_update_partial_overlapping(self):
-        """
-        Ensure we can't change retirement if it overlaps with another
-        reservation.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        reservation_user = Reservation.objects.create(
-            user=self.user,
-            retirement=self.retirement2,
-            order_line=self.order_line,
-            is_active=True,
-        )
-
-        data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': 3},
-            ),
-        }
-
-        response = self.client.patch(
-            reverse(
-                'retirement:reservation-detail',
-                kwargs={'pk': reservation_user.id},
-            ),
-            data,
-            format='json',
-        )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_400_BAD_REQUEST,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-
-        content = {
-            'non_field_errors': [
-                "This reservation overlaps with another active "
-                "reservations for this user."
-            ]
-        }
-
-        self.assertEqual(response_data, content)
-
-    def test_update_partial_more_expensive_retirement_missing_info(self):
-        """
-        Ensure we can't change retirement if the new one is more expensive and
-        no payment_token or single_use_token is provided.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        self.retirement2.price = 999
-        self.retirement2.save()
-
-        data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': 2},
-            ),
-        }
-
-        response = self.client.patch(
-            reverse(
-                'retirement:reservation-detail',
-                kwargs={'pk': 1},
-            ),
-            data,
-            format='json',
-        )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_400_BAD_REQUEST,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-
-        content = {
-            'non_field_errors': [
-                "The new retirement is more expensive than the current one. "
-                "Provide a payment_token or single_use_token to charge the "
-                "balance."
-            ]
-        }
-
-        self.assertEqual(response_data, content)
-
-        self.retirement2.price = 199
-        self.retirement2.save()
-
-    @responses.activate
-    def test_update_partial_more_expensive_retirement(self):
-        """
-        Ensure we can change retirement if the new one is more expensive and
-        a payment_token or single_use_token is provided.
-        """
-        self.client.force_authenticate(user=self.user)
-
-        self.retirement2.price = 999
-        self.retirement2.save()
-
-        responses.add(
-            responses.POST,
-            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
-            json=SAMPLE_PAYMENT_RESPONSE,
-            status=200
-        )
-
-        responses.add(
-            responses.POST,
-            "http://example.com/cardpayments/v1/accounts/0123456789/"
-            "settlements/1/refunds",
-            json=SAMPLE_REFUND_RESPONSE,
-            status=200
-        )
-
-        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
-
-        data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': 2},
-            ),
-            'payment_token': "valid_token"
-        }
-
-        with mock.patch(
-                'django.utils.timezone.now', return_value=FIXED_TIME):
-            response = self.client.patch(
-                reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 1},
-                ),
-                data,
-                format='json',
-            )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_200_OK,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-
-        del response_data['user_details']
-        del response_data['retirement_details']
-
-        content = {
-            'id': 1,
-            'is_active': True,
-            'is_present': False,
-            'retirement': 'http://testserver/retirement/retirements/2',
-            'url': 'http://testserver/retirement/reservations/1',
-            'user': 'http://testserver/users/1',
-            'order_line': 'http://testserver/order_lines/2',
-            'cancelation_date': None,
-            'cancelation_action': None,
-            'cancelation_reason': None,
-            'refundable': True,
-            'exchangeable': True,
-        }
-
-        self.assertEqual(response_data, content)
-
-        # Validate the new order
-        new_order = Order.objects.filter(transaction_date=FIXED_TIME)[0]
-
-        self.assertTrue(new_order)
-        self.assertEqual(new_order.transaction_date, FIXED_TIME)
-        self.assertEqual(new_order.user, self.user)
-
-        # Validate the new orderline
-        self.reservation.refresh_from_db()
-        new_orderline = self.reservation.order_line
-
-        self.assertFalse(self.order_line == new_orderline)
-        self.assertEqual(new_orderline.order, new_order)
-        self.assertEqual(new_orderline.object_id, self.retirement2.id)
-        self.assertEqual(new_orderline.content_type.model, "retirement")
-        self.assertEqual(new_orderline.quantity, 1)
-
-        # Validate the canceled reservation
-        canceled_reservation = Reservation.objects.filter(is_active=False)[0]
-
-        self.assertTrue(canceled_reservation)
-        self.assertEqual(canceled_reservation.cancelation_action, 'E')
-        self.assertEqual(canceled_reservation.cancelation_reason, 'U')
-        self.assertEqual(canceled_reservation.cancelation_date, FIXED_TIME)
-        self.assertEqual(canceled_reservation.retirement, self.retirement)
-        self.assertEqual(canceled_reservation.order_line, self.order_line)
-
-        # Validate the full refund on old orderline
-        refund = Refund.objects.filter(orderline=self.order_line)[0]
-
-        self.assertTrue(refund)
-
-        refund_amount = self.retirement.price * (Decimal(TAX_RATE) + 1)
-
-        self.assertEqual(
-            refund.amount,
-            refund_amount.quantize(Decimal('.01'), rounding=ROUND_HALF_UP)
-        )
-        self.assertEqual(refund.refund_date, FIXED_TIME)
-
-        # 1 mail confirming the exchange
-        # 1 mail confirming the participation to the new retirement
-        # 1 mail confirming the new order
-        self.assertEqual(len(mail.outbox), 3)
-
-        self.retirement2.price = 199
-        self.retirement2.save()
-
-    @responses.activate
-    def test_update_partial_more_expensive_retirement_single_use_token(self):
-        """
-        Ensure we can change retirement if the new one is more expensive and
-        a payment_token or single_use_token is provided.
-        """
-        self.client.force_authenticate(user=self.user)
-
-        self.retirement2.price = 999
-        self.retirement2.save()
-
-        responses.add(
-            responses.POST,
-            "http://example.com/customervault/v1/profiles/",
-            json=SAMPLE_PROFILE_RESPONSE,
-            status=201
-        )
-
-        responses.add(
-            responses.POST,
-            "http://example.com/customervault/v1/profiles/123/cards/",
-            json=SAMPLE_CARD_RESPONSE,
-            status=201
-        )
-
-        responses.add(
-            responses.POST,
-            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
-            json=SAMPLE_PAYMENT_RESPONSE,
-            status=200
-        )
-
-        responses.add(
-            responses.POST,
-            "http://example.com/cardpayments/v1/accounts/0123456789/"
-            "settlements/1/refunds",
-            json=SAMPLE_REFUND_RESPONSE,
-            status=200
-        )
-
-        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
-
-        data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': 2},
-            ),
-            'single_use_token': "valid_token"
-        }
-
-        with mock.patch(
-                'django.utils.timezone.now', return_value=FIXED_TIME):
-            response = self.client.patch(
-                reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 1},
-                ),
-                data,
-                format='json',
-            )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_200_OK,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-
-        del response_data['user_details']
-        del response_data['retirement_details']
-
-        content = {
-            'id': 1,
-            'is_active': True,
-            'is_present': False,
-            'retirement': 'http://testserver/retirement/retirements/2',
-            'url': 'http://testserver/retirement/reservations/1',
-            'user': 'http://testserver/users/1',
-            'order_line': 'http://testserver/order_lines/2',
-            'cancelation_date': None,
-            'cancelation_action': None,
-            'cancelation_reason': None,
-            'refundable': True,
-            'exchangeable': True,
-        }
-
-        self.assertEqual(response_data, content)
-
-        # Validate the new order
-        new_order = Order.objects.filter(transaction_date=FIXED_TIME)[0]
-
-        self.assertTrue(new_order)
-        self.assertEqual(new_order.transaction_date, FIXED_TIME)
-        self.assertEqual(new_order.user, self.user)
-
-        # Validate the new orderline
-        self.reservation.refresh_from_db()
-        new_orderline = self.reservation.order_line
-
-        self.assertFalse(self.order_line == new_orderline)
-        self.assertEqual(new_orderline.order, new_order)
-        self.assertEqual(new_orderline.object_id, self.retirement2.id)
-        self.assertEqual(new_orderline.content_type.model, "retirement")
-        self.assertEqual(new_orderline.quantity, 1)
-
-        # Validate the canceled reservation
-        canceled_reservation = Reservation.objects.filter(is_active=False)[0]
-
-        self.assertTrue(canceled_reservation)
-        self.assertEqual(canceled_reservation.cancelation_action, 'E')
-        self.assertEqual(canceled_reservation.cancelation_reason, 'U')
-        self.assertEqual(canceled_reservation.cancelation_date, FIXED_TIME)
-        self.assertEqual(canceled_reservation.retirement, self.retirement)
-        self.assertEqual(canceled_reservation.order_line, self.order_line)
-
-        # Validate the full refund on old orderline
-        refund = Refund.objects.filter(orderline=self.order_line)[0]
-
-        self.assertTrue(refund)
-
-        refund_amount = self.retirement.price * (Decimal(TAX_RATE) + 1)
-
-        self.assertEqual(
-            refund.amount,
-            refund_amount.quantize(Decimal('.01'), rounding=ROUND_HALF_UP)
-        )
-        self.assertEqual(refund.refund_date, FIXED_TIME)
-
-        # 1 mail confirming the exchange
-        # 1 mail confirming the participation to the new retirement
-        # 1 mail confirming the new order
-        self.assertEqual(len(mail.outbox), 3)
-
-        self.retirement2.price = 199
-        self.retirement2.save()
-
-    @responses.activate
-    def test_update_partial_less_expensive_retirement(self):
-        """
-        Ensure we can change retirement if the new one is less expensive. A
-        refund will be issued.
-        """
-        self.client.force_authenticate(user=self.user)
-
-        self.retirement2.price = 99
-        self.retirement2.save()
-
-        responses.add(
-            responses.POST,
-            "http://example.com/cardpayments/v1/accounts/0123456789/"
-            "settlements/1/refunds",
-            json=SAMPLE_REFUND_RESPONSE,
-            status=200
-        )
-
-        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
-
-        data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': 2},
-            ),
-        }
-
-        with mock.patch(
-                'django.utils.timezone.now', return_value=FIXED_TIME):
-            response = self.client.patch(
-                reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 1},
-                ),
-                data,
-                format='json',
-            )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_200_OK,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-
-        del response_data['user_details']
-        del response_data['retirement_details']
-
-        content = {
-            'id': 1,
-            'is_active': True,
-            'is_present': False,
-            'retirement': 'http://testserver/retirement/retirements/2',
-            'url': 'http://testserver/retirement/reservations/1',
-            'user': 'http://testserver/users/1',
-            'order_line': 'http://testserver/order_lines/1',
-            'cancelation_date': None,
-            'cancelation_action': None,
-            'cancelation_reason': None,
-            'refundable': True,
-            'exchangeable': True,
-        }
-
-        self.assertEqual(response_data, content)
-
-        # Validate that a canceled reservation is created
-        canceled_reservation = Reservation.objects.filter(is_active=False)[0]
-
-        self.assertTrue(canceled_reservation)
-        self.assertEqual(canceled_reservation.cancelation_action, 'E')
-        self.assertEqual(canceled_reservation.cancelation_reason, 'U')
-        self.assertEqual(canceled_reservation.cancelation_date, FIXED_TIME)
-        self.assertEqual(canceled_reservation.retirement, self.retirement)
-        self.assertEqual(canceled_reservation.order_line, self.order_line)
-
-        # Validate that the refund object has been created
-        refund = Refund.objects.filter(
-            orderline=self.reservation.order_line
-        )[0]
-
-        self.assertTrue(refund)
-        tax_rate = Decimal(TAX_RATE + 1)
-        amount = (self.retirement.price - self.retirement2.price) * tax_rate
-        self.assertEqual(
-            refund.amount,
-            amount.quantize(Decimal('.01'), rounding=ROUND_HALF_UP)
-        )
-        self.assertEqual(refund.refund_date, FIXED_TIME)
-
-        # 1 mail confirming the exchange
-        # 1 mail confirming the participation to the new retirement
-        # 1 mail confirming the refund
-        self.assertEqual(len(mail.outbox), 3)
-
-        self.retirement2.price = 199
-        self.retirement2.save()
-
-    def test_update_partial_with_forbidden_fields(self):
-        """
-        Ensure we can't partially update a reservation (other fields).
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        data = {
-            'is_active': False,
-            'is_present': True,
-        }
-
-        response = self.client.patch(
-            reverse(
-                'retirement:reservation-detail',
-                kwargs={'pk': 1},
-            ),
-            data,
-            format='json',
-        )
-
-        response_data = json.loads(response.content)
-
-        content = {
-            'non_field_errors': [
-                "Only is_present and retirement can be updated. To change "
-                "other fields, delete this reservation and create a new one."
-            ]
-        }
-
-        self.assertEqual(response_data, content)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_update_partial_non_exchangeable(self):
-        """
-        Ensure we can't change a reservation's retirement if the reservation
-        is marked as non-exchangeable.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        self.reservation.exchangeable = False
-        self.reservation.save()
-
-        data = {
-            'retirement': reverse(
-                'retirement:retirement-detail',
-                kwargs={'pk': 2},
-            ),
-        }
-
-        response = self.client.patch(
-            reverse(
-                'retirement:reservation-detail',
-                kwargs={'pk': self.reservation.pk},
-            ),
-            data,
-            format='json',
-        )
-
-        response_data = json.loads(response.content)
-
-        content = {
-            'non_field_errors': [
-                "This reservation is not exchangeable. Please contact us "
-                "to make any changes to this reservation."
-            ]
-        }
-
-        self.assertEqual(response_data, content)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        self.reservation.exchangeable = True
-        self.reservation.save()
 
     def test_list(self):
         """
         Ensure we can list reservations as an admin.
         """
         self.client.force_authenticate(user=self.admin)
-
+        self.maxDiff = None
         response = self.client.get(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             format='json',
         )
 
         data = json.loads(response.content)
 
         del data['results'][0]['user_details']
-        del data['results'][0]['retirement_details']
+        del data['results'][0]['retreat_details']
         del data['results'][1]['user_details']
-        del data['results'][1]['retirement_details']
+        del data['results'][1]['retreat_details']
+        del data['results'][2]['user_details']
+        del data['results'][2]['retreat_details']
 
         content = {
-            'count': 2,
+            'count': 3,
             'next': None,
             'previous': None,
-            'results': [{
-                'id': 1,
-                'is_active': True,
-                'is_present': False,
-                'retirement': 'http://testserver/retirement/retirements/1',
-                'url': 'http://testserver/retirement/reservations/1',
-                'user': 'http://testserver/users/1',
-                'order_line': 'http://testserver/order_lines/1',
-                'cancelation_date': None,
-                'cancelation_action': None,
-                'cancelation_reason': None,
-                'refundable': True,
-                'exchangeable': True,
-            }, {
-                'id': 2,
-                'is_active': True,
-                'is_present': False,
-                'retirement': 'http://testserver/retirement/retirements/2',
-                'url': 'http://testserver/retirement/reservations/2',
-                'user': 'http://testserver/users/2',
-                'order_line': 'http://testserver/order_lines/1',
-                'cancelation_date': None,
-                'cancelation_action': None,
-                'cancelation_reason': None,
-                'refundable': True,
-                'exchangeable': True,
-            }]
+            'results': [
+                self.reservation_expected_payload,
+                self.reservation2_expected_payload,
+                {
+                    'id': self.reservation_admin.id,
+                    'is_active': True,
+                    'is_present': False,
+                    'retreat': 'http://testserver/retreat/retreats/' +
+                               str(self.retreat2.id),
+                    'url': 'http://testserver/retreat/reservations/' +
+                           str(self.reservation_admin.id),
+                    'user': 'http://testserver/users/' + str(self.admin.id),
+                    'order_line': 'http://testserver/order_lines/' +
+                                  str(self.order_line.id),
+                    'cancelation_date': None,
+                    'cancelation_action': None,
+                    'cancelation_reason': None,
+                    'refundable': True,
+                    'exchangeable': True,
+                }
+            ]
         }
 
         self.assertEqual(data, content)
@@ -1529,38 +619,25 @@ class ReservationTests(APITestCase):
         """
         Ensure that a user can list its reservations.
         Be wary: a user can see the list of user ID that are associated with
-                 the reservation's retirement.
+                 the reservation's retreat.
         """
         self.client.force_authenticate(user=self.user)
 
         response = self.client.get(
-            reverse('retirement:reservation-list'),
+            reverse('retreat:reservation-list'),
             format='json',
         )
 
         data = json.loads(response.content)
 
         del data['results'][0]['user_details']
-        del data['results'][0]['retirement_details']
+        del data['results'][0]['retreat_details']
 
         content = {
             'count': 1,
             'next': None,
             'previous': None,
-            'results': [{
-                'id': 1,
-                'is_active': True,
-                'is_present': False,
-                'retirement': 'http://testserver/retirement/retirements/1',
-                'url': 'http://testserver/retirement/reservations/1',
-                'user': 'http://testserver/users/1',
-                'order_line': 'http://testserver/order_lines/1',
-                'cancelation_date': None,
-                'cancelation_action': None,
-                'cancelation_reason': None,
-                'refundable': True,
-                'exchangeable': True,
-            }]
+            'results': [self.reservation_expected_payload]
         }
 
         self.assertEqual(data, content)
@@ -1575,32 +652,17 @@ class ReservationTests(APITestCase):
 
         response = self.client.get(
             reverse(
-                'retirement:reservation-detail',
-                kwargs={'pk': 1},
+                'retreat:reservation-detail',
+                kwargs={'pk': self.reservation.id},
             ),
         )
 
         response_data = json.loads(response.content)
 
         del response_data['user_details']
-        del response_data['retirement_details']
+        del response_data['retreat_details']
 
-        content = {
-            'id': 1,
-            'is_active': True,
-            'is_present': False,
-            'retirement': 'http://testserver/retirement/retirements/1',
-            'url': 'http://testserver/retirement/reservations/1',
-            'user': 'http://testserver/users/1',
-            'order_line': 'http://testserver/order_lines/1',
-            'cancelation_date': None,
-            'cancelation_action': None,
-            'cancelation_reason': None,
-            'refundable': True,
-            'exchangeable': True,
-        }
-
-        self.assertEqual(response_data, content)
+        self.assertEqual(response_data, self.reservation_expected_payload)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1612,8 +674,8 @@ class ReservationTests(APITestCase):
 
         response = self.client.get(
             reverse(
-                'retirement:reservation-detail',
-                kwargs={'pk': 2},
+                'retreat:reservation-detail',
+                kwargs={'pk': self.reservation_admin.id},
             ),
         )
 
@@ -1631,7 +693,7 @@ class ReservationTests(APITestCase):
 
         response = self.client.get(
             reverse(
-                'retirement:retirement-detail',
+                'retreat:retreat-detail',
                 kwargs={'pk': 999},
             ),
         )
@@ -1645,7 +707,7 @@ class ReservationTests(APITestCase):
     @responses.activate
     def test_delete(self):
         """
-        Ensure that a user can cancel one of his retirement reservations.
+        Ensure that a user can cancel one of his retreat reservations.
         By canceling 'min_day_refund' days or more before the event, the user
          will be refunded 'refund_rate'% of the price paid.
         The user will receive an email confirming the refund or inviting the
@@ -1670,8 +732,8 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.delete(
                 reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 1},
+                    'retreat:reservation-detail',
+                    kwargs={'pk': self.reservation.id},
                 ),
             )
 
@@ -1696,7 +758,7 @@ class ReservationTests(APITestCase):
 
     def test_delete_late(self):
         """
-        Ensure that a user can cancel one of his retirement reservations.
+        Ensure that a user can cancel one of his retreat reservations.
         This cancelation does not respect 'min_day_refund', thus the user
          will not be refunded.
         The user won't receive any email.
@@ -1709,8 +771,8 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.delete(
                 reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 1},
+                    'retreat:reservation-detail',
+                    kwargs={'pk': self.reservation.id},
                 ),
             )
 
@@ -1735,7 +797,7 @@ class ReservationTests(APITestCase):
 
     def test_delete_non_refundable(self):
         """
-        Ensure that a user can cancel one of his retirement reservations.
+        Ensure that a user can cancel one of his retreat reservations.
         This cancelation does not respect 'refundable', thus the user
          will not be refunded.
         The user won't receive any email.
@@ -1751,7 +813,7 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.delete(
                 reverse(
-                    'retirement:reservation-detail',
+                    'retreat:reservation-detail',
                     kwargs={'pk': self.reservation.pk},
                 ),
             )
@@ -1778,7 +840,103 @@ class ReservationTests(APITestCase):
         self.reservation.refundable = True
         self.reservation.save()
 
+    def test_delete_retirement_refundable_created_by_administrator(self):
+        """
+        Ensure that a user can cancel one of his retreat reservations
+        created by an administrator.
+        Since the user didn't bought this reservation via the platform
+        via a manual administratior action he will not be automatically
+        refund.
+        The user won't receive any email.
+
+        Test when refundable is True, but we will not refund
+        """
+        self.client.force_authenticate(user=self.user2)
+
+        FIXED_TIME = datetime(2000, 1, 10, tzinfo=LOCAL_TIMEZONE)
+
+        self.assertTrue(self.reservation2.refundable)
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'retreat:reservation-detail',
+                    kwargs={'pk': self.reservation2.pk},
+                ),
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content
+        )
+
+        self.reservation2.refresh_from_db()
+
+        self.assertFalse(self.reservation2.is_active)
+        self.assertEqual(self.reservation2.cancelation_reason, 'U')
+        self.assertEqual(self.reservation2.cancelation_action, 'N')
+        self.assertEqual(self.reservation2.cancelation_date, FIXED_TIME)
+
+        self.reservation2.is_active = True
+        self.reservation2.cancelation_date = None
+        self.reservation2.cancelation_reason = None
+
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_delete_retirement_not_refundable_created_by_administrator(self):
+        """
+        Ensure that a user can cancel one of his retreat reservations
+        created by an administrator.
+        Since the user didn't bought this reservation via the platform
+        via a manual administratior action he will not be automatically
+        refund.
+        The user won't receive any email.
+
+        Test when refundable is False, but we will not refund
+        """
+        self.client.force_authenticate(user=self.user2)
+
+        FIXED_TIME = datetime(2000, 1, 10, tzinfo=LOCAL_TIMEZONE)
+
+        self.reservation2.refundable = False
+        self.reservation2.save()
+
+        self.reservation2.refresh_from_db()
+
+        self.assertFalse(self.reservation2.refundable)
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'retreat:reservation-detail',
+                    kwargs={'pk': self.reservation2.pk},
+                ),
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content
+        )
+
+        self.reservation2.refresh_from_db()
+
+        self.assertFalse(self.reservation2.is_active)
+        self.assertEqual(self.reservation2.cancelation_reason, 'U')
+        self.assertEqual(self.reservation2.cancelation_action, 'N')
+        self.assertEqual(self.reservation2.cancelation_date, FIXED_TIME)
+
+        self.reservation2.is_active = True
+        self.reservation2.cancelation_date = None
+        self.reservation2.cancelation_reason = None
+
+        self.assertEqual(len(mail.outbox), 0)
+
     @responses.activate
+    @override_settings(ADMINS=[("You", "you@example.com")])
     def test_delete_scheduler_error(self):
         """
         Ensure emails were sent to admins if the API fails to schedule
@@ -1786,8 +944,8 @@ class ReservationTests(APITestCase):
         """
         self.client.force_authenticate(user=self.admin)
 
-        self.retirement2.seats = self.retirement2.total_reservations
-        self.retirement2.save()
+        self.retreat2.seats = self.retreat2.total_reservations
+        self.retreat2.save()
 
         responses.add(
             responses.POST,
@@ -1809,8 +967,8 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.delete(
                 reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 2},
+                    'retreat:reservation-detail',
+                    kwargs={'pk': self.reservation_admin.id},
                 ),
             )
 
@@ -1833,10 +991,10 @@ class ReservationTests(APITestCase):
 
         # 1 mail for the refund
         # X mails to every admin
-        self.assertTrue(len(mail.outbox) > 1, "Invalid sent mail count")
+        self.assertGreater(len(mail.outbox), 1, "Invalid sent mail count")
 
-        self.retirement2.seats = 400
-        self.retirement2.save()
+        self.retreat2.seats = 400
+        self.retreat2.save()
 
     def test_delete_not_owner(self):
         """
@@ -1846,7 +1004,7 @@ class ReservationTests(APITestCase):
 
         response = self.client.delete(
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 kwargs={'pk': self.reservation_admin.id},
             ),
         )
@@ -1865,7 +1023,7 @@ class ReservationTests(APITestCase):
 
         response = self.client.delete(
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 kwargs={'pk': self.reservation_admin.id},
             ),
         )
@@ -1897,21 +1055,10 @@ class ReservationTests(APITestCase):
             status=200
         )
 
-        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
-
-        with mock.patch(
-                'django.utils.timezone.now', return_value=FIXED_TIME):
-            response = self.client.delete(
-                reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 1},
-                ),
-            )
-
         response = self.client.delete(
             reverse(
-                'retirement:reservation-detail',
-                kwargs={'pk': 1},
+                'retreat:reservation-detail',
+                kwargs={'pk': self.reservation.id},
             ),
         )
 
@@ -1926,7 +1073,6 @@ class ReservationTests(APITestCase):
         self.assertFalse(self.reservation.is_active)
         self.assertEqual(self.reservation.cancelation_reason, 'U')
         self.assertEqual(self.reservation.cancelation_action, 'R')
-        self.assertEqual(self.reservation.cancelation_date, FIXED_TIME)
 
         self.reservation.is_active = True
         self.reservation.cancelation_date = None
@@ -1956,8 +1102,8 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.delete(
                 reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 1},
+                    'retreat:reservation-detail',
+                    kwargs={'pk': self.reservation.id},
                 ),
             )
 
@@ -1968,8 +1114,9 @@ class ReservationTests(APITestCase):
         )
 
         content = {
-            'non_field_errors': "The order has not been charged yet. Try "
-                                "again later."
+            'non_field_errors': [
+                "The order has not been charged yet. Try again later."
+            ]
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -1990,7 +1137,7 @@ class ReservationTests(APITestCase):
     @responses.activate
     def test_delete_refund_error(self):
         """
-        Ensure that a user can cancel one of his retirement reservations.
+        Ensure that a user can cancel one of his retreat reservations.
         By canceling 'min_day_refund' days or more before the event, the user
          will be refunded 'refund_rate'% of the price paid.
         The user will receive an email confirming the refund or inviting the
@@ -2015,8 +1162,8 @@ class ReservationTests(APITestCase):
                 'django.utils.timezone.now', return_value=FIXED_TIME):
             response = self.client.delete(
                 reverse(
-                    'retirement:reservation-detail',
-                    kwargs={'pk': 1},
+                    'retreat:reservation-detail',
+                    kwargs={'pk': self.reservation.id},
                 ),
             )
 

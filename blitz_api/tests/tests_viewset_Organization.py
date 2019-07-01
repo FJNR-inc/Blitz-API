@@ -41,13 +41,15 @@ class OrganizationTests(APITestCase):
 
         content = {
             'domains': [],
-            'id': 2,
             'name': 'fake organization',
-            'url': 'http://testserver/organizations/2'
         }
 
+        response_data = remove_translation_fields(json.loads(response.content))
+        del response_data['url']
+        del response_data['id']
+
         self.assertEqual(
-            remove_translation_fields(json.loads(response.content)),
+            response_data,
             content
         )
 
@@ -94,9 +96,9 @@ class OrganizationTests(APITestCase):
             'previous': None,
             'results': [{
                 'domains': [],
-                'id': 1,
+                'id': self.org.id,
                 'name': 'random_organization',
-                'url': 'http://testserver/organizations/1'
+                'url': 'http://testserver/organizations/' + str(self.org.id)
             }]
         }
 

@@ -49,7 +49,7 @@ class OrderTests(APITestCase):
             order=self.order,
             quantity=999,
             content_type=self.package_type,
-            object_id=1,
+            object_id=self.package.id,
             coupon=self.coupon,
         )
 

@@ -12,8 +12,8 @@ from store.models import Membership, OrderLine
 User = get_user_model()
 
 
-class Retirement(Address, SafeDeleteModel):
-    """Represents a retirement physical place."""
+class Retreat(Address, SafeDeleteModel):
+    """Represents a retreat physical place."""
 
     ACTIVITY_LANGUAGE = (
         ('EN', _("English")),
@@ -22,8 +22,8 @@ class Retirement(Address, SafeDeleteModel):
     )
 
     class Meta:
-        verbose_name = _("Retirement")
-        verbose_name_plural = _("Retirements")
+        verbose_name = _("Retreat")
+        verbose_name_plural = _("Retreats")
 
     name = models.CharField(
         verbose_name=_("Name"),
@@ -37,6 +37,10 @@ class Retirement(Address, SafeDeleteModel):
 
     seats = models.IntegerField(verbose_name=_("Seats"), )
 
+    # number of seats reserved for people in queue
+    # when someone cancels their reservation and there is a queue,
+    # reserved_seat is incremented by 1. If reserved_seats > 0, only
+    # people with a waitQueueNotification can order a reservation
     reserved_seats = models.IntegerField(
         verbose_name=_("Reserved seats"),
         default=0,
@@ -87,14 +91,14 @@ class Retirement(Address, SafeDeleteModel):
         through='Reservation',
         blank=True,
         verbose_name=_("User"),
-        related_name='retirements',
+        related_name='retreats',
     )
 
     exclusive_memberships = models.ManyToManyField(
         Membership,
         blank=True,
         verbose_name=_("Memberships"),
-        related_name='retirements',
+        related_name='retreats',
     )
 
     is_active = models.BooleanField(verbose_name=_("Active"), )
@@ -129,23 +133,32 @@ class Retirement(Address, SafeDeleteModel):
         verbose_name=_("Review URL"),
     )
 
+    has_shared_rooms = models.BooleanField()
+
     # History is registered in translation.py
     # history = HistoricalRecords()
 
     @property
     def total_reservations(self):
         reservations = Reservation.objects.filter(
-            retirement=self,
+            retreat=self,
             is_active=True,
         ).count()
         return reservations
+
+    @property
+    def places_remaining(self):
+        seats = self.seats
+        reserved_seats = self.reserved_seats
+        reservations = self.reservations.filter(is_active=True).count()
+        return seats - reservations - reserved_seats
 
     def __str__(self):
         return self.name
 
 
 class Picture(models.Model):
-    """Represents pictures representing a retirement place"""
+    """Represents pictures representing a retreat place"""
 
     class Meta:
         verbose_name = _("Picture")
@@ -156,16 +169,16 @@ class Picture(models.Model):
         max_length=253,
     )
 
-    retirement = models.ForeignKey(
-        Retirement,
+    retreat = models.ForeignKey(
+        Retreat,
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
-        verbose_name=_("Retirement"),
+        verbose_name=_("Retreat"),
         related_name='pictures',
     )
 
-    picture = models.ImageField(_('picture'), upload_to='retirements')
+    picture = models.ImageField(_('picture'), upload_to='retreats')
 
     # Needed to display in the admin panel
     def picture_tag(self):
@@ -183,12 +196,12 @@ class Picture(models.Model):
 
 
 class Reservation(SafeDeleteModel):
-    """Represents a user registration to a Retirement"""
+    """Represents a user registration to a Retreat"""
 
     CANCELATION_REASON = (
         ('U', _("User canceled")),
-        ('RD', _("Retirement deleted")),
-        ('RM', _("Retirement modified")),
+        ('RD', _("Retreat deleted")),
+        ('RM', _("Retreat modified")),
     )
 
     CANCELATION_ACTION = (
@@ -201,12 +214,12 @@ class Reservation(SafeDeleteModel):
         User,
         on_delete=models.CASCADE,
         verbose_name=_("User"),
-        related_name='retirement_reservations',
+        related_name='retreat_reservations',
     )
-    retirement = models.ForeignKey(
-        Retirement,
+    retreat = models.ForeignKey(
+        Retreat,
         on_delete=models.CASCADE,
-        verbose_name=_("Retirement"),
+        verbose_name=_("Retreat"),
         related_name='reservations',
     )
     is_active = models.BooleanField(verbose_name=_("Active"))
@@ -237,7 +250,7 @@ class Reservation(SafeDeleteModel):
         OrderLine,
         on_delete=models.CASCADE,
         verbose_name=_("Order line"),
-        related_name='retirement_reservations',
+        related_name='retreat_reservations',
         null=True,
     )
     refundable = models.BooleanField(
@@ -260,14 +273,14 @@ class WaitQueue(models.Model):
     Represents element of a FIFO waiting queue to which users register
     manually.
     When the 'notify' action is called, first users of the queue of every
-    retirement will be notified by email if there is a place left in the
-    retirement.
+    retreat will be notified by email if there is a place left in the
+    retreat.
     """
 
     class Meta:
         verbose_name = _("Waiting queue")
         verbose_name_plural = _("Waiting queues")
-        unique_together = ('user', 'retirement')
+        unique_together = ('user', 'retreat')
 
     user = models.ForeignKey(
         User,
@@ -276,10 +289,10 @@ class WaitQueue(models.Model):
         related_name='wait_queues',
     )
 
-    retirement = models.ForeignKey(
-        Retirement,
+    retreat = models.ForeignKey(
+        Retreat,
         on_delete=models.CASCADE,
-        verbose_name=_("Retirement"),
+        verbose_name=_("Retreat"),
         related_name='wait_queue',
     )
 
@@ -288,12 +301,12 @@ class WaitQueue(models.Model):
     history = HistoricalRecords()
 
     def __str__(self):
-        return ', '.join([str(self.retirement), str(self.user)])
+        return ', '.join([str(self.retreat), str(self.user)])
 
 
 class WaitQueueNotification(models.Model):
     """
-    Represents a notification instance for the retirement wait queues.
+    Represents a notification instance for the retreat wait queues.
     Each time a user is notified, we create an instance of this object as a
     journal. Sent notifications can then be listed by admins.
     """
@@ -302,10 +315,10 @@ class WaitQueueNotification(models.Model):
         verbose_name = _("Wait queue notification")
         verbose_name_plural = _("Wait queue notification")
 
-    retirement = models.ForeignKey(
-        Retirement,
+    retreat = models.ForeignKey(
+        Retreat,
         on_delete=models.CASCADE,
-        verbose_name=_("Retirement"),
+        verbose_name=_("Retreat"),
         related_name='wait_queue_notifications',
     )
 
@@ -322,5 +335,5 @@ class WaitQueueNotification(models.Model):
 
     def __str__(self):
         return ', '.join(
-            [str(self.retirement), str(self.user)]
+            [str(self.retreat), str(self.user)]
         )

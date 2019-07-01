@@ -1,9 +1,13 @@
+import base64
+import json
+
 import pytz
 
 from datetime import datetime
 
 from django.contrib.auth import get_user_model, password_validation
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.utils import timezone
 from django.http import Http404, HttpResponse
 from django.core.exceptions import ValidationError
@@ -11,19 +15,20 @@ from django.utils.translation import ugettext_lazy as _
 
 from rest_framework import status, viewsets, mixins, filters
 from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 
+from blitz_api.mixins import ExportMixin
 from .models import (
     TemporaryToken, ActionToken, Domain, Organization, AcademicLevel,
     AcademicField,
-)
+    ExportMedia)
 from .resources import (AcademicFieldResource, AcademicLevelResource,
                         OrganizationResource, UserResource)
-from .services import ExportPagination
 from . import serializers, permissions, services
 
 User = get_user_model()
@@ -31,7 +36,7 @@ User = get_user_model()
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given user.
@@ -49,48 +54,30 @@ class UserViewSet(viewsets.ModelViewSet):
     Sets the user inactive.
     """
     queryset = User.objects.all()
-    filter_fields = {
-        'email': '__all__',
-        'phone': '__all__',
-        'other_phone': '__all__',
-        'academic_field': '__all__',
-        'university': '__all__',
-        'academic_level': '__all__',
-        'membership': '__all__',
-        'last_login': '__all__',
-        'first_name': '__all__',
-        'last_name': '__all__',
-        'is_active': '__all__',
-        'date_joined': '__all__',
-        'birthdate': '__all__',
-        'gender': '__all__',
-        'membership_end': '__all__',
-        'tickets': '__all__',
-        'groups': '__all__',
-        'user_permissions': '__all__'
+    filterset_fields = {
+        'email',
+        'phone',
+        'other_phone',
+        'academic_field',
+        'university',
+        'academic_level',
+        'membership',
+        'last_login',
+        'first_name',
+        'last_name',
+        'is_active',
+        'date_joined',
+        'birthdate',
+        'gender',
+        'membership_end',
+        'tickets',
+        'groups',
+        'user_permissions',
     }
     search_fields = ('first_name', 'last_name', 'email')
     ordering = ('email',)
 
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = UserResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="User-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
+    export_resource = UserResource()
 
     def get_serializer_class(self):
         if (self.action == 'update') | (self.action == 'partial_update'):
@@ -460,7 +447,7 @@ class DomainViewSet(viewsets.ModelViewSet):
     ordering = ('name',)
 
 
-class OrganizationViewSet(viewsets.ModelViewSet):
+class OrganizationViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given organization.
@@ -476,25 +463,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrReadOnly,)
     ordering = ('name',)
 
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = OrganizationResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="Organization-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
+    export_resource = OrganizationResource()
 
 
 class ObtainTemporaryAuthToken(ObtainAuthToken):
@@ -550,7 +519,7 @@ class TemporaryTokenDestroy(viewsets.GenericViewSet, mixins.DestroyModelMixin):
         return tokens
 
 
-class AcademicLevelViewSet(viewsets.ModelViewSet):
+class AcademicLevelViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given academic level.
@@ -566,28 +535,10 @@ class AcademicLevelViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrReadOnly,)
     ordering = ('name',)
 
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = AcademicLevelResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="AcademicLevel-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
+    export_resource = AcademicLevelResource()
 
 
-class AcademicFieldViewSet(viewsets.ModelViewSet):
+class AcademicFieldViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given academic field.
@@ -603,22 +554,11 @@ class AcademicFieldViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrReadOnly,)
     ordering = ('name',)
 
-    @action(detail=False, permission_classes=[IsAdminUser])
-    def export(self, request):
-        # Use custom paginator (by page, min/max 1000 objects/page)
-        self.pagination_class = ExportPagination
-        # Order queryset by ascending id, thus by descending age too
-        queryset = self.get_queryset().order_by('pk')
-        # Paginate queryset using custom paginator
-        page = self.paginate_queryset(queryset)
-        # Build dataset using paginated queryset
-        dataset = AcademicFieldResource().export(page)
-        # Build response object
-        response = self.get_paginated_response(dataset.xls)
-        # Add filename to response
-        response['Content-Disposition'] = ''.join([
-            'attachment; filename="AcademicField-',
-            LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S"),
-            '".xls'
-        ])
-        return response
+    export_resource = AcademicFieldResource()
+
+
+class ExportMediaViewSet(viewsets.ModelViewSet):
+    parser_classes = (MultiPartParser,)
+    serializer_class = serializers.ExportMediaSerializer
+    queryset = ExportMedia.objects.all()
+    permission_classes = (IsAdminUser,)

@@ -21,7 +21,8 @@ from rest_framework.validators import UniqueValidator
 
 from blitz_api.serializers import UserSerializer
 from blitz_api.services import (check_if_translated_field,
-                                remove_translation_fields)
+                                remove_translation_fields,
+                                getMessageTranslate)
 from store.exceptions import PaymentAPIError
 from store.models import Order, OrderLine, PaymentProfile, Refund
 from store.services import (charge_payment,
@@ -33,18 +34,18 @@ from store.services import (charge_payment,
                             refund_amount, )
 
 from .fields import TimezoneField
-from .models import (Picture, Reservation, Retirement, WaitQueue,
+from .models import (Picture, Reservation, Retreat, WaitQueue,
                      WaitQueueNotification, )
-from .services import refund_retirement
+from .services import refund_retreat
 
 User = get_user_model()
 
 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
-class RetirementSerializer(serializers.HyperlinkedModelSerializer):
+class RetreatSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
-    places_remaining = serializers.SerializerMethodField()
+    places_remaining = serializers.ReadOnlyField()
     total_reservations = serializers.ReadOnlyField()
     reservations = serializers.SerializerMethodField()
     reservations_canceled = serializers.SerializerMethodField()
@@ -54,23 +55,26 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
     )
     name = serializers.CharField(
         required=False,
-        validators=[UniqueValidator(queryset=Retirement.objects.all())],
+        validators=[UniqueValidator(queryset=Retreat.objects.all())],
     )
     name_fr = serializers.CharField(
         required=False,
         allow_null=True,
-        validators=[UniqueValidator(queryset=Retirement.objects.all())],
+        validators=[UniqueValidator(queryset=Retreat.objects.all())],
     )
     name_en = serializers.CharField(
         required=False,
         allow_null=True,
-        validators=[UniqueValidator(queryset=Retirement.objects.all())],
+        validators=[UniqueValidator(queryset=Retreat.objects.all())],
     )
     details = serializers.CharField(required=False, )
     country = serializers.CharField(required=False, )
     state_province = serializers.CharField(required=False, )
     city = serializers.CharField(required=False, )
     address_line1 = serializers.CharField(required=False, )
+    has_shared_rooms = serializers.BooleanField(required=False, )
+    is_active = serializers.BooleanField(required=False, )
+    accessibility = serializers.BooleanField(required=False, )
 
     # June 7th 2018
     # The SlugRelatedField serializer can't get a field's attributes.
@@ -95,14 +99,14 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
     def get_reservations(self, obj):
         reservation_ids = Reservation.objects.filter(
             is_active=True,
-            retirement=obj,
+            retreat=obj,
         ).values_list(
             'id',
             flat=True,
         )
         return [
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 args=[id],
                 request=self.context['request'],
             ) for id in reservation_ids
@@ -111,39 +115,33 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
     def get_reservations_canceled(self, obj):
         reservation_ids = Reservation.objects.filter(
             is_active=False,
-            retirement=obj,
+            retreat=obj,
         ).values_list(
             'id',
             flat=True,
         )
         return [
             reverse(
-                'retirement:reservation-detail',
+                'retreat:reservation-detail',
                 args=[id],
                 request=self.context['request'],
             ) for id in reservation_ids
         ]
 
-    def get_places_remaining(self, obj):
-        seats = obj.seats
-        reserved_seats = obj.reserved_seats
-        reservations = obj.reservations.filter(is_active=True).count()
-        return seats - reservations - reserved_seats
-
     def validate(self, attr):
         err = {}
         if not check_if_translated_field('name', attr):
-            err['name'] = _("This field is required.")
+            err.update(getMessageTranslate('name', attr, True))
         if not check_if_translated_field('details', attr):
-            err['details'] = _("This field is required.")
+            err.update(getMessageTranslate('details', attr, True))
         if not check_if_translated_field('country', attr):
-            err['country'] = _("This field is required.")
+            err.update(getMessageTranslate('country', attr, True))
         if not check_if_translated_field('state_province', attr):
-            err['state_province'] = _("This field is required.")
+            err.update(getMessageTranslate('state_province', attr, True))
         if not check_if_translated_field('city', attr):
-            err['city'] = _("This field is required.")
+            err.update(getMessageTranslate('city', attr, True))
         if not check_if_translated_field('address_line1', attr):
-            err['address_line1'] = _("This field is required.")
+            err.update(getMessageTranslate('address_line1', attr, True))
         if not check_if_translated_field('timezone', attr):
             err['timezone'] = _("This field is required.")
         if not check_if_translated_field('postal_code', attr):
@@ -166,16 +164,18 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
             err['is_active'] = _("This field is required.")
         if not check_if_translated_field('accessibility', attr):
             err['accessibility'] = _("This field is required.")
+        if not check_if_translated_field('has_shared_rooms', attr):
+            err['has_shared_rooms'] = _("This field is required.")
         if err:
             raise serializers.ValidationError(err)
-        return super(RetirementSerializer, self).validate(attr)
+        return super(RetreatSerializer, self).validate(attr)
 
     def create(self, validated_data):
         """
-        Schedule retirement reminder and post-event emails.
+        Schedule retreat reminder and post-event emails.
         UPDATE: Commenting out reminder email since they are no longer desired.
         """
-        retirement = super().create(validated_data)
+        retreat = super().create(validated_data)
 
         scheduler_url = '{0}'.format(
             settings.EXTERNAL_SCHEDULER['URL'],
@@ -192,13 +192,13 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
             "url": '{0}{1}'.format(
                 self.context['request'].build_absolute_uri(
                     reverse(
-                        'retirement:retirement-detail',
-                        args=(retirement.id, )
+                        'retreat:retreat-detail',
+                        args=(retreat.id, )
                     )
                 ),
                 "/remind_users"
             ),
-            "description": "Retirement 7-days reminder notification"
+            "description": "Retreat 7-days reminder notification"
         }
 
         try:
@@ -224,9 +224,9 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
                 requests.exceptions.ConnectionError) as err:
             mail_admins(
                 "Thèsez-vous: external scheduler error",
-                "{0}\nRetirement:{1}\nException:\n{2}\n".format(
+                "{0}\nRetreat:{1}\nException:\n{2}\n".format(
                     "Pre-event email task scheduling failed!",
-                    retirement.__dict__,
+                    retreat.__dict__,
                     traceback.format_exc(),
                 )
             )
@@ -243,13 +243,13 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
             "url": '{0}{1}'.format(
                 self.context['request'].build_absolute_uri(
                     reverse(
-                        'retirement:retirement-detail',
-                        args=(retirement.id, )
+                        'retreat:retreat-detail',
+                        args=(retreat.id, )
                     )
                 ),
                 "/recap"
             ),
-            "description": "Retirement post-event notification"
+            "description": "Retreat post-event notification"
         }
 
         try:
@@ -276,35 +276,35 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
                 requests.exceptions.ConnectionError) as err:
             mail_admins(
                 "Thèsez-vous: external scheduler error",
-                "{0}\nRetirement:{1}\nException:\n{2}\n".format(
+                "{0}\nRetreat:{1}\nException:\n{2}\n".format(
                     "Post-event email task scheduling failed!",
-                    retirement.__dict__,
+                    retreat.__dict__,
                     traceback.format_exc(),
                 )
             )
 
-        return retirement
+        return retreat
 
     def to_representation(self, instance):
         is_staff = self.context['request'].user.is_staff
         if self.context['view'].action == 'retrieve' and is_staff:
             self.fields['users'] = UserSerializer(many=True)
-        data = super(RetirementSerializer, self).to_representation(instance)
+        data = super(RetreatSerializer, self).to_representation(instance)
         if is_staff:
             return data
         return remove_translation_fields(data)
 
     class Meta:
-        model = Retirement
+        model = Retreat
         exclude = ('deleted', )
         extra_kwargs = {
             'details': {
-                'help_text': _("Description of the retirement.")
+                'help_text': _("Description of the retreat.")
             },
             'name': {
-                'help_text': _("Name of the retirement."),
+                'help_text': _("Name of the retreat."),
                 'validators':
-                [UniqueValidator(queryset=Retirement.objects.all())],
+                [UniqueValidator(queryset=Retreat.objects.all())],
             },
             'seats': {
                 'required': False,
@@ -335,7 +335,7 @@ class RetirementSerializer(serializers.HyperlinkedModelSerializer):
                 'required': False,
             },
             'url': {
-                'view_name': 'retirement:retirement-detail',
+                'view_name': 'retreat:retreat-detail',
             },
         }
 
@@ -353,12 +353,12 @@ class PictureSerializer(serializers.HyperlinkedModelSerializer):
         model = Picture
         fields = '__all__'
         extra_kwargs = {
-            'retirement': {
-                'help_text': _("Retirement represented by the picture."),
-                'view_name': 'retirement:retirement-detail',
+            'retreat': {
+                'help_text': _("Retreat represented by the picture."),
+                'view_name': 'retreat:retreat-detail',
             },
             'url': {
-                'view_name': 'retirement:picture-detail',
+                'view_name': 'retreat:picture-detail',
             },
             'name': {
                 'help_text': _("Name of the picture."),
@@ -374,9 +374,9 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
     # Custom names are needed to overcome an issue with DRF:
     # https://github.com/encode/django-rest-framework/issues/2719
     # I
-    retirement_details = RetirementSerializer(
+    retreat_details = RetreatSerializer(
         read_only=True,
-        source='retirement',
+        source='retreat',
     )
     user_details = UserSerializer(
         read_only=True,
@@ -405,16 +405,16 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         # because we need to stop validation if improper fields are passed in
         # a partial update.
         if action == 'partial_update':
-            # Only allow modification of is_present & retirement fields.
+            # Only allow modification of is_present & retreat fields.
             is_invalid = validated_data.copy()
             is_invalid.pop('is_present', None)
-            is_invalid.pop('retirement', None)
+            is_invalid.pop('retreat', None)
             is_invalid.pop('payment_token', None)
             is_invalid.pop('single_use_token', None)
             if is_invalid:
                 raise serializers.ValidationError({
                     'non_field_errors': [
-                        _("Only is_present and retirement can be updated. To "
+                        _("Only is_present and retreat can be updated. To "
                           "change other fields, delete this reservation and "
                           "create a new one.")
                     ]
@@ -423,18 +423,21 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
 
         # Generate a list of tuples containing start/end time of
         # existing reservations.
-        start = validated_data['retirement'].start_time
-        end = validated_data['retirement'].end_time
+        start = validated_data['retreat'].start_time
+        end = validated_data['retreat'].end_time
         active_reservations = Reservation.objects.filter(
             user=validated_data['user'],
             is_active=True,
-        ).exclude(**validated_data).values_list(
-            'retirement__start_time',
-            'retirement__end_time',
         )
 
-        for retirements in active_reservations:
-            if max(retirements[0], start) < min(retirements[1], end):
+        active_reservations = active_reservations.values_list(
+            'retreat__start_time',
+            'retreat__end_time',
+
+        )
+
+        for retreats in active_reservations:
+            if max(retreats[0], start) < min(retreats[1], end):
                 raise serializers.ValidationError({
                     'non_field_errors': [_(
                         "This reservation overlaps with another active "
@@ -445,17 +448,25 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
 
     def create(self, validated_data):
         """
-        Allows an admin to create retirements reservations for another user.
+        Allows an admin to create retreats reservations for another user.
         """
         validated_data['refundable'] = False
         validated_data['exchangeable'] = False
         validated_data['is_active'] = True
 
+        if validated_data['retreat'].places_remaining <= 0:
+            raise serializers.ValidationError({
+                'non_field_errors': [_(
+                    "This retreat doesn't have available places. Please "
+                    "check number of seats available and reserved seats."
+                )]
+            })
+
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
 
-        if not instance.exchangeable and validated_data.get('retirement'):
+        if not instance.exchangeable and validated_data.get('retreat'):
             raise serializers.ValidationError({
                 'non_field_errors': [_(
                     "This reservation is not exchangeable. Please contact us "
@@ -471,7 +482,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         amount = 0
         profile = PaymentProfile.objects.filter(owner=user).first()
         instance_pk = instance.pk
-        current_retirement = instance.retirement
+        current_retreat = instance.retreat
         coupon = instance.order_line.coupon
         coupon_value = instance.order_line.coupon_real_value
         order_line = instance.order_line
@@ -489,7 +500,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
 
         with transaction.atomic():
             # NOTE: This copy logic should probably be inside the "if" below
-            #       that checks if a retirement exchange is done.
+            #       that checks if a retreat exchange is done.
             # Create a copy of the reservation. This copy keeps track of
             # the exchange.
             canceled_reservation = instance
@@ -510,47 +521,47 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 validated_data,
             )
 
-            # Update retirement seats
+            # Update retreat seats
             free_seats = (
-                current_retirement.seats -
-                current_retirement.total_reservations
+                current_retreat.seats -
+                current_retreat.total_reservations
             )
-            if (current_retirement.reserved_seats or free_seats == 1):
-                current_retirement.reserved_seats += 1
-                current_retirement.save()
+            if (current_retreat.reserved_seats or free_seats == 1):
+                current_retreat.reserved_seats += 1
+                current_retreat.save()
 
-            if validated_data.get('retirement'):
+            if validated_data.get('retreat'):
                 # Validate if user has the right to reserve a seat in the new
-                # retirement
-                new_retirement = instance.retirement
-                old_retirement = current_retirement
+                # retreat
+                new_retreat = instance.retreat
+                old_retreat = current_retreat
 
-                user_waiting = new_retirement.wait_queue.filter(user=user)
+                user_waiting = new_retreat.wait_queue.filter(user=user)
                 free_seats = (
-                    new_retirement.seats -
-                    new_retirement.total_reservations -
-                    new_retirement.reserved_seats +
+                    new_retreat.seats -
+                    new_retreat.total_reservations -
+                    new_retreat.reserved_seats +
                     1
                 )
                 reserved_for_user = (
-                    new_retirement.reserved_seats and
+                    new_retreat.reserved_seats and
                     WaitQueueNotification.objects.filter(
                         user=user,
-                        retirement=new_retirement
+                        retreat=new_retreat
                     )
                 )
                 if not (free_seats > 0 or reserved_for_user):
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
                             "There are no places left in the requested "
-                            "retirement."
+                            "retreat."
                         )]
                     })
                 if user_waiting:
                     user_waiting.delete()
 
             if (self.context['view'].action == 'partial_update' and
-                    validated_data.get('retirement')):
+                    validated_data.get('retreat')):
                 if order_line.quantity > 1:
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
@@ -559,47 +570,47 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                             "support team."
                         )]
                     })
-                days_remaining = current_retirement.start_time - timezone.now()
+                days_remaining = current_retreat.start_time - timezone.now()
                 days_exchange = timedelta(
-                    days=current_retirement.min_day_exchange
+                    days=current_retreat.min_day_exchange
                 )
                 respects_minimum_days = (days_remaining >= days_exchange)
-                new_retirement_price = validated_data['retirement'].price
-                if current_retirement.price < new_retirement_price:
-                    # If the new retirement is more expensive, reapply the
+                new_retreat_price = validated_data['retreat'].price
+                if current_retreat.price < new_retreat_price:
+                    # If the new retreat is more expensive, reapply the
                     # coupon on the new orderline created. In other words, any
                     # coupon used for the initial purchase is applied again
                     # here.
                     need_transaction = True
                     amount = (
-                        validated_data['retirement'].price -
+                        validated_data['retreat'].price -
                         order_line.coupon_real_value
                     )
                     if not (payment_token or single_use_token):
                         raise serializers.ValidationError({
                             'non_field_errors': [_(
-                                "The new retirement is more expensive than "
+                                "The new retreat is more expensive than "
                                 "the current one. Provide a payment_token or "
                                 "single_use_token to charge the balance."
                             )]
                         })
-                if current_retirement.price > new_retirement_price:
+                if current_retreat.price > new_retreat_price:
                     # If a coupon was applied for the purchase, check if the
                     # real cost of the purchase was lower than the price
                     # difference.
                     # If so, refund the real cost of the purchase.
-                    # Else refund the difference between the 2 retirements.
+                    # Else refund the difference between the 2 retreats.
                     need_refund = True
                     price_diff = (
-                        current_retirement.price -
-                        validated_data['retirement'].price
+                        current_retreat.price -
+                        validated_data['retreat'].price
                     )
                     real_cost = order_line.cost
                     amount = min(price_diff, real_cost)
-                if current_retirement == validated_data['retirement']:
+                if current_retreat == validated_data['retreat']:
                     raise serializers.ValidationError({
-                        'retirement': [_(
-                            "That retirement is already assigned to this "
+                        'retreat': [_(
+                            "That retreat is already assigned to this "
                             "object."
                         )]
                     })
@@ -631,18 +642,18 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     )
                 # Generate a list of tuples containing start/end time of
                 # existing reservations.
-                start = validated_data['retirement'].start_time
-                end = validated_data['retirement'].end_time
+                start = validated_data['retreat'].start_time
+                end = validated_data['retreat'].end_time
                 active_reservations = Reservation.objects.filter(
                     user=user,
                     is_active=True,
                 ).exclude(pk=instance.pk).values_list(
-                    'retirement__start_time',
-                    'retirement__end_time',
+                    'retreat__start_time',
+                    'retreat__end_time',
                 )
 
-                for retirements in active_reservations:
-                    if max(retirements[0], start) < min(retirements[1], end):
+                for retreats in active_reservations:
+                    if max(retreats[0], start) < min(retreats[1], end):
                         raise serializers.ValidationError({
                             'non_field_errors': [_(
                                 "This reservation overlaps with another "
@@ -660,9 +671,9 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         order=order,
                         quantity=1,
                         content_type=ContentType.objects.get_for_model(
-                            Retirement
+                            Retreat
                         ),
-                        object_id=validated_data['retirement'].id,
+                        object_id=validated_data['retreat'].id,
                         cost=amount,
                         coupon=coupon,
                         coupon_real_value=coupon_value,
@@ -670,26 +681,26 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     tax = round(amount * Decimal(TAX_RATE), 2)
                     amount *= Decimal(TAX_RATE + 1)
                     amount = round(amount * 100, 2)
-                    retirement = validated_data['retirement']
+                    retreat = validated_data['retreat']
 
-                    # Do a complete refund of the previous retirement
+                    # Do a complete refund of the previous retreat
                     try:
-                        refund_instance = refund_retirement(
+                        refund_instance = refund_retreat(
                             canceled_reservation,
                             100,
-                            "Exchange retirement {0} for retirement "
+                            "Exchange retreat {0} for retreat "
                             "{1}".format(
-                                str(current_retirement),
-                                str(validated_data['retirement'])
+                                str(current_retreat),
+                                str(validated_data['retreat'])
                             )
                         )
                     except PaymentAPIError as err:
                         if str(err) == PAYSAFE_EXCEPTION['3406']:
                             raise serializers.ValidationError({
-                                'non_field_errors': _(
+                                'non_field_errors': [_(
                                     "The order has not been charged yet. "
                                     "Try again later."
-                                )
+                                )]
                             })
                         raise serializers.ValidationError({
                             'message': str(err)
@@ -740,16 +751,16 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     tax = round(amount * Decimal(TAX_RATE), 2)
                     amount *= Decimal(TAX_RATE + 1)
                     amount = round(amount * 100, 2)
-                    retirement = validated_data['retirement']
+                    retreat = validated_data['retreat']
 
                     refund_instance = Refund.objects.create(
                         orderline=order_line,
                         refund_date=timezone.now(),
                         amount=amount/100,
-                        details="Exchange retirement {0} for "
-                                "retirement {1}".format(
-                                    str(current_retirement),
-                                    str(validated_data['retirement'])
+                        details="Exchange retreat {0} for "
+                                "retreat {1}".format(
+                                    str(current_retreat),
+                                    str(validated_data['retreat'])
                                 ),
                     )
 
@@ -764,17 +775,17 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     except PaymentAPIError as err:
                         if str(err) == PAYSAFE_EXCEPTION['3406']:
                             raise serializers.ValidationError({
-                                'non_field_errors': _(
+                                'non_field_errors': [_(
                                     "The order has not been charged yet. "
                                     "Try again later."
-                                )
+                                )]
                             })
                         raise serializers.ValidationError({
                             'message': str(err)
                         })
 
-                    new_retirement = retirement
-                    old_retirement = current_retirement
+                    new_retreat = retreat
+                    old_retreat = current_retreat
 
             # Ask the external scheduler to start calling /notify if the
             # reserved_seats count == 1. Otherwise, the scheduler should
@@ -782,7 +793,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             #
             # Since we are in the context of a cancelation, if reserved_seats
             # equals 1, that means that this is the first cancelation.
-            if current_retirement.reserved_seats == 1:
+            if current_retreat.reserved_seats == 1:
                 scheduler_url = '{0}'.format(
                     settings.EXTERNAL_SCHEDULER['URL'],
                 )
@@ -792,11 +803,11 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     "minute": (timezone.now().minute + 5) % 60,
                     "url": '{0}{1}'.format(
                         request.build_absolute_uri(
-                            reverse('retirement:waitqueuenotification-list')
+                            reverse('retreat:waitqueuenotification-list')
                         ),
                         "/notify"
                     ),
-                    "description": "Retirement wait queue notification"
+                    "description": "Retreat wait queue notification"
                 }
 
                 try:
@@ -856,18 +867,18 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 'TYPE': "Achat",
                 'ITEM_LIST': items,
                 'TAX': round(
-                    (new_order_line.cost - current_retirement.price) *
+                    (new_order_line.cost - current_retreat.price) *
                     Decimal(TAX_RATE),
                     2,
                 ),
-                'DISCOUNT': current_retirement.price,
+                'DISCOUNT': current_retreat.price,
                 'COUPON': {'code': _("Échange")},
                 'SUBTOTAL': round(
-                    new_order_line.cost - current_retirement.price,
+                    new_order_line.cost - current_retreat.price,
                     2
                 ),
                 'COST': round(
-                    (new_order_line.cost - current_retirement.price) *
+                    (new_order_line.cost - current_retreat.price) *
                     Decimal(TAX_RATE + 1),
                     2
                 ),
@@ -894,10 +905,10 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 'CUSTOMER_EMAIL': user.email,
                 'CUSTOMER_NUMBER': user.id,
                 'TYPE': "Remboursement",
-                'NEW_RETIREMENT': new_retirement,
-                'OLD_RETIREMENT': old_retirement,
+                'NEW_RETREAT': new_retreat,
+                'OLD_RETREAT': old_retreat,
                 'SUBTOTAL':
-                old_retirement.price - new_retirement.price,
+                old_retreat.price - new_retreat.price,
                 'COST': round(amount/100, 2),
                 'TAX': round(Decimal(tax), 2),
             }
@@ -914,15 +925,15 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             )
 
         # Send exchange confirmation email
-        if validated_data.get('retirement'):
+        if validated_data.get('retreat'):
             merge_data = {
                 'DATETIME': timezone.localtime().strftime("%x %X"),
                 'CUSTOMER_NAME': user.first_name + " " + user.last_name,
                 'CUSTOMER_EMAIL': user.email,
                 'CUSTOMER_NUMBER': user.id,
                 'TYPE': "Échange",
-                'NEW_RETIREMENT': new_retirement,
-                'OLD_RETIREMENT': old_retirement,
+                'NEW_RETREAT': new_retreat,
+                'OLD_RETREAT': old_retreat,
             }
 
             plain_msg = render_to_string("exchange.txt", merge_data)
@@ -937,16 +948,16 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             )
 
             merge_data = {
-                'RETIREMENT': new_retirement,
+                'RETREAT': new_retreat,
                 'USER': instance.user,
             }
 
             plain_msg = render_to_string(
-                "retirement_info.txt",
+                "retreat_info.txt",
                 merge_data
             )
             msg_html = render_to_string(
-                "retirement_info.html",
+                "retreat_info.html",
                 merge_data
             )
 
@@ -964,16 +975,16 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         model = Reservation
         exclude = ('deleted', )
         extra_kwargs = {
-            'retirement': {
-                'help_text': _("Retirement represented by the picture."),
-                'view_name': 'retirement:retirement-detail',
+            'retreat': {
+                'help_text': _("Retreat represented by the picture."),
+                'view_name': 'retreat:retreat-detail',
             },
             'is_active': {
                 'required': False,
                 'help_text': _("Whether the reservation is active or not."),
             },
             'url': {
-                'view_name': 'retirement:reservation-detail',
+                'view_name': 'retreat:reservation-detail',
             },
         }
 
@@ -981,6 +992,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
 class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     created_at = serializers.ReadOnlyField()
+    list_size = serializers.SerializerMethodField()
 
     def validate_user(self, obj):
         """
@@ -996,13 +1008,16 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
         model = WaitQueue
         fields = '__all__'
         extra_kwargs = {
-            'retirement': {
-                'view_name': 'retirement:retirement-detail',
+            'retreat': {
+                'view_name': 'retreat:retreat-detail',
             },
             'url': {
-                'view_name': 'retirement:waitqueue-detail',
+                'view_name': 'retreat:waitqueue-detail',
             },
         }
+
+    def get_list_size(self, obj):
+        return WaitQueue.objects.filter(retreat=obj.retreat).count()
 
 
 class WaitQueueNotificationSerializer(serializers.HyperlinkedModelSerializer):
@@ -1013,10 +1028,10 @@ class WaitQueueNotificationSerializer(serializers.HyperlinkedModelSerializer):
         model = WaitQueue
         fields = '__all__'
         extra_kwargs = {
-            'retirement': {
-                'view_name': 'retirement:retirement-detail',
+            'retreat': {
+                'view_name': 'retreat:retreat-detail',
             },
             'url': {
-                'view_name': 'retirement:waitqueuenotification-detail',
+                'view_name': 'retreat:waitqueuenotification-detail',
             },
         }

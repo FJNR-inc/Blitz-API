@@ -5,7 +5,7 @@ from import_export import fields, resources
 from import_export.widgets import (ForeignKeyWidget, ManyToManyWidget,
                                    DateTimeWidget)
 
-from .models import Reservation, Retirement
+from .models import Reservation, Retreat
 
 User = get_user_model()
 
@@ -20,10 +20,10 @@ class ReservationResource(resources.ModelResource):
         widget=ForeignKeyWidget(User, 'email'),
     )
 
-    retirement = fields.Field(
-        column_name='retirement',
-        attribute='retirement',
-        widget=ForeignKeyWidget(Retirement, 'name'),
+    retreat = fields.Field(
+        column_name='retreat',
+        attribute='retreat',
+        widget=ForeignKeyWidget(Retreat, 'name'),
     )
 
     cancelation_reason = fields.Field(
@@ -38,13 +38,13 @@ class ReservationResource(resources.ModelResource):
 
     start_time = fields.Field(
         column_name='start_time',
-        attribute='retirement__start_time',
+        attribute='retreat__start_time',
         widget=DateTimeWidget(),
     )
 
     end_time = fields.Field(
         column_name='end_time',
-        attribute='retirement__end_time',
+        attribute='retreat__end_time',
         widget=DateTimeWidget(),
     )
 
@@ -53,7 +53,7 @@ class ReservationResource(resources.ModelResource):
         fields = (
             'id',
             'user',
-            'retirement',
+            'retreat',
             'start_time',
             'end_time',
             'cancelation_date',
@@ -65,7 +65,7 @@ class ReservationResource(resources.ModelResource):
         export_order = (
             'id',
             'user',
-            'retirement',
+            'retreat',
             'start_time',
             'end_time',
             'cancelation_date',
@@ -76,9 +76,9 @@ class ReservationResource(resources.ModelResource):
         )
 
 
-class RetirementResource(resources.ModelResource):
+class RetreatResource(resources.ModelResource):
     class Meta:
-        model = Retirement
+        model = Retreat
         fields = (
             'id',
             'name',
@@ -119,10 +119,10 @@ class WaitQueueResource(resources.ModelResource):
         widget=ForeignKeyWidget(User, 'email'),
     )
 
-    retirement = fields.Field(
-        column_name='retirement',
-        attribute='retirement',
-        widget=ForeignKeyWidget(Retirement, 'name'),
+    retreat = fields.Field(
+        column_name='retreat',
+        attribute='retreat',
+        widget=ForeignKeyWidget(Retreat, 'name'),
     )
 
     created_at = fields.Field(
@@ -132,17 +132,17 @@ class WaitQueueResource(resources.ModelResource):
     )
 
     class Meta:
-        model = Retirement
+        model = Retreat
         fields = (
             'id',
             'user',
-            'retirement',
+            'retreat',
             'created_at',
         )
         export_order = (
             'id',
             'user',
-            'retirement',
+            'retreat',
             'created_at',
         )
 
@@ -155,10 +155,10 @@ class WaitQueueNotificationResource(resources.ModelResource):
         widget=ForeignKeyWidget(User, 'email'),
     )
 
-    retirement = fields.Field(
-        column_name='retirement',
-        attribute='retirement',
-        widget=ForeignKeyWidget(Retirement, 'name'),
+    retreat = fields.Field(
+        column_name='retreat',
+        attribute='retreat',
+        widget=ForeignKeyWidget(Retreat, 'name'),
     )
 
     created_at = fields.Field(
@@ -168,16 +168,16 @@ class WaitQueueNotificationResource(resources.ModelResource):
     )
 
     class Meta:
-        model = Retirement
+        model = Retreat
         fields = (
             'id',
             'user',
-            'retirement',
+            'retreat',
             'created_at',
         )
         export_order = (
             'id',
             'user',
-            'retirement',
+            'retreat',
             'created_at',
         )

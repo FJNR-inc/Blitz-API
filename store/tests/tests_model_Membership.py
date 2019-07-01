@@ -60,7 +60,7 @@ class MembershipTests(APITestCase):
             order=self.order,
             quantity=1,
             content_type=self.membership_type,
-            object_id=1,
+            object_id=membership.id,
         )
 
         self.assertEqual(

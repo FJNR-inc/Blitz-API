@@ -18,15 +18,16 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
 from blitz_api.services import (remove_translation_fields,
-                                check_if_translated_field,)
+                                check_if_translated_field,
+                                getMessageTranslate)
 from workplace.models import Reservation
-from retirement.models import Reservation as RetirementReservation
-from retirement.models import WaitQueueNotification, Retirement
+from retirement.models import Reservation as RetreatReservation
+from retirement.models import WaitQueueNotification, Retreat
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
                      PaymentProfile, CustomPayment, Coupon, CouponUser, Refund,
-                     )
+                     MembershipCoupon,)
 from .services import (charge_payment,
                        create_external_payment_profile,
                        create_external_card,
@@ -66,6 +67,13 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
         allow_null=True,
     )
 
+    def validate(self, attr):
+        if not check_if_translated_field('name', attr):
+            raise serializers.ValidationError(
+                getMessageTranslate('name', attr, True)
+            )
+        return super(BaseProductSerializer, self).validate(attr)
+
     def to_representation(self, instance):
         user = self.context['request'].user
         data = super(BaseProductSerializer, self).to_representation(instance)
@@ -83,13 +91,13 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
 class MembershipSerializer(BaseProductSerializer):
 
     def validate(self, attr):
-        action = self.context['request'].parser_context['view'].action
-        if action != 'partial_update':
-            if not check_if_translated_field('name', attr):
-                raise serializers.ValidationError({
-                    'name': _("This field is required.")
-                })
-        return super(MembershipSerializer, self).validate(attr)
+        try:
+            return super().validate(attr)
+        except serializers.ValidationError as e:
+            action = self.context['request'].parser_context['view'].action
+            if action != 'partial_update':
+                raise e
+            return attr
 
     class Meta:
         model = Membership
@@ -110,13 +118,13 @@ class PackageSerializer(BaseProductSerializer):
     )
 
     def validate(self, attr):
-        action = self.context['request'].parser_context['view'].action
-        if action != 'partial_update':
-            if not check_if_translated_field('name', attr):
-                raise serializers.ValidationError({
-                    'name': _("This field is required.")
-                })
-        return super(PackageSerializer, self).validate(attr)
+        try:
+            return super().validate(attr)
+        except serializers.ValidationError as e:
+            action = self.context['request'].parser_context['view'].action
+            if action != 'partial_update':
+                raise e
+            return attr
 
     class Meta:
         model = Package
@@ -153,7 +161,7 @@ class CustomPaymentSerializer(serializers.HyperlinkedModelSerializer):
 
         with transaction.atomic():
             custom_payment = CustomPayment.objects.create(**validated_data)
-            amount = int(round(custom_payment.price*100))
+            amount = int(round(custom_payment.price * 100))
 
             # Charge the order with the external payment API
             try:
@@ -300,7 +308,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
 
         if (not user.is_staff
                 and (content_type.model == 'package'
-                     or content_type.model == 'retirement')
+                     or content_type.model == 'retreat')
                 and obj.exclusive_memberships.all()
                 and user_membership not in obj.exclusive_memberships.all()):
             raise serializers.ValidationError({
@@ -326,7 +334,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
 
         if (content_type.model == 'membership'
                 or content_type.model == 'package'
-                or content_type.model == 'retirement'):
+                or content_type.model == 'retreat'):
             attrs['cost'] = obj.price * validated_data.get('quantity')
 
         return attrs
@@ -370,6 +378,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         required=False,
         write_only=True,
     )
+
     # target_user = serializers.HyperlinkedRelatedField(
     #     many=False,
     #     write_only=True,
@@ -409,7 +418,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         validated_data['user'] = user
         profile = PaymentProfile.objects.filter(owner=user).first()
 
-        retirement_reservations = list()
+        retreat_reservations = list()
 
         if single_use_token and not profile:
             # Create external profile
@@ -452,8 +461,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     discount_amount = coupon_info['value']
                     orderline_cost = coupon_info['orderline'].cost
                     coupon_info['orderline'].cost = (
-                        orderline_cost -
-                        discount_amount
+                            orderline_cost -
+                            discount_amount
                     )
                     coupon_info['orderline'].coupon = coupon
                     coupon_info['orderline'].coupon_real_value = coupon_info[
@@ -478,8 +487,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             reservation_orderlines = order.order_lines.filter(
                 content_type__model="timeslot"
             )
-            retirement_orderlines = order.order_lines.filter(
-                content_type__model="retirement"
+            retreat_orderlines = order.order_lines.filter(
+                content_type__model="retreat"
             )
             need_transaction = False
 
@@ -494,15 +503,44 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     })
                 user.membership = membership_orderlines[0].content_object
                 user.membership_end = (
-                    timezone.now().date() + user.membership.duration
+                        timezone.now().date() + user.membership.duration
                 )
                 user.save()
+
+                membership_coupons = MembershipCoupon.objects.filter(
+                    membership__pk=membership_orderlines[0].content_object.pk
+                )
+
+                for membership_coupon in membership_coupons:
+                    coupon = Coupon.objects.create(
+                        value=membership_coupon.value,
+                        percent_off=membership_coupon.percent_off,
+                        max_use=membership_coupon.max_use,
+                        max_use_per_user=membership_coupon.max_use_per_user,
+                        details=membership_coupon.details,
+                        start_time=timezone.now(),
+                        end_time=timezone.now() +
+                        membership_orderlines[0].content_object.duration,
+                        owner=user)
+                    coupon.applicable_retreats.set(
+                        membership_coupon.applicable_retreats.all())
+                    coupon.applicable_timeslots.set(
+                        membership_coupon.applicable_timeslots.all())
+                    coupon.applicable_packages.set(
+                        membership_coupon.applicable_packages.all())
+                    coupon.applicable_memberships.set(
+                        membership_coupon.applicable_memberships.all())
+                    coupon.applicable_product_types.set(
+                        membership_coupon.applicable_product_types.all())
+                    coupon.generate_code()
+                    coupon.save()
+
             if package_orderlines:
                 need_transaction = True
                 for package_orderline in package_orderlines:
                     user.tickets += (
-                        package_orderline.content_object.reservations *
-                        package_orderline.quantity
+                            package_orderline.content_object.reservations *
+                            package_orderline.quantity
                     )
                     user.save()
             if reservation_orderlines:
@@ -510,7 +548,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     timeslot = reservation_orderline.content_object
                     reservations = timeslot.reservations.filter(is_active=True)
                     reserved = reservations.count()
-                    if timeslot.price > user.tickets:
+                    if timeslot.billing_price > user.tickets:
                         raise serializers.ValidationError({
                             'non_field_errors': [_(
                                 "You don't have enough tickets to make this "
@@ -544,21 +582,21 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                                 "timeslot."
                             )]
                         })
-            if retirement_orderlines:
+            if retreat_orderlines:
                 need_transaction = True
                 if not (user.phone and user.city):
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
                             "Incomplete user profile. 'phone' and 'city' "
                             "field must be filled in the user profile to book "
-                            "a retirement."
+                            "a retreat."
                         )]
                     })
 
-                for retirement_orderline in retirement_orderlines:
-                    retirement = retirement_orderline.content_object
-                    user_waiting = retirement.wait_queue.filter(user=user)
-                    reservations = retirement.reservations.filter(
+                for retreat_orderline in retreat_orderlines:
+                    retreat = retreat_orderline.content_object
+                    user_waiting = retreat.wait_queue.filter(user=user)
+                    reservations = retreat.reservations.filter(
                         is_active=True
                     )
                     reserved = reservations.count()
@@ -566,33 +604,33 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         raise serializers.ValidationError({
                             'non_field_errors': [_(
                                 "You already are registered to this "
-                                "retirement: {0}.".format(str(retirement))
+                                "retreat: {0}.".format(str(retreat))
                             )]
                         })
-                    if (((retirement.seats - retirement.total_reservations -
-                          retirement.reserved_seats) > 0)
-                            or (retirement.reserved_seats
+                    if (((retreat.seats - retreat.total_reservations -
+                          retreat.reserved_seats) > 0)
+                            or (retreat.reserved_seats
                                 and WaitQueueNotification.objects.filter(
-                                    user=user, retirement=retirement))):
-                        retirement_reservations.append(
-                            RetirementReservation.objects.create(
+                                        user=user, retreat=retreat))):
+                        retreat_reservations.append(
+                            RetreatReservation.objects.create(
                                 user=user,
-                                retirement=retirement,
-                                order_line=retirement_orderline,
+                                retreat=retreat,
+                                order_line=retreat_orderline,
                                 is_active=True
                             )
                         )
                         # Decrement reserved_seats if > 0
-                        if retirement.reserved_seats:
-                            retirement.reserved_seats = (
-                                retirement.reserved_seats - 1
+                        if retreat.reserved_seats:
+                            retreat.reserved_seats = (
+                                    retreat.reserved_seats - 1
                             )
-                            retirement.save()
+                            retreat.save()
                     else:
                         raise serializers.ValidationError({
                             'non_field_errors': [_(
                                 "There are no places left in the requested "
-                                "retirement."
+                                "retreat."
                             )]
                         })
                     if user_waiting:
@@ -629,7 +667,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     })
             elif (membership_orderlines
                   or package_orderlines
-                  or retirement_orderlines) and int(amount):
+                  or retreat_orderlines) and int(amount):
                 raise serializers.ValidationError({
                     'non_field_errors': [_(
                         "A payment_token or single_use_token is required to "
@@ -664,12 +702,12 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             orderlines = order.order_lines.filter(
                 models.Q(content_type__model='membership') |
                 models.Q(content_type__model='package') |
-                models.Q(content_type__model='retirement')
+                models.Q(content_type__model='retreat')
             )
 
             # Here, the 'details' key is used to provide details of the
             #  item to the email template.
-            # As of now, only 'retirement' objects have the 'email_content'
+            # As of now, only 'retreat' objects have the 'email_content'
             #  key that is used here. There is surely a better way to
             #  to handle that logic that will be more generic.
             items = [
@@ -680,7 +718,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         orderline.content_object.name
                     ),
                     # Removed details section because it was only used
-                    # for retirements. Retirements instead have another
+                    # for retreats. Retreats instead have another
                     # unique email containing details of the event.
                     # 'details':
                     #    orderline.content_object.email_content if hasattr(
@@ -722,20 +760,20 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 html_message=msg_html,
             )
 
-        # Send retirement informations emails
-        for retirement_reservation in retirement_reservations:
+        # Send retreat informations emails
+        for retreat_reservation in retreat_reservations:
             # Send info email
             merge_data = {
-                'RETIREMENT': retirement_reservation.retirement,
+                'RETREAT': retreat_reservation.retreat,
                 'USER': user,
             }
 
             plain_msg = render_to_string(
-                "retirement_info.txt",
+                "retreat_info.txt",
                 merge_data
             )
             msg_html = render_to_string(
-                "retirement_info.html",
+                "retreat_info.html",
                 merge_data
             )
 
@@ -743,7 +781,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 "Confirmation d'inscription à la retraite",
                 plain_msg,
                 settings.DEFAULT_FROM_EMAIL,
-                [retirement_reservation.user.email],
+                [retreat_reservation.user.email],
                 html_message=msg_html,
             )
 
@@ -859,12 +897,12 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
         new_percent_off = validated_data.get('percent_off', None)
 
         value_off = (
-            (not instance.value and new_value) or
-            (instance.value and new_value != 0)
+                (not instance.value and new_value) or
+                (instance.value and new_value != 0)
         )
         percent_off = (
-            (not instance.percent_off and new_percent_off) or
-            (instance.percent_off and new_percent_off != 0)
+                (not instance.percent_off and new_percent_off) or
+                (instance.percent_off and new_percent_off != 0)
         )
 
         if value_off and percent_off:
@@ -887,11 +925,11 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
     def to_representation(self, instance):
         data = super(CouponSerializer, self).to_representation(instance)
         from workplace.serializers import TimeSlotSerializer
-        from retirement.serializers import RetirementSerializer
+        from retirement.serializers import RetreatSerializer
         action = self.context['view'].action
         if action == 'retrieve' or action == 'list':
-            data['applicable_retirements'] = RetirementSerializer(
-                instance.applicable_retirements,
+            data['applicable_retreats'] = RetreatSerializer(
+                instance.applicable_retreats,
                 many=True,
                 context={
                     'request': self.context['request'],
@@ -926,11 +964,11 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Coupon
-        exclude = ('deleted', )
+        exclude = ('deleted',)
         extra_kwargs = {
-            'applicable_retirements': {
+            'applicable_retreats': {
                 'required': False,
-                'view_name': 'retirement:retirement-detail',
+                'view_name': 'retreat:retreat-detail',
             },
             'applicable_timeslots': {
                 'required': False,
@@ -949,7 +987,7 @@ class CouponUserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = CouponUser
-        exclude = ('deleted', )
+        exclude = ('deleted',)
 
 
 class RefundSerializer(serializers.HyperlinkedModelSerializer):
@@ -957,4 +995,4 @@ class RefundSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Refund
-        exclude = ('deleted', )
+        exclude = ('deleted',)

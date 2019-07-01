@@ -134,7 +134,6 @@ def charge_payment(amount, payment_token, reference_number):
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
         try:
-            print(json.loads(err.response.content))
             err_code = json.loads(err.response.content)['error']['code']
             if err_code in PAYSAFE_EXCEPTION:
                 raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
@@ -180,7 +179,6 @@ def refund_amount(settlement_id, amount):
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
         try:
-            print(json.loads(err.response.content))
             err_code = json.loads(err.response.content)['error']['code']
             if err_code in PAYSAFE_EXCEPTION:
                 raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
@@ -225,7 +223,6 @@ def create_external_payment_profile(user):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        print(json.loads(err.response.content))
         err_code = json.loads(err.response.content)['error']['code']
         if err_code in PAYSAFE_EXCEPTION:
             raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
@@ -256,7 +253,6 @@ def get_external_payment_profile(profile_id):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        print(json.loads(err.response.content))
         err_code = json.loads(err.response.content)['error']['code']
         if err_code in PAYSAFE_EXCEPTION:
             raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
@@ -294,7 +290,6 @@ def update_external_card(profile_id, card_id, single_use_token):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        print(json.loads(err.response.content))
         err_code = json.loads(err.response.content)['error']['code']
         if err_code in PAYSAFE_EXCEPTION:
             raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
@@ -441,7 +436,6 @@ def delete_external_card(profile_id, card_id):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        print(json.loads(err.response.content))
         err_code = json.loads(err.response.content)['error']['code']
         if err_code in PAYSAFE_EXCEPTION:
             raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
@@ -533,8 +527,8 @@ def validate_coupon_for_order(coupon, order):
         | Q(content_type__model='membership',
             object_id__in=coupon.applicable_memberships.all().
             values_list('id', flat=True))
-        | Q(content_type__model='retirement',
-            object_id__in=coupon.applicable_retirements.all().
+        | Q(content_type__model='retreat',
+            object_id__in=coupon.applicable_retreats.all().
             values_list('id', flat=True))
     )
     if not applicable_orderlines:

@@ -611,15 +611,16 @@ class UsersTests(APITestCase):
         self.assertEqual(first_user['email'], self.admin.email)
 
         membership = {
-            'url': 'http://testserver/memberships/1',
-            'id': 1,
+            'url': 'http://testserver/memberships/' + str(self.membership.id),
+            'id': self.membership.id,
             'order_lines': [],
             'name': 'basic_membership',
             'available': True,
             'price': '50.00',
             'details': '1-Year student membership',
             'duration': '365 00:00:00',
-            'academic_levels': ['http://testserver/academic_levels/1']
+            'academic_levels': ['http://testserver/academic_levels/' +
+                                str(self.academic_level.id)]
         }
 
         self.assertEqual(

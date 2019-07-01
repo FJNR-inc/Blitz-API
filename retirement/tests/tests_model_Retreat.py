@@ -4,19 +4,19 @@ import pytz
 from django.conf import settings
 from rest_framework.test import APITestCase
 
-from ..models import Retirement
+from ..models import Retreat
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
-class RetirementTests(APITestCase):
+class RetreatTests(APITestCase):
     def test_create(self):
         """
-        Ensure that we can create a retirement.
+        Ensure that we can create a retreat.
         """
-        retirement = Retirement.objects.create(
-            name="random_retirement",
-            details="This is a description of the retirement.",
+        retreat = Retreat.objects.create(
+            name="random_retreat",
+            details="This is a description of the retreat.",
             seats=40,
             address_line1="123 random street",
             postal_code="123 456",
@@ -34,6 +34,7 @@ class RetirementTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True,
         )
 
-        self.assertEqual(retirement.__str__(), "random_retirement")
+        self.assertEqual(retreat.__str__(), "random_retreat")

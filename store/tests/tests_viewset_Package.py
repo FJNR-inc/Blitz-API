@@ -52,7 +52,7 @@ class PackageTests(APITestCase):
             order=cls.order,
             quantity=1,
             content_type=cls.package_type,
-            object_id=1,
+            object_id=cls.package.id,
         )
         cls.academic_level = AcademicLevel.objects.create(
             name="University"
@@ -91,18 +91,22 @@ class PackageTests(APITestCase):
 
         content = {
             'details': '10 reservations package',
-            'exclusive_memberships': ['http://testserver/memberships/1'],
+            'exclusive_memberships': [
+                f'http://testserver/memberships/{self.membership.id}'],
             'available': True,
-            'id': 3,
             'name': 'basic_package',
             'order_lines': [],
             'price': '50.00',
-            'reservations': 10,
-            'url': 'http://testserver/packages/3'
+            'reservations': 10
         }
 
+        response_content = json.loads(response.content)
+
+        del response_content['id']
+        del response_content['url']
+
         self.assertEqual(
-            remove_translation_fields(json.loads(response.content)),
+            remove_translation_fields(response_content),
             content
         )
 
@@ -281,7 +285,7 @@ class PackageTests(APITestCase):
         response = self.client.put(
             reverse(
                 'package-detail',
-                kwargs={'pk': 1},
+                args=[self.package.id]
             ),
             data,
             format='json',
@@ -291,12 +295,13 @@ class PackageTests(APITestCase):
             'available': True,
             'details': '999 reservations package',
             'exclusive_memberships': [],
-            'id': 1,
+            'id': self.package.id,
             'name': 'extreme_package_updated',
-            'order_lines': ['http://testserver/order_lines/1'],
+            'order_lines': [
+                f'http://testserver/order_lines/{self.order_line.id}'],
             'price': '1.00',
             'reservations': 999,
-            'url': 'http://testserver/packages/1'
+            'url': f'http://testserver/packages/{self.package.id}'
         }
 
         self.assertEqual(
@@ -320,7 +325,7 @@ class PackageTests(APITestCase):
         response = self.client.patch(
             reverse(
                 'package-detail',
-                kwargs={'pk': 1},
+                args=[self.package.id]
             ),
             data,
             format='json',
@@ -330,12 +335,13 @@ class PackageTests(APITestCase):
             'available': True,
             'details': 'New very cool details',
             'exclusive_memberships': [],
-            'id': 1,
+            'id': self.package.id,
             'name': 'extreme_package',
-            'order_lines': ['http://testserver/order_lines/1'],
+            'order_lines': [
+                f'http://testserver/order_lines/{self.order_line.id}'],
             'price': '99.00',
             'reservations': 100,
-            'url': 'http://testserver/packages/1'
+            'url': f'http://testserver/packages/{self.package.id}'
         }
 
         self.assertEqual(
@@ -354,7 +360,7 @@ class PackageTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'package-detail',
-                kwargs={'pk': 1},
+                args=[self.package.id]
             ),
         )
         package = self.package
@@ -374,7 +380,7 @@ class PackageTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'package-detail',
-                kwargs={'pk': 1},
+                args=[self.package.id]
             ),
         )
 
@@ -418,11 +424,11 @@ class PackageTests(APITestCase):
                 'available': True,
                 'details': '100 reservations package',
                 'exclusive_memberships': [],
-                'id': 1,
+                'id': self.package.id,
                 'name': 'extreme_package',
                 'price': '400.00',
                 'reservations': 100,
-                'url': 'http://testserver/packages/1'
+                'url': f'http://testserver/packages/{self.package.id}'
             }]
         }
 
@@ -454,22 +460,24 @@ class PackageTests(APITestCase):
                 'available': True,
                 'details': '100 reservations package',
                 'exclusive_memberships': [],
-                'id': 1,
+                'id': self.package.id,
                 'name': 'extreme_package',
-                'order_lines': ['http://testserver/order_lines/1'],
+                'order_lines': [
+                    f'http://testserver/order_lines/{self.order_line.id}'],
                 'price': '400.00',
                 'reservations': 100,
-                'url': 'http://testserver/packages/1'
+                'url': f'http://testserver/packages/{self.package.id}'
             }, {
                 'available': False,
                 'details': 'todo',
                 'exclusive_memberships': [],
-                'id': 2,
+                'id': self.package_unavailable.id,
                 'name': 'pending_package',
                 'order_lines': [],
                 'price': '400.00',
                 'reservations': 100,
-                'url': 'http://testserver/packages/2'
+                'url':
+                    f'http://testserver/packages/{self.package_unavailable.id}'
             }]
         }
 
@@ -485,7 +493,7 @@ class PackageTests(APITestCase):
         response = self.client.get(
             reverse(
                 'package-detail',
-                kwargs={'pk': 1},
+                args=[self.package.id]
             ),
         )
 
@@ -493,11 +501,11 @@ class PackageTests(APITestCase):
             'available': True,
             'details': '100 reservations package',
             'exclusive_memberships': [],
-            'id': 1,
+            'id': self.package.id,
             'name': 'extreme_package',
             'price': '400.00',
             'reservations': 100,
-            'url': 'http://testserver/packages/1'
+            'url': f'http://testserver/packages/{self.package.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -513,7 +521,7 @@ class PackageTests(APITestCase):
         response = self.client.get(
             reverse(
                 'package-detail',
-                kwargs={'pk': 1},
+                args=[self.package.id]
             ),
         )
 
@@ -521,12 +529,13 @@ class PackageTests(APITestCase):
             'available': True,
             'details': '100 reservations package',
             'exclusive_memberships': [],
-            'id': 1,
+            'id': self.package.id,
             'name': 'extreme_package',
-            'order_lines': ['http://testserver/order_lines/1'],
+            'order_lines': [
+                f'http://testserver/order_lines/{self.order_line.id}'],
             'price': '400.00',
             'reservations': 100,
-            'url': 'http://testserver/packages/1'
+            'url': f'http://testserver/packages/{self.package.id}'
         }
 
         self.assertEqual(

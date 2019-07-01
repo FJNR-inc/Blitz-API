@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase
 
 from blitz_api.factories import UserFactory
 
-from ..models import Retirement, WaitQueueNotification
+from ..models import Retreat, WaitQueueNotification
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
@@ -16,9 +16,9 @@ class WaitQueueNotificationTests(APITestCase):
     def setUpClass(cls):
         super(WaitQueueNotificationTests, cls).setUpClass()
         cls.user = UserFactory()
-        cls.retirement = Retirement.objects.create(
-            name="random_retirement",
-            details="This is a description of the retirement.",
+        cls.retreat = Retreat.objects.create(
+            name="random_retreat",
+            details="This is a description of the retreat.",
             seats=40,
             address_line1="123 random street",
             postal_code="123 456",
@@ -35,18 +35,19 @@ class WaitQueueNotificationTests(APITestCase):
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
+            has_shared_rooms=True,
         )
 
     def test_create(self):
         """
-        Ensure that we can create a retirement.
+        Ensure that we can create a retreat.
         """
         wait_queue = WaitQueueNotification.objects.create(
             user=self.user,
-            retirement=self.retirement,
+            retreat=self.retreat,
         )
 
         self.assertEqual(
             wait_queue.__str__(),
-            ', '.join(["random_retirement", str(self.user)])
+            ', '.join(["random_retreat", str(self.user)])
         )

@@ -19,7 +19,7 @@ from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.models import AcademicLevel
 from blitz_api.services import remove_translation_fields
 from workplace.models import TimeSlot, Period, Workplace
-from retirement.models import Retirement
+from retirement.models import Retreat
 
 from ..models import Package, Order, OrderLine, Membership, Coupon
 
@@ -75,10 +75,10 @@ class CouponTests(APITestCase):
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
-        cls.retirement = Retirement.objects.create(
-            name="mega_retirement",
+        cls.retreat = Retreat.objects.create(
+            name="mega_retreat",
             seats=400,
-            details="This is a description of the mega retirement.",
+            details="This is a description of the mega retreat.",
             address_line1="123 random street",
             postal_code="123 456",
             state_province="Random state",
@@ -92,6 +92,7 @@ class CouponTests(APITestCase):
             is_active=True,
             activity_language='FR',
             accessibility=True,
+            has_shared_rooms=True,
         )
         cls.coupon = Coupon.objects.create(
             value=13,
@@ -115,6 +116,8 @@ class CouponTests(APITestCase):
         )
         cls.coupon.applicable_product_types.add(cls.package_type)
 
+        cls.maxDiff = None
+
     def test_create(self):
         """
         Ensure we can create a coupon if user has permission.
@@ -131,7 +134,7 @@ class CouponTests(APITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": "http://testserver/users/1",
+            "owner": "http://testserver/users/" + str(self.user.id),
         }
 
         response = self.client.post(
@@ -141,10 +144,10 @@ class CouponTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
 
         content = {
-            "url": "http://testserver/coupons/3",
-            "id": 3,
             "applicable_product_types": [
                 "package"
             ],
@@ -156,8 +159,8 @@ class CouponTests(APITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": "http://testserver/users/1",
-            "applicable_retirements": [],
+            "owner": "http://testserver/users/" + str(self.user.id),
+            "applicable_retreats": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -171,7 +174,7 @@ class CouponTests(APITestCase):
         )
 
         self.assertEqual(
-            json.loads(response.content),
+            response_data,
             content
         )
 
@@ -193,7 +196,7 @@ class CouponTests(APITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": "http://testserver/users/1",
+            "owner": "http://testserver/users/" + str(self.user.id),
         }
 
         response = self.client.post(
@@ -203,10 +206,10 @@ class CouponTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
 
         content = {
-            "url": "http://testserver/coupons/3",
-            "id": 3,
             "applicable_product_types": [
                 "package"
             ],
@@ -218,8 +221,8 @@ class CouponTests(APITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": "http://testserver/users/1",
-            "applicable_retirements": [],
+            "owner": "http://testserver/users/" + str(self.user.id),
+            "applicable_retreats": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -253,7 +256,7 @@ class CouponTests(APITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": "http://testserver/users/1",
+            "owner": "http://testserver/users/" + str(self.user.id),
         }
 
         response = self.client.post(
@@ -263,10 +266,10 @@ class CouponTests(APITestCase):
         )
 
         response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
 
         content = {
-            "url": "http://testserver/coupons/3",
-            "id": 3,
             "applicable_product_types": [
                 "package"
             ],
@@ -278,8 +281,8 @@ class CouponTests(APITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": "http://testserver/users/1",
-            "applicable_retirements": [],
+            "owner": "http://testserver/users/" + str(self.user.id),
+            "applicable_retreats": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -293,7 +296,7 @@ class CouponTests(APITestCase):
         )
 
         self.assertEqual(
-            json.loads(response.content),
+            response_data,
             content
         )
 
@@ -314,7 +317,7 @@ class CouponTests(APITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": "http://testserver/users/1",
+            "owner": "http://testserver/users/" + str(self.user.id),
         }
 
         response = self.client.post(
@@ -356,7 +359,7 @@ class CouponTests(APITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": "http://testserver/users/1",
+            "owner": "http://testserver/users/" + str(self.user.id),
         }
 
         response = self.client.post(
@@ -399,7 +402,7 @@ class CouponTests(APITestCase):
         response = self.client.post(
             reverse(
                 'coupon-notify',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.coupon.id},
             ),
             data,
             format='json',
@@ -429,7 +432,7 @@ class CouponTests(APITestCase):
         response = self.client.post(
             reverse(
                 'coupon-notify',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.coupon.id},
             ),
             data,
             format='json',
@@ -493,7 +496,7 @@ class CouponTests(APITestCase):
         response = self.client.post(
             reverse(
                 'coupon-notify',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.coupon.id},
             ),
             data,
             format='json',
@@ -532,7 +535,7 @@ class CouponTests(APITestCase):
         response = self.client.post(
             reverse(
                 'coupon-notify',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.coupon.id},
             ),
             data,
             format='json',
@@ -568,7 +571,7 @@ class CouponTests(APITestCase):
         response = self.client.post(
             reverse(
                 'coupon-notify',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.coupon.id},
             ),
             data,
             format='json',
@@ -607,7 +610,7 @@ class CouponTests(APITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": "http://testserver/users/1",
+            "owner": "http://testserver/users/" + str(self.user.id),
         }
         with mock.patch(
                 'store.serializers.random.choices', return_value="ABCDEFGH"):
@@ -650,7 +653,7 @@ class CouponTests(APITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": "http://testserver/users/1",
+            "owner": "http://testserver/users/" + str(self.user.id),
         }
 
         response = self.client.post(
@@ -822,7 +825,7 @@ class CouponTests(APITestCase):
             "max_use": -100,
             "max_use_per_user": -2,
             "details": "Any package for fjeanneau clients",
-            "owner": "http://testserver/users/1",
+            "owner": "http://testserver/users/" + str(self.user.id),
         }
 
         response = self.client.post(
@@ -866,13 +869,13 @@ class CouponTests(APITestCase):
             "max_use": 1000,
             "max_use_per_user": 20,
             "details": "Any package for clients (updated max_use)",
-            "owner": "http://testserver/users/1",
+            "owner": "http://testserver/users/" + str(self.user.id),
         }
 
         response = self.client.put(
             reverse(
                 'coupon-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.coupon.id},
             ),
             data,
             format='json',
@@ -881,8 +884,8 @@ class CouponTests(APITestCase):
         response_data = json.loads(response.content)
 
         content = {
-            "url": "http://testserver/coupons/1",
-            "id": 1,
+            "url": "http://testserver/coupons/" + str(self.coupon.id),
+            "id": self.coupon.id,
             "applicable_product_types": [
                 "package"
             ],
@@ -894,8 +897,8 @@ class CouponTests(APITestCase):
             "max_use": 1000,
             "max_use_per_user": 20,
             "details": "Any package for clients (updated max_use)",
-            "owner": "http://testserver/users/1",
-            "applicable_retirements": [],
+            "owner": "http://testserver/users/" + str(self.user.id),
+            "applicable_retreats": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -924,7 +927,7 @@ class CouponTests(APITestCase):
         response = self.client.patch(
             reverse(
                 'coupon-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.coupon.id},
             ),
             data,
             format='json',
@@ -939,8 +942,8 @@ class CouponTests(APITestCase):
         response_data = json.loads(response.content)
 
         content = {
-            "url": "http://testserver/coupons/1",
-            "id": 1,
+            "url": "http://testserver/coupons/" + str(self.coupon.id),
+            "id": self.coupon.id,
             "applicable_product_types": [
                 "package"
             ],
@@ -952,8 +955,8 @@ class CouponTests(APITestCase):
             "max_use": 1000,
             "max_use_per_user": 20,
             "details": "Any package for clients (updated max_use)",
-            "owner": "http://testserver/users/1",
-            "applicable_retirements": [],
+            "owner": "http://testserver/users/" + str(self.user.id),
+            "applicable_retreats": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -974,7 +977,7 @@ class CouponTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'coupon-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.coupon.id},
             ),
         )
 
@@ -991,7 +994,7 @@ class CouponTests(APITestCase):
         response = self.client.delete(
             reverse(
                 'coupon-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.coupon.id},
             ),
         )
 
@@ -1022,8 +1025,8 @@ class CouponTests(APITestCase):
         """
         self.client.force_authenticate(user=self.user)
 
-        self.coupon.applicable_retirements.set([
-            self.retirement,
+        self.coupon.applicable_retreats.set([
+            self.retreat,
         ])
         self.coupon.applicable_timeslots.set([
             self.time_slot,
@@ -1047,8 +1050,8 @@ class CouponTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                "url": "http://testserver/coupons/1",
-                "id": 1,
+                "url": "http://testserver/coupons/" + str(self.coupon.id),
+                "id": self.coupon.id,
                 "applicable_product_types": [
                     "package"
                 ],
@@ -1060,28 +1063,29 @@ class CouponTests(APITestCase):
                 "max_use": 100,
                 "max_use_per_user": 2,
                 "details": "Any package for clients",
-                "owner": "http://testserver/users/1",
+                "owner": "http://testserver/users/" + str(self.user.id),
                 "applicable_memberships": [{
                     'academic_levels': [],
                     'available': True,
                     'details': '1-Year student membership',
                     'duration': '365 00:00:00',
-                    'id': 1,
+                    'id': self.membership.id,
                     'name': 'basic_membership',
                     'price': '50.00',
-                    'url': 'http://testserver/memberships/1'
+                    'url': 'http://testserver/memberships/' +
+                           str(self.membership.id)
                 }],
                 "applicable_packages": [{
                     'available': True,
                     'details': '100 reservations package',
                     'exclusive_memberships': [],
-                    'id': 1,
+                    'id': self.package.id,
                     'name': 'extreme_package',
                     'price': '400.00',
                     'reservations': 100,
-                    'url': 'http://testserver/packages/1'
+                    'url': 'http://testserver/packages/' + str(self.package.id)
                 }],
-                "applicable_retirements": [{
+                "applicable_retreats": [{
                     'accessibility': True,
                     'activity_language': 'FR',
                     'address_line1': '123 random street',
@@ -1089,18 +1093,18 @@ class CouponTests(APITestCase):
                     'carpool_url': None,
                     'city': '',
                     'country': 'Random country',
-                    'details': 'This is a description of the mega retirement.',
+                    'details': 'This is a description of the mega retreat.',
                     'email_content': None,
                     'end_time': '2130-01-17T12:00:00-05:00',
                     'exclusive_memberships': [],
                     'form_url': None,
-                    'id': 1,
+                    'id': self.retreat.id,
                     'is_active': True,
                     'latitude': None,
                     'longitude': None,
                     'min_day_exchange': 7,
                     'min_day_refund': 7,
-                    'name': 'mega_retirement',
+                    'name': 'mega_retreat',
                     'next_user_notified': 0,
                     'notification_interval': '1 00:00:00',
                     'pictures': [],
@@ -1118,19 +1122,25 @@ class CouponTests(APITestCase):
                     'state_province': 'Random state',
                     'timezone': None,
                     'total_reservations': 0,
-                    'url': 'http://testserver/retirement/retirements/1',
-                    'users': []
+                    'url':
+                        f'http://testserver/retreat/retreats/'
+                        f'{self.retreat.id}',
+                    'users': [],
+                    'has_shared_rooms': True,
                 }],
                 "applicable_timeslots": [{
+                    'billing_price': 1.0,
                     'end_time': '2130-01-15T12:00:00-05:00',
-                    'id': 1,
-                    'period': 'http://testserver/periods/1',
+                    'id': self.period.id,
+                    'period': 'http://testserver/periods/' +
+                              str(self.period.id),
                     'places_remaining': 40,
                     'price': '1.00',
                     'reservations': [],
                     'reservations_canceled': [],
                     'start_time': '2130-01-15T08:00:00-05:00',
-                    'url': 'http://testserver/time_slots/1',
+                    'url': 'http://testserver/time_slots/' +
+                           str(self.time_slot.id),
                     'users': [],
                     'workplace': {
                         'address_line1': '123 random street',
@@ -1138,7 +1148,7 @@ class CouponTests(APITestCase):
                         'city': '',
                         'country': 'Random country',
                         'details': 'This is a description of the workplace.',
-                        'id': 1,
+                        'id': self.workplace.id,
                         'latitude': None,
                         'longitude': None,
                         'name': 'random_workplace',
@@ -1148,9 +1158,11 @@ class CouponTests(APITestCase):
                         'seats': 40,
                         'state_province': 'Random state',
                         'timezone': None,
-                        'volunteers': [],
-                        'url': 'http://testserver/workplaces/1'
-                    }
+                        'url':
+                            f'http://testserver/workplaces/'
+                            f'{self.workplace.id}',
+                        'volunteers': []
+                        }
                 }],
                 "users": []
             }]
@@ -1160,7 +1172,7 @@ class CouponTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.coupon.applicable_retirements.set([])
+        self.coupon.applicable_retreats.set([])
         self.coupon.applicable_timeslots.set([])
         self.coupon.applicable_packages.set([])
         self.coupon.applicable_memberships.set([])
@@ -1183,8 +1195,8 @@ class CouponTests(APITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                "url": "http://testserver/coupons/1",
-                "id": 1,
+                "url": "http://testserver/coupons/" + str(self.coupon.id),
+                "id": self.coupon.id,
                 "applicable_product_types": [
                     "package"
                 ],
@@ -1196,15 +1208,15 @@ class CouponTests(APITestCase):
                 "max_use": 100,
                 "max_use_per_user": 2,
                 "details": "Any package for clients",
-                "owner": "http://testserver/users/1",
-                "applicable_retirements": [],
+                "owner": "http://testserver/users/" + str(self.user.id),
+                "applicable_retreats": [],
                 "applicable_timeslots": [],
                 "applicable_packages": [],
                 "applicable_memberships": [],
                 "users": []
             }, {
-                "url": "http://testserver/coupons/2",
-                "id": 2,
+                "url": "http://testserver/coupons/" + str(self.coupon2.id),
+                "id": self.coupon2.id,
                 "applicable_product_types": [],
                 "value": "13.00",
                 "percent_off": None,
@@ -1214,8 +1226,8 @@ class CouponTests(APITestCase):
                 "max_use": 100,
                 "max_use_per_user": 2,
                 "details": "Any package for clients",
-                "owner": "http://testserver/users/2",
-                "applicable_retirements": [],
+                "owner": "http://testserver/users/" + str(self.admin.id),
+                "applicable_retreats": [],
                 "applicable_timeslots": [],
                 "applicable_packages": [],
                 "applicable_memberships": [],
@@ -1234,8 +1246,8 @@ class CouponTests(APITestCase):
         """
         self.client.force_authenticate(user=self.user)
 
-        self.coupon.applicable_retirements.set([
-            self.retirement,
+        self.coupon.applicable_retreats.set([
+            self.retreat,
         ])
         self.coupon.applicable_timeslots.set([
             self.time_slot,
@@ -1257,8 +1269,8 @@ class CouponTests(APITestCase):
         data = json.loads(response.content)
 
         content = {
-            "url": "http://testserver/coupons/1",
-            "id": 1,
+            "url": "http://testserver/coupons/" + str(self.coupon.id),
+            "id": self.coupon.id,
             "value": "13.00",
             "percent_off": None,
             "code": data['code'],
@@ -1267,29 +1279,30 @@ class CouponTests(APITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": "http://testserver/users/1",
+            "owner": "http://testserver/users/" + str(self.user.id),
             "applicable_product_types": ['package'],
             "applicable_memberships": [{
                 'academic_levels': [],
                 'available': True,
                 'details': '1-Year student membership',
                 'duration': '365 00:00:00',
-                'id': 1,
+                'id': self.membership.id,
                 'name': 'basic_membership',
                 'price': '50.00',
-                'url': 'http://testserver/memberships/1'
+                'url': 'http://testserver/memberships/' +
+                       str(self.membership.id)
             }],
             "applicable_packages": [{
                 'available': True,
                 'details': '100 reservations package',
                 'exclusive_memberships': [],
-                'id': 1,
+                'id': self.package.id,
                 'name': 'extreme_package',
                 'price': '400.00',
                 'reservations': 100,
-                'url': 'http://testserver/packages/1'
+                'url': 'http://testserver/packages/' + str(self.package.id)
             }],
-            "applicable_retirements": [{
+            "applicable_retreats": [{
                 'accessibility': True,
                 'activity_language': 'FR',
                 'address_line1': '123 random street',
@@ -1297,18 +1310,18 @@ class CouponTests(APITestCase):
                 'carpool_url': None,
                 'city': '',
                 'country': 'Random country',
-                'details': 'This is a description of the mega retirement.',
+                'details': 'This is a description of the mega retreat.',
                 'email_content': None,
                 'end_time': '2130-01-17T12:00:00-05:00',
                 'exclusive_memberships': [],
                 'form_url': None,
-                'id': 1,
+                'id': self.retreat.id,
                 'is_active': True,
                 'latitude': None,
                 'longitude': None,
                 'min_day_exchange': 7,
                 'min_day_refund': 7,
-                'name': 'mega_retirement',
+                'name': 'mega_retreat',
                 'next_user_notified': 0,
                 'notification_interval': '1 00:00:00',
                 'pictures': [],
@@ -1326,19 +1339,24 @@ class CouponTests(APITestCase):
                 'state_province': 'Random state',
                 'timezone': None,
                 'total_reservations': 0,
-                'url': 'http://testserver/retirement/retirements/1',
-                'users': []
+                'url':
+                    f'http://testserver/retreat/retreats/'
+                    f'{self.retreat.id}',
+                'users': [],
+                'has_shared_rooms': True,
             }],
             "applicable_timeslots": [{
+                'billing_price': 1.0,
                 'end_time': '2130-01-15T12:00:00-05:00',
-                'id': 1,
-                'period': 'http://testserver/periods/1',
+                'id': self.period.id,
+                'period': 'http://testserver/periods/' + str(self.period.id),
                 'places_remaining': 40,
                 'price': '1.00',
                 'reservations': [],
                 'reservations_canceled': [],
                 'start_time': '2130-01-15T08:00:00-05:00',
-                'url': 'http://testserver/time_slots/1',
+                'url': 'http://testserver/time_slots/' +
+                       str(self.time_slot.id),
                 'users': [],
                 'workplace': {
                     'address_line1': '123 random street',
@@ -1346,7 +1364,7 @@ class CouponTests(APITestCase):
                     'city': '',
                     'country': 'Random country',
                     'details': 'This is a description of the workplace.',
-                    'id': 1,
+                    'id': self.workplace.id,
                     'latitude': None,
                     'longitude': None,
                     'name': 'random_workplace',
@@ -1357,7 +1375,7 @@ class CouponTests(APITestCase):
                     'state_province': 'Random state',
                     'timezone': None,
                     'volunteers': [],
-                    'url': 'http://testserver/workplaces/1'
+                    'url': f'http://testserver/workplaces/{self.workplace.id}'
                 }
             }],
             "users": []
@@ -1367,7 +1385,7 @@ class CouponTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.coupon.applicable_retirements.set([])
+        self.coupon.applicable_retreats.set([])
         self.coupon.applicable_timeslots.set([])
         self.coupon.applicable_packages.set([])
         self.coupon.applicable_memberships.set([])
@@ -1381,7 +1399,7 @@ class CouponTests(APITestCase):
         response = self.client.get(
             reverse(
                 'coupon-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.coupon.id},
             ),
         )
 
@@ -1394,8 +1412,8 @@ class CouponTests(APITestCase):
         data = json.loads(response.content)
 
         content = {
-            "url": "http://testserver/coupons/1",
-            "id": 1,
+            "url": "http://testserver/coupons/" + str(self.coupon.id),
+            "id": self.coupon.id,
             "applicable_product_types": [
                 "package"
             ],
@@ -1407,8 +1425,8 @@ class CouponTests(APITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": "http://testserver/users/1",
-            "applicable_retirements": [],
+            "owner": "http://testserver/users/" + str(self.user.id),
+            "applicable_retreats": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -1447,7 +1465,7 @@ class CouponTests(APITestCase):
         response = self.client.get(
             reverse(
                 'coupon-detail',
-                kwargs={'pk': 1},
+                kwargs={'pk': self.coupon.id},
             ),
         )
 
