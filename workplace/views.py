@@ -413,6 +413,8 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         'cancelation_reason',
         'timeslot__start_time',
         'timeslot__end_time',
+        'user__first_name',
+        'user__last_name',
     )
 
     export_resource = ReservationResource()
