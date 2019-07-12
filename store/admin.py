@@ -190,6 +190,8 @@ class CouponUserAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
         'user__username',
     ) + SafeDeleteAdmin.list_filter
 
+    actions = ['undelete_selected', 'export_admin_action']
+
 
 admin.site.register(Membership, MembershipAdmin)
 admin.site.register(Package, PackageAdmin)
