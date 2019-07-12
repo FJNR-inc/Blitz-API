@@ -145,6 +145,33 @@ def notify_user_of_new_account(email, password):
         )
 
 
+def notify_user_of_change_email(email, activation_url, first_name):
+    if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is False:
+        raise MailServiceError(_("Email service is disabled."))
+    else:
+        merge_data = {
+            "ACTIVATION_URL": activation_url,
+            "FIRST_NAME": first_name,
+        }
+
+        plain_msg = render_to_string(
+            "notify_user_of_change_email.txt",
+            merge_data
+        )
+        msg_html = render_to_string(
+            "notify_user_of_change_email.html",
+            merge_data
+        )
+
+        return django_send_mail(
+            "Confirmation de votre nouvelle adresse courriel",
+            plain_msg,
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            html_message=msg_html,
+        )
+
+
 class ExportPagination(PageNumberPagination):
     """ Custom paginator for data exportation """
     page_size = 1000
