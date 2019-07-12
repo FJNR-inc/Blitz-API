@@ -112,11 +112,12 @@ class OrderLineAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'quantity',
         ('order__user', admin.RelatedOnlyFieldListFilter),
     )
-    search_fields = (
+    search_fields = [
         'order__user__email',
         'order__user__username',
         'coupon__code',
-    )
+        'id'
+    ]
 
     def owner(self, instance):
         return instance.order.user
