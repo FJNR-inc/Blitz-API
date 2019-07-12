@@ -297,7 +297,8 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
             ).key
 
             # Setup the url for the activation button in the email
-            activation_url = FRONTEND_SETTINGS['EMAIL_CHANGE_CONFIRMATION'].replace(
+            activation_url = FRONTEND_SETTINGS['EMAIL_CHANGE_CONFIRMATION']\
+                .replace(
                 "{{token}}",
                 activate_token
             )

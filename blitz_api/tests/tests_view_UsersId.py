@@ -8,6 +8,7 @@ from django.urls import reverse
 
 from .. import models
 from ..factories import UserFactory, AdminFactory
+from django.test.utils import override_settings
 
 
 class UsersIdTests(APITestCase):
@@ -281,6 +282,14 @@ class UsersIdTests(APITestCase):
         # Check the status code
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+            "FRONTEND_INTEGRATION": {
+                "EMAIL_CHANGE_CONFIRMATION": "test",
+            }
+        }
+    )
     def test_partial_update_user_change_email(self):
         """
         Ensure we can get an activation email at a new email address if its
@@ -459,6 +468,14 @@ class UsersIdTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+            "FRONTEND_INTEGRATION": {
+                "EMAIL_CHANGE_CONFIRMATION": "test",
+            }
+        }
+    )
     def test_partial_update_user_change_university_and_email(self):
         """
         Ensure we can get an activation email at a new email address if its
@@ -606,6 +623,14 @@ class UsersIdTests(APITestCase):
         # No email is sent if only the university changed
         self.assertEqual(len(mail.outbox), 0)
 
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+            "FRONTEND_INTEGRATION": {
+                "EMAIL_CHANGE_CONFIRMATION": "test",
+            }
+        }
+    )
     def test_update_user_with_permission(self):
         """
         Ensure we can update a specific user if caller has permission.
