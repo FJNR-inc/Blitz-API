@@ -37,6 +37,12 @@ class RetreatAdmin(SimpleHistoryAdmin, TranslationAdmin,
         'price',
     ) + SafeDeleteAdmin.list_filter
 
+    search_fields = [
+        'name_fr',
+        'name_en',
+        'id'
+    ]
+
 
 class PictureAdmin(SimpleHistoryAdmin, TranslationAdmin):
     list_display = (
@@ -66,6 +72,8 @@ class ReservationAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
         'cancelation_reason',
         'cancelation_action',
     ) + SafeDeleteAdmin.list_filter
+
+    autocomplete_fields = ['user', 'order_line', 'retreat']
 
 
 class WaitQueueAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
