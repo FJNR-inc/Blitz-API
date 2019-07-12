@@ -190,10 +190,11 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
         Lowercase all email addresses.
         """
         if User.objects.filter(email__iexact=value):
-            raise serializers.ValidationError(_(
-                "An account for the specified email "
-                "address already exists."
-            ))
+            if self.context['request'].user.email != value:
+                raise serializers.ValidationError(_(
+                    "An account for the specified email "
+                    "address already exists."
+                ))
         return value
 
     def validate_academic_field(self, value):
@@ -296,28 +297,17 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
             ).key
 
             # Setup the url for the activation button in the email
-            activation_url = FRONTEND_SETTINGS['ACTIVATION_URL'].replace(
+            activation_url = FRONTEND_SETTINGS['EMAIL_CHANGE_CONFIRMATION'].replace(
                 "{{token}}",
                 activate_token
             )
-            # Email sending is not validated here.
-            context = {
-                "activation_url": activation_url,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-            }
-            message = EmailMessage(
-                subject=None,  # required for SendinBlue templates
-                body='',  # required for SendinBlue templates
-                to=[new_email]
+
+            # Send email to activate change of email
+            services.notify_user_of_change_email(
+                new_email,
+                activation_url,
+                user.first_name
             )
-            message.from_email = None  # required for SendinBlue templates
-            # use this SendinBlue template
-            message.template_id = settings.ANYMAIL[
-                "TEMPLATES"
-            ]["CONFIRM_CHANGE_EMAIL"]
-            message.merge_global_data = context
-            response = message.send()  # returns number of sent emails
 
         if not email_activation_needed:
             validated_data['username'] = email

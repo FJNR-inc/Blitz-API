@@ -314,6 +314,10 @@ LOCAL_SETTINGS = {
     'FRONTEND_INTEGRATION': {
         'ACTIVATION_URL': config('ACTIVATION_URL',
                                  default='https://example.com/activate/{{token}}'),
+        'EMAIL_CHANGE_CONFIRMATION': config(
+            'EMAIL_CHANGE_CONFIRMATION',
+            default='https://example.com/validate/email/{{token}}'
+        ),
         'FORGOT_PASSWORD_URL': config('FORGOT_PASSWORD_URL',
                                       default='https://example.com/reset-password/{{token}}'),
     },
