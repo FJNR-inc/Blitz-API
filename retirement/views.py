@@ -8,6 +8,7 @@ import traceback
 
 import pytz
 import rest_framework
+from django.core.files.base import ContentFile
 
 from blitz_api.exceptions import MailServiceError
 from blitz_api.mixins import ExportMixin
@@ -27,6 +28,10 @@ from rest_framework import serializers as rest_framework_serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
+
+from blitz_api.models import ExportMedia
+from blitz_api.serializers import ExportMediaSerializer
+from blitz_api.services import ExportPagination
 from store.exceptions import PaymentAPIError
 from store.models import Refund
 from store.services import refund_amount, PAYSAFE_EXCEPTION
@@ -35,7 +40,7 @@ from . import permissions, serializers
 from .models import (Picture, Reservation, Retreat, WaitQueue,
                      WaitQueueNotification)
 from .resources import (ReservationResource, RetreatResource,
-                        WaitQueueNotificationResource, WaitQueueResource)
+                        WaitQueueNotificationResource, WaitQueueResource, RetreatReservationResource)
 from .services import (notify_reserved_retreat_seat,
                        send_retreat_7_days_email,
                        send_post_retreat_email, )
@@ -135,6 +140,37 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             'stop': True,
         }
         return Response(response_data, status=status.HTTP_200_OK)
+
+    @action(detail=True, permission_classes=[IsAdminUser])
+    def export_participation(self, request, pk=None):
+
+        retreat: Retreat = self.get_object()
+        # Order queryset by ascending id, thus by descending age too
+        queryset = Reservation.objects.filter(retreat=retreat)
+        # Build dataset using paginated queryset
+        dataset = RetreatReservationResource().export(queryset)
+
+        date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
+            .strftime("%Y%m%d-%H%M%S")
+        filename = f'export-participation-{retreat.name}{date_file}.xls'
+
+        new_exprt = ExportMedia.objects.create()
+        content = ContentFile(dataset.xls)
+        new_exprt.file.save(filename, content)
+
+        export_url = ExportMediaSerializer(
+            new_exprt,
+            context={'request': request}
+        ).data.get('file')
+
+        response = Response(
+            status=status.HTTP_200_OK,
+            data={
+                'file_url': export_url
+            }
+        )
+
+        return response
 
 
 class PictureViewSet(viewsets.ModelViewSet):

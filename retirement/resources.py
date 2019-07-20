@@ -5,6 +5,7 @@ from import_export import fields, resources
 from import_export.widgets import (ForeignKeyWidget, ManyToManyWidget,
                                    DateTimeWidget)
 
+from store.models import OrderLine
 from .models import Reservation, Retreat
 
 User = get_user_model()
@@ -180,4 +181,58 @@ class WaitQueueNotificationResource(resources.ModelResource):
             'user',
             'retreat',
             'created_at',
+        )
+
+
+class RetreatReservationResource(resources.ModelResource):
+    last_name = fields.Field(
+        column_name='last_name',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'last_name'),
+    )
+
+    first_name = fields.Field(
+        column_name='first_name',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'first_name'),
+    )
+
+    email = fields.Field(
+        column_name='email',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'email'),
+    )
+
+    #status = (membre, étudiant, allié, etc.)
+
+    order_date = fields.Field(
+        column_name='order_date',
+        attribute='order_line__order__transaction_date',
+        widget=DateTimeWidget(),
+    )
+
+    #complementary_informations = (dans formulaire d’achat)
+
+    #promo_code = (dans formulaire d’achat)
+
+
+    class Meta:
+        model = Reservation
+        fields = (
+            'last_name',
+            'first_name',
+            'email',
+            #'status',
+            'order_date',
+            #'complementary_informations',
+            #'promo_code',
+        )
+        export_order = (
+            'last_name',
+            'first_name',
+            'email',
+            #'status',
+            'order_date',
+            #'complementary_informations',
+            #'promo_code',
         )
