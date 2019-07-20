@@ -39,8 +39,10 @@ from store.services import refund_amount, PAYSAFE_EXCEPTION
 from . import permissions, serializers
 from .models import (Picture, Reservation, Retreat, WaitQueue,
                      WaitQueueNotification)
-from .resources import (ReservationResource, RetreatResource,
-                        WaitQueueNotificationResource, WaitQueueResource, RetreatReservationResource)
+from .resources import (
+    ReservationResource, RetreatResource,
+    WaitQueueNotificationResource, WaitQueueResource,
+    RetreatReservationResource)
 from .services import (notify_reserved_retreat_seat,
                        send_retreat_7_days_email,
                        send_post_retreat_email, )

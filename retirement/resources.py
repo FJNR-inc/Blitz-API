@@ -203,7 +203,11 @@ class RetreatReservationResource(resources.ModelResource):
         widget=ForeignKeyWidget(User, 'email'),
     )
 
-    #status = (membre, étudiant, allié, etc.)
+    status = fields.Field(
+        column_name='status',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'membership__name'),
+    )
 
     order_date = fields.Field(
         column_name='order_date',
@@ -211,10 +215,29 @@ class RetreatReservationResource(resources.ModelResource):
         widget=DateTimeWidget(),
     )
 
-    #complementary_informations = (dans formulaire d’achat)
+    promo_code = fields.Field(
+        column_name='promo_code',
+        attribute='order_line',
+        widget=ForeignKeyWidget(OrderLine, 'coupon__code'),
+    )
 
-    #promo_code = (dans formulaire d’achat)
+    personnal_restrictions = fields.Field(
+        column_name='personnal_restriction',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'personnal_restrictions'),
+    )
 
+    city = fields.Field(
+        column_name='city',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'city'),
+    )
+
+    phone = fields.Field(
+        column_name='phone',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'phone'),
+    )
 
     class Meta:
         model = Reservation
@@ -222,17 +245,21 @@ class RetreatReservationResource(resources.ModelResource):
             'last_name',
             'first_name',
             'email',
-            #'status',
+            'status',
             'order_date',
-            #'complementary_informations',
-            #'promo_code',
+            'promo_code',
+            'personnal_restrictions',
+            'city',
+            'phone'
         )
         export_order = (
             'last_name',
             'first_name',
             'email',
-            #'status',
+            'status',
             'order_date',
-            #'complementary_informations',
-            #'promo_code',
+            'promo_code',
+            'personnal_restrictions',
+            'city',
+            'phone'
         )
