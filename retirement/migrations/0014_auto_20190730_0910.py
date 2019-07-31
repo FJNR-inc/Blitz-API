@@ -12,7 +12,8 @@ def update_inscription_date(apps, schema_editor):
         if reservation.order_line:
             reservation.inscription_date = reservation.order_line.order.transaction_date
         else:
-            reservation.inscription_date = reservation.retreat.start_time
+            reservation.inscription_date = reservation.retreat.start_time - \
+                                           datetime.timedelta(minutes=10)
 
         reservation.save()
 

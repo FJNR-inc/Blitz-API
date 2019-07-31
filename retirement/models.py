@@ -263,7 +263,7 @@ class Reservation(SafeDeleteModel):
     )
 
     inscription_date = models.DateTimeField(
-        verbose_name="Inscription date",
+        verbose_name=_("Inscription date"),
         auto_now_add=True
     )
 
