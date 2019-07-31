@@ -235,6 +235,7 @@ class ReservationTests(APITestCase):
 
         del response_data['user_details']
         del response_data['retreat_details']
+        del response_data['inscription_date']
 
         content = self.reservation_expected_payload.copy()
         content['is_present'] = True
@@ -291,6 +292,7 @@ class ReservationTests(APITestCase):
 
         del response_data['user_details']
         del response_data['retreat_details']
+        del response_data['inscription_date']
 
         content = self.reservation_expected_payload.copy()
         content['is_present'] = True
@@ -681,6 +683,7 @@ class ReservationTests(APITestCase):
 
         del response_data['user_details']
         del response_data['retreat_details']
+        del response_data['inscription_date']
 
         content = self.reservation_expected_payload.copy()
         content['retreat'] = 'http://testserver' + reverse(
@@ -901,6 +904,7 @@ class ReservationTests(APITestCase):
 
         del response_data['user_details']
         del response_data['retreat_details']
+        del response_data['inscription_date']
 
         content = self.reservation_expected_payload.copy()
         content['retreat'] = 'http://testserver' + reverse(

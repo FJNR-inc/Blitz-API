@@ -262,6 +262,11 @@ class Reservation(SafeDeleteModel):
         default=True,
     )
 
+    inscription_date = models.DateTimeField(
+        verbose_name=_("Inscription date"),
+        auto_now_add=True
+    )
+
     history = HistoricalRecords()
 
     def __str__(self):

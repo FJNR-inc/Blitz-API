@@ -223,6 +223,7 @@ class ReservationTests(APITestCase):
         del response_data['retreat_details']['reservations']
         del response_data['id']
         del response_data['url']
+        del response_data['inscription_date']
 
         content = {
             'is_active': True,
@@ -583,6 +584,9 @@ class ReservationTests(APITestCase):
         del data['results'][1]['retreat_details']
         del data['results'][2]['user_details']
         del data['results'][2]['retreat_details']
+        del data['results'][0]['inscription_date']
+        del data['results'][1]['inscription_date']
+        del data['results'][2]['inscription_date']
 
         content = {
             'count': 3,
@@ -632,6 +636,7 @@ class ReservationTests(APITestCase):
 
         del data['results'][0]['user_details']
         del data['results'][0]['retreat_details']
+        del data['results'][0]['inscription_date']
 
         content = {
             'count': 1,
@@ -661,6 +666,7 @@ class ReservationTests(APITestCase):
 
         del response_data['user_details']
         del response_data['retreat_details']
+        del response_data['inscription_date']
 
         self.assertEqual(response_data, self.reservation_expected_payload)
 
