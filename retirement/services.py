@@ -5,11 +5,11 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils import timezone
 
+from retirement.models import WaitQueue
 from store.exceptions import PaymentAPIError
 from store.models import Refund
 from store.services import (PAYSAFE_EXCEPTION,
                             refund_amount, )
-
 
 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
@@ -20,7 +20,19 @@ def notify_reserved_retreat_seat(user, retreat):
     to a retreat for 24h hours.
     """
 
-    merge_data = {'RETREAT_NAME': retreat.name}
+    wait_queue: WaitQueue = WaitQueue.objects.get(user=user, retreat=retreat)
+
+    # Setup the url for the activation button in the email
+    wait_queue_url = settings.LOCAL_SETTINGS[
+        'FRONTEND_INTEGRATION'][
+        'RETREAT_UNSUBSCRIBE_URL'] \
+        .replace(
+        "{{wait_queue_id}}",
+        str(wait_queue.id)
+    )
+
+    merge_data = {'RETREAT_NAME': retreat.name,
+                  'WAITE_QUEUE_URL': wait_queue_url}
 
     plain_msg = render_to_string("reserved_place.txt", merge_data)
     msg_html = render_to_string("reserved_place.html", merge_data)
@@ -112,7 +124,7 @@ def refund_retreat(reservation, refund_rate, refund_reason):
     refund_instance = Refund.objects.create(
         orderline=orderline,
         refund_date=timezone.now(),
-        amount=amount_to_refund/100,
+        amount=amount_to_refund / 100,
         details=refund_reason,
         refund_id=refund_res_content['id'],
     )
