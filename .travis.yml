@@ -35,6 +35,7 @@ env:
   - AUTO_ACTIVATE_USER=False
   - ACTIVATION_URL=https://da6gat167y18o.cloudfront.net/membership/confirmation/{{token}}
   - FORGOT_PASSWORD_URL=https://da6gat167y18o.cloudfront.net/reset-password/{{token}}
+  - RETREAT_UNSUBSCRIBE_URL=https://da6gat167y18o.cloudfront.net/wait_queue/{{wait_queue_id}}/unsubscribe
   - AWS_S3_REGION_NAME=ca-central-1
   - AWS_STORAGE_STATIC_BUCKET_NAME=thesezvous-api-static
   - AWS_STORAGE_MEDIA_BUCKET_NAME=thesezvous-api-media-dev
