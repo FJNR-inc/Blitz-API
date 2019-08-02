@@ -14,7 +14,7 @@ Des places se sont libérées pour une retraite à laquelle vous êtes intéress
 
 Vous pouvez accéder à cette place exclusive en vous connectant à la plateforme Thèsez-vous!
 
-Se désinscrire: {{ WAITE_QUEUE_URL }}
+Se désinscrire de la file d'attente: {{ WAIT_QUEUE_URL }}
 
  
 ** L'ÉQUIPE THÈSEZ-VOUS
