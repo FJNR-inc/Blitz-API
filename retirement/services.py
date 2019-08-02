@@ -32,7 +32,7 @@ def notify_reserved_retreat_seat(user, retreat):
     )
 
     merge_data = {'RETREAT_NAME': retreat.name,
-                  'WAITE_QUEUE_URL': wait_queue_url}
+                  'WAIT_QUEUE_URL': wait_queue_url}
 
     plain_msg = render_to_string("reserved_place.txt", merge_data)
     msg_html = render_to_string("reserved_place.html", merge_data)

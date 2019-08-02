@@ -18,27 +18,8 @@
             list-style-type: none;
         }
 
-        .button {
-            background-color: #142823;
-            color: white;
-            padding: 15px 30px;
-            border: 1px solid #142823;
-            text-decoration: none;
-            display: inline-block;
-            text-transform: uppercase;
-            font-weight: bold;
-            transition: all cubic-bezier(0.445, 0.05, 0.55, 0.95) 300ms;
-            line-height: 15pt;
+        .center {
             text-align: center;
-            font-size: 11pt;
-            min-width: 170px;
-            font-family: 'Nunito Sans', sans-serif;
-        }
-
-        .button:hover {
-            color: #142823;
-            background-color: transparent;
-            cursor: pointer;
         }
 
         .email {
@@ -108,9 +89,9 @@
             Vous pouvez accéder à cette place exclusive en vous connectant
             à la plateforme Thèsez-vous!
         </p>
-        <p>
-            Vous pouvez vous désinscrire de la file d'attente avec ce <a href="{{ WAITE_QUEUE_URL }}">
-                lien
+        <p class="center">
+            <a href="{{ WAIT_QUEUE_URL }}">
+                Se désinscrire de la file d'attente
             </a>
         </p>
         <h2 class="email__content__subtitle">
