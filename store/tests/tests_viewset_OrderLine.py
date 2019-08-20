@@ -84,6 +84,8 @@ class OrderLineTests(APITestCase):
             cost=99 * cls.package.price,
         )
 
+        cls.maxDiff = 5000
+
     def test_create_package(self):
         """
         Ensure we can create an order line if user has permission.
@@ -110,6 +112,7 @@ class OrderLineTests(APITestCase):
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': 2 * self.package.price,
+            'options': []
         }
 
         response_content = json.loads(response.content)
@@ -241,6 +244,7 @@ class OrderLineTests(APITestCase):
             'coupon': None,
             'coupon_real_value': 0,
             'cost': 2.0 * self.package.price,
+            'options': []
         }
 
         response_content = json.loads(response.content)
@@ -277,6 +281,7 @@ class OrderLineTests(APITestCase):
             'order': f'http://testserver/orders/{self.order.id}',
             'quantity': 1,
             'cost': self.membership.price,
+            'options': []
         }
 
         response_content = json.loads(response.content)
@@ -408,6 +413,7 @@ class OrderLineTests(APITestCase):
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': 99 * self.package.price,
+            'options': [],
             'url': f'http://testserver/order_lines/{self.order_line.id}'
         }
 
@@ -447,6 +453,7 @@ class OrderLineTests(APITestCase):
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': 9 * self.package.price,
+            'options': [],
             'url': f'http://testserver/order_lines/{self.order_line.id}'
         }
 
@@ -544,6 +551,7 @@ class OrderLineTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': self.package.price,
+                'options': [],
                 'url': f'http://testserver/order_lines/{self.order_line.id}'
             }]
         }
@@ -578,6 +586,7 @@ class OrderLineTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': self.package.price,
+                'options': [],
                 'url': f'http://testserver/order_lines/{self.order_line.id}'
             }, {
                 'content_type': 'package',
@@ -588,6 +597,7 @@ class OrderLineTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 99 * self.package.price,
+                'options': [],
                 'url':
                     f'http://testserver/order_lines/{self.order_line_admin.id}'
             }]
@@ -637,6 +647,7 @@ class OrderLineTests(APITestCase):
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': self.package.price,
+            'options': [],
             'url': f'http://testserver/order_lines/{self.order_line.id}'
         }
 
@@ -685,6 +696,7 @@ class OrderLineTests(APITestCase):
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': self.package.price,
+            'options': [],
             'url': f'http://testserver/order_lines/{self.order_line.id}'
         }
 

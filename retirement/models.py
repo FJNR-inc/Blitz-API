@@ -7,12 +7,12 @@ from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
-from store.models import Membership, OrderLine
+from store.models import Membership, OrderLine, BaseProduct
 
 User = get_user_model()
 
 
-class Retreat(Address, SafeDeleteModel):
+class Retreat(Address, SafeDeleteModel, BaseProduct):
     """Represents a retreat physical place."""
 
     ACTIVITY_LANGUAGE = (
@@ -25,15 +25,9 @@ class Retreat(Address, SafeDeleteModel):
         verbose_name = _("Retreat")
         verbose_name_plural = _("Retreats")
 
-    name = models.CharField(
-        verbose_name=_("Name"),
-        max_length=253,
-    )
-
-    details = models.CharField(
-        verbose_name=_("Details"),
-        max_length=1000,
-    )
+    old_id = models.IntegerField(
+        verbose_name=_("Id before migrate to base product"),
+        null=True,)
 
     seats = models.IntegerField(verbose_name=_("Seats"), )
 
@@ -66,12 +60,6 @@ class Retreat(Address, SafeDeleteModel):
         max_length=100,
         choices=ACTIVITY_LANGUAGE,
         verbose_name=_("Activity language"),
-    )
-
-    price = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        verbose_name=_("Price"),
     )
 
     start_time = models.DateTimeField(verbose_name=_("Start time"), )
