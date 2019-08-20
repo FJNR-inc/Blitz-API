@@ -34,6 +34,7 @@ class RetreatTests(APITestCase):
         cls.admin = AdminFactory()
 
     def setUp(self):
+        self.maxDiff = 10000
         self.retreat = Retreat.objects.create(
             name="mega_retreat",
             details="This is a description of the mega retreat.",

@@ -118,6 +118,8 @@ class ReservationTests(APITestCase):
             is_active=True,
         )
 
+        cls.maxDiff = 5000
+
     def test_create(self):
         """
         Ensure we can create a reservation if user has permission.

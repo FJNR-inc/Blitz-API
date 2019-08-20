@@ -50,6 +50,7 @@ TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 class ReservationTests(APITestCase):
 
     def setUp(self):
+        self.maxDiff = 10000
         self.client = APIClient()
         self.user = UserFactory()
         self.user2 = UserFactory()
@@ -129,8 +130,7 @@ class ReservationTests(APITestCase):
             order=self.order,
             quantity=1,
             content_type=self.retreat_type,
-            object_id=self.retreat.id,
-            cost=self.retreat.price,
+            object_id=self.retreat.id
         )
         self.reservation = Reservation.objects.create(
             user=self.user,
