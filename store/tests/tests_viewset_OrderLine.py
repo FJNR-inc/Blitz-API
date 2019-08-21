@@ -714,8 +714,8 @@ class OrderLineTests(APITestCase):
 
     def test_product_list(self):
         """
-        Ensure we get not found when asking for an order line that doesn't
-        exist.
+        Get list of product, get content_type name group by content_type in
+        all order line
         """
         self.client.force_authenticate(user=self.admin)
 

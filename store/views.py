@@ -298,7 +298,11 @@ class OrderLineViewSet(ExportMixin, ChartJSMixin, viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def product_list(self, request: HttpRequest):
-
+        """
+        Get content_type name, id and if he can display details group by
+        content_type in all order lines
+        Use to filter by content_type in ChartJS call
+        """
         product_list = list(self.get_queryset()
                             .distinct('content_type')
                             .values('content_type'))
