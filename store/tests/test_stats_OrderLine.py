@@ -1,9 +1,11 @@
 import json
 
+import pytz
+from django.conf import settings
 from rest_framework.test import APIClient, APITestCase
 from blitz_api.factories import UserFactory, AdminFactory
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from django.utils import timezone
 from django.urls import reverse
@@ -13,6 +15,8 @@ from django.contrib.contenttypes.models import ContentType
 from blitz_api.models import AcademicLevel
 
 from ..models import Membership, Order, OrderLine, Package
+
+LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
 class OrderLineStatsTests(APITestCase):
@@ -54,13 +58,13 @@ class OrderLineStatsTests(APITestCase):
         ])
         self.order = Order.objects.create(
             user=self.user,
-            transaction_date=timezone.now(),
+            transaction_date=LOCAL_TIMEZONE.localize(datetime(2020, 1, 15, 8)),
             authorization_id=1,
             settlement_id=1,
         )
         self.order_admin = Order.objects.create(
             user=self.admin,
-            transaction_date=timezone.now(),
+            transaction_date=LOCAL_TIMEZONE.localize(datetime(2020, 1, 15, 8)),
             authorization_id=1,
             settlement_id=1,
         )
@@ -80,10 +84,7 @@ class OrderLineStatsTests(APITestCase):
         )
 
     def test_chartJS(self):
-        """
-        Ensure we get not found when asking for an order line that doesn't
-        exist.
-        """
+
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
@@ -93,14 +94,14 @@ class OrderLineStatsTests(APITestCase):
         )
 
         content = {
-            'labels': ['2019-08-11T00:00:00-04:00'],
+            'labels': ['2020-01-15T00:00:00-05:00'],
             'datasets': [
                 {
                     'label': 'Package',
                     'data':
                         [
                             {
-                                'x': '2019-08-11T00:00:00-04:00',
+                                'x': '2020-01-15T00:00:00-05:00',
                                 'y': 100
                             }
                         ]
@@ -111,10 +112,7 @@ class OrderLineStatsTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
     def test_chartJS_interval_month(self):
-        """
-        Ensure we get not found when asking for an order line that doesn't
-        exist.
-        """
+
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
@@ -124,13 +122,13 @@ class OrderLineStatsTests(APITestCase):
         )
 
         content = {
-            'labels': ['2019-08-01T00:00:00-04:00'],
+            'labels': ['2020-01-01T00:00:00-05:00'],
             'datasets': [
                 {
                     'label': 'Package',
                     'data': [
                         {
-                            'x': '2019-08-01T00:00:00-04:00',
+                            'x': '2020-01-01T00:00:00-05:00',
                             'y': 100
                         }
                     ]
@@ -141,10 +139,7 @@ class OrderLineStatsTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
     def test_chartJS_interval_month_filter_date(self):
-        """
-        Ensure we get not found when asking for an order line that doesn't
-        exist.
-        """
+
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
@@ -152,17 +147,17 @@ class OrderLineStatsTests(APITestCase):
                 'orderline-chartjs'
             ) + '?interval=month&aggregate=sum' +
             'start=2018-01-01T00:00:00.000Z' +
-            'end=2020-01-01T00:00:00.000Z'
+            'end=2024-01-01T00:00:00.000Z'
         )
 
         content = {
-            'labels': ['2019-08-01T00:00:00-04:00'],
+            'labels': ['2020-01-01T00:00:00-05:00'],
             'datasets': [
                 {
                     'label': 'Package',
                     'data': [
                         {
-                            'x': '2019-08-01T00:00:00-04:00',
+                            'x': '2020-01-01T00:00:00-05:00',
                             'y': 100
                         }
                     ]
@@ -173,10 +168,7 @@ class OrderLineStatsTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
     def test_chartJS_interval_month_content_type_filter(self):
-        """
-        Ensure we get not found when asking for an order line that doesn't
-        exist.
-        """
+
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
@@ -187,13 +179,13 @@ class OrderLineStatsTests(APITestCase):
         )
 
         content = {
-            'labels': ['2019-08-01T00:00:00-04:00'],
+            'labels': ['2020-01-01T00:00:00-05:00'],
             'datasets': [
                 {
                     'label': 'Package',
                     'data': [
                         {
-                            'x': '2019-08-01T00:00:00-04:00',
+                            'x': '2020-01-01T00:00:00-05:00',
                             'y': 100
                         }
                     ]
@@ -204,10 +196,7 @@ class OrderLineStatsTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
     def test_chartJS_interval_month_with_detail(self):
-        """
-        Ensure we get not found when asking for an order line that doesn't
-        exist.
-        """
+
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
@@ -216,17 +205,14 @@ class OrderLineStatsTests(APITestCase):
             ) + '?interval=month&aggregate=sum&group_by_object=True',
         )
 
-        content = {'labels': ['2019-08-01T00:00:00-04:00'], 'datasets': [
+        content = {'labels': ['2020-01-01T00:00:00-05:00'], 'datasets': [
             {'label': 'extreme_package',
-             'data': [{'x': '2019-08-01T00:00:00-04:00', 'y': 100}]}]}
+             'data': [{'x': '2020-01-01T00:00:00-05:00', 'y': 100}]}]}
 
         self.assertEqual(json.loads(response.content), content)
 
     def test_chartJS_interval_week(self):
-        """
-        Ensure we get not found when asking for an order line that doesn't
-        exist.
-        """
+
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
@@ -235,17 +221,14 @@ class OrderLineStatsTests(APITestCase):
             ) + '?interval=week&aggregate=sum',
         )
 
-        content = {'labels': ['2019-08-05T00:00:00-04:00'], 'datasets': [
+        content = {'labels': ['2020-01-13T00:00:00-05:00'], 'datasets': [
             {'label': 'Package',
-             'data': [{'x': '2019-08-05T00:00:00-04:00', 'y': 100}]}]}
+             'data': [{'x': '2020-01-13T00:00:00-05:00', 'y': 100}]}]}
 
         self.assertEqual(json.loads(response.content), content)
 
     def test_chartJS_interval_year(self):
-        """
-        Ensure we get not found when asking for an order line that doesn't
-        exist.
-        """
+
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
@@ -254,17 +237,14 @@ class OrderLineStatsTests(APITestCase):
             ) + '?interval=year&aggregate=sum',
         )
 
-        content = {'labels': ['2019-01-01T00:00:00-05:00'], 'datasets': [
+        content = {'labels': ['2020-01-01T00:00:00-05:00'], 'datasets': [
             {'label': 'Package',
-             'data': [{'x': '2019-01-01T00:00:00-05:00', 'y': 100}]}]}
+             'data': [{'x': '2020-01-01T00:00:00-05:00', 'y': 100}]}]}
 
         self.assertEqual(json.loads(response.content), content)
 
     def test_chartJS_interval_month_count(self):
-        """
-        Ensure we get not found when asking for an order line that doesn't
-        exist.
-        """
+
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.get(
@@ -273,8 +253,8 @@ class OrderLineStatsTests(APITestCase):
             ) + '?interval=month&aggregate=count',
         )
 
-        content = {'labels': ['2019-08-01T00:00:00-04:00'], 'datasets': [
+        content = {'labels': ['2020-01-01T00:00:00-05:00'], 'datasets': [
             {'label': 'Package',
-             'data': [{'x': '2019-08-01T00:00:00-04:00', 'y': 2}]}]}
+             'data': [{'x': '2020-01-01T00:00:00-05:00', 'y': 2}]}]}
 
         self.assertEqual(json.loads(response.content), content)

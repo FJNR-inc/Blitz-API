@@ -14,19 +14,54 @@ from django.template.defaultfilters import date
 
 
 class ChartJSMixin(object):
+    """
+    We can use this mixin in a view to get formatted data for ChartJS
+    It extract from a queryset sum of a quantity field,
+    group by an interval on a date field.
+    The interval can be:
+     - day
+     - week
+     - month
+     - year
+     It can be filter by start and end date.
+     The final format will be like this:
+     {
+        'labels': ['2019-01-01T00:00:00-05:00'],
+        'datasets': [
+            {
+                'label': 'Package',
+                'data': [
+                    {
+                        'x': '2019-01-01T00:00:00-05:00',
+                        'y': 100
+                    }, ...
+                ]
+            }
+        ]
+    }
+
+    labels is the distinct list of all 'x' of all datatesets
+    """
+
+    # attribute to be overwrite in the view
+    # The field to be used to get the date
     date_field: string = None
+    # The field to be used to get the quantity to sum
     quantity_field: string = None
 
+    # Http Parameters key
     INTERVAL = 'interval'
     AGGREGATE = 'aggregate'
     END = 'end'
     START = 'start'
     GROUP_BY_OBJECT = 'group_by_object'  # object_id or content_type
-    group_by_object = False
 
+    # Key data extracted
     QUANTITY = 'quantity'
     CONTENT_TYPE = 'content_type'
     OBJECT_ID = 'object_id'
+
+    group_by_object = False
 
     @action(detail=False, permission_classes=[IsAdminUser])
     def chartjs(self, request: HttpRequest):
