@@ -504,16 +504,22 @@ class WaitQueueViewSet(ExportMixin, viewsets.ModelViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        retreat = instance.retreat
-        wait_queue = retreat.wait_queue.all().order_by('created_at')
-        for index, item in enumerate(wait_queue):
-            if item == instance:
-                wait_queue_pos = index
-                break
+        wait_queue_object: WaitQueue = self.get_object()
+        retreat = wait_queue_object.retreat
+        retreat_wait_queue_list = retreat.wait_queue.all()\
+            .order_by('created_at')
+
+        wait_queue_pos = list(retreat_wait_queue_list).index(wait_queue_object)
+
         if wait_queue_pos < retreat.next_user_notified:
             retreat.next_user_notified -= 1
             retreat.save()
+
+        # Delete also WaitqueueNotification link to this waitqueue
+        WaitQueueNotification.objects.filter(
+            retreat=retreat,
+            user=wait_queue_object.user).delete()
+
         return super(WaitQueueViewSet, self).destroy(request, *args, **kwargs)
 
 

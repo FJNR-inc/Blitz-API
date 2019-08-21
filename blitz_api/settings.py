@@ -320,6 +320,10 @@ LOCAL_SETTINGS = {
         ),
         'FORGOT_PASSWORD_URL': config('FORGOT_PASSWORD_URL',
                                       default='https://example.com/reset-password/{{token}}'),
+        'RETREAT_UNSUBSCRIBE_URL':
+            config('RETREAT_UNSUBSCRIBE_URL',
+                   default='https://example.com/wait_queue/'
+                           '{{wait_queue_id}}/unsubscribe'),
     },
     'SELLING_TAX': 0.14975,
     'RETREAT_NOTIFICATION_LIFETIME_DAYS': config(
