@@ -83,7 +83,7 @@ class OrderTests(APITestCase):
             OptionProduct.objects.get(id=response_content.get('id'))
         )
 
-    def test_create_with_product(self):
+    def test_create_with_product_type(self):
 
         self.client.force_authenticate(user=self.admin)
 
@@ -126,7 +126,7 @@ class OrderTests(APITestCase):
                       list(self.retreat.options),
                       response_content.get('id'))
 
-    def test_create_with_product_type(self):
+    def test_create_with_product(self):
 
         self.client.force_authenticate(user=self.admin)
 
@@ -137,9 +137,7 @@ class OrderTests(APITestCase):
             'price': '50.00',
             'max_quantity': 10,
             'available_on_products':
-                [reverse('baseproduct-detail',
-                         args=[self.retreat.id],
-                         request=self.request)]
+                [self.retreat.id]
         }
 
         response = self.client.post(

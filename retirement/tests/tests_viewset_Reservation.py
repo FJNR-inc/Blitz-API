@@ -280,6 +280,9 @@ class ReservationTests(APITestCase):
                 'url': 'http://testserver/retreat/retreats/' +
                        str(self.retreat2.id),
                 'has_shared_rooms': True,
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'options': [],
             },
             'user_details': {
                 'academic_field': None,
