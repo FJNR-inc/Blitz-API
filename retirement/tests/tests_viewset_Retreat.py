@@ -182,6 +182,9 @@ class RetreatTests(APITestCase):
             'review_url': 'example3.com',
             'place_name': '',
             'has_shared_rooms': True,
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'options': [],
         }
 
         response_data = remove_translation_fields(json.loads(response.content))
@@ -507,6 +510,9 @@ class RetreatTests(APITestCase):
             'url': 'http://testserver/retreat/retreats/' +
                    str(self.retreat.id),
             'has_shared_rooms': True,
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'options': [],
         }
 
         self.assertEqual(
@@ -600,6 +606,9 @@ class RetreatTests(APITestCase):
                     'url': 'http://testserver/retreat/retreats/' +
                            str(self.retreat.id),
                     'has_shared_rooms': True,
+                    'available_on_product_types': [],
+                    'available_on_products': [],
+                    'options': [],
                 }
             ]
         }
@@ -665,6 +674,9 @@ class RetreatTests(APITestCase):
                 'url': 'http://testserver/retreat/retreats/' +
                        str(self.retreat2.id),
                 'has_shared_rooms': True,
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'options': [],
             }]
         }
 
@@ -725,6 +737,9 @@ class RetreatTests(APITestCase):
             'url': 'http://testserver/retreat/retreats/' +
                    str(self.retreat.id),
             'has_shared_rooms': True,
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'options': [],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -791,6 +806,9 @@ class RetreatTests(APITestCase):
             'url': 'http://testserver/retreat/retreats/' +
                    str(self.retreat.id),
             'has_shared_rooms': True,
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'options': [],
         }
 
         self.assertEqual(response_data, content)

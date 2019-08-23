@@ -129,11 +129,10 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
         required=False,
     )
 
-    options = serializers.HyperlinkedRelatedField(
+    available_on_products = serializers.PrimaryKeyRelatedField(
+        queryset=BaseProduct.objects.all(),
         many=True,
-        required=False,
-        view_name='baseproduct-detail',
-        read_only=True
+        required=False
     )
 
     def to_representation(self, instance):
@@ -144,13 +143,6 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
             data.pop("order_lines")
             data = remove_translation_fields(data)
 
-        # remove options from the serializer if no data
-        if instance.available_on_product_types.count() == 0:
-            data.pop("available_on_product_types")
-        if instance.available_on_products.count() == 0:
-            data.pop("available_on_products")
-        if instance.options.count() == 0:
-            data.pop("options")
         return data
 
     def run_validation(self, data=empty):

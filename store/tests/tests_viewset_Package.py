@@ -97,7 +97,10 @@ class PackageTests(APITestCase):
             'name': 'basic_package',
             'order_lines': [],
             'price': '50.00',
-            'reservations': 10
+            'reservations': 10,
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'options': [],
         }
 
         response_content = json.loads(response.content)
@@ -301,7 +304,10 @@ class PackageTests(APITestCase):
                 f'http://testserver/order_lines/{self.order_line.id}'],
             'price': '1.00',
             'reservations': 999,
-            'url': f'http://testserver/packages/{self.package.id}'
+            'url': f'http://testserver/packages/{self.package.id}',
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'options': [],
         }
 
         self.assertEqual(
@@ -341,7 +347,10 @@ class PackageTests(APITestCase):
                 f'http://testserver/order_lines/{self.order_line.id}'],
             'price': '99.00',
             'reservations': 100,
-            'url': f'http://testserver/packages/{self.package.id}'
+            'url': f'http://testserver/packages/{self.package.id}',
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'options': [],
         }
 
         self.assertEqual(
@@ -428,7 +437,10 @@ class PackageTests(APITestCase):
                 'name': 'extreme_package',
                 'price': '400.00',
                 'reservations': 100,
-                'url': f'http://testserver/packages/{self.package.id}'
+                'url': f'http://testserver/packages/{self.package.id}',
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'options': [],
             }]
         }
 
@@ -466,7 +478,10 @@ class PackageTests(APITestCase):
                     f'http://testserver/order_lines/{self.order_line.id}'],
                 'price': '400.00',
                 'reservations': 100,
-                'url': f'http://testserver/packages/{self.package.id}'
+                'url': f'http://testserver/packages/{self.package.id}',
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'options': [],
             }, {
                 'available': False,
                 'details': 'todo',
@@ -477,7 +492,11 @@ class PackageTests(APITestCase):
                 'price': '400.00',
                 'reservations': 100,
                 'url':
-                    f'http://testserver/packages/{self.package_unavailable.id}'
+                    f'http://testserver/packages/'
+                    f'{self.package_unavailable.id}',
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'options': [],
             }]
         }
 
@@ -505,7 +524,10 @@ class PackageTests(APITestCase):
             'name': 'extreme_package',
             'price': '400.00',
             'reservations': 100,
-            'url': f'http://testserver/packages/{self.package.id}'
+            'url': f'http://testserver/packages/{self.package.id}',
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'options': [],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -535,7 +557,10 @@ class PackageTests(APITestCase):
                 f'http://testserver/order_lines/{self.order_line.id}'],
             'price': '400.00',
             'reservations': 100,
-            'url': f'http://testserver/packages/{self.package.id}'
+            'url': f'http://testserver/packages/{self.package.id}',
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'options': [],
         }
 
         self.assertEqual(
