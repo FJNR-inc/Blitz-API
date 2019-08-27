@@ -1,8 +1,17 @@
 import binascii
 import os
+import json
+import traceback
 from datetime import timedelta
 
 from django.conf import settings
+
+import requests
+from django.conf import settings
+from django.core.mail import mail_admins, send_mail
+from django.template.loader import render_to_string
+from django.utils import timezone
+from rest_framework.reverse import reverse
 
 from blitz_api.models import Address
 from django.contrib.auth import get_user_model
@@ -158,6 +167,123 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
     def __str__(self):
         return self.name
+
+    def notify_scheduler_waite_queue(self, wait_queue_notification_url):
+        # Ask the external scheduler to start calling /notify if the
+        # reserved_seats count == 1. Otherwise, the scheduler should
+        # already be calling /notify at specified intervals.
+        #
+        # Since we are in the context of a cancelation, if reserved_seats
+        # equals 1, that means that this is the first cancelation.
+
+        if self.reserved_seats == 1:
+            scheduler_url = '{0}'.format(
+                settings.EXTERNAL_SCHEDULER['URL'],
+            )
+
+            data = {
+                "hour": timezone.now().hour,
+                "minute": (timezone.now().minute + 5) % 60,
+                "url": '{0}{1}'.format(
+                    wait_queue_notification_url,
+                    "/notify"
+                ),
+                "description": "Retreat wait queue notification"
+            }
+
+            try:
+                auth_data = {
+                    "username": settings.EXTERNAL_SCHEDULER['USER'],
+                    "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
+                }
+                auth = requests.post(
+                    scheduler_url + "/authentication",
+                    json=auth_data,
+                )
+                auth.raise_for_status()
+
+                r = requests.post(
+                    scheduler_url + '/tasks',
+                    json=data,
+                    headers={
+                        'Authorization':
+                            'Token ' + json.loads(auth.content)[
+                                'token']},
+                    timeout=(10, 10),
+                )
+                r.raise_for_status()
+            except (requests.exceptions.HTTPError,
+                    requests.exceptions.ConnectionError) as err:
+                mail_admins(
+                    "Thèsez-vous: external scheduler error",
+                    traceback.format_exc()
+                )
+
+    def notify_users(self):
+        notified_someone = False
+
+        datetime_refund = self.start_time - timedelta(days=self.min_day_refund)
+        # if we are after the refund delay, we notify every waiting user
+        if timezone.now() >= datetime_refund:
+
+            for wait_queue in self.wait_queue.all():
+                user = wait_queue.user
+
+                # Check if user have already a notification
+                if not WaitQueueNotification.objects.filter(
+                        user=user, retreat=self):
+                    self.notify_reserved_seat(user)
+
+                    notified_someone = True
+
+            # set seat and user_index to 0 because we notify everyone
+            self.reserved_seats = 0
+
+        else:
+            # Get the wait queue with elements ordered by ascending date
+            wait_queue = self.wait_queue.all().order_by('created_at')
+            # Get number of waiting users
+            nb_waiting_users = wait_queue.count()
+            # If all users have already been notified, free all reserved seats
+            if self.next_user_notified >= nb_waiting_users:
+                self.reserved_seats = 0
+                self.next_user_notified = 0
+            # Else notify a user for every reserved seat
+            for seat in range(self.reserved_seats):
+                if self.next_user_notified >= nb_waiting_users:
+                    self.reserved_seats -= 1
+                else:
+                    user = wait_queue[self.next_user_notified].user
+                    self.notify_reserved_seat(user)
+                    self.next_user_notified += 1
+                    WaitQueueNotification.objects.create(
+                        user=user,
+                        retreat=self,
+                    )
+                    notified_someone = True
+
+        self.save()
+        return notified_someone
+
+    def notify_reserved_seat(self, user):
+        """
+        This function sends an email to notify a
+        user that he has a reserved seat
+        to a retreat for 24h hours.
+        """
+
+        merge_data = {'RETREAT_NAME': self.name}
+
+        plain_msg = render_to_string("reserved_place.txt", merge_data)
+        msg_html = render_to_string("reserved_place.html", merge_data)
+
+        return send_mail(
+            "Place exclusive pour 24h",
+            plain_msg,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            html_message=msg_html,
+        )
 
 
 class Picture(models.Model):

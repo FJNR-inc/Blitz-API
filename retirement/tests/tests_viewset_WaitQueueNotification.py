@@ -445,6 +445,63 @@ class WaitQueueNotificationTests(APITestCase):
         waiting_user.delete()
         waiting_user2.delete()
 
+    def test_notify_bypass(self):
+
+        FIXED_TIME = self.retreat.start_time - \
+                     timedelta(days=self.retreat.min_day_refund)
+
+        # Old notification that will be deleted
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+
+            waiting_user = WaitQueue.objects.create(
+                user=self.user,
+                retreat=self.retreat,
+            )
+
+            waiting_user2 = WaitQueue.objects.create(
+                user=self.user2,
+                retreat=self.retreat,
+            )
+
+        FIXED_TIME = FIXED_TIME + timedelta(days=1)
+
+        # Old notification that will be deleted
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+
+            notification_count = WaitQueueNotification.objects.all().count()
+
+            response = self.client.get(
+                '/'.join([
+                    reverse('retreat:waitqueuenotification-list'),
+                    'notify',
+                ])
+            )
+
+            self.retreat.refresh_from_db()
+
+            self.assertEqual(
+                self.retreat.next_user_notified,
+                0,
+                "next_user_notified index invalid"
+            )
+
+            # Assert that only 2 reserved seats remain (since only 2 users are
+            # waiting)
+            self.assertEqual(
+                self.retreat.reserved_seats,
+                0,
+                "reserved_seats index invalid"
+            )
+
+            self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+            self.assertEqual(len(mail.outbox), 2)
+
+            waiting_user.delete()
+            waiting_user2.delete()
+
     def test_notify_reached_end_of_wait_queue(self):
         """
         Ensure we get a proper response if no users remain in any
