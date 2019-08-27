@@ -3,7 +3,8 @@ import pytz
 from datetime import datetime
 
 from django.conf import settings
-from django.http import Http404, HttpResponse
+from django.contrib.contenttypes.models import ContentType
+from django.http import Http404, HttpResponse, HttpRequest
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
@@ -13,6 +14,7 @@ from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
+from blitz_api.chartjs import ChartJSMixin
 from blitz_api.mixins import ExportMixin
 
 from .exceptions import PaymentAPIError
@@ -27,7 +29,6 @@ from .services import (delete_external_card, validate_coupon_for_order,
                        notify_for_coupon, )
 
 from . import serializers, permissions
-
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
@@ -330,7 +331,7 @@ class OrderViewSet(ExportMixin, viewsets.ModelViewSet):
         return Order.objects.filter(user=self.request.user.id)
 
 
-class OrderLineViewSet(ExportMixin, viewsets.ModelViewSet):
+class OrderLineViewSet(ExportMixin, ChartJSMixin, viewsets.ModelViewSet):
     """
     retrieve:
     Return the given order line.
@@ -344,8 +345,14 @@ class OrderLineViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.OrderLineSerializer
     queryset = OrderLine.objects.all()
     permission_classes = (IsAuthenticated,)
+    filter_fields = {
+        'order__transaction_date': ['gte', 'lte']
+    }
 
     export_resource = OrderLineResource()
+
+    date_field = 'order__transaction_date'
+    quantity_field = 'quantity'
 
     def get_queryset(self):
         """
@@ -353,8 +360,44 @@ class OrderLineViewSet(ExportMixin, viewsets.ModelViewSet):
         the currently authenticated user is an admin (is_staff).
         """
         if self.request.user.is_staff:
+            product_param = self.request.GET.getlist('content_type')
+            if product_param:
+                product_param = [int(product_id)
+                                 for product_id in product_param]
+
+                return OrderLine.objects.all(). \
+                    filter(content_type__id__in=product_param)
+
             return OrderLine.objects.all()
         return OrderLine.objects.filter(order__user=self.request.user)
+
+    @action(detail=False, permission_classes=[IsAdminUser])
+    def product_list(self, request: HttpRequest):
+        """
+        Get content_type name, id and if he can display details group by
+        content_type in all order lines
+        Use to filter by content_type in ChartJS call
+        """
+        product_list = list(self.get_queryset()
+                            .distinct('content_type')
+                            .values('content_type'))
+
+        product_object_list = []
+
+        for product in product_list:
+            product_object = ContentType.objects.get(
+                id=product.get('content_type'))
+            product_dict = {
+                'name': product_object.name,
+                'id': product_object.id,
+                'detail': product_object.model != 'timeslot'
+            }
+            product_object_list.append(product_dict)
+
+        return Response(
+            status=status.HTTP_200_OK,
+            data=product_object_list
+        )
 
 
 class CustomPaymentViewSet(ExportMixin, viewsets.ModelViewSet):
