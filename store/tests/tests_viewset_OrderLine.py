@@ -711,3 +711,26 @@ class OrderLineTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_product_list(self):
+        """
+        Get list of product, get content_type name group by content_type in
+        all order line
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.get(
+            reverse(
+                'orderline-list'
+            ) + '/product_list',
+        )
+
+        content = [
+            {
+                'name': 'Package',
+                'id': 35,
+                'detail': True
+            }
+        ]
+
+        self.assertEqual(json.loads(response.content), content)
