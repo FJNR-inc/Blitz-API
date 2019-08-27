@@ -19,7 +19,8 @@ from blitz_api.mixins import ExportMixin
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, PaymentProfile,
-                     CustomPayment, Coupon, CouponUser, Refund, )
+                     CustomPayment, Coupon, CouponUser, Refund, BaseProduct,
+                     OptionProduct)
 from .permissions import IsOwner
 from .resources import (MembershipResource, PackageResource, OrderResource,
                         OrderLineResource, CustomPaymentResource,
@@ -30,6 +31,46 @@ from .services import (delete_external_card, validate_coupon_for_order,
 from . import serializers, permissions
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
+
+
+class BaseProductViewSet(ExportMixin, viewsets.ModelViewSet):
+    """
+    retrieve:
+    Return the given membership.
+
+    list:
+    Return a list of all the existing memberships.
+
+    create:
+    Create a new membership instance.
+    """
+    serializer_class = serializers.BaseProductManagerSerializer
+    queryset = BaseProduct.objects.all()
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+    filter_fields = {
+        'available': ['exact'],
+        'name': ['exact'],
+        'price': ['exact', 'gte', 'lte'],
+    }
+    ordering = ('name',)
+
+    def get_queryset(self):
+        """
+        This viewset should return available memberships except if
+        the currently authenticated user is an admin (is_staff).
+        """
+        if self.request.user.is_staff:
+            return BaseProduct.objects.all()
+        return BaseProduct.objects.filter(available=True)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.available = False
+            instance.save()
+        except Http404:
+            pass
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class MembershipViewSet(ExportMixin, viewsets.ModelViewSet):
@@ -111,6 +152,40 @@ class PackageViewSet(ExportMixin, viewsets.ModelViewSet):
         if self.request.user.is_staff:
             return Package.objects.all()
         return Package.objects.filter(available=True)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.available = False
+            instance.save()
+        except Http404:
+            pass
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class OptionProductViewSet(ExportMixin, viewsets.ModelViewSet):
+    """
+    retrieve:
+    Return the given package.
+
+    list:
+    Return a list of all the existing packages.
+
+    create:
+    Create a new package instance.
+    """
+    serializer_class = serializers.OptionProductSerializer
+    queryset = OptionProduct.objects.all()
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+
+    def get_queryset(self):
+        """
+        This viewset should return available memberships except if
+        the currently authenticated user is an admin (is_staff).
+        """
+        if self.request.user.is_staff:
+            return OptionProduct.objects.all()
+        return OptionProduct.objects.filter(available=True)
 
     def destroy(self, request, *args, **kwargs):
         try:

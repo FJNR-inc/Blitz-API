@@ -1,22 +1,16 @@
 import re
-from rest_framework import serializers, status
-from rest_framework.validators import UniqueValidator
+from rest_framework import serializers
 from rest_framework.authtoken.serializers import AuthTokenSerializer
-from rest_framework.response import Response
 from django.contrib.auth import (get_user_model, password_validation,
                                  authenticate, )
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.mail import EmailMessage
-from django.db.models.base import ObjectDoesNotExist
 
 from .models import (
     Domain, Organization, ActionToken, AcademicField, AcademicLevel,
     ExportMedia
 )
-from .services import remove_translation_fields, \
-    check_if_translated_field, getMessageTranslate
 from .services import remove_translation_fields, check_if_translated_field
 from . import services
 from store.serializers import MembershipSerializer

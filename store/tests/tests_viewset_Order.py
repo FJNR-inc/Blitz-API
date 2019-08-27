@@ -34,7 +34,7 @@ from .paysafe_sample_responses import (
 )
 
 from ..models import (Package, Order, OrderLine, Membership, PaymentProfile,
-                      Coupon, CouponUser, MembershipCoupon)
+                      Coupon, CouponUser, MembershipCoupon, OptionProduct)
 
 User = get_user_model()
 
@@ -220,6 +220,14 @@ class OrderTests(APITestCase):
 
         self.maxDiff = None
 
+        self.options: OptionProduct = OptionProduct.objects.create(
+            name="Vegan",
+            details="Vegan details",
+            available=True,
+            price=50,
+            max_quantity=10
+        )
+
     @responses.activate
     def test_create_with_payment_token(self):
         """
@@ -255,6 +263,10 @@ class OrderTests(APITestCase):
                 'content_type': 'retreat',
                 'object_id': self.retreat.id,
                 'quantity': 1,
+                'options': [{
+                    'id': self.options.id,
+                    'quantity': 1
+                }]
             }],
             'coupon': "ABCD1234",
         }
@@ -268,6 +280,9 @@ class OrderTests(APITestCase):
             )
 
         response_data = json.loads(response.content)
+
+        new_order_id = response_data['id']
+
         del response_data['url']
         del response_data['id']
 
@@ -301,6 +316,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'options': []
             }, {
                 'content_type': 'package',
                 'object_id': self.package.id,
@@ -308,6 +324,7 @@ class OrderTests(APITestCase):
                 'coupon': "ABCD1234",
                 'coupon_real_value': 10.0,
                 'cost': 2 * self.package.price - 10,
+                'options': []
             }, {
                 'content_type': 'timeslot',
                 'object_id': self.time_slot.id,
@@ -315,13 +332,18 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'options': []
             }, {
                 'content_type': 'retreat',
                 'object_id': self.retreat.id,
                 'quantity': 1,
                 'coupon': None,
                 'coupon_real_value': 0.0,
-                'cost': 199.0,
+                'cost': 199.0 + self.options.price,
+                'options':  [{
+                    'id': self.options.id,
+                    'quantity': 1
+                }]
             }],
             'user': f'http://testserver/users/{self.admin.id}',
             'transaction_date': response_data['transaction_date'],
@@ -363,6 +385,16 @@ class OrderTests(APITestCase):
         # 1 email for the order details
         # 1 email for the retreat informations
         self.assertEqual(len(mail.outbox), 2)
+
+        new_order: Order = Order.objects.get(id=new_order_id)
+        total_price = \
+            self.membership.price * 1 + \
+            self.package.price * 2 + \
+            self.retreat.price * 1 + \
+            self.options.price - \
+            self.coupon.value
+
+        self.assertEqual(new_order.total_cost, total_price)
 
     @responses.activate
     def test_create_reservation_only(self):
@@ -411,6 +443,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'options': []
             }],
             'user': 'http://testserver/users/' + str(self.admin.id),
             'transaction_date': response_data['transaction_date'],
@@ -484,6 +517,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'options': []
             }],
             'user': 'http://testserver/users/' + str(self.admin.id),
             'transaction_date': response_data['transaction_date'],
@@ -1102,6 +1136,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
+                'options': []
             }],
             'user': 'http://testserver/users/' + str(self.user.id),
             'transaction_date': response_data['transaction_date'],
@@ -1171,6 +1206,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
+                'options': []
             }],
             'user': 'http://testserver/users/' + str(self.user.id),
             'transaction_date': response_data['transaction_date'],
@@ -1437,12 +1473,14 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
+                'options': []
             }, {
                 'content_type': 'timeslot',
                 'quantity': 1,
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'options': []
             }],
             'user': 'http://testserver/users/' + str(self.user.id),
             'transaction_date': response_data['transaction_date'],
@@ -1529,12 +1567,14 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'options': []
             }, {
                 'content_type': 'package',
                 'quantity': 2,
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
+                'options': []
             }],
             'user': 'http://testserver/users/' + str(self.admin.id),
             'transaction_date': response_data['transaction_date'],
@@ -1815,12 +1855,14 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'options': []
             }, {
                 'content_type': 'package',
                 'quantity': 2,
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
+                'options': []
             }],
             'settlement_id': '1',
             'reference_number': '751',
@@ -2030,6 +2072,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'options': []
             }],
             'user': 'http://testserver/users/' + str(self.admin.id),
             'transaction_date': response_data['transaction_date'],
@@ -2105,6 +2148,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'object_id': self.package.id,
                 'quantity': 99,
+                'options': [],
                 'order': 'http://testserver/orders/' + str(self.order.id)
             }],
         }
@@ -2184,6 +2228,7 @@ class OrderTests(APITestCase):
                     'coupon': None,
                     'coupon_real_value': 0.0,
                     'cost': self.package.price,
+                    'options': []
                 }],
                 'url': 'http://testserver/orders/' + str(self.order.id),
                 'user': 'http://testserver/users/' + str(self.user.id),
@@ -2228,6 +2273,7 @@ class OrderTests(APITestCase):
                     'coupon': None,
                     'coupon_real_value': 0.0,
                     'cost': self.package.price,
+                    'options': []
                 }],
                 'url': 'http://testserver/orders/' + str(self.order.id),
                 'user': 'http://testserver/users/' + str(self.user.id),
@@ -2297,6 +2343,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': self.package.price,
+                'options': []
             }],
             'url': 'http://testserver/orders/' + str(self.order.id),
             'user': 'http://testserver/users/' + str(self.user.id),
@@ -2357,6 +2404,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': self.package.price,
+                'options': []
             }],
             'url': 'http://testserver/orders/' + str(self.order.id),
             'user': 'http://testserver/users/' + str(self.user.id),
@@ -2432,7 +2480,8 @@ class OrderTests(APITestCase):
             'orderline': {
                 'content_type': 'package',
                 'object_id': self.package.id,
-                'quantity': 2
+                'quantity': 2,
+                'options': []
             },
             'value': 10.0
         }
@@ -2493,7 +2542,8 @@ class OrderTests(APITestCase):
             'orderline': {
                 'content_type': 'package',
                 'object_id': self.package2.id,
-                'quantity': 1
+                'quantity': 1,
+                'options': []
             },
             'value': 4000.0
         }

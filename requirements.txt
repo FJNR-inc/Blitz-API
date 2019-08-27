@@ -20,3 +20,4 @@ django-safedelete==0.5.1
 -e git+https://github.com/deschler/django-modeltranslation.git@c8bda494a8cd36b393811552aeee71faf86d7438#egg=django-modeltranslation
 django-import-export==1.2.0
 jsonfield==2.0.2
+django-model-utils==3.2.0
