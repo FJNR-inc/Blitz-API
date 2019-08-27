@@ -6,7 +6,6 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from retirement.models import WaitQueue
-from store.exceptions import PaymentAPIError
 from store.models import Refund
 from store.services import (PAYSAFE_EXCEPTION,
                             refund_amount, )

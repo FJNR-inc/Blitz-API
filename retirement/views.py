@@ -39,12 +39,10 @@ from store.services import refund_amount, PAYSAFE_EXCEPTION
 from . import permissions, serializers
 from .models import (Picture, Reservation, Retreat, WaitQueue,
                      WaitQueueNotification, RetreatInvitation)
-from .resources import (
-    ReservationResource, RetreatResource,
-    WaitQueueNotificationResource, WaitQueueResource,
-    RetreatReservationResource)
-from .services import (notify_reserved_retreat_seat,
-                       send_retreat_7_days_email,
+from .resources import (ReservationResource, RetreatResource,
+                        WaitQueueNotificationResource, WaitQueueResource,
+                        RetreatReservationResource)
+from .services import (send_retreat_7_days_email,
                        send_post_retreat_email, )
 
 User = get_user_model()
@@ -357,61 +355,16 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                 instance.save()
 
                 free_seats = retreat.seats - retreat.total_reservations
-                if (retreat.reserved_seats or free_seats == 1):
+                if retreat.reserved_seats or free_seats == 1:
                     retreat.reserved_seats += 1
-                # Ask the external scheduler to start calling /notify if the
-                # reserved_seats count == 1. Otherwise, the scheduler should
-                # already be calling /notify at specified intervals.
-                #
-                # Since we are in the context of a cancelation, if
-                # reserved_seats equals 1, that means that this is the first
-                # cancelation.
-                if retreat.reserved_seats == 1:
-                    scheduler_url = '{0}'.format(
-                        settings.EXTERNAL_SCHEDULER['URL'],
+
+                wait_queue_notification_url = request.build_absolute_uri(
+                    reverse(
+                        'retreat:waitqueuenotification-list'
                     )
-
-                    data = {
-                        "hour": timezone.now().hour,
-                        "minute": (timezone.now().minute + 5) % 60,
-                        "url": '{0}{1}'.format(
-                            request.build_absolute_uri(
-                                reverse(
-                                    'retreat:waitqueuenotification-list'
-                                )
-                            ),
-                            "/notify"
-                        ),
-                        "description": "Retreat wait queue notification"
-                    }
-
-                    try:
-                        auth_data = {
-                            "username": settings.EXTERNAL_SCHEDULER['USER'],
-                            "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
-                        }
-                        auth = requests.post(
-                            scheduler_url + "/authentication",
-                            json=auth_data,
-                        )
-                        auth.raise_for_status()
-
-                        r = requests.post(
-                            scheduler_url + '/tasks',
-                            json=data,
-                            headers={
-                                'Authorization':
-                                    'Token ' + json.loads(auth.content)[
-                                        'token']},
-                            timeout=(10, 10),
-                        )
-                        r.raise_for_status()
-                    except (requests.exceptions.HTTPError,
-                            requests.exceptions.ConnectionError) as err:
-                        mail_admins(
-                            "Thèsez-vous: external scheduler error",
-                            traceback.format_exc()
-                        )
+                ),
+                retreat.notify_scheduler_waite_queue(
+                    wait_queue_notification_url)
 
                 retreat.save()
 
@@ -595,31 +548,7 @@ class WaitQueueNotificationViewSet(ExportMixin, mixins.ListModelMixin,
                 # than 24h ago.
                 continue
             ready_retreats = True
-            # Get the wait queue with elements ordered by ascending date
-            wait_queue = retreat.wait_queue.all().order_by('created_at')
-            # Get number of waiting users
-            nb_waiting_users = wait_queue.count()
-            # If all users have already been notified, free all reserved seats
-            if retreat.next_user_notified >= nb_waiting_users:
-                retreat.reserved_seats = 0
-                retreat.next_user_notified = 0
-            # Else notify a user for every reserved seat
-            for seat in range(retreat.reserved_seats):
-                if retreat.next_user_notified >= nb_waiting_users:
-                    retreat.reserved_seats -= 1
-                else:
-                    user = wait_queue[retreat.next_user_notified].user
-                    notify_reserved_retreat_seat(
-                        user,
-                        retreat,
-                    )
-                    retreat.next_user_notified += 1
-                    WaitQueueNotification.objects.create(
-                        user=user,
-                        retreat=retreat,
-                    )
-                    notified_someone = True
-            retreat.save()
+            notified_someone = notified_someone or retreat.notify_users()
 
         if retreats_to_notify.count() == 0:
             response_data = {
