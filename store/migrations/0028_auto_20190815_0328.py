@@ -21,7 +21,7 @@ def link_membership_to_base_product(apps, schema_editor):
             details_fr=membership.details_fr,
             details_en=membership.details_en
         )
-        membership.baseproduct_ptr = base_product.id
+        membership.baseproduct_ptr = base_product
         membership.save()
 
 
@@ -40,7 +40,7 @@ def link_package_to_base_product(apps, schema_editor):
             details_fr=package.details_fr,
             details_en=package.details_en
         )
-        package.baseproduct_ptr = base_product.id
+        package.baseproduct_ptr = base_product
         package.save()
 
 class Migration(migrations.Migration):
@@ -100,18 +100,24 @@ class Migration(migrations.Migration):
             name='baseproduct_ptr',
             field=models.ForeignKey(auto_created=True, blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, parent_link=True, related_name='+', to='store.BaseProduct'),
         ),
-        migrations.RemoveField(
-            model_name='membership',
-            name='id',
-        ),
         migrations.AddField(
             model_name='membership',
             name='baseproduct_ptr',
-            field=models.OneToOneField(auto_created=True, default=1, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='store.BaseProduct'),
+            field=models.OneToOneField(auto_created=True, null=True, blank=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, serialize=False, to='store.BaseProduct'),
             preserve_default=False,
         ),
         migrations.RunPython(link_membership_to_base_product),
         migrations.RemoveField(
+            model_name='membership',
+            name='id',
+        ),
+        migrations.AlterField(
+            model_name='membership',
+            name='baseproduct_ptr',
+            field=models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='store.BaseProduct'),
+            preserve_default=False,
+        ),
+        migrations.RemoveField(
             model_name='optionproduct',
             name='id',
         ),
@@ -121,17 +127,23 @@ class Migration(migrations.Migration):
             field=models.OneToOneField(auto_created=True, default=1, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='store.BaseProduct'),
             preserve_default=False,
         ),
+        migrations.AddField(
+            model_name='package',
+            name='baseproduct_ptr',
+            field=models.OneToOneField(auto_created=True, null=True, blank=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, serialize=False, to='store.BaseProduct'),
+            preserve_default=False,
+        ),
+        migrations.RunPython(link_package_to_base_product),
         migrations.RemoveField(
             model_name='package',
             name='id',
         ),
-        migrations.AddField(
+        migrations.AlterField(
             model_name='package',
             name='baseproduct_ptr',
             field=models.OneToOneField(auto_created=True, default=1, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='store.BaseProduct'),
             preserve_default=False,
         ),
-        migrations.RunPython(link_package_to_base_product),
         migrations.RemoveField(
             model_name='membership',
             name='available',
