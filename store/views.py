@@ -360,10 +360,10 @@ class OrderLineViewSet(ExportMixin, ChartJSMixin, viewsets.ModelViewSet):
         the currently authenticated user is an admin (is_staff).
         """
         if self.request.user.is_staff:
-            product_param = self.request.GET.getlist('content_type')
+            product_param = self.request.query_params.get('content_type')
             if product_param:
                 product_param = [int(product_id)
-                                 for product_id in product_param]
+                                 for product_id in product_param.split(',')]
 
                 return OrderLine.objects.all(). \
                     filter(content_type__id__in=product_param)
