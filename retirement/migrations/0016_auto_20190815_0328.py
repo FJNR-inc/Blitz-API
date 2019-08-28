@@ -19,7 +19,7 @@ def link_retreat_to_base_product(apps, schema_editor):
             details_fr=retreat.details_fr,
             details_en=retreat.details_en
         )
-        retreat.baseproduct_ptr = base_product.id
+        retreat.baseproduct_ptr = base_product
         retreat.save()
 
 
@@ -55,10 +55,6 @@ class Migration(migrations.Migration):
             preserve_default=False,
         ),
         migrations.RunPython(save_old_id),
-        migrations.RemoveField(
-            model_name='retreat',
-            name='id',
-        ),
         migrations.AddField(
             model_name='historicalretreat',
             name='baseproduct_ptr',
@@ -72,6 +68,21 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='retreat',
             name='baseproduct_ptr',
+            field=models.OneToOneField(auto_created=True,
+                                       on_delete=django.db.models.deletion.CASCADE,
+                                       parent_link=True, null=True, blank=True,
+                                       serialize=False,
+                                       to='store.BaseProduct'),
+            preserve_default=False,
+        ),
+        migrations.RunPython(link_retreat_to_base_product),
+        migrations.RemoveField(
+            model_name='retreat',
+            name='id',
+        ),
+        migrations.AlterField(
+            model_name='retreat',
+            name='baseproduct_ptr',
             field=models.OneToOneField(auto_created=True, default=1,
                                        on_delete=django.db.models.deletion.CASCADE,
                                        parent_link=True, primary_key=True,
@@ -79,7 +90,6 @@ class Migration(migrations.Migration):
                                        to='store.BaseProduct'),
             preserve_default=False,
         ),
-        migrations.RunPython(link_retreat_to_base_product),
         migrations.RemoveField(
             model_name='retreat',
             name='available',
