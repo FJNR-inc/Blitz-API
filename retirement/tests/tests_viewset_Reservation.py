@@ -50,7 +50,6 @@ TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 class ReservationTests(APITestCase):
 
     def setUp(self):
-        self.maxDiff = 10000
         self.client = APIClient()
         self.user = UserFactory()
         self.user2 = UserFactory()
@@ -154,6 +153,7 @@ class ReservationTests(APITestCase):
             'cancelation_reason': None,
             'refundable': True,
             'exchangeable': True,
+            'invitation': None,
         }
         self.reservation2 = Reservation.objects.create(
             user=self.user2,
@@ -175,6 +175,7 @@ class ReservationTests(APITestCase):
             'cancelation_reason': None,
             'refundable': True,
             'exchangeable': True,
+            'invitation': None,
         }
         self.reservation_admin = Reservation.objects.create(
             user=self.admin,
@@ -237,6 +238,7 @@ class ReservationTests(APITestCase):
             'retreat': 'http://testserver/retreat/retreats/' +
                        str(self.retreat2.id),
             'order_line': None,
+            'invitation': None,
             'retreat_details': {
                 'activity_language': None,
                 'end_time': '2130-02-17T12:00:00-05:00',
@@ -280,6 +282,7 @@ class ReservationTests(APITestCase):
                 'url': 'http://testserver/retreat/retreats/' +
                        str(self.retreat2.id),
                 'has_shared_rooms': True,
+                'hidden': False,
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
@@ -614,6 +617,7 @@ class ReservationTests(APITestCase):
                     'cancelation_reason': None,
                     'refundable': True,
                     'exchangeable': True,
+                    'invitation': None,
                 }
             ]
         }

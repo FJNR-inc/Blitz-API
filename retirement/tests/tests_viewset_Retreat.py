@@ -81,6 +81,30 @@ class RetreatTests(APITestCase):
             has_shared_rooms=True,
         )
 
+        self.retreat_hidden = Retreat.objects.create(
+            name="hidden_retreat",
+            details="This is a description of the hidden retreat.",
+            seats=400,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+            price=199,
+            start_time=LOCAL_TIMEZONE.localize(datetime(2140, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2140, 1, 17, 12)),
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            is_active=True,
+            activity_language='FR',
+            accessibility=True,
+            form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
+            has_shared_rooms=True,
+            hidden=True
+        )
+
     @override_settings(
         EXTERNAL_SCHEDULER={
             'URL': "http://example.com",
@@ -130,6 +154,7 @@ class RetreatTests(APITestCase):
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
             'has_shared_rooms': True,
+            'hidden': False,
         }
 
         response = self.client.post(
@@ -149,6 +174,8 @@ class RetreatTests(APITestCase):
             'email_content': None,
             'address_line1': 'random_address_1',
             'address_line2': None,
+            'available_on_product_types': [],
+            'available_on_products': [],
             'city': 'random_city',
             'country': 'Random_Country',
             'postal_code': 'RAN_DOM',
@@ -182,9 +209,125 @@ class RetreatTests(APITestCase):
             'review_url': 'example3.com',
             'place_name': '',
             'has_shared_rooms': True,
+            'options': [],
+            'hidden': False,
+        }
+
+        response_data = remove_translation_fields(json.loads(response.content))
+        del response_data['id']
+        del response_data['url']
+
+        self.assertEqual(
+            response_data,
+            content
+        )
+
+    @override_settings(
+        EXTERNAL_SCHEDULER={
+            'URL': "http://example.com",
+            'USER': "user",
+            'PASSWORD': "password",
+        }
+    )
+    @responses.activate
+    def test_create(self):
+        """
+        Ensure we can create a retreat if user has permission.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/authentication",
+            json={"token": "1234567890"},
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/tasks",
+            status=200
+        )
+
+        data = {
+            'name': "random_retreat",
+            'seats': 40,
+            'details': "short_description",
+            'address_line1': 'random_address_1',
+            'city': 'random_city',
+            'country': 'Random_Country',
+            'postal_code': 'RAN_DOM',
+            'state_province': 'Random_State',
+            'timezone': "America/Montreal",
+            'price': '100.00',
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 16)),
+            'min_day_refund': 7,
+            'min_day_exchange': 7,
+            'refund_rate': 50,
+            'is_active': True,
+            'accessibility': True,
+            'form_url': "example.com",
+            'carpool_url': 'example2.com',
+            'review_url': 'example3.com',
+            'has_shared_rooms': True,
+            'hidden': True,
+        }
+
+        response = self.client.post(
+            reverse('retreat:retreat-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        content = {
+            'details': 'short_description',
+            'email_content': None,
+            'address_line1': 'random_address_1',
+            'address_line2': None,
             'available_on_product_types': [],
             'available_on_products': [],
+            'city': 'random_city',
+            'country': 'Random_Country',
+            'postal_code': 'RAN_DOM',
+            'state_province': 'Random_State',
+            'latitude': None,
+            'longitude': None,
+            'name': 'random_retreat',
+            'next_user_notified': 0,
+            'notification_interval': '1 00:00:00',
             'options': [],
+            'pictures': [],
+            'start_time': '2130-01-15T12:00:00-05:00',
+            'end_time': '2130-01-17T16:00:00-05:00',
+            'seats': 40,
+            'reserved_seats': 0,
+            'activity_language': None,
+            'price': '100.00',
+            'exclusive_memberships': [],
+            'timezone': "America/Montreal",
+            'is_active': True,
+            'places_remaining': 40,
+            'min_day_exchange': 7,
+            'min_day_refund': 7,
+            'refund_rate': 50,
+            'reservations': [],
+            'reservations_canceled': [],
+            'total_reservations': 0,
+            'users': [],
+            'accessibility': True,
+            'form_url': "example.com",
+            'carpool_url': 'example2.com',
+            'review_url': 'example3.com',
+            'place_name': '',
+            'has_shared_rooms': True,
+            'hidden': True,
         }
 
         response_data = remove_translation_fields(json.loads(response.content))
@@ -225,6 +368,7 @@ class RetreatTests(APITestCase):
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
             'has_shared_rooms': True,
+            'hidden': False,
         }
 
         response = self.client.post(
@@ -303,6 +447,7 @@ class RetreatTests(APITestCase):
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
             'has_shared_rooms': True,
+            'hidden': False,
         }
 
         response = self.client.post(
@@ -386,6 +531,7 @@ class RetreatTests(APITestCase):
             'review_url': (1,),
             'place_name': (1,),
             'has_shared_rooms': "",
+            'hidden': False,
         }
 
         response = self.client.post(
@@ -458,6 +604,7 @@ class RetreatTests(APITestCase):
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
             'has_shared_rooms': True,
+            'hidden': False,
         }
 
         response = self.client.put(
@@ -513,6 +660,7 @@ class RetreatTests(APITestCase):
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
+            'hidden': False,
         }
 
         self.assertEqual(
@@ -609,11 +757,138 @@ class RetreatTests(APITestCase):
                     'available_on_product_types': [],
                     'available_on_products': [],
                     'options': [],
+                    'hidden': False,
                 }
             ]
         }
 
         self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_as_admin(self):
+        self.client.force_authenticate(user=self.admin)
+
+        self.retreat2.is_active = False
+        self.retreat2.save()
+
+        response = self.client.get(
+            reverse('retreat:retreat-list'),
+            format='json',
+        )
+
+        content = {'count': 3, 'next': None, 'previous': None, 'results': [
+            {
+                'places_remaining': 400, 'total_reservations': 0,
+                'reservations': [], 'reservations_canceled': [],
+                'timezone': None,
+                'name': 'hidden_retreat', 'name_fr': None,
+                'name_en': 'hidden_retreat',
+                'details': 'This is a description of the hidden retreat.',
+                'country': 'Random country', 'state_province': 'Random state',
+                'city': '', 'address_line1': '123 random street',
+                'has_shared_rooms': True, 'is_active': True,
+                'accessibility': True,
+                'pictures': [], 'place_name': '', 'country_fr': None,
+                'country_en': 'Random country', 'state_province_fr': None,
+                'state_province_en': 'Random state', 'city_fr': None,
+                'city_en': None, 'address_line1_fr': None,
+                'address_line1_en': '123 random street', 'address_line2': None,
+                'address_line2_fr': None, 'address_line2_en': None,
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'postal_code': '123 456', 'latitude': None, 'longitude': None,
+                'details_fr': None,
+                'details_en': 'This is a description of the hidden retreat.',
+                'seats': 400, 'reserved_seats': 0, 'next_user_notified': 0,
+                'notification_interval': '1 00:00:00',
+                'old_id': None,
+                'options': [],
+                'activity_language': 'FR',
+                'price': '199.00', 'start_time': '2140-01-15T08:00:00-05:00',
+                'end_time': '2140-01-17T12:00:00-05:00', 'min_day_refund': 7,
+                'refund_rate': 50, 'min_day_exchange': 7,
+                'email_content': None,
+                'form_url': 'example.com', 'carpool_url': 'example2.com',
+                'review_url': 'example3.com', 'hidden': True, 'users': [],
+                'exclusive_memberships': []},
+            {
+                'places_remaining': 400, 'total_reservations': 0,
+                'reservations': [], 'reservations_canceled': [],
+                'timezone': None,
+                'name': 'mega_retreat', 'name_fr': None,
+                'name_en': 'mega_retreat',
+                'details': 'This is a description of the mega retreat.',
+                'country': 'Random country', 'state_province': 'Random state',
+                'city': '', 'address_line1': '123 random street',
+                'has_shared_rooms': True, 'is_active': True,
+                'accessibility': True,
+                'pictures': [], 'place_name': '', 'country_fr': None,
+                'country_en': 'Random country', 'state_province_fr': None,
+                'state_province_en': 'Random state', 'city_fr': None,
+                'city_en': None, 'address_line1_fr': None,
+                'address_line1_en': '123 random street', 'address_line2': None,
+                'address_line2_fr': None, 'address_line2_en': None,
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'postal_code': '123 456', 'latitude': None, 'longitude': None,
+                'details_fr': None,
+                'details_en': 'This is a description of the mega retreat.',
+                'seats': 400, 'reserved_seats': 0, 'next_user_notified': 0,
+                'notification_interval': '1 00:00:00',
+                'old_id': None,
+                'options': [],
+                'activity_language': 'FR',
+                'price': '199.00', 'start_time': '2130-01-15T08:00:00-05:00',
+                'end_time': '2130-01-17T12:00:00-05:00', 'min_day_refund': 7,
+                'refund_rate': 50, 'min_day_exchange': 7,
+                'email_content': None,
+                'form_url': 'example.com', 'carpool_url': 'example2.com',
+                'review_url': 'example3.com', 'hidden': False, 'users': [],
+                'exclusive_memberships': []},
+            {
+                'places_remaining': 400, 'total_reservations': 0,
+                'reservations': [], 'reservations_canceled': [],
+                'timezone': None,
+                'name': 'ultra_retreat', 'name_fr': None,
+                'name_en': 'ultra_retreat',
+                'details': 'This is a description of the ultra retreat.',
+                'country': 'Random country', 'state_province': 'Random state',
+                'city': '', 'address_line1': '123 random street',
+                'has_shared_rooms': True, 'is_active': False,
+                'accessibility': True, 'pictures': [], 'place_name': '',
+                'country_fr': None, 'country_en': 'Random country',
+                'state_province_fr': None, 'state_province_en': 'Random state',
+                'city_fr': None, 'city_en': None, 'address_line1_fr': None,
+                'address_line1_en': '123 random street', 'address_line2': None,
+                'address_line2_fr': None, 'address_line2_en': None,
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'postal_code': '123 456', 'latitude': None, 'longitude': None,
+                'details_fr': None,
+                'details_en': 'This is a description of the ultra retreat.',
+                'seats': 400, 'reserved_seats': 0, 'next_user_notified': 0,
+                'notification_interval': '1 00:00:00',
+                'old_id': None,
+                'options': [],
+                'activity_language': 'FR',
+                'price': '199.00', 'start_time': '2140-01-15T08:00:00-05:00',
+                'end_time': '2140-01-17T12:00:00-05:00', 'min_day_refund': 7,
+                'refund_rate': 50, 'min_day_exchange': 7,
+                'email_content': None,
+                'form_url': 'example.com', 'carpool_url': 'example2.com',
+                'review_url': 'example3.com', 'hidden': False, 'users': [],
+                'exclusive_memberships': []}]}
+
+        response_content = json.loads(response.content)
+        del response_content['results'][0]['url']
+        del response_content['results'][0]['id']
+        del response_content['results'][1]['url']
+        del response_content['results'][1]['id']
+        del response_content['results'][2]['url']
+        del response_content['results'][2]['id']
+
+        self.assertEqual(response_content, content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -677,6 +952,7 @@ class RetreatTests(APITestCase):
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
+                'hidden': False,
             }]
         }
 
@@ -740,6 +1016,7 @@ class RetreatTests(APITestCase):
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
+            'hidden': False,
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -809,6 +1086,7 @@ class RetreatTests(APITestCase):
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
+            'hidden': False,
         }
 
         self.assertEqual(response_data, content)

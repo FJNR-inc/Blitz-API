@@ -21,7 +21,8 @@ from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.models import AcademicLevel
 
 from workplace.models import TimeSlot, Period, Workplace
-from retirement.models import Retreat, WaitQueueNotification, WaitQueue
+from retirement.models import Retreat, WaitQueueNotification, WaitQueue, \
+    RetreatInvitation
 
 from .paysafe_sample_responses import (
     SAMPLE_PROFILE_RESPONSE,
@@ -218,6 +219,11 @@ class OrderTests(APITestCase):
             coupon=self.coupon,
         )
 
+        self.invitation = RetreatInvitation.objects.create(
+            retreat=self.retreat,
+            nb_places=5
+        )
+
         self.maxDiff = None
 
         self.options: OptionProduct = OptionProduct.objects.create(
@@ -263,6 +269,8 @@ class OrderTests(APITestCase):
                 'content_type': 'retreat',
                 'object_id': self.retreat.id,
                 'quantity': 1,
+                'metadata':
+                    json.dumps({'invitation_id': self.invitation.id}),
                 'options': [{
                     'id': self.options.id,
                     'quantity': 1
@@ -316,6 +324,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'metadata': None,
                 'options': []
             }, {
                 'content_type': 'package',
@@ -324,6 +333,7 @@ class OrderTests(APITestCase):
                 'coupon': "ABCD1234",
                 'coupon_real_value': 10.0,
                 'cost': 2 * self.package.price - 10,
+                'metadata': None,
                 'options': []
             }, {
                 'content_type': 'timeslot',
@@ -332,6 +342,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'metadata': None,
                 'options': []
             }, {
                 'content_type': 'retreat',
@@ -339,6 +350,8 @@ class OrderTests(APITestCase):
                 'quantity': 1,
                 'coupon': None,
                 'coupon_real_value': 0.0,
+                'metadata':
+                    json.dumps({'invitation_id': self.invitation.id}),
                 'cost': 199.0 + self.options.price,
                 'options':  [{
                     'id': self.options.id,
@@ -385,6 +398,12 @@ class OrderTests(APITestCase):
         # 1 email for the order details
         # 1 email for the retreat informations
         self.assertEqual(len(mail.outbox), 2)
+
+        # validate that the invitation are linked to the
+        # reservation of the retreat
+        self.assertEqual(
+            self.invitation.retreat_reservations.all()[0].user,
+            self.admin)
 
         new_order: Order = Order.objects.get(id=new_order_id)
         total_price = \
@@ -443,6 +462,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'metadata': None,
                 'options': []
             }],
             'user': 'http://testserver/users/' + str(self.admin.id),
@@ -517,6 +537,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'metadata': None,
                 'options': []
             }],
             'user': 'http://testserver/users/' + str(self.admin.id),
@@ -1136,6 +1157,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
+                'metadata': None,
                 'options': []
             }],
             'user': 'http://testserver/users/' + str(self.user.id),
@@ -1206,6 +1228,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
+                'metadata': None,
                 'options': []
             }],
             'user': 'http://testserver/users/' + str(self.user.id),
@@ -1473,6 +1496,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
+                'metadata': None,
                 'options': []
             }, {
                 'content_type': 'timeslot',
@@ -1480,6 +1504,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'metadata': None,
                 'options': []
             }],
             'user': 'http://testserver/users/' + str(self.user.id),
@@ -1567,6 +1592,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'metadata': None,
                 'options': []
             }, {
                 'content_type': 'package',
@@ -1574,6 +1600,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
+                'metadata': None,
                 'options': []
             }],
             'user': 'http://testserver/users/' + str(self.admin.id),
@@ -1855,6 +1882,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'metadata': None,
                 'options': []
             }, {
                 'content_type': 'package',
@@ -1862,6 +1890,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
+                'metadata': None,
                 'options': []
             }],
             'settlement_id': '1',
@@ -2072,6 +2101,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'metadata': None,
                 'options': []
             }],
             'user': 'http://testserver/users/' + str(self.admin.id),
@@ -2148,8 +2178,9 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'object_id': self.package.id,
                 'quantity': 99,
+                'order': 'http://testserver/orders/' + str(self.order.id),
+                'metadata': None,
                 'options': [],
-                'order': 'http://testserver/orders/' + str(self.order.id)
             }],
         }
 
@@ -2228,6 +2259,7 @@ class OrderTests(APITestCase):
                     'coupon': None,
                     'coupon_real_value': 0.0,
                     'cost': self.package.price,
+                    'metadata': None,
                     'options': []
                 }],
                 'url': 'http://testserver/orders/' + str(self.order.id),
@@ -2273,6 +2305,7 @@ class OrderTests(APITestCase):
                     'coupon': None,
                     'coupon_real_value': 0.0,
                     'cost': self.package.price,
+                    'metadata': None,
                     'options': []
                 }],
                 'url': 'http://testserver/orders/' + str(self.order.id),
@@ -2343,6 +2376,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': self.package.price,
+                'metadata': None,
                 'options': []
             }],
             'url': 'http://testserver/orders/' + str(self.order.id),
@@ -2404,6 +2438,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': self.package.price,
+                'metadata': None,
                 'options': []
             }],
             'url': 'http://testserver/orders/' + str(self.order.id),
@@ -2481,6 +2516,7 @@ class OrderTests(APITestCase):
                 'content_type': 'package',
                 'object_id': self.package.id,
                 'quantity': 2,
+                'metadata': None,
                 'options': []
             },
             'value': 10.0
@@ -2543,6 +2579,7 @@ class OrderTests(APITestCase):
                 'content_type': 'package',
                 'object_id': self.package2.id,
                 'quantity': 1,
+                'metadata': None,
                 'options': []
             },
             'value': 4000.0

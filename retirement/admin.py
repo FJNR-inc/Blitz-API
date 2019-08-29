@@ -6,7 +6,7 @@ from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 from simple_history.admin import SimpleHistoryAdmin
 
 from .models import (Picture, Reservation, Retreat, WaitQueue,
-                     WaitQueueNotification, )
+                     WaitQueueNotification, RetreatInvitation)
 from .resources import (ReservationResource, RetreatResource,
                         WaitQueueResource)
 
@@ -110,8 +110,39 @@ class WaitQueueNotificationAdmin(SimpleHistoryAdmin):
     )
 
 
+class ReservationAdminInline(admin.TabularInline):
+    model = Reservation
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+class RetreatInvitationAdmin(SimpleHistoryAdmin,
+                             SafeDeleteAdmin):
+    inlines = (ReservationAdminInline,)
+    list_display = (
+        'name',
+        'coupon',
+        'retreat',
+        'nb_places',
+        highlight_deleted,
+    ) + SafeDeleteAdmin.list_display
+
+    list_filter = (
+        ('retreat', admin.RelatedOnlyFieldListFilter),
+        ('coupon', admin.RelatedOnlyFieldListFilter)
+    ) + SafeDeleteAdmin.list_filter
+
+
 admin.site.register(Retreat, RetreatAdmin)
 admin.site.register(Picture, PictureAdmin)
 admin.site.register(Reservation, ReservationAdmin)
 admin.site.register(WaitQueue, WaitQueueAdmin)
 admin.site.register(WaitQueueNotification, WaitQueueNotificationAdmin)
+admin.site.register(RetreatInvitation, RetreatInvitationAdmin)
