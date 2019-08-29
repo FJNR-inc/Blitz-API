@@ -1,3 +1,5 @@
+import json
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -26,7 +28,8 @@ from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,
                                 getMessageTranslate)
 from workplace.models import Reservation
-from retirement.models import Reservation as RetreatReservation
+from retirement.models import Reservation as RetreatReservation, \
+    RetreatInvitation
 from retirement.models import WaitQueueNotification, Retreat
 
 from .exceptions import PaymentAPIError
@@ -717,19 +720,40 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                                 "retreat: {0}.".format(str(retreat))
                             )]
                         })
-                    if (((retreat.seats - retreat.total_reservations -
-                          retreat.reserved_seats) > 0)
+                    if ((retreat.has_places_remaining())
                             or (retreat.reserved_seats
                                 and WaitQueueNotification.objects.filter(
                                         user=user, retreat=retreat))):
-                        retreat_reservations.append(
+
+                        # Manage invitation to retreat
+                        # If there are no places left we raise an error
+                        # The invitation id is store in the orderline metadata
+                        invitation = retreat_orderline.get_invitation()
+
+                        if invitation and not invitation.has_free_places():
+                            raise serializers.ValidationError({
+                                'invitation_id': [_(
+                                    "There are no places left for "
+                                    "the requested invitation."
+                                )]
+                            })
+
+                        new_retreat_reservation = \
                             RetreatReservation.objects.create(
                                 user=user,
                                 retreat=retreat,
                                 order_line=retreat_orderline,
                                 is_active=True
                             )
+
+                        if invitation:
+                            new_retreat_reservation.invitation = invitation
+                            new_retreat_reservation.save()
+
+                        retreat_reservations.append(
+                            new_retreat_reservation
                         )
+
                         # Decrement reserved_seats if > 0
                         if retreat.reserved_seats:
                             retreat.reserved_seats = (

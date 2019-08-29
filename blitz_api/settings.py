@@ -320,6 +320,9 @@ LOCAL_SETTINGS = {
         ),
         'FORGOT_PASSWORD_URL': config('FORGOT_PASSWORD_URL',
                                       default='https://example.com/reset-password/{{token}}'),
+        'RETREAT_INVITATION_URL':
+            config('RETREAT_INVITATION_URL',
+                   default='https://example.com/retreat_invitation/{{token}}'),
         'RETREAT_UNSUBSCRIBE_URL':
             config('RETREAT_UNSUBSCRIBE_URL',
                    default='https://example.com/wait_queue/'
