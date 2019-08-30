@@ -746,13 +746,14 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     new_retreat = retreat
                     old_retreat = current_retreat
 
-            wait_queue_notification_url = request.build_absolute_uri(
+            retrat_notification_url = request.build_absolute_uri(
                 reverse(
-                    'retreat:waitqueuenotification-list'
+                    'retreat:retreat-notify',
+                    args=[current_retreat.id]
                 )
             ),
             current_retreat.notify_scheduler_waite_queue(
-                wait_queue_notification_url)
+                retrat_notification_url)
 
         # Send appropriate emails
         # Send order confirmation email
