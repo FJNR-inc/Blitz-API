@@ -168,7 +168,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
     def __str__(self):
         return self.name
 
-    def notify_scheduler_waite_queue(self, wait_queue_notification_url):
+    def notify_scheduler_waite_queue(self, retrat_notification_url):
         # Ask the external scheduler to start calling /notify if the
         # reserved_seats count == 1. Otherwise, the scheduler should
         # already be calling /notify at specified intervals.
@@ -184,10 +184,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
             data = {
                 "hour": timezone.now().hour,
                 "minute": (timezone.now().minute + 5) % 60,
-                "url": '{0}{1}'.format(
-                    wait_queue_notification_url,
-                    "/notify"
-                ),
+                "url": retrat_notification_url,
                 "description": "Retreat wait queue notification"
             }
 

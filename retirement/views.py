@@ -118,6 +118,59 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         return Response(response_data, status=status.HTTP_200_OK)
 
     @action(detail=True, permission_classes=[])
+    def notify(self, request, pk=None):
+        """
+        That custom action allows anyone to notify
+        users in wait queues of a retreat.
+        For this retreat, there will be as many users notified as there are
+        reserved seats.
+        At the same time, this clears older notification logs. That part should
+        be moved somewhere else.
+        """
+        # Checks if lastest notification is older than 24h
+        # This is a hard-coded limitation to allow anonymous users to call
+        # the function.
+        # Keep a 5 minutes gap.
+        time_limit = timezone.now() - timedelta(hours=23, minutes=55)
+        notified_someone = False
+        ready_retreat = False
+
+        retreat: Retreat = self.get_object()
+
+        # Remove older notifications
+        remove_before = timezone.now() - timedelta(
+            days=settings.LOCAL_SETTINGS[
+                'RETREAT_NOTIFICATION_LIFETIME_DAYS'
+            ]
+        )
+        WaitQueueNotification.objects.filter(
+            created_at__lt=remove_before,
+            retreat=retreat
+        ).delete()
+
+        if not retreat.wait_queue_notifications.filter(
+                created_at__gt=time_limit):
+            # Next iteration, since this wait_queue has been notified less
+            # than 24h ago.
+            ready_retreat = True
+            notified_someone = retreat.notify_users()
+
+        if not ready_retreat:
+            response_data = {
+                'detail': "Last notification was sent less than 24h ago."
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not notified_someone:
+            response_data = {
+                'detail': "No reserved seats.",
+                'stop': True,
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, permission_classes=[])
     def recap(self, request, pk=None):
         """
         That custom action allows an admin (or automated task) to notify
@@ -358,13 +411,14 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                 if retreat.reserved_seats or free_seats == 1:
                     retreat.reserved_seats += 1
 
-                wait_queue_notification_url = request.build_absolute_uri(
+                retrat_notification_url = request.build_absolute_uri(
                     reverse(
-                        'retreat:waitqueuenotification-list'
+                        'retreat:retreat-notify',
+                        args=[retreat.id]
                     )
                 ),
                 retreat.notify_scheduler_waite_queue(
-                    wait_queue_notification_url)
+                    retrat_notification_url)
 
                 retreat.save()
 
