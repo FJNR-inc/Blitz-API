@@ -46,6 +46,10 @@ TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
 class BaseProductManagerSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = BaseProduct
+        fields = '__all__'
+
     def to_representation(self, instance):
 
         instance = BaseProduct.objects.get_subclass(id=instance.id)
