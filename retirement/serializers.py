@@ -442,7 +442,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         amount = 0
         profile = PaymentProfile.objects.filter(owner=user).first()
         instance_pk = instance.pk
-        current_retreat = instance.retreat
+        current_retreat: Retreat = instance.retreat
         coupon = instance.order_line.coupon
         coupon_value = instance.order_line.coupon_real_value
         order_line = instance.order_line
@@ -746,55 +746,14 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     new_retreat = retreat
                     old_retreat = current_retreat
 
-            # Ask the external scheduler to start calling /notify if the
-            # reserved_seats count == 1. Otherwise, the scheduler should
-            # already be calling /notify at specified intervals.
-            #
-            # Since we are in the context of a cancelation, if reserved_seats
-            # equals 1, that means that this is the first cancelation.
-            if current_retreat.reserved_seats == 1:
-                scheduler_url = '{0}'.format(
-                    settings.EXTERNAL_SCHEDULER['URL'],
+            retrat_notification_url = request.build_absolute_uri(
+                reverse(
+                    'retreat:retreat-notify',
+                    args=[current_retreat.id]
                 )
-
-                data = {
-                    "hour": timezone.now().hour,
-                    "minute": (timezone.now().minute + 5) % 60,
-                    "url": '{0}{1}'.format(
-                        request.build_absolute_uri(
-                            reverse('retreat:waitqueuenotification-list')
-                        ),
-                        "/notify"
-                    ),
-                    "description": "Retreat wait queue notification"
-                }
-
-                try:
-                    auth_data = {
-                        "username": settings.EXTERNAL_SCHEDULER['USER'],
-                        "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
-                    }
-                    auth = requests.post(
-                        scheduler_url + "/authentication",
-                        json=auth_data,
-                    )
-                    auth.raise_for_status()
-
-                    r = requests.post(
-                        scheduler_url + '/tasks',
-                        json=data,
-                        headers={
-                            'Authorization':
-                            'Token ' + json.loads(auth.content)['token']},
-                        timeout=(10, 10),
-                    )
-                    r.raise_for_status()
-                except (requests.exceptions.HTTPError,
-                        requests.exceptions.ConnectionError) as err:
-                    mail_admins(
-                        "Thèsez-vous: external scheduler error",
-                        traceback.format_exc()
-                    )
+            ),
+            current_retreat.notify_scheduler_waite_queue(
+                retrat_notification_url)
 
         # Send appropriate emails
         # Send order confirmation email
