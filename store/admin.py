@@ -7,7 +7,7 @@ from simple_history.admin import SimpleHistoryAdmin
 
 from .models import (Membership, Order, OrderLine, Package, PaymentProfile,
                      CustomPayment, Coupon, MembershipCoupon, CouponUser,
-                     Refund, )
+                     Refund, BaseProduct, OrderLineBaseProduct, OptionProduct)
 from .resources import (MembershipResource, OrderResource, OrderLineResource,
                         PackageResource, CustomPaymentResource, CouponResource,
                         CouponUserResource, RefundResource, )
@@ -203,3 +203,6 @@ admin.site.register(Coupon, CouponAdmin)
 admin.site.register(MembershipCoupon)
 admin.site.register(CouponUser, CouponUserAdmin)
 admin.site.register(Refund, RefundAdmin)
+admin.site.register(BaseProduct)
+admin.site.register(OrderLineBaseProduct)
+admin.site.register(OptionProduct)
