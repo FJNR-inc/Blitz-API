@@ -112,6 +112,7 @@ class OrderLineTests(APITestCase):
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': 2 * self.package.price,
+            'metadata': None,
             'options': []
         }
 
@@ -244,6 +245,7 @@ class OrderLineTests(APITestCase):
             'coupon': None,
             'coupon_real_value': 0,
             'cost': 2.0 * self.package.price,
+            'metadata': None,
             'options': []
         }
 
@@ -281,6 +283,7 @@ class OrderLineTests(APITestCase):
             'order': f'http://testserver/orders/{self.order.id}',
             'quantity': 1,
             'cost': self.membership.price,
+            'metadata': None,
             'options': []
         }
 
@@ -413,8 +416,9 @@ class OrderLineTests(APITestCase):
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': 99 * self.package.price,
+            'url': f'http://testserver/order_lines/{self.order_line.id}',
+            'metadata': None,
             'options': [],
-            'url': f'http://testserver/order_lines/{self.order_line.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -453,8 +457,9 @@ class OrderLineTests(APITestCase):
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': 9 * self.package.price,
+            'url': f'http://testserver/order_lines/{self.order_line.id}',
+            'metadata': None,
             'options': [],
-            'url': f'http://testserver/order_lines/{self.order_line.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -552,7 +557,8 @@ class OrderLineTests(APITestCase):
                 'coupon_real_value': 0.0,
                 'cost': self.package.price,
                 'options': [],
-                'url': f'http://testserver/order_lines/{self.order_line.id}'
+                'url': f'http://testserver/order_lines/{self.order_line.id}',
+                'metadata': None,
             }]
         }
 
@@ -586,8 +592,9 @@ class OrderLineTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': self.package.price,
+                'url': f'http://testserver/order_lines/{self.order_line.id}',
+                'metadata': None,
                 'options': [],
-                'url': f'http://testserver/order_lines/{self.order_line.id}'
             }, {
                 'content_type': 'package',
                 'id': self.order_line_admin.id,
@@ -597,6 +604,7 @@ class OrderLineTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 99 * self.package.price,
+                'metadata': None,
                 'options': [],
                 'url':
                     f'http://testserver/order_lines/{self.order_line_admin.id}'
@@ -647,8 +655,9 @@ class OrderLineTests(APITestCase):
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': self.package.price,
+            'url': f'http://testserver/order_lines/{self.order_line.id}',
+            'metadata': None,
             'options': [],
-            'url': f'http://testserver/order_lines/{self.order_line.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -696,8 +705,9 @@ class OrderLineTests(APITestCase):
             'coupon': None,
             'coupon_real_value': 0.0,
             'cost': self.package.price,
+            'url': f'http://testserver/order_lines/{self.order_line.id}',
+            'metadata': None,
             'options': [],
-            'url': f'http://testserver/order_lines/{self.order_line.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)

@@ -1,4 +1,8 @@
+import binascii
+import os
 from datetime import timedelta
+
+from django.conf import settings
 
 from blitz_api.models import Address
 from django.contrib.auth import get_user_model
@@ -7,7 +11,8 @@ from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
-from store.models import Membership, OrderLine, BaseProduct
+from store.models import Membership, OrderLine, BaseProduct,\
+    Coupon
 
 User = get_user_model()
 
@@ -123,6 +128,11 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
     has_shared_rooms = models.BooleanField()
 
+    hidden = models.BooleanField(
+        verbose_name=_("Hidden"),
+        default=False
+    )
+
     # History is registered in translation.py
     # history = HistoricalRecords()
 
@@ -140,6 +150,11 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         reserved_seats = self.reserved_seats
         reservations = self.reservations.filter(is_active=True).count()
         return seats - reservations - reserved_seats
+
+    def has_places_remaining(self):
+        return (self.seats -
+                self.total_reservations -
+                self.reserved_seats) > 0
 
     def __str__(self):
         return self.name
@@ -255,6 +270,15 @@ class Reservation(SafeDeleteModel):
         auto_now_add=True
     )
 
+    invitation = models.ForeignKey(
+        'RetreatInvitation',
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Invitation"),
+        related_name='retreat_reservations',
+        null=True,
+        blank=True
+    )
+
     history = HistoricalRecords()
 
     def __str__(self):
@@ -330,3 +354,69 @@ class WaitQueueNotification(models.Model):
         return ', '.join(
             [str(self.retreat), str(self.user)]
         )
+
+
+class RetreatInvitation(SafeDeleteModel):
+
+    url_token = models.CharField(
+        _("Key"),
+        max_length=40,
+        unique=True)
+
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=253,
+        blank=True,
+        null=True,
+    )
+
+    nb_places = models.IntegerField(
+        verbose_name=_("Number of places")
+    )
+
+    retreat = models.ForeignKey(
+        Retreat,
+        on_delete=models.CASCADE,
+        verbose_name=_("Retreat"),
+        related_name='invitations',
+    )
+
+    coupon = models.ForeignKey(
+        Coupon,
+        on_delete=models.SET_NULL,
+        verbose_name=_("Coupon"),
+        related_name='invitations',
+        null=True,
+        blank=True
+    )
+
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return self.url_token
+
+    def save(self, *args, **kwargs):
+        if not self.url_token:
+            self.url_token = self.generate_key()
+        return super(RetreatInvitation, self).save(*args, **kwargs)
+
+    def generate_key(self):
+        return binascii.hexlify(os.urandom(20)).decode()
+
+    @property
+    def front_url(self):
+        url = settings.LOCAL_SETTINGS[
+            'FRONTEND_INTEGRATION'][
+            'FORGOT_PASSWORD_URL'].replace(
+            "{{token}}",
+            str(self.url_token)
+        )
+        return url
+
+    @property
+    def nb_places_used(self):
+
+        return self.retreat_reservations.filter(is_active=True).count()
+
+    def has_free_places(self):
+        return self.nb_places_used < self.nb_places

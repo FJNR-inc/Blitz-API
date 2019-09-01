@@ -156,6 +156,7 @@ class ReservationTests(APITestCase):
             'cancelation_reason': None,
             'refundable': True,
             'exchangeable': True,
+            'invitation': None,
         }
         cls.reservation_non_exchangeable = Reservation.objects.create(
             user=cls.admin,

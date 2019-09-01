@@ -35,7 +35,7 @@ from store.services import (charge_payment,
 
 from .fields import TimezoneField
 from .models import (Picture, Reservation, Retreat, WaitQueue,
-                     WaitQueueNotification, )
+                     WaitQueueNotification, RetreatInvitation)
 from .services import refund_retreat
 
 User = get_user_model()
@@ -938,6 +938,10 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 'help_text': _("Retreat represented by the picture."),
                 'view_name': 'retreat:retreat-detail',
             },
+            'invitation': {
+                'help_text': _("Retreat represented by the picture."),
+                'view_name': 'retreat:retreatinvitation-detail',
+            },
             'is_active': {
                 'required': False,
                 'help_text': _("Whether the reservation is active or not."),
@@ -992,5 +996,24 @@ class WaitQueueNotificationSerializer(serializers.HyperlinkedModelSerializer):
             },
             'url': {
                 'view_name': 'retreat:waitqueuenotification-detail',
+            },
+        }
+
+
+class RetreatInvitationSerializer(serializers.HyperlinkedModelSerializer):
+    url_token = serializers.ReadOnlyField()
+    front_url = serializers.ReadOnlyField()
+    nb_places_used = serializers.ReadOnlyField()
+
+    class Meta:
+        model = RetreatInvitation
+        fields = '__all__'
+        extra_kwargs = {
+            'retreat': {
+                'help_text': _("Retreat"),
+                'view_name': 'retreat:retreat-detail',
+            },
+            'url': {
+                'view_name': 'retreat:retreatinvitation-detail',
             },
         }

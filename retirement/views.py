@@ -38,7 +38,7 @@ from store.services import refund_amount, PAYSAFE_EXCEPTION
 
 from . import permissions, serializers
 from .models import (Picture, Reservation, Retreat, WaitQueue,
-                     WaitQueueNotification)
+                     WaitQueueNotification, RetreatInvitation)
 from .resources import (
     ReservationResource, RetreatResource,
     WaitQueueNotificationResource, WaitQueueResource,
@@ -84,7 +84,8 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         """
         if self.request.user.is_staff:
             return Retreat.objects.all()
-        return Retreat.objects.filter(is_active=True)
+        return Retreat.objects.filter(is_active=True,
+                                      hidden=False)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -641,3 +642,11 @@ class WaitQueueNotificationViewSet(ExportMixin, mixins.ListModelMixin,
             return Response(response_data, status=status.HTTP_200_OK)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class RetreatInvitationViewSet(viewsets.ModelViewSet):
+
+    serializer_class = serializers.RetreatInvitationSerializer
+    queryset = RetreatInvitation.objects.all()
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+    filter_fields = '__all__'

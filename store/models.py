@@ -1,4 +1,5 @@
 import decimal
+import json
 import random
 import string
 from decimal import Decimal
@@ -201,6 +202,12 @@ class OrderLine(models.Model):
         blank=True
     )
 
+    metadata = models.TextField(
+        verbose_name=_("Metada"),
+        blank=True,
+        null=True,
+    )
+
     history = HistoricalRecords()
 
     def __str__(self):
@@ -210,6 +217,19 @@ class OrderLine(models.Model):
         self.cost = self.cost - coupon_value
         self.coupon_real_value = coupon_value
         self.save()
+
+    def get_invitation(self):
+        if self.metadata:
+            metadata = json.loads(
+                self.metadata)
+            invitation_id = metadata.get(
+                'invitation_id', None)
+
+            if invitation_id:
+                from retirement.models import RetreatInvitation
+                return RetreatInvitation.objects.get(
+                    id=invitation_id)
+        return None
 
 
 class OrderLineBaseProduct(models.Model):
