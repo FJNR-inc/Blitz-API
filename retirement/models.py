@@ -226,12 +226,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
             for wait_queue in self.wait_queue.all():
                 user = wait_queue.user
 
-                # Check if user have already a notification
-                if not WaitQueueNotification.objects.filter(
-                        user=user, retreat=self):
-                    self.notify_reserved_seat(user)
-
-                    notified_someone = True
+                self.notify_reserved_seat(user)
+                notified_someone = True
 
             # set seat and user_index to 0 because we notify everyone
             self.reserved_seats = 0
