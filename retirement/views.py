@@ -1,29 +1,19 @@
 from decimal import Decimal
-import json
-from copy import copy
 from datetime import datetime, timedelta
 
-import requests
-import traceback
-
 import pytz
-import rest_framework
 from django.core.files.base import ContentFile
 
-from blitz_api.exceptions import MailServiceError
 from blitz_api.mixins import ExportMixin
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.mail import mail_admins
 from django.core.mail import send_mail as django_send_mail
 from django.db import transaction
-from django.db.models import F
-from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
-from rest_framework import exceptions, mixins, status, viewsets, serializers
+from rest_framework import mixins, status, viewsets
 from rest_framework import serializers as rest_framework_serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
@@ -31,7 +21,6 @@ from rest_framework.response import Response
 
 from blitz_api.models import ExportMedia
 from blitz_api.serializers import ExportMediaSerializer
-from blitz_api.services import ExportPagination
 from store.exceptions import PaymentAPIError
 from store.models import Refund
 from store.services import refund_amount, PAYSAFE_EXCEPTION
@@ -560,71 +549,6 @@ class WaitQueueNotificationViewSet(ExportMixin, mixins.ListModelMixin,
         if self.request.user.is_staff:
             return WaitQueueNotification.objects.all()
         return WaitQueueNotification.objects.filter(user=self.request.user)
-
-    @action(detail=False, permission_classes=[])
-    def notify(self, request):
-        """
-        That custom action allows anyone to notify
-        users in wait queues of every retreat.
-        For each retreat, there will be as many users notified as there are
-        reserved seats.
-        At the same time, this clears older notification logs. That part should
-        be moved somewhere else.
-        """
-        # Checks if lastest notification is older than 24h
-        # This is a hard-coded limitation to allow anonymous users to call
-        # the function.
-        # Keep a 5 minutes gap.
-        time_limit = timezone.now() - timedelta(hours=23, minutes=55)
-        notified_someone = False
-        ready_retreats = False
-
-        retreats_to_notify = Retreat.objects.filter(
-            reserved_seats__gt=0,
-            start_time__gt=timezone.now(),
-            is_active=True,
-        )
-
-        # Remove older notifications
-        remove_before = timezone.now() - timedelta(
-            days=settings.LOCAL_SETTINGS[
-                'RETREAT_NOTIFICATION_LIFETIME_DAYS'
-            ]
-        )
-        WaitQueueNotification.objects.filter(
-            created_at__lt=remove_before
-        ).delete()
-
-        for retreat in retreats_to_notify:
-            if retreat.wait_queue_notifications.filter(
-                    created_at__gt=time_limit):
-                # Next iteration, since this wait_queue has been notified less
-                # than 24h ago.
-                continue
-            ready_retreats = True
-            notified_someone = notified_someone or retreat.notify_users()
-
-        if retreats_to_notify.count() == 0:
-            response_data = {
-                'detail': "No reserved seats.",
-                'stop': True,
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        if not ready_retreats:
-            response_data = {
-                'detail': "Last notification was sent less than 24h ago."
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        if not notified_someone:
-            response_data = {
-                'detail': "No reserved seats.",
-                'stop': True,
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class RetreatInvitationViewSet(viewsets.ModelViewSet):
