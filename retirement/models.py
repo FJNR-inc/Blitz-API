@@ -1,4 +1,17 @@
+import binascii
+import os
+import json
+import traceback
 from datetime import timedelta
+
+from django.conf import settings
+
+import requests
+from django.conf import settings
+from django.core.mail import mail_admins, send_mail
+from django.template.loader import render_to_string
+from django.utils import timezone
+from rest_framework.reverse import reverse
 
 from blitz_api.models import Address
 from django.contrib.auth import get_user_model
@@ -7,12 +20,13 @@ from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
-from store.models import Membership, OrderLine
+from store.models import Membership, OrderLine, BaseProduct,\
+    Coupon
 
 User = get_user_model()
 
 
-class Retreat(Address, SafeDeleteModel):
+class Retreat(Address, SafeDeleteModel, BaseProduct):
     """Represents a retreat physical place."""
 
     ACTIVITY_LANGUAGE = (
@@ -25,15 +39,9 @@ class Retreat(Address, SafeDeleteModel):
         verbose_name = _("Retreat")
         verbose_name_plural = _("Retreats")
 
-    name = models.CharField(
-        verbose_name=_("Name"),
-        max_length=253,
-    )
-
-    details = models.CharField(
-        verbose_name=_("Details"),
-        max_length=1000,
-    )
+    old_id = models.IntegerField(
+        verbose_name=_("Id before migrate to base product"),
+        null=True,)
 
     seats = models.IntegerField(verbose_name=_("Seats"), )
 
@@ -66,12 +74,6 @@ class Retreat(Address, SafeDeleteModel):
         max_length=100,
         choices=ACTIVITY_LANGUAGE,
         verbose_name=_("Activity language"),
-    )
-
-    price = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        verbose_name=_("Price"),
     )
 
     start_time = models.DateTimeField(verbose_name=_("Start time"), )
@@ -135,6 +137,11 @@ class Retreat(Address, SafeDeleteModel):
 
     has_shared_rooms = models.BooleanField()
 
+    hidden = models.BooleanField(
+        verbose_name=_("Hidden"),
+        default=False
+    )
+
     # History is registered in translation.py
     # history = HistoricalRecords()
 
@@ -153,8 +160,123 @@ class Retreat(Address, SafeDeleteModel):
         reservations = self.reservations.filter(is_active=True).count()
         return seats - reservations - reserved_seats
 
+    def has_places_remaining(self):
+        return (self.seats -
+                self.total_reservations -
+                self.reserved_seats) > 0
+
     def __str__(self):
         return self.name
+
+    def notify_scheduler_waite_queue(self, retrat_notification_url):
+        # Ask the external scheduler to start calling /notify if the
+        # reserved_seats count == 1. Otherwise, the scheduler should
+        # already be calling /notify at specified intervals.
+        #
+        # Since we are in the context of a cancelation, if reserved_seats
+        # equals 1, that means that this is the first cancelation.
+
+        if self.reserved_seats == 1:
+            scheduler_url = '{0}'.format(
+                settings.EXTERNAL_SCHEDULER['URL'],
+            )
+
+            data = {
+                "hour": timezone.now().hour,
+                "minute": (timezone.now().minute + 5) % 60,
+                "url": retrat_notification_url,
+                "description": "Retreat wait queue notification"
+            }
+
+            try:
+                auth_data = {
+                    "username": settings.EXTERNAL_SCHEDULER['USER'],
+                    "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
+                }
+                auth = requests.post(
+                    scheduler_url + "/authentication",
+                    json=auth_data,
+                )
+                auth.raise_for_status()
+
+                r = requests.post(
+                    scheduler_url + '/tasks',
+                    json=data,
+                    headers={
+                        'Authorization':
+                            'Token ' + json.loads(auth.content)[
+                                'token']},
+                    timeout=(10, 10),
+                )
+                r.raise_for_status()
+            except (requests.exceptions.HTTPError,
+                    requests.exceptions.ConnectionError) as err:
+                mail_admins(
+                    "Thèsez-vous: external scheduler error",
+                    traceback.format_exc()
+                )
+
+    def notify_users(self):
+        notified_someone = False
+
+        datetime_refund = self.start_time - timedelta(days=self.min_day_refund)
+        # if we are after the refund delay, we notify every waiting user
+        if timezone.now() >= datetime_refund:
+
+            for wait_queue in self.wait_queue.all():
+                user = wait_queue.user
+
+                self.notify_reserved_seat(user)
+                notified_someone = True
+
+            # set seat and user_index to 0 because we notify everyone
+            self.reserved_seats = 0
+
+        else:
+            # Get the wait queue with elements ordered by ascending date
+            wait_queue = self.wait_queue.all().order_by('created_at')
+            # Get number of waiting users
+            nb_waiting_users = wait_queue.count()
+            # If all users have already been notified, free all reserved seats
+            if self.next_user_notified >= nb_waiting_users:
+                self.reserved_seats = 0
+                self.next_user_notified = 0
+            # Else notify a user for every reserved seat
+            for seat in range(self.reserved_seats):
+                if self.next_user_notified >= nb_waiting_users:
+                    self.reserved_seats -= 1
+                else:
+                    user = wait_queue[self.next_user_notified].user
+                    self.notify_reserved_seat(user)
+                    self.next_user_notified += 1
+                    WaitQueueNotification.objects.create(
+                        user=user,
+                        retreat=self,
+                    )
+                    notified_someone = True
+
+        self.save()
+        return notified_someone
+
+    def notify_reserved_seat(self, user):
+        """
+        This function sends an email to notify a
+        user that he has a reserved seat
+        to a retreat for 24h hours.
+        """
+
+        merge_data = {'RETREAT_NAME': self.name}
+
+        plain_msg = render_to_string("reserved_place.txt", merge_data)
+        msg_html = render_to_string("reserved_place.html", merge_data)
+
+        return send_mail(
+            "Place exclusive pour 24h",
+            plain_msg,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            html_message=msg_html,
+        )
 
 
 class Picture(models.Model):
@@ -262,6 +384,20 @@ class Reservation(SafeDeleteModel):
         default=True,
     )
 
+    inscription_date = models.DateTimeField(
+        verbose_name="Inscription date",
+        auto_now_add=True
+    )
+
+    invitation = models.ForeignKey(
+        'RetreatInvitation',
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Invitation"),
+        related_name='retreat_reservations',
+        null=True,
+        blank=True
+    )
+
     history = HistoricalRecords()
 
     def __str__(self):
@@ -337,3 +473,69 @@ class WaitQueueNotification(models.Model):
         return ', '.join(
             [str(self.retreat), str(self.user)]
         )
+
+
+class RetreatInvitation(SafeDeleteModel):
+
+    url_token = models.CharField(
+        _("Key"),
+        max_length=40,
+        unique=True)
+
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=253,
+        blank=True,
+        null=True,
+    )
+
+    nb_places = models.IntegerField(
+        verbose_name=_("Number of places")
+    )
+
+    retreat = models.ForeignKey(
+        Retreat,
+        on_delete=models.CASCADE,
+        verbose_name=_("Retreat"),
+        related_name='invitations',
+    )
+
+    coupon = models.ForeignKey(
+        Coupon,
+        on_delete=models.SET_NULL,
+        verbose_name=_("Coupon"),
+        related_name='invitations',
+        null=True,
+        blank=True
+    )
+
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return self.url_token
+
+    def save(self, *args, **kwargs):
+        if not self.url_token:
+            self.url_token = self.generate_key()
+        return super(RetreatInvitation, self).save(*args, **kwargs)
+
+    def generate_key(self):
+        return binascii.hexlify(os.urandom(20)).decode()
+
+    @property
+    def front_url(self):
+        url = settings.LOCAL_SETTINGS[
+            'FRONTEND_INTEGRATION'][
+            'FORGOT_PASSWORD_URL'].replace(
+            "{{token}}",
+            str(self.url_token)
+        )
+        return url
+
+    @property
+    def nb_places_used(self):
+
+        return self.retreat_reservations.filter(is_active=True).count()
+
+    def has_free_places(self):
+        return self.nb_places_used < self.nb_places

@@ -29,6 +29,8 @@ class WorkplaceAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
         'seats',
     ) + SafeDeleteAdmin.list_filter
 
+    actions = ['undelete_selected', 'export_admin_action']
+
 
 class PictureAdmin(SimpleHistoryAdmin, TranslationAdmin):
     list_display = ('name', 'workplace', 'picture_tag',)
@@ -55,6 +57,8 @@ class PeriodAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
         'is_active',
     ) + SafeDeleteAdmin.list_filter
 
+    actions = ['undelete_selected', 'export_admin_action']
+
 
 class TimeSlotAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
                     ExportActionModelAdmin):
@@ -73,6 +77,8 @@ class TimeSlotAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
         ('period__workplace', admin.RelatedOnlyFieldListFilter),
         'price',
     ) + SafeDeleteAdmin.list_filter
+
+    actions = ['undelete_selected', 'export_admin_action']
 
 
 class ReservationAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
@@ -95,6 +101,8 @@ class ReservationAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
         'cancelation_date',
         'cancelation_reason',
     ) + SafeDeleteAdmin.list_filter
+
+    actions = ['undelete_selected', 'export_admin_action']
 
 
 admin.site.register(Workplace, WorkplaceAdmin)

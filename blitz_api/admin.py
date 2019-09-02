@@ -38,6 +38,7 @@ class CustomUserAdmin(UserAdmin, SimpleHistoryAdmin, ExportActionModelAdmin):
     """ Required to display extra fields of users in Django Admin """
     resource_class = UserResource
     form = CustomUserChangeForm
+    search_fields = ['first_name', 'last_name', 'email', 'id']
 
     def __init__(self, *args, **kwargs):
         super(CustomUserAdmin, self).__init__(*args, **kwargs)

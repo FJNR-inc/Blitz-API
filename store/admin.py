@@ -7,7 +7,7 @@ from simple_history.admin import SimpleHistoryAdmin
 
 from .models import (Membership, Order, OrderLine, Package, PaymentProfile,
                      CustomPayment, Coupon, MembershipCoupon, CouponUser,
-                     Refund, )
+                     Refund, BaseProduct, OrderLineBaseProduct, OptionProduct)
 from .resources import (MembershipResource, OrderResource, OrderLineResource,
                         PackageResource, CustomPaymentResource, CouponResource,
                         CouponUserResource, RefundResource, )
@@ -112,11 +112,12 @@ class OrderLineAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'quantity',
         ('order__user', admin.RelatedOnlyFieldListFilter),
     )
-    search_fields = (
+    search_fields = [
         'order__user__email',
         'order__user__username',
         'coupon__code',
-    )
+        'id'
+    ]
 
     def owner(self, instance):
         return instance.order.user
@@ -189,6 +190,8 @@ class CouponUserAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
         'user__username',
     ) + SafeDeleteAdmin.list_filter
 
+    actions = ['undelete_selected', 'export_admin_action']
+
 
 admin.site.register(Membership, MembershipAdmin)
 admin.site.register(Package, PackageAdmin)
@@ -200,3 +203,6 @@ admin.site.register(Coupon, CouponAdmin)
 admin.site.register(MembershipCoupon)
 admin.site.register(CouponUser, CouponUserAdmin)
 admin.site.register(Refund, RefundAdmin)
+admin.site.register(BaseProduct)
+admin.site.register(OrderLineBaseProduct)
+admin.site.register(OptionProduct)

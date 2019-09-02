@@ -1,4 +1,11 @@
+import json
+
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.fields import empty
+from rest_framework.serializers import as_serializer_error
+from rest_framework.settings import api_settings
 from rest_framework.validators import UniqueValidator
 
 from decimal import Decimal
@@ -21,13 +28,14 @@ from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,
                                 getMessageTranslate)
 from workplace.models import Reservation
-from retirement.models import Reservation as RetreatReservation
+from retirement.models import Reservation as RetreatReservation, \
+    RetreatInvitation
 from retirement.models import WaitQueueNotification, Retreat
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
                      PaymentProfile, CustomPayment, Coupon, CouponUser, Refund,
-                     MembershipCoupon,)
+                     MembershipCoupon, OptionProduct, OrderLineBaseProduct)
 from .services import (charge_payment,
                        create_external_payment_profile,
                        create_external_card,
@@ -38,6 +46,55 @@ from .services import (charge_payment,
 User = get_user_model()
 
 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
+
+
+class BaseProductManagerSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = BaseProduct
+        fields = '__all__'
+
+    def to_representation(self, instance):
+
+        instance = BaseProduct.objects.get_subclass(id=instance.id)
+
+        if isinstance(instance, Retreat):
+            from retirement.serializers import RetreatSerializer
+            serializer = RetreatSerializer
+        elif isinstance(instance, OptionProduct):
+            serializer = OptionProductSerializer
+        elif isinstance(instance, Membership):
+            serializer = MembershipSerializer
+        elif isinstance(instance, Package):
+            serializer = PackageSerializer
+        else:
+            serializer = BaseProductSerializer
+
+        return serializer(instance=instance, context=self.context).data
+
+
+class OrderLineBaseProductSerializer(serializers.ModelSerializer):
+
+    id = serializers.IntegerField()
+    quantity = serializers.IntegerField()
+
+    class Meta:
+        model = BaseProduct
+        fields = ('id', 'quantity')
+
+    def validate(self, attrs):
+        product_id = attrs['id']
+        quantity = attrs['quantity']
+        base_product = BaseProduct.objects.get_subclass(id=product_id)
+        if isinstance(base_product, OptionProduct):
+            if quantity > base_product.max_quantity:
+                raise serializers.ValidationError({
+                    'quantity': [
+                        f'Quantity too big, limited to '
+                        f'{base_product.max_quantity}'
+                    ]
+                })
+
+        return attrs
 
 
 class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
@@ -52,35 +109,89 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
         decimal_places=2,
         min_value=0.1,
     )
-    available = serializers.BooleanField(
-        required=True,
-    )
+
     name = serializers.CharField(
         required=False,
+        validators=[UniqueValidator(queryset=Retreat.objects.all())],
     )
     name_fr = serializers.CharField(
         required=False,
         allow_null=True,
+        validators=[UniqueValidator(queryset=Retreat.objects.all())],
     )
     name_en = serializers.CharField(
         required=False,
         allow_null=True,
+        validators=[UniqueValidator(queryset=Retreat.objects.all())],
     )
 
-    def validate(self, attr):
-        if not check_if_translated_field('name', attr):
-            raise serializers.ValidationError(
-                getMessageTranslate('name', attr, True)
-            )
-        return super(BaseProductSerializer, self).validate(attr)
+    available = serializers.BooleanField(
+        required=True
+    )
+
+    available_on_product_types = serializers.SlugRelatedField(
+        queryset=ContentType.objects.all(),
+        slug_field='model',
+        many=True,
+        required=False,
+    )
+
+    available_on_products = serializers.PrimaryKeyRelatedField(
+        queryset=BaseProduct.objects.all(),
+        many=True,
+        required=False
+    )
 
     def to_representation(self, instance):
         user = self.context['request'].user
+        self.fields['options'] = BaseProductManagerSerializer(many=True)
         data = super(BaseProductSerializer, self).to_representation(instance)
         if not user.is_staff:
             data.pop("order_lines")
             data = remove_translation_fields(data)
+
         return data
+
+    def run_validation(self, data=empty):
+
+        def merge_err_dict(errs, new_errors):
+            errs_copy = {**errs, **new_errors}
+            for key, value in errs_copy.items():
+                if key in errs and key in new_errors:
+                    errs_copy[key] = value + errs[key]
+
+            return errs_copy
+
+        (is_empty_value, data) = self.validate_empty_values(data)
+        if is_empty_value:
+            return data
+
+        errs = {}
+        value = None
+        try:
+            value = self.to_internal_value(data)
+        except (ValidationError, DjangoValidationError) as exc:
+            errs = as_serializer_error(exc)
+
+        try:
+            self.run_validators(data)
+        except (ValidationError, DjangoValidationError) as exc:
+            errs = merge_err_dict(errs, as_serializer_error(exc))
+
+        try:
+            if value:
+                value = self.validate(value)
+            else:
+                value = self.validate(data)
+            assert value is not None, \
+                '.validate() should return the validated data'
+        except (ValidationError, DjangoValidationError) as exc:
+            errs = merge_err_dict(errs, as_serializer_error(exc))
+
+        if errs:
+            raise serializers.ValidationError(errs)
+        else:
+            return value
 
     class Meta:
         model = BaseProduct
@@ -105,9 +216,6 @@ class MembershipSerializer(BaseProductSerializer):
         extra_kwargs = {
             'name': {
                 'help_text': _("Name of the membership."),
-                'validators': [
-                    UniqueValidator(queryset=Membership.objects.all())
-                ],
             },
         }
 
@@ -132,11 +240,14 @@ class PackageSerializer(BaseProductSerializer):
         extra_kwargs = {
             'name': {
                 'help_text': _("Name of the package."),
-                'validators': [
-                    UniqueValidator(queryset=Package.objects.all())
-                ],
             },
         }
+
+
+class OptionProductSerializer(BaseProductSerializer):
+    class Meta:
+        model = OptionProduct
+        fields = '__all__'
 
 
 class CustomPaymentSerializer(serializers.HyperlinkedModelSerializer):
@@ -280,6 +391,12 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
         read_only=True,
     )
 
+    options = OrderLineBaseProductSerializer(
+        many=True,
+        required=False,
+        write_only=True
+    )
+
     def validate(self, attrs):
         """Limits packages according to request user membership"""
         validated_data = super().validate(attrs)
@@ -342,6 +459,26 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = OrderLine
         fields = '__all__'
+
+    def to_representation(self, instance: OrderLine):
+        data = super(OrderLineSerializer, self).to_representation(instance)
+
+        data['options'] = []
+        options = instance.options.all()
+        if options:
+            option: BaseProduct
+            for option in options:
+                option_id = option.id
+                option_quantity = option.orderlinebaseproduct_set.\
+                    get(order_line_id=instance.id).quantity
+
+                option_data = {
+                    'id': option_id,
+                    'quantity': option_quantity
+                }
+                data['options'].append(option_data)
+
+        return data
 
 
 class OrderLineSerializerNoOrder(OrderLineSerializer):
@@ -445,38 +582,18 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             coupon = validated_data.pop('coupon', None)
             order = Order.objects.create(**validated_data)
             charge_response = None
+
+            order.add_line_from_data(orderlines_data)
+
             discount_amount = 0
-            for orderline_data in orderlines_data:
-                OrderLine.objects.create(order=order, **orderline_data)
-
             if coupon:
-                coupon_info = validate_coupon_for_order(coupon, order)
-                if coupon_info['valid_use']:
-                    coupon_user = CouponUser.objects.get(
-                        user=user,
-                        coupon=coupon,
-                    )
-                    coupon_user.uses = coupon_user.uses + 1
-                    coupon_user.save()
-                    discount_amount = coupon_info['value']
-                    orderline_cost = coupon_info['orderline'].cost
-                    coupon_info['orderline'].cost = (
-                            orderline_cost -
-                            discount_amount
-                    )
-                    coupon_info['orderline'].coupon = coupon
-                    coupon_info['orderline'].coupon_real_value = coupon_info[
-                        'value'
-                    ]
-                    coupon_info['orderline'].save()
-                else:
-                    raise serializers.ValidationError(coupon_info['error'])
+                coupon_valid_use, error, discount_amount = \
+                    order.applying_coupon(coupon, user)
+                if not coupon_valid_use:
+                    raise serializers.ValidationError(error)
 
-            amount = order.total_cost
-            tax = amount * Decimal(repr(TAX_RATE))
-            tax = tax.quantize(Decimal('0.01'))
-            amount *= Decimal(repr(TAX_RATE + 1))
-            amount = round(amount * 100, 2)
+            amount = order.total_cost_with_taxes
+            tax = order.taxes
 
             membership_orderlines = order.order_lines.filter(
                 content_type__model="membership"
@@ -519,8 +636,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         max_use_per_user=membership_coupon.max_use_per_user,
                         details=membership_coupon.details,
                         start_time=timezone.now(),
-                        end_time=timezone.now() +
-                        membership_orderlines[0].content_object.duration,
+                        end_time=timezone.now() + membership_orderlines[
+                            0].content_object.duration,
                         owner=user)
                     coupon.applicable_retreats.set(
                         membership_coupon.applicable_retreats.all())
@@ -607,19 +724,40 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                                 "retreat: {0}.".format(str(retreat))
                             )]
                         })
-                    if (((retreat.seats - retreat.total_reservations -
-                          retreat.reserved_seats) > 0)
+                    if ((retreat.has_places_remaining())
                             or (retreat.reserved_seats
                                 and WaitQueueNotification.objects.filter(
                                         user=user, retreat=retreat))):
-                        retreat_reservations.append(
+
+                        # Manage invitation to retreat
+                        # If there are no places left we raise an error
+                        # The invitation id is store in the orderline metadata
+                        invitation = retreat_orderline.get_invitation()
+
+                        if invitation and not invitation.has_free_places():
+                            raise serializers.ValidationError({
+                                'invitation_id': [_(
+                                    "There are no places left for "
+                                    "the requested invitation."
+                                )]
+                            })
+
+                        new_retreat_reservation = \
                             RetreatReservation.objects.create(
                                 user=user,
                                 retreat=retreat,
                                 order_line=retreat_orderline,
                                 is_active=True
                             )
+
+                        if invitation:
+                            new_retreat_reservation.invitation = invitation
+                            new_retreat_reservation.save()
+
+                        retreat_reservations.append(
+                            new_retreat_reservation
                         )
+
                         # Decrement reserved_seats if > 0
                         if retreat.reserved_seats:
                             retreat.reserved_seats = (

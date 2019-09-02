@@ -1,43 +1,37 @@
 from decimal import Decimal
-import json
-from copy import copy
 from datetime import datetime, timedelta
 
-import requests
-import traceback
-
 import pytz
-import rest_framework
+from django.core.files.base import ContentFile
 
-from blitz_api.exceptions import MailServiceError
 from blitz_api.mixins import ExportMixin
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.mail import mail_admins
 from django.core.mail import send_mail as django_send_mail
 from django.db import transaction
-from django.db.models import F
-from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
-from rest_framework import exceptions, mixins, status, viewsets, serializers
+from rest_framework import mixins, status, viewsets
 from rest_framework import serializers as rest_framework_serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
+
+from blitz_api.models import ExportMedia
+from blitz_api.serializers import ExportMediaSerializer
 from store.exceptions import PaymentAPIError
 from store.models import Refund
 from store.services import refund_amount, PAYSAFE_EXCEPTION
 
 from . import permissions, serializers
 from .models import (Picture, Reservation, Retreat, WaitQueue,
-                     WaitQueueNotification)
+                     WaitQueueNotification, RetreatInvitation)
 from .resources import (ReservationResource, RetreatResource,
-                        WaitQueueNotificationResource, WaitQueueResource)
-from .services import (notify_reserved_retreat_seat,
-                       send_retreat_7_days_email,
+                        WaitQueueNotificationResource, WaitQueueResource,
+                        RetreatReservationResource)
+from .services import (send_retreat_7_days_email,
                        send_post_retreat_email, )
 
 User = get_user_model()
@@ -77,7 +71,8 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         """
         if self.request.user.is_staff:
             return Retreat.objects.all()
-        return Retreat.objects.filter(is_active=True)
+        return Retreat.objects.filter(is_active=True,
+                                      hidden=False)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -112,6 +107,59 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         return Response(response_data, status=status.HTTP_200_OK)
 
     @action(detail=True, permission_classes=[])
+    def notify(self, request, pk=None):
+        """
+        That custom action allows anyone to notify
+        users in wait queues of a retreat.
+        For this retreat, there will be as many users notified as there are
+        reserved seats.
+        At the same time, this clears older notification logs. That part should
+        be moved somewhere else.
+        """
+        # Checks if lastest notification is older than 24h
+        # This is a hard-coded limitation to allow anonymous users to call
+        # the function.
+        # Keep a 5 minutes gap.
+        time_limit = timezone.now() - timedelta(hours=23, minutes=55)
+        notified_someone = False
+        ready_retreat = False
+
+        retreat: Retreat = self.get_object()
+
+        # Remove older notifications
+        remove_before = timezone.now() - timedelta(
+            days=settings.LOCAL_SETTINGS[
+                'RETREAT_NOTIFICATION_LIFETIME_DAYS'
+            ]
+        )
+        WaitQueueNotification.objects.filter(
+            created_at__lt=remove_before,
+            retreat=retreat
+        ).delete()
+
+        if not retreat.wait_queue_notifications.filter(
+                created_at__gt=time_limit):
+            # Next iteration, since this wait_queue has been notified less
+            # than 24h ago.
+            ready_retreat = True
+            notified_someone = retreat.notify_users()
+
+        if not ready_retreat:
+            response_data = {
+                'detail': "Last notification was sent less than 24h ago."
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not notified_someone:
+            response_data = {
+                'detail': "No reserved seats.",
+                'stop': True,
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, permission_classes=[])
     def recap(self, request, pk=None):
         """
         That custom action allows an admin (or automated task) to notify
@@ -135,6 +183,37 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             'stop': True,
         }
         return Response(response_data, status=status.HTTP_200_OK)
+
+    @action(detail=True, permission_classes=[IsAdminUser])
+    def export_participation(self, request, pk=None):
+
+        retreat: Retreat = self.get_object()
+        # Order queryset by ascending id, thus by descending age too
+        queryset = Reservation.objects.filter(retreat=retreat)
+        # Build dataset using paginated queryset
+        dataset = RetreatReservationResource().export(queryset)
+
+        date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
+            .strftime("%Y%m%d-%H%M%S")
+        filename = f'export-participation-{retreat.name}{date_file}.xls'
+
+        new_exprt = ExportMedia.objects.create()
+        content = ContentFile(dataset.xls)
+        new_exprt.file.save(filename, content)
+
+        export_url = ExportMediaSerializer(
+            new_exprt,
+            context={'request': request}
+        ).data.get('file')
+
+        response = Response(
+            status=status.HTTP_200_OK,
+            data={
+                'file_url': export_url
+            }
+        )
+
+        return response
 
 
 class PictureViewSet(viewsets.ModelViewSet):
@@ -318,61 +397,17 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                 instance.save()
 
                 free_seats = retreat.seats - retreat.total_reservations
-                if (retreat.reserved_seats or free_seats == 1):
+                if retreat.reserved_seats or free_seats == 1:
                     retreat.reserved_seats += 1
-                # Ask the external scheduler to start calling /notify if the
-                # reserved_seats count == 1. Otherwise, the scheduler should
-                # already be calling /notify at specified intervals.
-                #
-                # Since we are in the context of a cancelation, if
-                # reserved_seats equals 1, that means that this is the first
-                # cancelation.
-                if retreat.reserved_seats == 1:
-                    scheduler_url = '{0}'.format(
-                        settings.EXTERNAL_SCHEDULER['URL'],
+
+                retrat_notification_url = request.build_absolute_uri(
+                    reverse(
+                        'retreat:retreat-notify',
+                        args=[retreat.id]
                     )
-
-                    data = {
-                        "hour": timezone.now().hour,
-                        "minute": (timezone.now().minute + 5) % 60,
-                        "url": '{0}{1}'.format(
-                            request.build_absolute_uri(
-                                reverse(
-                                    'retreat:waitqueuenotification-list'
-                                )
-                            ),
-                            "/notify"
-                        ),
-                        "description": "Retreat wait queue notification"
-                    }
-
-                    try:
-                        auth_data = {
-                            "username": settings.EXTERNAL_SCHEDULER['USER'],
-                            "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
-                        }
-                        auth = requests.post(
-                            scheduler_url + "/authentication",
-                            json=auth_data,
-                        )
-                        auth.raise_for_status()
-
-                        r = requests.post(
-                            scheduler_url + '/tasks',
-                            json=data,
-                            headers={
-                                'Authorization':
-                                    'Token ' + json.loads(auth.content)[
-                                        'token']},
-                            timeout=(10, 10),
-                        )
-                        r.raise_for_status()
-                    except (requests.exceptions.HTTPError,
-                            requests.exceptions.ConnectionError) as err:
-                        mail_admins(
-                            "Thèsez-vous: external scheduler error",
-                            traceback.format_exc()
-                        )
+                ),
+                retreat.notify_scheduler_waite_queue(
+                    retrat_notification_url)
 
                 retreat.save()
 
@@ -466,16 +501,22 @@ class WaitQueueViewSet(ExportMixin, viewsets.ModelViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        retreat = instance.retreat
-        wait_queue = retreat.wait_queue.all().order_by('created_at')
-        for index, item in enumerate(wait_queue):
-            if item == instance:
-                wait_queue_pos = index
-                break
+        wait_queue_object: WaitQueue = self.get_object()
+        retreat = wait_queue_object.retreat
+        retreat_wait_queue_list = retreat.wait_queue.all()\
+            .order_by('created_at')
+
+        wait_queue_pos = list(retreat_wait_queue_list).index(wait_queue_object)
+
         if wait_queue_pos < retreat.next_user_notified:
             retreat.next_user_notified -= 1
             retreat.save()
+
+        # Delete also WaitqueueNotification link to this waitqueue
+        WaitQueueNotification.objects.filter(
+            retreat=retreat,
+            user=wait_queue_object.user).delete()
+
         return super(WaitQueueViewSet, self).destroy(request, *args, **kwargs)
 
 
@@ -509,91 +550,10 @@ class WaitQueueNotificationViewSet(ExportMixin, mixins.ListModelMixin,
             return WaitQueueNotification.objects.all()
         return WaitQueueNotification.objects.filter(user=self.request.user)
 
-    @action(detail=False, permission_classes=[])
-    def notify(self, request):
-        """
-        That custom action allows anyone to notify
-        users in wait queues of every retreat.
-        For each retreat, there will be as many users notified as there are
-        reserved seats.
-        At the same time, this clears older notification logs. That part should
-        be moved somewhere else.
-        """
-        # Checks if lastest notification is older than 24h
-        # This is a hard-coded limitation to allow anonymous users to call
-        # the function.
-        # Keep a 5 minutes gap.
-        time_limit = timezone.now() - timedelta(hours=23, minutes=55)
-        notified_someone = False
-        ready_retreats = False
 
-        retreats_to_notify = Retreat.objects.filter(
-            reserved_seats__gt=0,
-            start_time__gt=timezone.now(),
-            is_active=True,
-        )
+class RetreatInvitationViewSet(viewsets.ModelViewSet):
 
-        # Remove older notifications
-        remove_before = timezone.now() - timedelta(
-            days=settings.LOCAL_SETTINGS[
-                'RETREAT_NOTIFICATION_LIFETIME_DAYS'
-            ]
-        )
-        WaitQueueNotification.objects.filter(
-            created_at__lt=remove_before
-        ).delete()
-
-        for retreat in retreats_to_notify:
-            if retreat.wait_queue_notifications.filter(
-                    created_at__gt=time_limit):
-                # Next iteration, since this wait_queue has been notified less
-                # than 24h ago.
-                continue
-            ready_retreats = True
-            # Get the wait queue with elements ordered by ascending date
-            wait_queue = retreat.wait_queue.all().order_by('created_at')
-            # Get number of waiting users
-            nb_waiting_users = wait_queue.count()
-            # If all users have already been notified, free all reserved seats
-            if retreat.next_user_notified >= nb_waiting_users:
-                retreat.reserved_seats = 0
-                retreat.next_user_notified = 0
-            # Else notify a user for every reserved seat
-            for seat in range(retreat.reserved_seats):
-                if retreat.next_user_notified >= nb_waiting_users:
-                    retreat.reserved_seats -= 1
-                else:
-                    user = wait_queue[retreat.next_user_notified].user
-                    notify_reserved_retreat_seat(
-                        user,
-                        retreat,
-                    )
-                    retreat.next_user_notified += 1
-                    WaitQueueNotification.objects.create(
-                        user=user,
-                        retreat=retreat,
-                    )
-                    notified_someone = True
-            retreat.save()
-
-        if retreats_to_notify.count() == 0:
-            response_data = {
-                'detail': "No reserved seats.",
-                'stop': True,
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        if not ready_retreats:
-            response_data = {
-                'detail': "Last notification was sent less than 24h ago."
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        if not notified_someone:
-            response_data = {
-                'detail': "No reserved seats.",
-                'stop': True,
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    serializer_class = serializers.RetreatInvitationSerializer
+    queryset = RetreatInvitation.objects.all()
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+    filter_fields = '__all__'

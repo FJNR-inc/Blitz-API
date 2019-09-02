@@ -6,7 +6,7 @@ from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 from simple_history.admin import SimpleHistoryAdmin
 
 from .models import (Picture, Reservation, Retreat, WaitQueue,
-                     WaitQueueNotification, )
+                     WaitQueueNotification, RetreatInvitation)
 from .resources import (ReservationResource, RetreatResource,
                         WaitQueueResource)
 
@@ -17,8 +17,10 @@ class PictureAdminInline(admin.TabularInline):
     readonly_fields = ('picture_tag', )
 
 
-class RetreatAdmin(SimpleHistoryAdmin, TranslationAdmin,
-                   ExportActionModelAdmin):
+class RetreatAdmin(SimpleHistoryAdmin,
+                   ExportActionModelAdmin,
+                   SafeDeleteAdmin,
+                   TranslationAdmin):
     resource_class = RetreatResource
     inlines = (PictureAdminInline, )
     list_display = (
@@ -37,6 +39,14 @@ class RetreatAdmin(SimpleHistoryAdmin, TranslationAdmin,
         'price',
     ) + SafeDeleteAdmin.list_filter
 
+    search_fields = [
+        'name_fr',
+        'name_en',
+        'id'
+    ]
+
+    actions = ['undelete_selected', 'export_admin_action']
+
 
 class PictureAdmin(SimpleHistoryAdmin, TranslationAdmin):
     list_display = (
@@ -46,8 +56,9 @@ class PictureAdmin(SimpleHistoryAdmin, TranslationAdmin):
     )
 
 
-class ReservationAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
-                       ExportActionModelAdmin):
+class ReservationAdmin(SimpleHistoryAdmin,
+                       ExportActionModelAdmin,
+                       SafeDeleteAdmin):
     resource_class = ReservationResource
     list_display = (
         'user',
@@ -66,6 +77,10 @@ class ReservationAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
         'cancelation_reason',
         'cancelation_action',
     ) + SafeDeleteAdmin.list_filter
+
+    autocomplete_fields = ['user', 'order_line', 'retreat']
+
+    actions = ['undelete_selected', 'export_admin_action']
 
 
 class WaitQueueAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
@@ -95,8 +110,39 @@ class WaitQueueNotificationAdmin(SimpleHistoryAdmin):
     )
 
 
+class ReservationAdminInline(admin.TabularInline):
+    model = Reservation
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+class RetreatInvitationAdmin(SimpleHistoryAdmin,
+                             SafeDeleteAdmin):
+    inlines = (ReservationAdminInline,)
+    list_display = (
+        'name',
+        'coupon',
+        'retreat',
+        'nb_places',
+        highlight_deleted,
+    ) + SafeDeleteAdmin.list_display
+
+    list_filter = (
+        ('retreat', admin.RelatedOnlyFieldListFilter),
+        ('coupon', admin.RelatedOnlyFieldListFilter)
+    ) + SafeDeleteAdmin.list_filter
+
+
 admin.site.register(Retreat, RetreatAdmin)
 admin.site.register(Picture, PictureAdmin)
 admin.site.register(Reservation, ReservationAdmin)
 admin.site.register(WaitQueue, WaitQueueAdmin)
 admin.site.register(WaitQueueNotification, WaitQueueNotificationAdmin)
+admin.site.register(RetreatInvitation, RetreatInvitationAdmin)

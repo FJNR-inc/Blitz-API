@@ -129,8 +129,7 @@ class ReservationTests(APITestCase):
             order=self.order,
             quantity=1,
             content_type=self.retreat_type,
-            object_id=self.retreat.id,
-            cost=self.retreat.price,
+            object_id=self.retreat.id
         )
         self.reservation = Reservation.objects.create(
             user=self.user,
@@ -154,6 +153,7 @@ class ReservationTests(APITestCase):
             'cancelation_reason': None,
             'refundable': True,
             'exchangeable': True,
+            'invitation': None,
         }
         self.reservation2 = Reservation.objects.create(
             user=self.user2,
@@ -175,6 +175,7 @@ class ReservationTests(APITestCase):
             'cancelation_reason': None,
             'refundable': True,
             'exchangeable': True,
+            'invitation': None,
         }
         self.reservation_admin = Reservation.objects.create(
             user=self.admin,
@@ -223,6 +224,7 @@ class ReservationTests(APITestCase):
         del response_data['retreat_details']['reservations']
         del response_data['id']
         del response_data['url']
+        del response_data['inscription_date']
 
         content = {
             'is_active': True,
@@ -236,6 +238,7 @@ class ReservationTests(APITestCase):
             'retreat': 'http://testserver/retreat/retreats/' +
                        str(self.retreat2.id),
             'order_line': None,
+            'invitation': None,
             'retreat_details': {
                 'activity_language': None,
                 'end_time': '2130-02-17T12:00:00-05:00',
@@ -279,6 +282,10 @@ class ReservationTests(APITestCase):
                 'url': 'http://testserver/retreat/retreats/' +
                        str(self.retreat2.id),
                 'has_shared_rooms': True,
+                'hidden': False,
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'options': [],
             },
             'user_details': {
                 'academic_field': None,
@@ -583,6 +590,9 @@ class ReservationTests(APITestCase):
         del data['results'][1]['retreat_details']
         del data['results'][2]['user_details']
         del data['results'][2]['retreat_details']
+        del data['results'][0]['inscription_date']
+        del data['results'][1]['inscription_date']
+        del data['results'][2]['inscription_date']
 
         content = {
             'count': 3,
@@ -607,6 +617,7 @@ class ReservationTests(APITestCase):
                     'cancelation_reason': None,
                     'refundable': True,
                     'exchangeable': True,
+                    'invitation': None,
                 }
             ]
         }
@@ -632,6 +643,7 @@ class ReservationTests(APITestCase):
 
         del data['results'][0]['user_details']
         del data['results'][0]['retreat_details']
+        del data['results'][0]['inscription_date']
 
         content = {
             'count': 1,
@@ -661,6 +673,7 @@ class ReservationTests(APITestCase):
 
         del response_data['user_details']
         del response_data['retreat_details']
+        del response_data['inscription_date']
 
         self.assertEqual(response_data, self.reservation_expected_payload)
 

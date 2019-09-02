@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <style>
+      @import url('https://fonts.googleapis.com/css?family=Nunito+Sans');
+
+      body {
+        margin: 0;
+        font-family: 'Nunito Sans', sans-serif;
+        color: #142823;
+      }
+
+      ul {
+        margin: 30px 0 0 0;
+        padding: 0;
+        list-style-type: none;
+      }
+
+       .button {
+        background-color: #142823;
+        color: white;
+        padding: 15px 30px;
+        border: 1px solid #142823;
+        text-decoration: none;
+        display: inline-block;
+        text-transform: uppercase;
+        font-weight: bold;
+        transition: all cubic-bezier(0.445, 0.05, 0.55, 0.95) 300ms;
+        line-height: 15pt;
+        text-align: center;
+        font-size: 11pt;
+        min-width: 170px;
+        font-family: 'Nunito Sans', sans-serif;
+      }
+
+      .email {
+        background-color: #F7EDD9;
+        height:auto;
+        padding: 20px;
+      }
+
+      .email__logo {
+        margin: 20px;
+        text-align: center;
+      }
+
+      .email__logo img {
+        height: 60px;
+        margin: auto;
+      }
+
+      .email__content {
+        background-color: #FCF7EF;
+        max-width: 600px;
+        padding: 20px;
+        margin: auto;
+      }
+
+
+      .email__content__title {
+        font-size: 24px;
+        font-weight: 900;
+      }
+
+      .email__content__subtitle {
+        font-size: 18px;
+        margin-top: 50px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email">
+      <div class="email__logo">
+        {% load static %}
+        <img src="{% static 'images/logo_general.png'%}" alt="">
+      </div>
+      <div class="email__content">
+        <h1 class="email__content__title">
+          Bonjour {{ FIRST_NAME }},
+        </h1>
+        <p>
+          Pour valider votre nouvelle adresse courriel, il vous suffit de cliquer sur ce bouton.
+        </p>
+
+        <a class="button" href="{{ ACTIVATION_URL }}">
+          Valider mon adresse courriel
+        </a>
+
+        <h2 class="email__content__subtitle">
+          L'équipe Thèsez-vous
+        </h2>
+        <p>
+          Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2<br>
+          info@thesez-vous.com, www.thesez-vous.com
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

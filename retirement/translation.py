@@ -7,8 +7,6 @@ from . import models
 @register(models.Retreat)
 class RetreatTranslationOptions(TranslationOptions):
     fields = (
-        'name',
-        'details',
         'country',
         'state_province',
         'city',

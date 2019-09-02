@@ -122,15 +122,13 @@ class ServicesTests(APITestCase):
             order=self.order,
             quantity=1,
             content_type=self.package_type,
-            object_id=self.package.id,
-            cost=self.package.price,
+            object_id=self.package.id
         )
         self.order_line_2 = OrderLine.objects.create(
             order=self.order,
             quantity=1,
             content_type=self.package_type,
-            object_id=self.package_2.id,
-            cost=self.package_2.price,
+            object_id=self.package_2.id
         )
 
     @responses.activate
@@ -384,15 +382,13 @@ class ServicesTests(APITestCase):
             order=self.order,
             quantity=1,
             content_type=self.package_type,
-            object_id=self.package_most_exp_product.id,
-            cost=self.package_most_exp_product.price,
+            object_id=self.package_most_exp_product.id
         )
         order_line_les_exp_product = OrderLine.objects.create(
             order=self.order,
             quantity=1,
             content_type=self.package_type,
-            object_id=self.package_less_exp_product.id,
-            cost=self.package_less_exp_product.price,
+            object_id=self.package_less_exp_product.id
         )
 
         coupon_info = validate_coupon_for_order(self.coupon, self.order)

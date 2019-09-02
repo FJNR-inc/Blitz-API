@@ -19,12 +19,12 @@ from rest_framework import serializers, status
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueValidator
 
-from blitz_api.serializers import UserSerializer
 from blitz_api.services import (check_if_translated_field,
                                 remove_translation_fields,
                                 getMessageTranslate)
 from store.exceptions import PaymentAPIError
 from store.models import Order, OrderLine, PaymentProfile, Refund
+from store.serializers import BaseProductSerializer
 from store.services import (charge_payment,
                             create_external_payment_profile,
                             create_external_card,
@@ -35,7 +35,7 @@ from store.services import (charge_payment,
 
 from .fields import TimezoneField
 from .models import (Picture, Reservation, Retreat, WaitQueue,
-                     WaitQueueNotification, )
+                     WaitQueueNotification, RetreatInvitation)
 from .services import refund_retreat
 
 User = get_user_model()
@@ -43,14 +43,13 @@ User = get_user_model()
 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
-class RetreatSerializer(serializers.HyperlinkedModelSerializer):
-    id = serializers.ReadOnlyField()
+class RetreatSerializer(BaseProductSerializer):
     places_remaining = serializers.ReadOnlyField()
     total_reservations = serializers.ReadOnlyField()
     reservations = serializers.SerializerMethodField()
     reservations_canceled = serializers.SerializerMethodField()
     timezone = TimezoneField(
-        required=False,
+        required=True,
         help_text=_("Timezone of the workplace."),
     )
     name = serializers.CharField(
@@ -72,10 +71,10 @@ class RetreatSerializer(serializers.HyperlinkedModelSerializer):
     state_province = serializers.CharField(required=False, )
     city = serializers.CharField(required=False, )
     address_line1 = serializers.CharField(required=False, )
-    has_shared_rooms = serializers.BooleanField(required=False, )
-    is_active = serializers.BooleanField(required=False, )
-    accessibility = serializers.BooleanField(required=False, )
 
+    available = serializers.BooleanField(
+        required=False
+    )
     # June 7th 2018
     # The SlugRelatedField serializer can't get a field's attributes.
     # Ex: It can't get the "url" attribute of Imagefield Picture.picture.url
@@ -142,30 +141,6 @@ class RetreatSerializer(serializers.HyperlinkedModelSerializer):
             err.update(getMessageTranslate('city', attr, True))
         if not check_if_translated_field('address_line1', attr):
             err.update(getMessageTranslate('address_line1', attr, True))
-        if not check_if_translated_field('timezone', attr):
-            err['timezone'] = _("This field is required.")
-        if not check_if_translated_field('postal_code', attr):
-            err['postal_code'] = _("This field is required.")
-        if not check_if_translated_field('seats', attr):
-            err['seats'] = _("This field is required.")
-        if not check_if_translated_field('price', attr):
-            err['price'] = _("This field is required.")
-        if not check_if_translated_field('start_time', attr):
-            err['start_time'] = _("This field is required.")
-        if not check_if_translated_field('end_time', attr):
-            err['end_time'] = _("This field is required.")
-        if not check_if_translated_field('min_day_refund', attr):
-            err['min_day_refund'] = _("This field is required.")
-        if not check_if_translated_field('refund_rate', attr):
-            err['refund_rate'] = _("This field is required.")
-        if not check_if_translated_field('min_day_exchange', attr):
-            err['min_day_exchange'] = _("This field is required.")
-        if not check_if_translated_field('is_active', attr):
-            err['is_active'] = _("This field is required.")
-        if not check_if_translated_field('accessibility', attr):
-            err['accessibility'] = _("This field is required.")
-        if not check_if_translated_field('has_shared_rooms', attr):
-            err['has_shared_rooms'] = _("This field is required.")
         if err:
             raise serializers.ValidationError(err)
         return super(RetreatSerializer, self).validate(attr)
@@ -288,15 +263,24 @@ class RetreatSerializer(serializers.HyperlinkedModelSerializer):
     def to_representation(self, instance):
         is_staff = self.context['request'].user.is_staff
         if self.context['view'].action == 'retrieve' and is_staff:
+            from blitz_api.serializers import UserSerializer
             self.fields['users'] = UserSerializer(many=True)
         data = super(RetreatSerializer, self).to_representation(instance)
+
+        # We don't need orderlines for retreat in this serializer
+        if data.get("order_lines") is not None:
+            data.pop("order_lines")
+
+        # TODO put back available after migration from is_active
+        data.pop("available")
+
         if is_staff:
             return data
         return remove_translation_fields(data)
 
     class Meta:
         model = Retreat
-        exclude = ('deleted', )
+        exclude = ('deleted',)
         extra_kwargs = {
             'details': {
                 'help_text': _("Description of the retreat.")
@@ -307,32 +291,7 @@ class RetreatSerializer(serializers.HyperlinkedModelSerializer):
                 [UniqueValidator(queryset=Retreat.objects.all())],
             },
             'seats': {
-                'required': False,
                 'help_text': _("Number of available seats.")
-            },
-            'timezone': {
-                'required': False,
-            },
-            'end_time': {
-                'required': False,
-            },
-            'start_time': {
-                'required': False,
-            },
-            'postal_code': {
-                'required': False,
-            },
-            'refund_rate': {
-                'required': False,
-            },
-            'min_day_exchange': {
-                'required': False,
-            },
-            'min_day_refund': {
-                'required': False,
-            },
-            'price': {
-                'required': False,
             },
             'url': {
                 'view_name': 'retreat:retreat-detail',
@@ -370,6 +329,7 @@ class PictureSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ReservationSerializer(serializers.HyperlinkedModelSerializer):
+    from blitz_api.serializers import UserSerializer
     id = serializers.ReadOnlyField()
     # Custom names are needed to overcome an issue with DRF:
     # https://github.com/encode/django-rest-framework/issues/2719
@@ -482,7 +442,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         amount = 0
         profile = PaymentProfile.objects.filter(owner=user).first()
         instance_pk = instance.pk
-        current_retreat = instance.retreat
+        current_retreat: Retreat = instance.retreat
         coupon = instance.order_line.coupon
         coupon_value = instance.order_line.coupon_real_value
         order_line = instance.order_line
@@ -674,7 +634,6 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                             Retreat
                         ),
                         object_id=validated_data['retreat'].id,
-                        cost=amount,
                         coupon=coupon,
                         coupon_real_value=coupon_value,
                     )
@@ -787,55 +746,14 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     new_retreat = retreat
                     old_retreat = current_retreat
 
-            # Ask the external scheduler to start calling /notify if the
-            # reserved_seats count == 1. Otherwise, the scheduler should
-            # already be calling /notify at specified intervals.
-            #
-            # Since we are in the context of a cancelation, if reserved_seats
-            # equals 1, that means that this is the first cancelation.
-            if current_retreat.reserved_seats == 1:
-                scheduler_url = '{0}'.format(
-                    settings.EXTERNAL_SCHEDULER['URL'],
+            retrat_notification_url = request.build_absolute_uri(
+                reverse(
+                    'retreat:retreat-notify',
+                    args=[current_retreat.id]
                 )
-
-                data = {
-                    "hour": timezone.now().hour,
-                    "minute": (timezone.now().minute + 5) % 60,
-                    "url": '{0}{1}'.format(
-                        request.build_absolute_uri(
-                            reverse('retreat:waitqueuenotification-list')
-                        ),
-                        "/notify"
-                    ),
-                    "description": "Retreat wait queue notification"
-                }
-
-                try:
-                    auth_data = {
-                        "username": settings.EXTERNAL_SCHEDULER['USER'],
-                        "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
-                    }
-                    auth = requests.post(
-                        scheduler_url + "/authentication",
-                        json=auth_data,
-                    )
-                    auth.raise_for_status()
-
-                    r = requests.post(
-                        scheduler_url + '/tasks',
-                        json=data,
-                        headers={
-                            'Authorization':
-                            'Token ' + json.loads(auth.content)['token']},
-                        timeout=(10, 10),
-                    )
-                    r.raise_for_status()
-                except (requests.exceptions.HTTPError,
-                        requests.exceptions.ConnectionError) as err:
-                    mail_admins(
-                        "Thèsez-vous: external scheduler error",
-                        traceback.format_exc()
-                    )
+            ),
+            current_retreat.notify_scheduler_waite_queue(
+                retrat_notification_url)
 
         # Send appropriate emails
         # Send order confirmation email
@@ -979,6 +897,10 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 'help_text': _("Retreat represented by the picture."),
                 'view_name': 'retreat:retreat-detail',
             },
+            'invitation': {
+                'help_text': _("Retreat represented by the picture."),
+                'view_name': 'retreat:retreatinvitation-detail',
+            },
             'is_active': {
                 'required': False,
                 'help_text': _("Whether the reservation is active or not."),
@@ -1033,5 +955,24 @@ class WaitQueueNotificationSerializer(serializers.HyperlinkedModelSerializer):
             },
             'url': {
                 'view_name': 'retreat:waitqueuenotification-detail',
+            },
+        }
+
+
+class RetreatInvitationSerializer(serializers.HyperlinkedModelSerializer):
+    url_token = serializers.ReadOnlyField()
+    front_url = serializers.ReadOnlyField()
+    nb_places_used = serializers.ReadOnlyField()
+
+    class Meta:
+        model = RetreatInvitation
+        fields = '__all__'
+        extra_kwargs = {
+            'retreat': {
+                'help_text': _("Retreat"),
+                'view_name': 'retreat:retreat-detail',
+            },
+            'url': {
+                'view_name': 'retreat:retreatinvitation-detail',
             },
         }

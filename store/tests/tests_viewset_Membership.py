@@ -80,7 +80,10 @@ class MembershipTests(APITestCase):
             'order_lines': [],
             'price': '125.00',
             'academic_levels': ['http://testserver/academic_levels/' +
-                                str(self.academic_level.id)]
+                                str(self.academic_level.id)],
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'options': [],
         }
 
         self.assertEqual(
@@ -251,7 +254,10 @@ class MembershipTests(APITestCase):
             'url': 'http://testserver/memberships/' + str(self.membership.id),
             'id': self.membership.id,
             'academic_levels': ['http://testserver/academic_levels/' +
-                                str(self.academic_level.id)]
+                                str(self.academic_level.id)],
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'options': [],
         }
 
         self.assertEqual(
@@ -340,7 +346,10 @@ class MembershipTests(APITestCase):
                        str(self.membership.id),
                 'id': self.membership.id,
                 'academic_levels': ['http://testserver/academic_levels/' +
-                                    str(self.academic_level.id)]
+                                    str(self.academic_level.id)],
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'options': [],
             }]
         }
 
@@ -379,7 +388,10 @@ class MembershipTests(APITestCase):
                 'url': 'http://testserver/memberships/' +
                        str(self.membership.id),
                 'academic_levels': ['http://testserver/academic_levels/' +
-                                    str(self.academic_level.id)]
+                                    str(self.academic_level.id)],
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'options': [],
             }, {
                 'available': False,
                 'id': self.membership_unavailable.id,
@@ -391,7 +403,10 @@ class MembershipTests(APITestCase):
                 'url': 'http://testserver/memberships/' +
                        str(self.membership_unavailable.id),
                 'academic_levels': ['http://testserver/academic_levels/' +
-                                    str(self.academic_level.id)]
+                                    str(self.academic_level.id)],
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'options': [],
             }]
         }
 
@@ -420,7 +435,10 @@ class MembershipTests(APITestCase):
             'price': '50.00',
             'url': 'http://testserver/memberships/' + str(self.membership.id),
             'academic_levels': ['http://testserver/academic_levels/' +
-                                str(self.academic_level.id)]
+                                str(self.academic_level.id)],
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'options': [],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -450,7 +468,10 @@ class MembershipTests(APITestCase):
             'price': '50.00',
             'url': 'http://testserver/memberships/' + str(self.membership.id),
             'academic_levels': ['http://testserver/academic_levels/' +
-                                str(self.academic_level.id)]
+                                str(self.academic_level.id)],
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'options': [],
         }
 
         self.assertEqual(

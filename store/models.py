@@ -1,6 +1,9 @@
 import decimal
+import json
 import random
 import string
+from decimal import Decimal
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
@@ -16,7 +19,11 @@ from simple_history.models import HistoricalRecords
 
 from blitz_api.models import AcademicLevel
 
+from model_utils.managers import InheritanceManager
+
 User = get_user_model()
+
+TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
 class Order(models.Model):
@@ -65,8 +72,18 @@ class Order(models.Model):
             models.Q(content_type__model='retreat')
         )
         for orderline in orderlines:
-            cost += orderline.cost * orderline.quantity
+            cost += orderline.cost
         return cost
+
+    @property
+    def total_cost_with_taxes(self):
+        amount = self.total_cost * Decimal(repr(TAX_RATE + 1))
+        return round(amount * 100, 2)
+
+    @property
+    def taxes(self):
+        tax = self.total_cost * Decimal(repr(TAX_RATE))
+        return tax.quantize(Decimal('0.01'))
 
     @property
     def total_ticket(self):
@@ -80,6 +97,46 @@ class Order(models.Model):
 
     def __str__(self):
         return str(self.authorization_id)
+
+    def applying_coupon(self, coupon, user):
+        from store.services import validate_coupon_for_order
+        coupon_info = validate_coupon_for_order(coupon, self)
+        if coupon_info['valid_use']:
+            coupon_user = CouponUser.objects.get(
+                user=user,
+                coupon=coupon,
+            )
+            coupon_user.uses = coupon_user.uses + 1
+            coupon_user.save()
+
+            order_line: OrderLine = coupon_info['orderline']
+            order_line.applying_coupon_value(coupon_info['value'])
+            order_line.coupon = coupon
+            order_line.save()
+
+        return \
+            coupon_info['valid_use'], \
+            coupon_info['error'], \
+            coupon_info['value']
+
+    def add_line_from_data(self, orderlines_data):
+        for orderline_data in orderlines_data:
+            options_ids_quantity = orderline_data.pop('options', None)
+            order_line: OrderLine = OrderLine.objects.create(
+                order=self, **orderline_data)
+
+            if options_ids_quantity:
+                for option_id_quantity in options_ids_quantity:
+                    option: BaseProduct = BaseProduct.objects.get(
+                        id=option_id_quantity['id'])
+                    quantity = option_id_quantity['quantity']
+                    OrderLineBaseProduct.objects.create(
+                        option=option,
+                        order_line=order_line,
+                        quantity=quantity
+                    )
+                    order_line.cost += option.price
+                order_line.save()
 
 
 class OrderLine(models.Model):
@@ -138,10 +195,50 @@ class OrderLine(models.Model):
         default=0,
     )
 
+    options = models.ManyToManyField(
+        'BaseProduct',
+        verbose_name=_("Options"),
+        through='OrderLineBaseProduct',
+        blank=True
+    )
+
+    metadata = models.TextField(
+        verbose_name=_("Metada"),
+        blank=True,
+        null=True,
+    )
+
     history = HistoricalRecords()
 
     def __str__(self):
         return str(self.content_object) + ', qt:' + str(self.quantity)
+
+    def applying_coupon_value(self, coupon_value):
+        self.cost = self.cost - coupon_value
+        self.coupon_real_value = coupon_value
+        self.save()
+
+    def get_invitation(self):
+        if self.metadata:
+            metadata = json.loads(
+                self.metadata)
+            invitation_id = metadata.get(
+                'invitation_id', None)
+
+            if invitation_id:
+                from retirement.models import RetreatInvitation
+                return RetreatInvitation.objects.get(
+                    id=invitation_id)
+        return None
+
+
+class OrderLineBaseProduct(models.Model):
+    order_line = models.ForeignKey('OrderLine', on_delete=models.CASCADE)
+    option = models.ForeignKey('BaseProduct', on_delete=models.CASCADE)
+
+    quantity = models.PositiveIntegerField(
+        verbose_name=_("Quantity"),
+    )
 
 
 class Refund(SafeDeleteModel):
@@ -192,7 +289,7 @@ class Refund(SafeDeleteModel):
 
 
 class BaseProduct(models.Model):
-    """Abstract model for base products"""
+    objects = InheritanceManager()
 
     name = models.CharField(
         verbose_name=_("Name"),
@@ -200,7 +297,8 @@ class BaseProduct(models.Model):
     )
 
     available = models.BooleanField(
-        verbose_name=_("Available")
+        verbose_name=_("Available"),
+        default=False
     )
 
     price = models.DecimalField(
@@ -218,8 +316,38 @@ class BaseProduct(models.Model):
 
     order_lines = GenericRelation(OrderLine)
 
-    class Meta:
-        abstract = True
+    available_on_products = models.ManyToManyField(
+        'self',
+        verbose_name=_("Applicable products"),
+        related_name='option_products',
+        blank=True,
+        symmetrical=False
+    )
+
+    available_on_product_types = models.ManyToManyField(
+        ContentType,
+        verbose_name=_("Applicable product types"),
+        related_name='products',
+        blank=True,
+    )
+
+    def __str__(self):
+        return self.name
+
+    def quantity_sold(self):
+        return self.order_lines.count()
+
+    @property
+    def options(self):
+
+        options_product_from_content_type = ContentType.objects. \
+            get_for_model(self) \
+            .products.exclude(id=self.id).select_subclasses()
+
+        if options_product_from_content_type.count() > 0:
+            return options_product_from_content_type
+        else:
+            return self.option_products.all().select_subclasses()
 
 
 class Membership(BaseProduct):
@@ -240,9 +368,6 @@ class Membership(BaseProduct):
 
     # History is registered in translation.py
     # history = HistoricalRecords()
-
-    def __str__(self):
-        return self.name
 
 
 class Package(BaseProduct):
@@ -266,8 +391,12 @@ class Package(BaseProduct):
     # History is registered in translation.py
     # history = HistoricalRecords()
 
-    def __str__(self):
-        return self.name
+
+class OptionProduct(BaseProduct):
+    max_quantity = models.IntegerField(
+        verbose_name=_("Max Quantity"),
+        default=0
+    )
 
 
 class CustomPayment(models.Model):

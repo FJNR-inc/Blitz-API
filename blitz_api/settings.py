@@ -314,8 +314,19 @@ LOCAL_SETTINGS = {
     'FRONTEND_INTEGRATION': {
         'ACTIVATION_URL': config('ACTIVATION_URL',
                                  default='https://example.com/activate/{{token}}'),
+        'EMAIL_CHANGE_CONFIRMATION': config(
+            'EMAIL_CHANGE_CONFIRMATION',
+            default='https://example.com/validate/email/{{token}}'
+        ),
         'FORGOT_PASSWORD_URL': config('FORGOT_PASSWORD_URL',
                                       default='https://example.com/reset-password/{{token}}'),
+        'RETREAT_INVITATION_URL':
+            config('RETREAT_INVITATION_URL',
+                   default='https://example.com/retreat_invitation/{{token}}'),
+        'RETREAT_UNSUBSCRIBE_URL':
+            config('RETREAT_UNSUBSCRIBE_URL',
+                   default='https://example.com/wait_queue/'
+                           '{{wait_queue_id}}/unsubscribe'),
     },
     'SELLING_TAX': 0.14975,
     'RETREAT_NOTIFICATION_LIFETIME_DAYS': config(

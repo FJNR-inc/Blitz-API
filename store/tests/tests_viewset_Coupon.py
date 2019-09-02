@@ -1073,7 +1073,10 @@ class CouponTests(APITestCase):
                     'name': 'basic_membership',
                     'price': '50.00',
                     'url': 'http://testserver/memberships/' +
-                           str(self.membership.id)
+                           str(self.membership.id),
+                    'available_on_product_types': [],
+                    'available_on_products': [],
+                    'options': [],
                 }],
                 "applicable_packages": [{
                     'available': True,
@@ -1083,7 +1086,11 @@ class CouponTests(APITestCase):
                     'name': 'extreme_package',
                     'price': '400.00',
                     'reservations': 100,
-                    'url': 'http://testserver/packages/' + str(self.package.id)
+                    'url':
+                        'http://testserver/packages/' + str(self.package.id),
+                    'available_on_product_types': [],
+                    'available_on_products': [],
+                    'options': [],
                 }],
                 "applicable_retreats": [{
                     'accessibility': True,
@@ -1127,6 +1134,10 @@ class CouponTests(APITestCase):
                         f'{self.retreat.id}',
                     'users': [],
                     'has_shared_rooms': True,
+                    'hidden': False,
+                    'available_on_product_types': [],
+                    'available_on_products': [],
+                    'options': [],
                 }],
                 "applicable_timeslots": [{
                     'billing_price': 1.0,
@@ -1290,7 +1301,10 @@ class CouponTests(APITestCase):
                 'name': 'basic_membership',
                 'price': '50.00',
                 'url': 'http://testserver/memberships/' +
-                       str(self.membership.id)
+                       str(self.membership.id),
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'options': [],
             }],
             "applicable_packages": [{
                 'available': True,
@@ -1300,7 +1314,10 @@ class CouponTests(APITestCase):
                 'name': 'extreme_package',
                 'price': '400.00',
                 'reservations': 100,
-                'url': 'http://testserver/packages/' + str(self.package.id)
+                'url': 'http://testserver/packages/' + str(self.package.id),
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'options': [],
             }],
             "applicable_retreats": [{
                 'accessibility': True,
@@ -1344,6 +1361,10 @@ class CouponTests(APITestCase):
                     f'{self.retreat.id}',
                 'users': [],
                 'has_shared_rooms': True,
+                'hidden': False,
+                'available_on_product_types': [],
+                'available_on_products': [],
+                'options': [],
             }],
             "applicable_timeslots": [{
                 'billing_price': 1.0,
