@@ -11,6 +11,8 @@ def link_membership_to_base_product(apps, schema_editor):
                                         'membership')
     base_product_model = apps.get_model('store',
                                         'baseproduct')
+    order_line_model = apps.get_model('store',
+                                      'orderline')
     for membership in membership_model.objects.all():
         base_product = base_product_model.objects.create(
             name=membership.name,
@@ -23,13 +25,20 @@ def link_membership_to_base_product(apps, schema_editor):
         )
         membership.baseproduct_ptr = base_product
         membership.save()
+        for order_line in order_line_model.objects.filter(
+                content_type__model='membership',
+                object_id=membership.id):
+            order_line.object_id = base_product.id
+            order_line.save()
 
 
 def link_package_to_base_product(apps, schema_editor):
     package_model = apps.get_model('store',
-                                        'package')
+                                   'package')
     base_product_model = apps.get_model('store',
                                         'baseproduct')
+    order_line_model = apps.get_model('store',
+                                      'orderline')
     for package in package_model.objects.all():
         base_product = base_product_model.objects.create(
             name=package.name,
@@ -42,6 +51,12 @@ def link_package_to_base_product(apps, schema_editor):
         )
         package.baseproduct_ptr = base_product
         package.save()
+        for order_line in order_line_model.objects.filter(
+                content_type__model='package',
+                object_id=package.id):
+            order_line.object_id = base_product.id
+            order_line.save()
+
 
 class Migration(migrations.Migration):
 
