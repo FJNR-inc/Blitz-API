@@ -1,3 +1,17 @@
+# 3.0.1
+
+## Special Considerations
+
+No special considerations
+
+## New changes
+
+ - Fix migration of product line
+ 
+## Deprecations 
+
+No deprecations
+
 # 3.0.0
 
 ## Special Considerations
