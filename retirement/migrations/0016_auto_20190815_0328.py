@@ -9,6 +9,8 @@ def link_retreat_to_base_product(apps, schema_editor):
                                    'retreat')
     base_product_model = apps.get_model('store',
                                         'baseproduct')
+    order_line_model = apps.get_model('store',
+                                      'orderline')
     for retreat in retreat_model.objects.all():
         base_product = base_product_model.objects.create(
             name=retreat.name,
@@ -21,6 +23,11 @@ def link_retreat_to_base_product(apps, schema_editor):
         )
         retreat.baseproduct_ptr = base_product
         retreat.save()
+        for order_line in order_line_model.objects.filter(
+                content_type__model='retreat',
+                object_id=retreat.id):
+            order_line.object_id = base_product.id
+            order_line.save()
 
 
 def save_old_id(apps, schema_editor):
