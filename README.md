@@ -89,3 +89,24 @@ http://localhost:8000/ and http://localhost:8000/admin
 ## Custom settings - NOT IMPLEMENTED YET
 
 If you need to have custom settings on your local environment, you can override global settings in `apiBlitz/local_settings.py`.
+
+## Deployment process
+
+1. Activate Deploy screen on frontend
+
+![deploy_page](doc_images/deploy_page.png)
+
+Need to be execute in frontend repository
+```
+npm run deploy:prod:deploy_page
+```
+
+2. Deploy api code
+```
+./utils/deploy_prod.sh
+```
+
+3. Deploy frontend
+```
+npm run deploy:prod
+```
