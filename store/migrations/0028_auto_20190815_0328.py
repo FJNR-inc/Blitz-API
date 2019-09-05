@@ -5,6 +5,24 @@ from django.db import migrations, models
 import django.db.models.deletion
 import simple_history.models
 
+from utils.migrate_base_product import update_id_on_models
+
+
+def save_old_id_membership(apps, schema_editor):
+    membership_model = apps.get_model('store',
+                                   'membership')
+    for membership in membership_model.objects.all():
+        membership.old_id = membership.id
+        membership.save()
+
+
+def save_old_id_package(apps, schema_editor):
+    package_model = apps.get_model('store',
+                                   'package')
+    for package in package_model.objects.all():
+        package.old_id = package.id
+        package.save()
+
 
 def link_membership_to_base_product(apps, schema_editor):
     membership_model = apps.get_model('store',
@@ -13,6 +31,7 @@ def link_membership_to_base_product(apps, schema_editor):
                                         'baseproduct')
     order_line_model = apps.get_model('store',
                                       'orderline')
+    updated_ids = {}
     for membership in membership_model.objects.all():
         base_product = base_product_model.objects.create(
             name=membership.name,
@@ -23,13 +42,14 @@ def link_membership_to_base_product(apps, schema_editor):
             details_fr=membership.details_fr,
             details_en=membership.details_en
         )
+        updated_ids[membership.old_id] = base_product.id
         membership.baseproduct_ptr = base_product
         membership.save()
-        for order_line in order_line_model.objects.filter(
-                content_type__model='membership',
-                object_id=membership.id):
-            order_line.object_id = base_product.id
-            order_line.save()
+
+    for order_line in order_line_model.objects.filter(
+            content_type__model='membership'):
+        order_line.object_id = updated_ids[order_line.object_id]
+        order_line.save()
 
 
 def link_package_to_base_product(apps, schema_editor):
@@ -39,6 +59,8 @@ def link_package_to_base_product(apps, schema_editor):
                                         'baseproduct')
     order_line_model = apps.get_model('store',
                                       'orderline')
+    updated_ids = {}
+
     for package in package_model.objects.all():
         base_product = base_product_model.objects.create(
             name=package.name,
@@ -49,13 +71,48 @@ def link_package_to_base_product(apps, schema_editor):
             details_fr=package.details_fr,
             details_en=package.details_en
         )
+        updated_ids[package.old_id] = base_product.id
         package.baseproduct_ptr = base_product
         package.save()
-        for order_line in order_line_model.objects.filter(
-                content_type__model='package',
-                object_id=package.id):
-            order_line.object_id = base_product.id
-            order_line.save()
+
+    for order_line in order_line_model.objects.filter(
+            content_type__model='package'):
+        order_line.object_id = updated_ids[order_line.object_id]
+        order_line.save()
+
+
+def update_membership_id_on_other_models(apps, schema_editor):
+    membership_model = apps.get_model('store',
+                                      'membership')
+
+    list_model_to_migrate = [
+        ('store', 'package', 'baseproduct_ptr_id', 'exclusive_memberships', False),
+        ('store', 'coupon', 'id', 'applicable_memberships', False),
+        ('store', 'membershipcoupon', 'id', 'applicable_memberships', False),
+        ('store', 'membershipcoupon', 'id', 'membership', True),
+        ('blitz_api', 'user', 'id', 'membership', True),
+    ]
+
+    updated_ids = {}
+    for membership in membership_model.objects.all():
+        updated_ids[membership.old_id] = membership.baseproduct_ptr_id
+
+    update_id_on_models(apps, list_model_to_migrate, updated_ids, membership_model)
+
+
+def update_package_id_on_other_models(apps, schema_editor):
+    package_model = apps.get_model('store',
+                                   'package')
+
+    list_model_to_migrate = [
+        ('store', 'coupon', 'id', 'applicable_packages', False),
+        ('store', 'membershipcoupon', 'id', 'applicable_packages',  False)
+    ]
+
+    updated_ids = {}
+    for package in package_model.objects.all():
+        updated_ids[package.old_id] = package.baseproduct_ptr_id
+    update_id_on_models(apps, list_model_to_migrate, updated_ids, package_model)
 
 
 class Migration(migrations.Migration):
@@ -66,6 +123,40 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AddField(
+            model_name='historicalmembership',
+            name='old_id',
+            field=models.IntegerField(default=1,
+                                      null=True,
+                                      verbose_name='Id before migrate to base product'),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='membership',
+            name='old_id',
+            field=models.IntegerField(default=1,
+                                      null=True,
+                                      verbose_name='Id before migrate to base product'),
+            preserve_default=False,
+        ),
+        migrations.RunPython(save_old_id_membership),
+        migrations.AddField(
+            model_name='historicalpackage',
+            name='old_id',
+            field=models.IntegerField(default=1,
+                                      null=True,
+                                      verbose_name='Id before migrate to base product'),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='package',
+            name='old_id',
+            field=models.IntegerField(default=1,
+                                      null=True,
+                                      verbose_name='Id before migrate to base product'),
+            preserve_default=False,
+        ),
+        migrations.RunPython(save_old_id_package),
         migrations.CreateModel(
             name='BaseProduct',
             fields=[
@@ -118,7 +209,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='membership',
             name='baseproduct_ptr',
-            field=models.OneToOneField(auto_created=True, null=True, blank=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, serialize=False, to='store.BaseProduct'),
+            field=models.ForeignKey(auto_created=True, null=True, blank=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, serialize=False, to='store.BaseProduct'),
             preserve_default=False,
         ),
         migrations.RunPython(link_membership_to_base_product),
@@ -139,13 +230,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='optionproduct',
             name='baseproduct_ptr',
-            field=models.OneToOneField(auto_created=True, default=1, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='store.BaseProduct'),
+            field=models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='store.BaseProduct'),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name='package',
             name='baseproduct_ptr',
-            field=models.OneToOneField(auto_created=True, null=True, blank=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, serialize=False, to='store.BaseProduct'),
+            field=models.ForeignKey(auto_created=True, null=True, blank=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, serialize=False, to='store.BaseProduct'),
             preserve_default=False,
         ),
         migrations.RunPython(link_package_to_base_product),
@@ -156,7 +247,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='package',
             name='baseproduct_ptr',
-            field=models.OneToOneField(auto_created=True, default=1, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='store.BaseProduct'),
+            field=models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='store.BaseProduct'),
             preserve_default=False,
         ),
         migrations.RemoveField(
@@ -239,4 +330,6 @@ class Migration(migrations.Migration):
             model_name='package',
             name='price',
         ),
+        migrations.RunPython(update_package_id_on_other_models),
+        migrations.RunPython(update_membership_id_on_other_models),
     ]
