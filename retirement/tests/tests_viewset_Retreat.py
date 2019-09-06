@@ -155,6 +155,14 @@ class RetreatTests(APITestCase):
             'review_url': 'example3.com',
             'has_shared_rooms': True,
             'hidden': False,
+            'accessibility_detail': None,
+            'description': None,
+            'food_allergen_free': False,
+            'food_gluten_free': False,
+            'food_vegan': False,
+            'food_vege': False,
+            'google_maps_url': None,
+            'sub_title': None,
         }
 
         response = self.client.post(
@@ -211,6 +219,14 @@ class RetreatTests(APITestCase):
             'has_shared_rooms': True,
             'options': [],
             'hidden': False,
+            'accessibility_detail': None,
+            'description': None,
+            'food_allergen_free': False,
+            'food_gluten_free': False,
+            'food_vegan': False,
+            'food_vege': False,
+            'google_maps_url': None,
+            'sub_title': None,
         }
 
         response_data = remove_translation_fields(json.loads(response.content))
@@ -328,6 +344,14 @@ class RetreatTests(APITestCase):
             'place_name': '',
             'has_shared_rooms': True,
             'hidden': True,
+            'accessibility_detail': None,
+            'description': None,
+            'food_allergen_free': False,
+            'food_gluten_free': False,
+            'food_vegan': False,
+            'food_vege': False,
+            'google_maps_url': None,
+            'sub_title': None
         }
 
         response_data = remove_translation_fields(json.loads(response.content))
@@ -661,6 +685,14 @@ class RetreatTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'hidden': False,
+            'accessibility_detail': None,
+            'description': None,
+            'food_allergen_free': False,
+            'food_gluten_free': False,
+            'food_vegan': False,
+            'food_vege': False,
+            'google_maps_url': None,
+            'sub_title': None
         }
 
         self.assertEqual(
@@ -758,6 +790,14 @@ class RetreatTests(APITestCase):
                     'available_on_products': [],
                     'options': [],
                     'hidden': False,
+                    'accessibility_detail': None,
+                    'description': None,
+                    'food_allergen_free': False,
+                    'food_gluten_free': False,
+                    'food_vegan': False,
+                    'food_vege': False,
+                    'google_maps_url': None,
+                    'sub_title': None,
                 }
             ]
         }
@@ -811,7 +851,16 @@ class RetreatTests(APITestCase):
                 'email_content': None,
                 'form_url': 'example.com', 'carpool_url': 'example2.com',
                 'review_url': 'example3.com', 'hidden': True, 'users': [],
-                'exclusive_memberships': []},
+                'exclusive_memberships': [],
+                'accessibility_detail': None,
+                'description': None,
+                'food_allergen_free': False,
+                'food_gluten_free': False,
+                'food_vegan': False,
+                'food_vege': False,
+                'google_maps_url': None,
+                'sub_title': None,
+            },
             {
                 'places_remaining': 400, 'total_reservations': 0,
                 'reservations': [], 'reservations_canceled': [],
@@ -845,7 +894,16 @@ class RetreatTests(APITestCase):
                 'email_content': None,
                 'form_url': 'example.com', 'carpool_url': 'example2.com',
                 'review_url': 'example3.com', 'hidden': False, 'users': [],
-                'exclusive_memberships': []},
+                'exclusive_memberships': [],
+                'accessibility_detail': None,
+                'description': None,
+                'food_allergen_free': False,
+                'food_gluten_free': False,
+                'food_vegan': False,
+                'food_vege': False,
+                'google_maps_url': None,
+                'sub_title': None,
+            },
             {
                 'places_remaining': 400, 'total_reservations': 0,
                 'reservations': [], 'reservations_canceled': [],
@@ -878,7 +936,16 @@ class RetreatTests(APITestCase):
                 'email_content': None,
                 'form_url': 'example.com', 'carpool_url': 'example2.com',
                 'review_url': 'example3.com', 'hidden': False, 'users': [],
-                'exclusive_memberships': []}]}
+                'exclusive_memberships': [],
+                'accessibility_detail': None,
+                'description': None,
+                'food_allergen_free': False,
+                'food_gluten_free': False,
+                'food_vegan': False,
+                'food_vege': False,
+                'google_maps_url': None,
+                'sub_title': None,
+            }]}
 
         response_content = json.loads(response.content)
         del response_content['results'][0]['url']
@@ -953,6 +1020,14 @@ class RetreatTests(APITestCase):
                 'available_on_products': [],
                 'options': [],
                 'hidden': False,
+                'accessibility_detail': None,
+                'description': None,
+                'food_allergen_free': False,
+                'food_gluten_free': False,
+                'food_vegan': False,
+                'food_vege': False,
+                'google_maps_url': None,
+                'sub_title': None,
             }]
         }
 
@@ -1017,6 +1092,14 @@ class RetreatTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'hidden': False,
+            'accessibility_detail': None,
+            'description': None,
+            'food_allergen_free': False,
+            'food_gluten_free': False,
+            'food_vegan': False,
+            'food_vege': False,
+            'google_maps_url': None,
+            'sub_title': None,
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -1087,6 +1170,14 @@ class RetreatTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'hidden': False,
+            'accessibility_detail': None,
+            'description': None,
+            'food_allergen_free': False,
+            'food_gluten_free': False,
+            'food_vegan': False,
+            'food_vege': False,
+            'google_maps_url': None,
+            'sub_title': None,
         }
 
         self.assertEqual(response_data, content)
