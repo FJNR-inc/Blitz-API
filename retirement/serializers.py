@@ -960,6 +960,7 @@ class WaitQueueNotificationSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class RetreatInvitationSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
     url_token = serializers.ReadOnlyField()
     front_url = serializers.ReadOnlyField()
     nb_places_used = serializers.ReadOnlyField()
