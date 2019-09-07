@@ -113,7 +113,7 @@ class InvitationViewTests(APITestCase):
 
         url = settings.LOCAL_SETTINGS[
             'FRONTEND_INTEGRATION'][
-            'FORGOT_PASSWORD_URL'].replace(
+            'RETREAT_INVITATION_URL'].replace(
             "{{token}}",
             str(response_data.get('url_token'))
         )
