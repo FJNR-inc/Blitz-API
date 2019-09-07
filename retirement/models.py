@@ -526,7 +526,7 @@ class RetreatInvitation(SafeDeleteModel):
     def front_url(self):
         url = settings.LOCAL_SETTINGS[
             'FRONTEND_INTEGRATION'][
-            'FORGOT_PASSWORD_URL'].replace(
+            'RETREAT_INVITATION_URL'].replace(
             "{{token}}",
             str(self.url_token)
         )
