@@ -142,6 +142,46 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         default=False
     )
 
+    google_maps_url = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Google maps URL"),
+    )
+
+    accessibility_detail = models.TextField(
+        verbose_name=_("Accessibility Detail"),
+        null=True,
+        blank=True,
+    )
+
+    sub_title = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Sub Title"),
+    )
+
+    description = models.TextField(
+        verbose_name=_("Description"),
+        null=True,
+        blank=True,
+    )
+
+    food_vege = models.BooleanField(
+        verbose_name=_("Food vege"),
+        default=False)
+
+    food_vegan = models.BooleanField(
+        verbose_name=_("Food vegan"),
+        default=False)
+
+    food_allergen_free = models.BooleanField(
+        verbose_name=_("Food allergen_free"),
+        default=False)
+
+    food_gluten_free = models.BooleanField(
+        verbose_name=_("Food gluten free"),
+        default=False)
+
     # History is registered in translation.py
     # history = HistoricalRecords()
 

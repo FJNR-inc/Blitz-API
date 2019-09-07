@@ -4,6 +4,10 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+from utils.migrate_base_product import update_id_on_models
+
+
+
 def link_retreat_to_base_product(apps, schema_editor):
     retreat_model = apps.get_model('retirement',
                                    'retreat')
@@ -11,6 +15,7 @@ def link_retreat_to_base_product(apps, schema_editor):
                                         'baseproduct')
     order_line_model = apps.get_model('store',
                                       'orderline')
+    updated_ids = {}
     for retreat in retreat_model.objects.all():
         base_product = base_product_model.objects.create(
             name=retreat.name,
@@ -21,13 +26,46 @@ def link_retreat_to_base_product(apps, schema_editor):
             details_fr=retreat.details_fr,
             details_en=retreat.details_en
         )
+        updated_ids[retreat.old_id] = base_product.id
         retreat.baseproduct_ptr = base_product
         retreat.save()
-        for order_line in order_line_model.objects.filter(
-                content_type__model='retreat',
-                object_id=retreat.id):
-            order_line.object_id = base_product.id
-            order_line.save()
+
+    for order_line in order_line_model.objects.filter(
+            content_type__model='retreat'):
+        order_line.object_id = updated_ids[order_line.object_id]
+        order_line.save()
+
+
+def update_retreat_id_on_other_models(apps, schema_editor):
+    retreat_model = apps.get_model('retirement',
+                                   'retreat')
+
+    list_model_to_migrate = [
+        ('retirement', 'picture', 'id', 'retreat', True),
+        ('retirement', 'reservation', 'id', 'retreat', True),
+        ('store', 'membership', 'baseproduct_ptr_id', 'retreats', False),
+        ('store', 'coupon', 'id', 'applicable_retreats', False),
+        ('store', 'membershipcoupon', 'id', 'applicable_retreats', False),
+        ('retirement', 'WaitQueueNotification', 'id', 'retreat', True),
+    ]
+
+    updated_ids = {}
+    for retreat in retreat_model.objects.all():
+        updated_ids[retreat.old_id] = retreat.baseproduct_ptr_id
+
+    update_id_on_models(apps, list_model_to_migrate,
+                        updated_ids, retreat_model)
+
+    # Update wait queue
+    # Copy them, delete and recreate
+    waite_queue_model = apps.get_model('retirement', 'waitqueue')
+
+    list_wait_queue = list(waite_queue_model.objects.all())
+    waite_queue_model.objects.all().delete()
+
+    for waite_queue in list_wait_queue:
+        waite_queue.retreat_id = updated_ids[waite_queue.retreat_id]
+        waite_queue.save()
 
 
 def save_old_id(apps, schema_editor):
@@ -90,7 +128,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='retreat',
             name='baseproduct_ptr',
-            field=models.OneToOneField(auto_created=True, default=1,
+            field=models.OneToOneField(auto_created=True,
                                        on_delete=django.db.models.deletion.CASCADE,
                                        parent_link=True, primary_key=True,
                                        serialize=False,
@@ -129,4 +167,5 @@ class Migration(migrations.Migration):
             model_name='retreat',
             name='price',
         ),
+        migrations.RunPython(update_retreat_id_on_other_models),
     ]

@@ -357,6 +357,10 @@ class Membership(BaseProduct):
         verbose_name = _("Membership")
         verbose_name_plural = _("Memberships")
 
+    old_id = models.IntegerField(
+        verbose_name=_("Id before migrate to base product"),
+        null=True,)
+
     duration = models.DurationField()
 
     academic_levels = models.ManyToManyField(
@@ -376,6 +380,10 @@ class Package(BaseProduct):
     class Meta:
         verbose_name = _("Package")
         verbose_name_plural = _("Packages")
+
+    old_id = models.IntegerField(
+        verbose_name=_("Id before migrate to base product"),
+        null=True,)
 
     reservations = models.PositiveIntegerField(
         verbose_name=_("Reservations"),
