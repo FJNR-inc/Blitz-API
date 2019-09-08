@@ -24,7 +24,7 @@ from blitz_api.services import (check_if_translated_field,
                                 getMessageTranslate)
 from store.exceptions import PaymentAPIError
 from store.models import Order, OrderLine, PaymentProfile, Refund
-from store.serializers import BaseProductSerializer
+from store.serializers import BaseProductSerializer, CouponSerializer
 from store.services import (charge_payment,
                             create_external_payment_profile,
                             create_external_card,
@@ -964,6 +964,8 @@ class RetreatInvitationSerializer(serializers.HyperlinkedModelSerializer):
     url_token = serializers.ReadOnlyField()
     front_url = serializers.ReadOnlyField()
     nb_places_used = serializers.ReadOnlyField()
+    retreat_detail = RetreatSerializer(read_only=True, source='retreat')
+    coupon_detail = CouponSerializer(read_only=True, source='coupon')
 
     class Meta:
         model = RetreatInvitation
