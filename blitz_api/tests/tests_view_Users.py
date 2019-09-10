@@ -3,6 +3,8 @@ import json
 from datetime import timedelta
 from unittest import mock
 
+from dateutil.relativedelta import relativedelta
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
@@ -663,7 +665,8 @@ class UsersTests(APITestCase):
             'volunteer_for_workplace',
             'hide_newsletter',
             'is_in_newsletter',
-            'number_of_free_virtual_retreat'
+            'number_of_free_virtual_retreat',
+            'membership_end_notification'
         ]
         for key in first_user.keys():
             self.assertTrue(
@@ -728,7 +731,8 @@ class UsersTests(APITestCase):
             'volunteer_for_workplace',
             'hide_newsletter',
             'is_in_newsletter',
-            'number_of_free_virtual_retreat'
+            'number_of_free_virtual_retreat',
+            'membership_end_notification'
         ]
         for key in first_user.keys():
             self.assertTrue(
@@ -772,3 +776,76 @@ class UsersTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+        }
+    )
+    def test_send_notification_end_membership(self):
+        """
+        Ensure we can send notification for membership end
+        """
+
+        fixed_time = timezone.now()
+
+        end_time_membership = fixed_time + relativedelta(days=28)
+
+        self.user.membership = self.membership
+        self.user.membership_end = end_time_membership
+        self.user.save()
+
+        with mock.patch(
+                'store.serializers.timezone.now',
+                return_value=fixed_time
+        ):
+            response = self.client.get(
+                reverse('user-execute-automatic-email-membership-end')
+            )
+
+        content = {
+            'stop': False,
+            'email_send_count': 1
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(
+            json.loads(response.content),
+            content
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.membership_end_notification, fixed_time)
+
+        with mock.patch(
+                'store.serializers.timezone.now',
+                return_value=fixed_time
+        ):
+            response = self.client.get(
+                reverse('user-execute-automatic-email-membership-end')
+            )
+        content = {
+            'stop': False,
+            'email_send_count': 0
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(
+            json.loads(response.content),
+            content
+        )
+
+        # no new mail
+        self.assertEqual(len(mail.outbox), 1)

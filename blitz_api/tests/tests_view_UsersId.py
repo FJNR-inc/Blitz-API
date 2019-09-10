@@ -55,7 +55,8 @@ class UsersIdTests(APITestCase):
             'volunteer_for_workplace',
             'hide_newsletter',
             'is_in_newsletter',
-            'number_of_free_virtual_retreat'
+            'number_of_free_virtual_retreat',
+            'membership_end_notification'
         ]
 
     def setUp(self):

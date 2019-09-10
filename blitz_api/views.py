@@ -96,7 +96,10 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
         """
         Returns the list of permissions that this view requires.
         """
-        if self.action == 'create':
+        if self.action in [
+            'create',
+            'execute_automatic_email_membership_end'
+        ]:
             permission_classes = []
         elif self.action == 'list':
             permission_classes = [IsAdminUser, ]
@@ -225,6 +228,26 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
                 return Response(content, status=status.HTTP_200_OK)
 
         return Response(status=status.HTTP_200_OK)
+
+    @action(detail=False, permission_classes=[])
+    def execute_automatic_email_membership_end(self, request):
+        """
+        That custom action allows an admin (or an automated task) to
+        notify a users that his membership comes to an end
+        """
+
+        emails = []
+        for user in User.objects.all():
+            email_send = user.check_and_notify_renew_membership()
+
+            if email_send:
+                emails.append(user.email)
+
+        response_data = {
+            'stop': False,
+            'email_send_count': len(emails)
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class UsersActivation(APIView):
