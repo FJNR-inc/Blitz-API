@@ -5,7 +5,7 @@ from import_export import fields, resources
 from import_export.widgets import (ForeignKeyWidget, ManyToManyWidget,
                                    DateTimeWidget)
 
-from store.models import OrderLine
+from store.models import OrderLine, OrderLineBaseProduct, OptionProduct
 from .models import Reservation, Retreat
 
 User = get_user_model()
@@ -262,4 +262,53 @@ class RetreatReservationResource(resources.ModelResource):
             'personnal_restrictions',
             'city',
             'phone'
+        )
+
+
+class OptionProductResource(resources.ModelResource):
+
+    last_name = fields.Field(
+        column_name='last_name',
+        attribute='order_line',
+        widget=ForeignKeyWidget(User, 'order__user__last_name'),
+    )
+
+    first_name = fields.Field(
+        column_name='first_name',
+        attribute='order_line',
+        widget=ForeignKeyWidget(User, 'order__user__first_name'),
+    )
+
+    email = fields.Field(
+        column_name='email',
+        attribute='order_line',
+        widget=ForeignKeyWidget(User, 'order__user__email'),
+    )
+
+    option_name = fields.Field(
+        column_name='name',
+        attribute='option',
+        widget=ForeignKeyWidget(OptionProduct, 'name')
+    )
+
+    quantity = fields.Field(
+        column_name='quantity',
+        attribute='quantity'
+    )
+
+    class Meta:
+        model = OrderLineBaseProduct
+        fields = (
+            'last_name',
+            'first_name',
+            'email',
+            'option_name',
+            'quantity'
+        )
+        export_order = (
+            'last_name',
+            'first_name',
+            'email',
+            'option_name',
+            'quantity'
         )
