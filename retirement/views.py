@@ -22,7 +22,7 @@ from rest_framework.response import Response
 from blitz_api.models import ExportMedia
 from blitz_api.serializers import ExportMediaSerializer
 from store.exceptions import PaymentAPIError
-from store.models import Refund
+from store.models import Refund, OptionProduct, OrderLineBaseProduct
 from store.services import refund_amount, PAYSAFE_EXCEPTION
 
 from . import permissions, serializers
@@ -30,7 +30,7 @@ from .models import (Picture, Reservation, Retreat, WaitQueue,
                      WaitQueueNotification, RetreatInvitation)
 from .resources import (ReservationResource, RetreatResource,
                         WaitQueueNotificationResource, WaitQueueResource,
-                        RetreatReservationResource)
+                        RetreatReservationResource, OptionProductResource)
 from .services import (send_retreat_7_days_email,
                        send_post_retreat_email, )
 
@@ -197,6 +197,39 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
             .strftime("%Y%m%d-%H%M%S")
         filename = f'export-participation-{retreat.name}{date_file}.xls'
+
+        new_exprt = ExportMedia.objects.create()
+        content = ContentFile(dataset.xls)
+        new_exprt.file.save(filename, content)
+
+        export_url = ExportMediaSerializer(
+            new_exprt,
+            context={'request': request}
+        ).data.get('file')
+
+        response = Response(
+            status=status.HTTP_200_OK,
+            data={
+                'file_url': export_url
+            }
+        )
+
+        return response
+
+    @action(detail=True, permission_classes=[IsAdminUser])
+    def export_options(self, request, pk=None):
+
+        retreat: Retreat = self.get_object()
+        # Order queryset by ascending id, thus by descending age too
+        queryset = OrderLineBaseProduct.objects.filter(
+            order_line__object_id=retreat.id,
+            order_line__content_type__model='retreat')
+        # Build dataset using paginated queryset
+        dataset = OptionProductResource().export(queryset)
+
+        date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
+            .strftime("%Y%m%d-%H%M%S")
+        filename = f'export-option-{retreat.name}-{date_file}.xls'
 
         new_exprt = ExportMedia.objects.create()
         content = ContentFile(dataset.xls)
