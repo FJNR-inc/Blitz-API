@@ -4,6 +4,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
 from django.http import Http404, HttpResponse, HttpRequest
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -20,7 +21,7 @@ from blitz_api.mixins import ExportMixin
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, PaymentProfile,
                      CustomPayment, Coupon, CouponUser, Refund, BaseProduct,
-                     OptionProduct)
+                     OptionProduct, OrderLineBaseProduct)
 from .permissions import IsOwner
 from .resources import (MembershipResource, PackageResource, OrderResource,
                         OrderLineResource, CustomPaymentResource,
@@ -259,6 +260,7 @@ class OrderViewSet(ExportMixin, viewsets.ModelViewSet):
 
     export_resource = OrderResource()
 
+    @transaction.atomic
     @action(
         methods=['post'], detail=False, permission_classes=[IsAuthenticated])
     def validate_coupon(self, request, pk=None):
@@ -269,57 +271,77 @@ class OrderViewSet(ExportMixin, viewsets.ModelViewSet):
 
         This is not the best way to do it and it could be improved.
         """
-        serializer = serializers.OrderSerializer(
-            data=request.data,
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        # Coupon is necessary for this view
-        if not serializer.validated_data.get('coupon'):
-            error = {
-                'coupon': [_("This field is required.")]
-            }
-            return Response(error, status=status.HTTP_400_BAD_REQUEST)
-        orderlines = serializer.validated_data.pop('order_lines', None)
-        coupon = serializer.validated_data.pop('coupon', None)
-        serializer.validated_data.pop('payment_token', None)
-        serializer.validated_data.pop('single_use_token', None)
-        order = Order(
-            **serializer.validated_data,
-            transaction_date=timezone.now(),
-            user=request.user,
-        )
-        order.save()
-
-        orderline_list = []
-        for idx, orderline in enumerate(orderlines):
-            orderline_list.append(
-                OrderLine(
-                    **orderline,
-                    order=order,
-                )
+        try:
+            sid = transaction.savepoint()
+            serializer = serializers.OrderSerializer(
+                data=request.data,
+                context={'request': request}
             )
-            orderline_list[idx].save()
+            serializer.is_valid(raise_exception=True)
+            # Coupon is necessary for this view
+            if not serializer.validated_data.get('coupon'):
+                error = {
+                    'coupon': [_("This field is required.")]
+                }
+                return Response(error, status=status.HTTP_400_BAD_REQUEST)
+            orderlines = serializer.validated_data.pop('order_lines', None)
+            coupon = serializer.validated_data.pop('coupon', None)
+            serializer.validated_data.pop('payment_token', None)
+            serializer.validated_data.pop('single_use_token', None)
+            order = Order(
+                **serializer.validated_data,
+                transaction_date=timezone.now(),
+                user=request.user,
+            )
+            order.save()
 
-        response = validate_coupon_for_order(coupon, order)
-        response['orderline'] = serializers.OrderLineSerializerNoOrder(
-            response['orderline'],
-            context={'request': request}
-        ).data
-        response['orderline'].pop('url', None)
-        response['orderline'].pop('id', None)
-        response['orderline'].pop('order', None)
-        response['orderline'].pop('coupon', None)
-        response['orderline'].pop('coupon_real_value', None)
-        response['orderline'].pop('cost', None)
-        order.delete()
-        for orderline in orderline_list:
-            orderline.delete()
-        if response['valid_use']:
+            orderline_list = []
+            for idx, orderline in enumerate(orderlines):
+                if 'options' in orderline.keys():
+                    options = orderline.pop('options')
+                orderline_list.append(
+                    OrderLine(
+                        **orderline,
+                        order=order,
+                    )
+                )
+
+                orderline_list[idx].save()
+
+                if 'options' in orderline.keys():
+                    for option in options:
+                        OrderLineBaseProduct.objects.create(
+                            order_line=orderline_list[idx],
+                            option_id=option.get('id'),
+                            quantity=option.get('quantity'),
+                        )
+                    orderline_list[idx].save()
+
+            response = validate_coupon_for_order(coupon, order)
+            response['orderline'] = serializers.OrderLineSerializerNoOrder(
+                response['orderline'],
+                context={'request': request}
+            ).data
+
+        except Exception as err:
+            raise err
+        finally:
+            # add rollback in finally, so it always rollback the data
+            transaction.savepoint_rollback(sid)
+
+        if response.get('valid_use', False):
+            response['orderline'].pop('url', None)
+            response['orderline'].pop('id', None)
+            response['orderline'].pop('order', None)
+            response['orderline'].pop('coupon', None)
+            response['orderline'].pop('coupon_real_value', None)
+            response['orderline'].pop('cost', None)
             response.pop('valid_use', None)
             response.pop('error', None)
             return Response(response)
-        return Response(response['error'], status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(response['error'],
+                        status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
         """
