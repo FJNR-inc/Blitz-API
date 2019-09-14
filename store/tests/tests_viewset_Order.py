@@ -184,6 +184,17 @@ class OrderTests(APITestCase):
             reserved_seats=1,
             has_shared_rooms=True,
         )
+
+        self.option_retreat: OptionProduct = OptionProduct.objects.create(
+            name="Vegan",
+            details="Vegan details",
+            available=True,
+            price=50,
+            max_quantity=10
+        )
+        self.option_retreat.available_on_products.add(self.retreat)
+        self.option_retreat.save()
+
         self.retreat_no_seats = Retreat.objects.create(
             name="no_place_left_retreat",
             seats=0,
@@ -2489,10 +2500,17 @@ class OrderTests(APITestCase):
                 'content_type': 'timeslot',
                 'object_id': self.time_slot.id,
                 'quantity': 1,
+                'options': []
             }, {
                 'content_type': 'retreat',
                 'object_id': self.retreat.id,
                 'quantity': 1,
+                'options': [
+                    {
+                        'id': self.option_retreat.id,
+                        'quantity': 2
+                    }
+                ]
             }],
             'coupon': "ABCD1234",
         }
