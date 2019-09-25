@@ -1,5 +1,7 @@
 import json
+from datetime import timedelta, date
 
+from dateutil.relativedelta import relativedelta
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -611,17 +613,28 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
             if membership_orderlines:
                 need_transaction = True
-                today = timezone.now().date()
-                if user.membership and user.membership_end > today:
+                # Allow to buy membership, 1 month before end of membership
+                limit_date_to_renew = \
+                    timezone.now().date() + relativedelta(months=1)
+                if user.membership and user.membership_end > \
+                        limit_date_to_renew:
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
                             "You already have an active membership."
                         )]
                     })
                 user.membership = membership_orderlines[0].content_object
-                user.membership_end = (
-                        timezone.now().date() + user.membership.duration
-                )
+                # If the user has already a membership end that
+                # is after today,
+                # we add the new membership duration to it
+                today = timezone.now().date()
+                if user.membership_end and user.membership_end > today:
+                    user.membership_end = \
+                        user.membership_end + user.membership.duration
+                else:
+                    user.membership_end = (
+                            today + user.membership.duration
+                    )
                 user.save()
 
                 membership_coupons = MembershipCoupon.objects.filter(
