@@ -518,14 +518,20 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         write_only=True,
     )
 
-    # target_user = serializers.HyperlinkedRelatedField(
-    #     many=False,
-    #     write_only=True,
-    #     view_name='user-detail',
-    #     required=False,
-    #     allow_null=True,
-    #     queryset=User.objects.all(),
-    # )
+    target_user = serializers.HyperlinkedRelatedField(
+        many=False,
+        write_only=True,
+        view_name='user-detail',
+        required=False,
+        allow_null=True,
+        queryset=User.objects.all(),
+    )
+
+    bypass_payment = serializers.BooleanField(
+        write_only=True,
+        required=False,
+    )
+
     # save_card = serializers.NullBooleanField(
     #     write_only=True,
     #     required=False,
@@ -536,16 +542,28 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         Create an Order and charge the user.
         """
         user = self.context['request'].user
-        # if validated_data.get('target_user', None):
-        #     if user.is_staff:
-        #         user = validated_data.pop('target_user')
-        #     else:
-        #         raise serializers.ValidationError({
-        #             'non_field_errors': [_(
-        #                "You cannot create an order for another user without "
-        #                 "admin rights."
-        #             )]
-        #         })
+        is_staff = user.is_staff
+        bypass_payment = False  # Default value
+        if 'target_user' in validated_data.keys():
+            if is_staff:
+                user = validated_data.pop('target_user')
+            else:
+                raise serializers.ValidationError({
+                    'non_field_errors': [_(
+                       "You don't have the permission to create "
+                       "an order for another user."
+                    )]
+                })
+        if 'bypass_payment' in validated_data.keys():
+            if is_staff:
+                bypass_payment = validated_data.pop('bypass_payment')
+            else:
+                raise serializers.ValidationError({
+                    'non_field_errors': [_(
+                        "You don't have the permission to bypass the payment"
+                    )]
+                })
+
         orderlines_data = validated_data.pop('order_lines')
         payment_token = validated_data.pop('payment_token', None)
         single_use_token = validated_data.pop('single_use_token', None)
@@ -703,8 +721,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         # OrderLine's quantity and TimeSlot's price will be
                         # used in the future if we want to allow multiple
                         # reservations of the same timeslot.
-                        user.tickets -= 1
-                        user.save()
+                        if not bypass_payment:
+                            user.tickets -= 1
+                            user.save()
                     else:
                         raise serializers.ValidationError({
                             'non_field_errors': [_(
@@ -787,6 +806,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     if user_waiting:
                         user_waiting.delete()
 
+            # Overwrite transaction depending on bypass_payment
+            need_transaction = need_transaction and not bypass_payment
             if need_transaction and payment_token and int(amount):
                 # Charge the order with the external payment API
                 try:
