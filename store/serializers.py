@@ -327,16 +327,7 @@ class CustomPaymentSerializer(serializers.HyperlinkedModelSerializer):
             'COST': custom_payment.price,
         }
 
-        plain_msg = render_to_string("invoice.txt", merge_data)
-        msg_html = render_to_string("invoice.html", merge_data)
-
-        send_mail(
-            "Confirmation d'achat",
-            plain_msg,
-            settings.DEFAULT_FROM_EMAIL,
-            [custom_payment.user.email],
-            html_message=msg_html,
-        )
+        Order.send_invoice([custom_payment.user.email], merge_data)
 
         return custom_payment
 
@@ -900,16 +891,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 'COST': round(amount / 100, 2),
             }
 
-            plain_msg = render_to_string("invoice.txt", merge_data)
-            msg_html = render_to_string("invoice.html", merge_data)
-
-            send_mail(
-                "Confirmation d'achat",
-                plain_msg,
-                settings.DEFAULT_FROM_EMAIL,
-                [order.user.email],
-                html_message=msg_html,
-            )
+            Order.send_invoice([order.user.email], merge_data)
 
         # Send retreat informations emails
         for retreat_reservation in retreat_reservations:

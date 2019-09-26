@@ -802,16 +802,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 ),
             }
 
-            plain_msg = render_to_string("invoice.txt", merge_data)
-            msg_html = render_to_string("invoice.html", merge_data)
-
-            send_mail(
-                "Confirmation d'achat",
-                plain_msg,
-                settings.DEFAULT_FROM_EMAIL,
-                [order.user.email],
-                html_message=msg_html,
-            )
+            Order.send_invoice([order.user.email], merge_data)
 
         # Send refund confirmation email
         if need_refund:

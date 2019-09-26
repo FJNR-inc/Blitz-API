@@ -11,7 +11,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import (
     GenericForeignKey, GenericRelation
 )
+from django.core.mail import send_mail
 from django.contrib.contenttypes.models import ContentType
+from django.template.loader import render_to_string
 
 from safedelete.models import SafeDeleteModel
 
@@ -97,6 +99,23 @@ class Order(models.Model):
 
     def __str__(self):
         return str(self.authorization_id)
+
+    @staticmethod
+    def send_invoice(to, merge_data):
+        if 'POLICY_URL' not in merge_data.keys():
+            merge_data['POLICY_URL'] = settings.\
+                LOCAL_SETTINGS['FRONTEND_INTEGRATION']['POLICY_URL']
+
+        plain_msg = render_to_string("invoice.txt", merge_data)
+        msg_html = render_to_string("invoice.html", merge_data)
+
+        send_mail(
+            "Confirmation d'achat",
+            plain_msg,
+            settings.DEFAULT_FROM_EMAIL,
+            to,
+            html_message=msg_html,
+        )
 
     def applying_coupon(self, coupon, user):
         from store.services import validate_coupon_for_order
