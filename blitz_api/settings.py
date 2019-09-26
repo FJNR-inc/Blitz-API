@@ -307,30 +307,51 @@ SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='admin@fjnr.ca')
 # User specific settings
 
 LOCAL_SETTINGS = {
-    'ORGANIZATION': config('ORGANIZATION', default='Blitz'),
-    'EMAIL_SERVICE': config('EMAIL_SERVICE', default=False, cast=bool),
-    'AUTO_ACTIVATE_USER': config('AUTO_ACTIVATE_USER', default=False,
-                                 cast=bool),
+    'ORGANIZATION': config(
+        'ORGANIZATION',
+        default='Blitz',
+    ),
+    'EMAIL_SERVICE': config(
+        'EMAIL_SERVICE',
+        default=False,
+        cast=bool,
+    ),
+    'AUTO_ACTIVATE_USER': config(
+        'AUTO_ACTIVATE_USER',
+        default=False,
+        cast=bool,
+    ),
     'FRONTEND_INTEGRATION': {
-        'ACTIVATION_URL': config('ACTIVATION_URL',
-                                 default='https://example.com/activate/{{token}}'),
+        'POLICY_URL': config(
+            'ACTIVATION_URL',
+            default='http://thesez-vous.org/policy',
+        ),
+        'ACTIVATION_URL': config(
+            'ACTIVATION_URL',
+            default='https://example.com/activate/{{token}}',
+        ),
         'EMAIL_CHANGE_CONFIRMATION': config(
             'EMAIL_CHANGE_CONFIRMATION',
             default='https://example.com/validate/email/{{token}}'
         ),
-        'FORGOT_PASSWORD_URL': config('FORGOT_PASSWORD_URL',
-                                      default='https://example.com/reset-password/{{token}}'),
-        'RETREAT_INVITATION_URL':
-            config('RETREAT_INVITATION_URL',
-                   default='https://example.com/retreat_invitation/{{token}}'),
-        'RETREAT_UNSUBSCRIBE_URL':
-            config('RETREAT_UNSUBSCRIBE_URL',
-                   default='https://example.com/wait_queue/'
-                           '{{wait_queue_id}}/unsubscribe'),
+        'FORGOT_PASSWORD_URL': config(
+            'FORGOT_PASSWORD_URL',
+            default='https://example.com/reset-password/{{token}}',
+        ),
+        'RETREAT_INVITATION_URL': config(
+            'RETREAT_INVITATION_URL',
+            default='https://example.com/retreat_invitation/{{token}}',
+        ),
+        'RETREAT_UNSUBSCRIBE_URL': config(
+            'RETREAT_UNSUBSCRIBE_URL',
+            default='https://example.com/wait_queue/{{wait_queue_id}}/unsubscribe',
+        ),
     },
     'SELLING_TAX': 0.14975,
     'RETREAT_NOTIFICATION_LIFETIME_DAYS': config(
-        'RETREAT_NOTIFICATION_LIFETIME_DAYS', default=30),
+        'RETREAT_NOTIFICATION_LIFETIME_DAYS',
+        default=30,
+    ),
 }
 
 # Payment settings
