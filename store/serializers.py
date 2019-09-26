@@ -939,6 +939,11 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 'RETREAT': retreat_reservation.retreat,
                 'USER': user,
             }
+            if len(retreat_reservation.retreat.pictures.all()):
+                merge_data['RETREAT_PICTURE'] = "{0}{1}".format(
+                    settings.MEDIA_URL,
+                    retreat_reservation.retreat.pictures[0].picture.url
+                )
 
             plain_msg = render_to_string(
                 "retreat_info.txt",
