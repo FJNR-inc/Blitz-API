@@ -1,6 +1,6 @@
 import json
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
@@ -56,7 +56,7 @@ class OrderTests(APITestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = UserFactory()
+        self.user: User = UserFactory()
         self.user.city = "Current city"
         self.user.phone = "123-456-7890"
         self.user.save()
@@ -184,17 +184,6 @@ class OrderTests(APITestCase):
             reserved_seats=1,
             has_shared_rooms=True,
         )
-
-        self.option_retreat: OptionProduct = OptionProduct.objects.create(
-            name="Vegan",
-            details="Vegan details",
-            available=True,
-            price=50,
-            max_quantity=10
-        )
-        self.option_retreat.available_on_products.add(self.retreat)
-        self.option_retreat.save()
-
         self.retreat_no_seats = Retreat.objects.create(
             name="no_place_left_retreat",
             seats=0,
@@ -427,6 +416,107 @@ class OrderTests(APITestCase):
         self.assertEqual(new_order.total_cost, total_price)
 
     @responses.activate
+    def test_buy_renew_membership(self):
+        """
+        Ensure we can renew a membership
+        """
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        end_time_membership = date(2018, 1, 15)
+        end_time_membership_updated = \
+            end_time_membership + self.membership.duration
+
+        self.user.membership = self.membership
+        self.user.membership_end = end_time_membership
+
+        self.client.force_authenticate(user=self.user)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'quantity': 1,
+            }],
+        }
+
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.membership_end,
+                         end_time_membership_updated)
+
+    @responses.activate
+    def test_buy_renew_membership_with_old_membership(self):
+        """
+        Ensure we can renew a membership
+        """
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        end_time_membership = date(2017, 1, 15)
+        end_time_membership_updated = \
+            FIXED_TIME.date() + self.membership.duration
+
+        self.user.membership = self.membership
+        self.user.membership_end = end_time_membership
+        self.user.save()
+
+        self.client.force_authenticate(user=self.user)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'quantity': 1,
+            }],
+        }
+
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.membership_end,
+                         end_time_membership_updated)
+
+    @responses.activate
     def test_create_reservation_only(self):
         """
         Ensure we can create an order for a reservation only.
@@ -494,6 +584,183 @@ class OrderTests(APITestCase):
         admin.save()
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    @responses.activate
+    def test_create_reservation_only_from_admin(self):
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'order_lines': [{
+                'content_type': 'timeslot',
+                'object_id': self.time_slot.id,
+                'quantity': 1,
+            }],
+            'target_user': 'http://testserver/users/' + str(self.user.id),
+            'bypass_payment': False,
+        }
+
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['transaction_date']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+
+        content = {
+            'order_lines': [{
+                'content_type': 'timeslot',
+                'quantity': 1,
+                'coupon': None,
+                'coupon_real_value': 0.0,
+                'cost': 0.0,
+                'metadata': None,
+                'options': []
+            }],
+            'user': 'http://testserver/users/' + str(self.user.id),
+            'authorization_id': '0',
+            'settlement_id': '0',
+            'reference_number': '0',
+        }
+
+        self.assertEqual(response_data, content)
+
+        user = self.user
+        user.refresh_from_db()
+
+        self.assertEqual(user.tickets, 0)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    @responses.activate
+    def test_create_reservation_only_from_admin_without_payment(self):
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'order_lines': [{
+                'content_type': 'timeslot',
+                'object_id': self.time_slot.id,
+                'quantity': 1,
+            }],
+            'target_user': 'http://testserver/users/' + str(self.user.id),
+            'bypass_payment': True,
+        }
+
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED,
+                         response.content)
+
+        response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['transaction_date']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+
+        content = {
+            'order_lines': [{
+                'content_type': 'timeslot',
+                'quantity': 1,
+                'coupon': None,
+                'coupon_real_value': 0.0,
+                'cost': 0.0,
+                'metadata': None,
+                'options': []
+            }],
+            'user': 'http://testserver/users/' + str(self.user.id),
+            'authorization_id': '0',
+            'settlement_id': '0',
+            'reference_number': '0',
+        }
+
+        self.assertEqual(response_data, content)
+
+        user = self.user
+        user.refresh_from_db()
+
+        self.assertEqual(user.tickets, 1)
+
+    @responses.activate
+    def test_create_reservation_only_from_not_admin(self):
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        self.client.force_authenticate(user=self.user)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'order_lines': [{
+                'content_type': 'timeslot',
+                'object_id': self.time_slot.id,
+                'quantity': 1,
+            }],
+            'target_user': 'http://testserver/users/' + str(self.user.id),
+            'bypass_payment': False,
+        }
+
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors':
+                [
+                    'You don\'t have the permission to create '
+                    'an order for another user.'
+                ]
+        }
+
+        self.assertEqual(response_data, content)
 
     @responses.activate
     def test_create_reservation_twice(self):
@@ -2500,17 +2767,10 @@ class OrderTests(APITestCase):
                 'content_type': 'timeslot',
                 'object_id': self.time_slot.id,
                 'quantity': 1,
-                'options': []
             }, {
                 'content_type': 'retreat',
                 'object_id': self.retreat.id,
                 'quantity': 1,
-                'options': [
-                    {
-                        'id': self.option_retreat.id,
-                        'quantity': 2
-                    }
-                ]
             }],
             'coupon': "ABCD1234",
         }

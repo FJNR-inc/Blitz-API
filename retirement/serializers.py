@@ -802,16 +802,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 ),
             }
 
-            plain_msg = render_to_string("invoice.txt", merge_data)
-            msg_html = render_to_string("invoice.html", merge_data)
-
-            send_mail(
-                "Confirmation d'achat",
-                plain_msg,
-                settings.DEFAULT_FROM_EMAIL,
-                [order.user.email],
-                html_message=msg_html,
-            )
+            Order.send_invoice([order.user.email], merge_data)
 
         # Send refund confirmation email
         if need_refund:
@@ -853,6 +844,11 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 'NEW_RETREAT': new_retreat,
                 'OLD_RETREAT': old_retreat,
             }
+            if len(new_retreat.pictures.all()):
+                merge_data['RETREAT_PICTURE'] = "{0}{1}".format(
+                    settings.MEDIA_URL,
+                    new_retreat.pictures[0].picture.url
+                )
 
             plain_msg = render_to_string("exchange.txt", merge_data)
             msg_html = render_to_string("exchange.html", merge_data)

@@ -1,5 +1,7 @@
 import json
+from datetime import timedelta, date
 
+from dateutil.relativedelta import relativedelta
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -325,16 +327,7 @@ class CustomPaymentSerializer(serializers.HyperlinkedModelSerializer):
             'COST': custom_payment.price,
         }
 
-        plain_msg = render_to_string("invoice.txt", merge_data)
-        msg_html = render_to_string("invoice.html", merge_data)
-
-        send_mail(
-            "Confirmation d'achat",
-            plain_msg,
-            settings.DEFAULT_FROM_EMAIL,
-            [custom_payment.user.email],
-            html_message=msg_html,
-        )
+        Order.send_invoice([custom_payment.user.email], merge_data)
 
         return custom_payment
 
@@ -516,14 +509,20 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         write_only=True,
     )
 
-    # target_user = serializers.HyperlinkedRelatedField(
-    #     many=False,
-    #     write_only=True,
-    #     view_name='user-detail',
-    #     required=False,
-    #     allow_null=True,
-    #     queryset=User.objects.all(),
-    # )
+    target_user = serializers.HyperlinkedRelatedField(
+        many=False,
+        write_only=True,
+        view_name='user-detail',
+        required=False,
+        allow_null=True,
+        queryset=User.objects.all(),
+    )
+
+    bypass_payment = serializers.BooleanField(
+        write_only=True,
+        required=False,
+    )
+
     # save_card = serializers.NullBooleanField(
     #     write_only=True,
     #     required=False,
@@ -534,16 +533,28 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         Create an Order and charge the user.
         """
         user = self.context['request'].user
-        # if validated_data.get('target_user', None):
-        #     if user.is_staff:
-        #         user = validated_data.pop('target_user')
-        #     else:
-        #         raise serializers.ValidationError({
-        #             'non_field_errors': [_(
-        #                "You cannot create an order for another user without "
-        #                 "admin rights."
-        #             )]
-        #         })
+        is_staff = user.is_staff
+        bypass_payment = False  # Default value
+        if 'target_user' in validated_data.keys():
+            if is_staff:
+                user = validated_data.pop('target_user')
+            else:
+                raise serializers.ValidationError({
+                    'non_field_errors': [_(
+                       "You don't have the permission to create "
+                       "an order for another user."
+                    )]
+                })
+        if 'bypass_payment' in validated_data.keys():
+            if is_staff:
+                bypass_payment = validated_data.pop('bypass_payment')
+            else:
+                raise serializers.ValidationError({
+                    'non_field_errors': [_(
+                        "You don't have the permission to bypass the payment"
+                    )]
+                })
+
         orderlines_data = validated_data.pop('order_lines')
         payment_token = validated_data.pop('payment_token', None)
         single_use_token = validated_data.pop('single_use_token', None)
@@ -611,17 +622,28 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
             if membership_orderlines:
                 need_transaction = True
-                today = timezone.now().date()
-                if user.membership and user.membership_end > today:
+                # Allow to buy membership, 1 month before end of membership
+                limit_date_to_renew = \
+                    timezone.now().date() + relativedelta(months=1)
+                if user.membership and user.membership_end > \
+                        limit_date_to_renew:
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
                             "You already have an active membership."
                         )]
                     })
                 user.membership = membership_orderlines[0].content_object
-                user.membership_end = (
-                        timezone.now().date() + user.membership.duration
-                )
+                # If the user has already a membership end that
+                # is after today,
+                # we add the new membership duration to it
+                today = timezone.now().date()
+                if user.membership_end and user.membership_end > today:
+                    user.membership_end = \
+                        user.membership_end + user.membership.duration
+                else:
+                    user.membership_end = (
+                            today + user.membership.duration
+                    )
                 user.save()
 
                 membership_coupons = MembershipCoupon.objects.filter(
@@ -690,8 +712,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         # OrderLine's quantity and TimeSlot's price will be
                         # used in the future if we want to allow multiple
                         # reservations of the same timeslot.
-                        user.tickets -= 1
-                        user.save()
+                        if not bypass_payment:
+                            user.tickets -= 1
+                            user.save()
                     else:
                         raise serializers.ValidationError({
                             'non_field_errors': [_(
@@ -774,6 +797,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     if user_waiting:
                         user_waiting.delete()
 
+            # Overwrite transaction depending on bypass_payment
+            need_transaction = need_transaction and not bypass_payment
             if need_transaction and payment_token and int(amount):
                 # Charge the order with the external payment API
                 try:
@@ -887,16 +912,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 'COST': round(amount / 100, 2),
             }
 
-            plain_msg = render_to_string("invoice.txt", merge_data)
-            msg_html = render_to_string("invoice.html", merge_data)
-
-            send_mail(
-                "Confirmation d'achat",
-                plain_msg,
-                settings.DEFAULT_FROM_EMAIL,
-                [order.user.email],
-                html_message=msg_html,
-            )
+            Order.send_invoice([order.user.email], merge_data)
 
         # Send retreat informations emails
         for retreat_reservation in retreat_reservations:
@@ -905,6 +921,11 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 'RETREAT': retreat_reservation.retreat,
                 'USER': user,
             }
+            if len(retreat_reservation.retreat.pictures.all()):
+                merge_data['RETREAT_PICTURE'] = "{0}{1}".format(
+                    settings.MEDIA_URL,
+                    retreat_reservation.retreat.pictures[0].picture.url
+                )
 
             plain_msg = render_to_string(
                 "retreat_info.txt",

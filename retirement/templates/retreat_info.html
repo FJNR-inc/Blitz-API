@@ -57,7 +57,7 @@
         }
         .email__content__details__picture {
             flex: 1;
-            background-image: url('{{ STATIC_URL }}images/THES_retraite_40e.JPG');
+            background-image: url('{{ RETREAT_PICTURE }}');
             background-size: cover;
             margin-right: 20px;
         }
@@ -180,15 +180,6 @@
                         {{RETREAT.end_time|date:"l j F Y "|capfirst}}{{RETREAT.end_time|date:"G"}}h{{RETREAT.end_time|date:"i"}}
                     </span>
                 </div>
-
-                <div class="email__content__details__text__info">
-                    <span class="email__content__details__text__info__label">
-                        Animation:
-                    </span>
-                    <span class="email__content__details__text__info__value">
-                        {{RETREAT.animation}}
-                    </span>
-                </div>
             </div>
         </div>
 
@@ -198,7 +189,7 @@
             Planifier votre retraite de rédaction
         </div>
         <div class="email__content__content">
-            Pour bien planifier votre retraite de rédaction, consultez la page <a href="">S'y préparer</a>.
+            Pour bien planifier votre retraite de rédaction, consultez la page "S'y préparer".
             Vous y trouverez l'horaire, le matériel à apporter, ainsi que de précieuses indications pour établir
             des objectifs de rédaction réalistes. Si vous prenez le temps de bien préparer votre retraite et vos
             objectifs de rédaction, vous en profiterez d'avantage!
@@ -262,7 +253,7 @@
                 Au plaisir de se retrouver et de rédiger tous ensemble!
             </p>
             <p class="email__content__footer__name">
-                Annie-Pier et toute l'équipe de Thèsez-vous
+                Toute l'équipe de Thèsez-vous
             </p>
         </div>
     </div>
@@ -318,15 +309,6 @@
                     <span class="email__content__details__text__info__value">
                         {{RETREAT.end_time|date:"l j F Y "|capfirst}}
                         {{RETREAT.end_time|date:"G"}}h{{RETREAT.end_time|date:"i"}}
-                    </span>
-                </div>
-
-                <div class="email__content__details__text__info">
-                    <span class="email__content__details__text__info__label">
-                        Animation:
-                    </span>
-                    <span class="email__content__details__text__info__value">
-                        {{RETREAT.animation}}
                     </span>
                 </div>
             </div>
@@ -413,7 +395,7 @@
                 With pleasure to write all together at this bilingual retreat!
             </p>
             <p class="email__content__footer__name">
-                Annie-Pier and the team of Thèsez-Vous?
+                Thèsez-Vous Team
             </p>
         </div>
     </div>
