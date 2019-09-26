@@ -1,11 +1,9 @@
-
-
 {% load static %}
 {% load i18n %}
-
  
-** PLUS QU'UNE SEMAINE AVANT LA RETRAITE!
-------------------------------------------------------------
+===================================
+PLUS QUE 7 JOURS AVANT LA RETRAITE!
+===================================
 
 Nous sommes heureux de vous compter parmi nous à la retraite {{RETREAT.name}}. Nous profitons de ce rappel pour vous recommuniquer les informations relatives à l'événement!
 
@@ -16,27 +14,35 @@ Nous sommes heureux de vous compter parmi nous à la retraite {{RETREAT.name}}. 
 {% endlanguage %}
 
 
-{% if RETREAT.email_content %} 
-** CE QUE VOUS DEVEZ SAVOIR
-------------------------------------------------------------
+=====================================
+Planifier votre retraite de rédaction
+=====================================
 
-{{RETREAT.email_content}}
-{% endif %}
+Pour bien planifier votre retraite de rédaction, consultez la page S'y
+préparer. Vous y trouverez l’horaire, le matériel à apporter, ainsi que de
+précieuses indications pour établir des objectifs de rédaction réalistes. Si
+vous prenez le temps de bien préparer votre retraite et vos objectifs de
+rédaction, vous en profiterez davantage!
 
- 
-** FORMULAIRE
-------------------------------------------------------------
+Lien de la page:
 
-Si ce n'est pas déjà fait, veuillez remplir le formulaire suivant afin que nous puissions préparer votre arrivée!
-
- 
-
-Formulaire ({{RETREAT.form_url}})
+http://www.thesez-vous.com/sypreparer.html
 
  
-** L'ÉQUIPE THÈSEZ-VOUS
-------------------------------------------------------------
+=========
+IMPORTANT
+=========
 
-Thèsez-vous n'autorise pas d'échanges ou de remboursements.
+Si ce n'est pas déjà fait à partir de votre profil sur la plateforme thesez-vous.org,
+veuillez remplir le formulaire suivant qui permet de répartir les chambres selon
+vos préférences.
+ 
+Formulaire: ({{RETREAT.form_url}})
+
+ 
+====================
+L'ÉQUIPE THÈSEZ-VOUS
+====================
+
 Thèsez-vous (Blitz Paradisio), 7640 Lajeunesse, Montréal, Quebec, H2R2J2
 info@thesez-vous.com, www.thesez-vous.com
