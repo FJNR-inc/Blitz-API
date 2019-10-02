@@ -301,6 +301,7 @@ class ReservationTests(APITestCase):
                 'academic_level': None,
                 'birthdate': None,
                 'gender': None,
+                'language': User.LANGUAGE_FR,
                 'groups': [],
                 'id': self.user.id,
                 'is_active': True,
