@@ -114,24 +114,21 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
     accessibility = models.BooleanField(verbose_name=_("Accessibility"), )
 
-    form_url = models.CharField(
+    form_url = models.TextField(
         blank=True,
         null=True,
-        max_length=2000,  # Max URL length supported by IE
         verbose_name=_("Form URL"),
     )
 
-    carpool_url = models.CharField(
+    carpool_url = models.TextField(
         blank=True,
         null=True,
-        max_length=2000,  # Max URL length supported by IE
         verbose_name=_("Carpool URL"),
     )
 
-    review_url = models.CharField(
+    review_url = models.TextField(
         blank=True,
         null=True,
-        max_length=2000,  # Max URL length supported by IE
         verbose_name=_("Review URL"),
     )
 
