@@ -127,3 +127,33 @@ class InvitationViewTests(APITestCase):
             response_data.get('front_url'),
             url
         )
+
+    def test_create_with_reserved_seat_option(self):
+
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'retreat': reverse('retreat:retreat-detail',
+                               args=[self.retreat.id],
+                               request=self.request),
+            'nb_places': 4,
+            'reserve_seat': True
+        }
+
+        response = self.client.post(
+            reverse('retreat:retreatinvitation-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        self.retreat.refresh_from_db()
+        self.assertEqual(
+            self.retreat.places_remaining,
+            self.retreat.seats - 4
+        )

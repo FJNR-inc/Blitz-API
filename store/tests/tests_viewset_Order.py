@@ -221,7 +221,8 @@ class OrderTests(APITestCase):
 
         self.invitation = RetreatInvitation.objects.create(
             retreat=self.retreat,
-            nb_places=5
+            nb_places=5,
+            reserve_seat=True
         )
 
         self.maxDiff = None
@@ -414,6 +415,94 @@ class OrderTests(APITestCase):
             self.coupon.value
 
         self.assertEqual(new_order.total_cost, total_price)
+
+    @responses.activate
+    def test_order_retreat_invitation_reserved_seats(self):
+        """
+        Ensure we can create an order when provided with a payment_token.
+        (Token representing an existing payment card.)
+        """
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        self.retreat.seats = self.invitation.nb_places_free()
+        self.retreat.save()
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
+                'quantity': 1,
+                'options': [{
+                    'id': self.options.id,
+                    'quantity': 1
+                }]
+            }],
+        }
+
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        response_data = json.loads(response.content)
+        data = {
+            "non_field_errors": [
+                "There are no places left in the requested retreat."]
+        }
+
+        self.assertEqual(
+            response_data,
+            data,
+            response_data,
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
+                'quantity': 1,
+                'metadata':
+                    json.dumps({'invitation_id': self.invitation.id}),
+                'options': [{
+                    'id': self.options.id,
+                    'quantity': 1
+                }]
+            }],
+        }
+
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
 
     @responses.activate
     def test_buy_renew_membership(self):
@@ -2393,9 +2482,11 @@ class OrderTests(APITestCase):
 
         self.assertEqual(self.admin.coupons.all().count(), 1 + nb_coupon_start)
 
-        new_coupon = self.admin.coupons.all()[0]
+        # Get the last coupon generate, it should be the new one associate
+        # with the membership
+        new_coupon = self.admin.coupons.all().order_by('-id')[0]
 
-        self.assertEqual(new_coupon.value, 100)
+        self.assertEqual(new_coupon.value, membership_coupon.value)
         self.assertEqual(new_coupon.percent_off, 0)
         self.assertEqual(new_coupon.max_use, 4)
         self.assertEqual(new_coupon.max_use_per_user, 4)

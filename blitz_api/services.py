@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 import pytz
@@ -12,6 +13,7 @@ from django.template.loader import render_to_string
 
 from rest_framework.pagination import PageNumberPagination
 
+from log_management.models import Log
 from .exceptions import MailServiceError
 from django.core.mail import send_mail as django_send_mail
 
@@ -43,7 +45,21 @@ def send_mail(users, context, template):
         # use this SendinBlue template
         message.template_id = MAIL_SERVICE["TEMPLATES"].get(template)
         message.merge_global_data = context
-        response = message.send()  # return number of successfully sent emails
+        try:
+            # return number of successfully sent emails
+            response = message.send()
+        except Exception as err:
+            additional_data = {
+                'email': user.email,
+                'context': context,
+                'template': template
+            }
+            Log.error(
+                source='SENDING_BLUE_TEMPLATE',
+                message=err,
+                additional_data=json.dumps(additional_data)
+            )
+            raise
 
         if not response:
             failed_emails.append(user.email)
@@ -136,13 +152,28 @@ def notify_user_of_new_account(email, password):
             merge_data
         )
 
-        return django_send_mail(
-            "Bienvenue à Thèsez-vous?",
-            plain_msg,
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            html_message=msg_html,
-        )
+        try:
+            return django_send_mail(
+                "Bienvenue à Thèsez-vous?",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                html_message=msg_html,
+            )
+        except Exception as err:
+            additional_data = {
+                'title': "Bienvenue à Thèsez-vous?",
+                'default_from': settings.DEFAULT_FROM_EMAIL,
+                'user_email': email,
+                'merge_data': merge_data,
+                'template': 'notify_user_of_new_account'
+            }
+            Log.error(
+                source='SENDING_BLUE_TEMPLATE',
+                message=err,
+                additional_data=json.dumps(additional_data)
+            )
+            raise
 
 
 def notify_user_of_change_email(email, activation_url, first_name):
@@ -163,13 +194,28 @@ def notify_user_of_change_email(email, activation_url, first_name):
             merge_data
         )
 
-        return django_send_mail(
-            "Confirmation de votre nouvelle adresse courriel",
-            plain_msg,
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            html_message=msg_html,
-        )
+        try:
+            return django_send_mail(
+                "Confirmation de votre nouvelle adresse courriel",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                html_message=msg_html,
+            )
+        except Exception as err:
+            additional_data = {
+                'title': "Confirmation de votre nouvelle adresse courriel",
+                'default_from': settings.DEFAULT_FROM_EMAIL,
+                'user_email': email,
+                'merge_data': merge_data,
+                'template': 'notify_user_of_change_email'
+            }
+            Log.error(
+                source='SENDING_BLUE_TEMPLATE',
+                message=err,
+                additional_data=json.dumps(additional_data)
+            )
+            raise
 
 
 class ExportPagination(PageNumberPagination):

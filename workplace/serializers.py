@@ -1,3 +1,4 @@
+import json
 from copy import copy
 
 from datetime import datetime
@@ -24,6 +25,7 @@ from blitz_api.serializers import UserSerializer
 from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,
                                 getMessageTranslate,)
+from log_management.models import Log
 
 from .models import Workplace, Picture, Period, TimeSlot, Reservation
 from .fields import TimezoneField
@@ -468,13 +470,29 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
                         "cancelation.html",
                         merge_data
                     )
-                    send_mail(
-                        "Annulation d'un bloc de rédaction",
-                        plain_msg,
-                        settings.DEFAULT_FROM_EMAIL,
-                        [reservation.user.email],
-                        html_message=msg_html,
-                    )
+
+                    try:
+                        send_mail(
+                            "Annulation d'un bloc de rédaction",
+                            plain_msg,
+                            settings.DEFAULT_FROM_EMAIL,
+                            [reservation.user.email],
+                            html_message=msg_html,
+                        )
+                    except Exception as err:
+                        additional_data = {
+                            'title': "Annulation d'un bloc de rédaction",
+                            'default_from': settings.DEFAULT_FROM_EMAIL,
+                            'user_email': reservation.user.email,
+                            'merge_data': merge_data,
+                            'template': 'cancelation'
+                        }
+                        Log.error(
+                            source='SENDING_BLUE_TEMPLATE',
+                            message=err,
+                            additional_data=json.dumps(additional_data)
+                        )
+                        raise
 
         return super(TimeSlotSerializer, self).update(
             instance,

@@ -29,6 +29,7 @@ from django.template.loader import render_to_string
 from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,
                                 getMessageTranslate)
+from log_management.models import Log
 from workplace.models import Reservation
 from retirement.models import Reservation as RetreatReservation, \
     RetreatInvitation
@@ -747,23 +748,15 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                                 "retreat: {0}.".format(str(retreat))
                             )]
                         })
-                    if ((retreat.has_places_remaining())
+
+                    invitation = retreat_orderline.get_invitation()
+                    if ((retreat.has_places_remaining(invitation))
                             or (retreat.reserved_seats
                                 and WaitQueueNotification.objects.filter(
                                         user=user, retreat=retreat))):
 
                         # Manage invitation to retreat
-                        # If there are no places left we raise an error
                         # The invitation id is store in the orderline metadata
-                        invitation = retreat_orderline.get_invitation()
-
-                        if invitation and not invitation.has_free_places():
-                            raise serializers.ValidationError({
-                                'invitation_id': [_(
-                                    "There are no places left for "
-                                    "the requested invitation."
-                                )]
-                            })
 
                         new_retreat_reservation = \
                             RetreatReservation.objects.create(
@@ -936,13 +929,28 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 merge_data
             )
 
-            send_mail(
-                "Confirmation d'inscription à la retraite",
-                plain_msg,
-                settings.DEFAULT_FROM_EMAIL,
-                [retreat_reservation.user.email],
-                html_message=msg_html,
-            )
+            try:
+                send_mail(
+                    "Confirmation d'inscription à la retraite",
+                    plain_msg,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [retreat_reservation.user.email],
+                    html_message=msg_html,
+                )
+            except Exception as err:
+                additional_data = {
+                    'title': "Confirmation d'inscription à la retraite",
+                    'default_from': settings.DEFAULT_FROM_EMAIL,
+                    'user_email': retreat_reservation.user.email,
+                    'merge_data': merge_data,
+                    'template': 'retreat_info'
+                }
+                Log.error(
+                    source='SENDING_BLUE_TEMPLATE',
+                    message=err,
+                    additional_data=json.dumps(additional_data)
+                )
+                raise
 
         return order
 

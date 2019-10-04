@@ -20,6 +20,8 @@ from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
+
+from log_management.models import Log
 from store.models import Membership, OrderLine, BaseProduct,\
     Coupon
 
@@ -114,24 +116,21 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
     accessibility = models.BooleanField(verbose_name=_("Accessibility"), )
 
-    form_url = models.CharField(
+    form_url = models.TextField(
         blank=True,
         null=True,
-        max_length=2000,  # Max URL length supported by IE
         verbose_name=_("Form URL"),
     )
 
-    carpool_url = models.CharField(
+    carpool_url = models.TextField(
         blank=True,
         null=True,
-        max_length=2000,  # Max URL length supported by IE
         verbose_name=_("Carpool URL"),
     )
 
-    review_url = models.CharField(
+    review_url = models.TextField(
         blank=True,
         null=True,
-        max_length=2000,  # Max URL length supported by IE
         verbose_name=_("Review URL"),
     )
 
@@ -187,23 +186,32 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
     @property
     def total_reservations(self):
-        reservations = Reservation.objects.filter(
-            retreat=self,
-            is_active=True,
-        ).count()
-        return reservations
+        return self.reservations.filter(is_active=True).count()
 
     @property
     def places_remaining(self):
-        seats = self.seats
-        reserved_seats = self.reserved_seats
-        reservations = self.reservations.filter(is_active=True).count()
-        return seats - reservations - reserved_seats
+        # Nb places available without invitations
+        seat_remaining = \
+            self.seats - self.total_reservations - self.reserved_seats
 
-    def has_places_remaining(self):
-        return (self.seats -
-                self.total_reservations -
-                self.reserved_seats) > 0
+        # Remove places reserved by invitations
+        for invitation in self.invitations.all():
+            if invitation.reserve_seat:
+                seat_remaining = \
+                    seat_remaining - invitation.nb_places_free()
+
+        return seat_remaining
+
+    def has_places_remaining(self, selected_invitation=None):
+        seat_remaining = self.places_remaining
+
+        # add places reserved for the selected invitation
+        if selected_invitation and \
+                selected_invitation.reserve_seat:
+            seat_remaining = \
+                seat_remaining + selected_invitation.nb_places_free()
+
+        return seat_remaining > 0
 
     def __str__(self):
         return self.name
@@ -310,13 +318,28 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         plain_msg = render_to_string("reserved_place.txt", merge_data)
         msg_html = render_to_string("reserved_place.html", merge_data)
 
-        return send_mail(
-            "Place exclusive pour 24h",
-            plain_msg,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            html_message=msg_html,
-        )
+        try:
+            return send_mail(
+                "Place exclusive pour 24h",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                html_message=msg_html,
+            )
+        except Exception as err:
+            additional_data = {
+                'title': "Place exclusive pour 24h",
+                'default_from': settings.DEFAULT_FROM_EMAIL,
+                'user_email': user.email,
+                'merge_data': merge_data,
+                'template': 'reserved_place'
+            }
+            Log.error(
+                source='SENDING_BLUE_TEMPLATE',
+                message=err,
+                additional_data=json.dumps(additional_data)
+            )
+            raise
 
 
 class Picture(models.Model):
@@ -549,6 +572,11 @@ class RetreatInvitation(SafeDeleteModel):
         blank=True
     )
 
+    reserve_seat = models.BooleanField(
+        verbose_name=_("Should reserve seat"),
+        default=False
+    )
+
     history = HistoricalRecords()
 
     def __str__(self):
@@ -576,6 +604,9 @@ class RetreatInvitation(SafeDeleteModel):
     def nb_places_used(self):
 
         return self.retreat_reservations.filter(is_active=True).count()
+
+    def nb_places_free(self):
+        return self.nb_places - self.nb_places_used
 
     def has_free_places(self):
         return self.nb_places_used < self.nb_places
