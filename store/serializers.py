@@ -747,23 +747,15 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                                 "retreat: {0}.".format(str(retreat))
                             )]
                         })
-                    if ((retreat.has_places_remaining())
+
+                    invitation = retreat_orderline.get_invitation()
+                    if ((retreat.has_places_remaining(invitation))
                             or (retreat.reserved_seats
                                 and WaitQueueNotification.objects.filter(
                                         user=user, retreat=retreat))):
 
                         # Manage invitation to retreat
-                        # If there are no places left we raise an error
                         # The invitation id is store in the orderline metadata
-                        invitation = retreat_orderline.get_invitation()
-
-                        if invitation and not invitation.has_free_places():
-                            raise serializers.ValidationError({
-                                'invitation_id': [_(
-                                    "There are no places left for "
-                                    "the requested invitation."
-                                )]
-                            })
 
                         new_retreat_reservation = \
                             RetreatReservation.objects.create(
