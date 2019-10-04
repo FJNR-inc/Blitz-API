@@ -184,23 +184,32 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
     @property
     def total_reservations(self):
-        reservations = Reservation.objects.filter(
-            retreat=self,
-            is_active=True,
-        ).count()
-        return reservations
+        return self.reservations.filter(is_active=True).count()
 
     @property
     def places_remaining(self):
-        seats = self.seats
-        reserved_seats = self.reserved_seats
-        reservations = self.reservations.filter(is_active=True).count()
-        return seats - reservations - reserved_seats
+        # Nb places available without invitations
+        seat_remaining = \
+            self.seats - self.total_reservations - self.reserved_seats
 
-    def has_places_remaining(self):
-        return (self.seats -
-                self.total_reservations -
-                self.reserved_seats) > 0
+        # Remove places reserved by invitations
+        for invitation in self.invitations.all():
+            if invitation.reserve_seat:
+                seat_remaining = \
+                    seat_remaining - invitation.nb_places_free()
+
+        return seat_remaining
+
+    def has_places_remaining(self, selected_invitation=None):
+        seat_remaining = self.places_remaining
+
+        # add places reserved for the selected invitation
+        if selected_invitation and \
+                selected_invitation.reserve_seat:
+            seat_remaining = \
+                seat_remaining + selected_invitation.nb_places_free()
+
+        return seat_remaining > 0
 
     def __str__(self):
         return self.name
@@ -546,6 +555,11 @@ class RetreatInvitation(SafeDeleteModel):
         blank=True
     )
 
+    reserve_seat = models.BooleanField(
+        verbose_name=_("Should reserve seat"),
+        default=False
+    )
+
     history = HistoricalRecords()
 
     def __str__(self):
@@ -573,6 +587,9 @@ class RetreatInvitation(SafeDeleteModel):
     def nb_places_used(self):
 
         return self.retreat_reservations.filter(is_active=True).count()
+
+    def nb_places_free(self):
+        return self.nb_places - self.nb_places_used
 
     def has_free_places(self):
         return self.nb_places_used < self.nb_places
