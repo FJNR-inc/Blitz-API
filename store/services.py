@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
+from log_management.models import Log
 from .exceptions import PaymentAPIError
 from .models import CouponUser
 
@@ -96,6 +97,31 @@ PAYSAFE_CARD_TYPE = {
 }
 
 
+def manage_paysafe_error(err, additional_data):
+    try:
+        err_code = json.loads(err.response.content)['error']['code']
+
+        Log.error(
+            source='PAYSAFE',
+            error_code=err_code,
+            message=err,
+            additional_data=json.dumps(additional_data)
+        )
+
+        if err_code in PAYSAFE_EXCEPTION:
+            raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
+    except json.decoder.JSONDecodeError as err:
+        print(err.response)
+
+    Log.error(
+        source='PAYSAFE',
+        error_code='unknown',
+        message=err,
+        additional_data=json.dumps(additional_data)
+    )
+    raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
+
+
 def charge_payment(amount, payment_token, reference_number):
     """
     This method is used to charge an amount to a card represented by the
@@ -133,14 +159,11 @@ def charge_payment(amount, payment_token, reference_number):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        try:
-            err_code = json.loads(err.response.content)['error']['code']
-            if err_code in PAYSAFE_EXCEPTION:
-                raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
-        except json.decoder.JSONDecodeError as err:
-            print(err.response)
-        raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
-
+        manage_paysafe_error(err, {
+                    'amount': amount,
+                    'payment_token': payment_token,
+                    'reference_number': reference_number
+                })
     return r
 
 
@@ -178,13 +201,10 @@ def refund_amount(settlement_id, amount):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        try:
-            err_code = json.loads(err.response.content)['error']['code']
-            if err_code in PAYSAFE_EXCEPTION:
-                raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
-        except json.decoder.JSONDecodeError as err:
-            print(err.response)
-        raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
+        manage_paysafe_error(err, {
+            'settlement_id': settlement_id,
+            'amount': amount,
+        })
 
     return r
 
@@ -223,10 +243,9 @@ def create_external_payment_profile(user):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        err_code = json.loads(err.response.content)['error']['code']
-        if err_code in PAYSAFE_EXCEPTION:
-            raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
-        raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
+        manage_paysafe_error(err, {
+            'data': data,
+        })
 
     return r
 
@@ -253,10 +272,9 @@ def get_external_payment_profile(profile_id):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        err_code = json.loads(err.response.content)['error']['code']
-        if err_code in PAYSAFE_EXCEPTION:
-            raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
-        raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
+        manage_paysafe_error(err, {
+            'profile_id': profile_id,
+        })
 
     return r
 
@@ -290,10 +308,11 @@ def update_external_card(profile_id, card_id, single_use_token):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        err_code = json.loads(err.response.content)['error']['code']
-        if err_code in PAYSAFE_EXCEPTION:
-            raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
-        raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
+        manage_paysafe_error(err, {
+            'profile_id': profile_id,
+            'card_id': card_id,
+            'single_use_token': single_use_token,
+        })
 
     return r
 
@@ -405,10 +424,9 @@ def get_external_card(card_id):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        err_code = json.loads(err.response.content)['error']['code']
-        if err_code in PAYSAFE_EXCEPTION:
-            raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
-        raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
+        manage_paysafe_error(err, {
+            'card_id': card_id
+        })
 
     return r
 
@@ -436,10 +454,10 @@ def delete_external_card(profile_id, card_id):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        err_code = json.loads(err.response.content)['error']['code']
-        if err_code in PAYSAFE_EXCEPTION:
-            raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
-        raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
+        manage_paysafe_error(err, {
+            'profile_id': profile_id,
+            'card_id': card_id
+        })
 
     return r
 
@@ -574,10 +592,25 @@ def notify_for_coupon(email, coupon):
     plain_msg = render_to_string("coupon_code.txt", merge_data)
     msg_html = render_to_string("coupon_code.html", merge_data)
 
-    return send_mail(
-        "Coupon rabais",
-        plain_msg,
-        settings.DEFAULT_FROM_EMAIL,
-        [email],
-        html_message=msg_html,
-    )
+    try:
+        return send_mail(
+            "Coupon rabais",
+            plain_msg,
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            html_message=msg_html,
+        )
+    except Exception as err:
+        additional_data = {
+            'title': "Coupon rabais",
+            'default_from': settings.DEFAULT_FROM_EMAIL,
+            'user_email': email,
+            'merge_data': merge_data,
+            'template': 'coupon_code'
+        }
+        Log.error(
+            source='SENDING_BLUE_TEMPLATE',
+            message=err,
+            additional_data=json.dumps(additional_data)
+        )
+        raise

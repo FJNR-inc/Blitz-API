@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 
 from django.conf import settings
@@ -5,6 +6,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils import timezone
 
+from log_management.models import Log
 from retirement.models import WaitQueue
 from store.models import Refund
 from store.services import (PAYSAFE_EXCEPTION,
@@ -36,13 +38,29 @@ def notify_reserved_retreat_seat(user, retreat):
     plain_msg = render_to_string("reserved_place.txt", merge_data)
     msg_html = render_to_string("reserved_place.html", merge_data)
 
-    return send_mail(
-        "Place exclusive pour 24h",
-        plain_msg,
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        html_message=msg_html,
-    )
+    try:
+        return send_mail(
+            "Place exclusive pour 24h",
+            plain_msg,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            html_message=msg_html,
+        )
+
+    except Exception as err:
+        additional_data = {
+            'title': "Place exclusive pour 24h",
+            'default_from': settings.DEFAULT_FROM_EMAIL,
+            'user_email': user.email,
+            'merge_data': merge_data,
+            'template': 'reserved_place'
+        }
+        Log.error(
+            source='SENDING_BLUE_TEMPLATE',
+            message=err,
+            additional_data=json.dumps(additional_data)
+        )
+        raise
 
 
 def send_retreat_7_days_email(user, retreat):
@@ -56,13 +74,28 @@ def send_retreat_7_days_email(user, retreat):
     plain_msg = render_to_string("reminder.txt", merge_data)
     msg_html = render_to_string("reminder.html", merge_data)
 
-    return send_mail(
-        "Rappel retraite",
-        plain_msg,
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        html_message=msg_html,
-    )
+    try:
+        return send_mail(
+            "Rappel retraite",
+            plain_msg,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            html_message=msg_html,
+        )
+    except Exception as err:
+        additional_data = {
+            'title': "Rappel retraite",
+            'default_from': settings.DEFAULT_FROM_EMAIL,
+            'user_email': user.email,
+            'merge_data': merge_data,
+            'template': 'reminder'
+        }
+        Log.error(
+            source='SENDING_BLUE_TEMPLATE',
+            message=err,
+            additional_data=json.dumps(additional_data)
+        )
+        raise
 
 
 def send_post_retreat_email(user, retreat):
@@ -79,13 +112,28 @@ def send_post_retreat_email(user, retreat):
     plain_msg = render_to_string("throwback.txt", merge_data)
     msg_html = render_to_string("throwback.html", merge_data)
 
-    return send_mail(
-        "Merci pour votre participation",
-        plain_msg,
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        html_message=msg_html,
-    )
+    try:
+        return send_mail(
+            "Merci pour votre participation",
+            plain_msg,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            html_message=msg_html,
+        )
+    except Exception as err:
+        additional_data = {
+            'title': "Merci pour votre participation",
+            'default_from': settings.DEFAULT_FROM_EMAIL,
+            'user_email': user.email,
+            'merge_data': merge_data,
+            'template': 'throwback'
+        }
+        Log.error(
+            source='SENDING_BLUE_TEMPLATE',
+            message=err,
+            additional_data=json.dumps(additional_data)
+        )
+        raise
 
 
 def refund_retreat(reservation, refund_rate, refund_reason):

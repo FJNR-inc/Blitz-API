@@ -23,6 +23,8 @@ from blitz_api.models import AcademicLevel
 
 from model_utils.managers import InheritanceManager
 
+from log_management.models import Log
+
 User = get_user_model()
 
 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
@@ -109,13 +111,28 @@ class Order(models.Model):
         plain_msg = render_to_string("invoice.txt", merge_data)
         msg_html = render_to_string("invoice.html", merge_data)
 
-        send_mail(
-            "Confirmation d'achat",
-            plain_msg,
-            settings.DEFAULT_FROM_EMAIL,
-            to,
-            html_message=msg_html,
-        )
+        try:
+            send_mail(
+                "Confirmation d'achat",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                to,
+                html_message=msg_html,
+            )
+        except Exception as err:
+            additional_data = {
+                'title': "Confirmation d'achat",
+                'default_from': settings.DEFAULT_FROM_EMAIL,
+                'user_email': to,
+                'merge_data': merge_data,
+                'template': 'invoice'
+            }
+            Log.error(
+                source='SENDING_BLUE_TEMPLATE',
+                message=err,
+                additional_data=json.dumps(additional_data)
+            )
+            raise
 
     def applying_coupon(self, coupon, user):
         from store.services import validate_coupon_for_order

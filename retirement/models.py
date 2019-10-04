@@ -20,6 +20,8 @@ from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
+
+from log_management.models import Log
 from store.models import Membership, OrderLine, BaseProduct,\
     Coupon
 
@@ -316,13 +318,28 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         plain_msg = render_to_string("reserved_place.txt", merge_data)
         msg_html = render_to_string("reserved_place.html", merge_data)
 
-        return send_mail(
-            "Place exclusive pour 24h",
-            plain_msg,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            html_message=msg_html,
-        )
+        try:
+            return send_mail(
+                "Place exclusive pour 24h",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                html_message=msg_html,
+            )
+        except Exception as err:
+            additional_data = {
+                'title': "Place exclusive pour 24h",
+                'default_from': settings.DEFAULT_FROM_EMAIL,
+                'user_email': user.email,
+                'merge_data': merge_data,
+                'template': 'reserved_place'
+            }
+            Log.error(
+                source='SENDING_BLUE_TEMPLATE',
+                message=err,
+                additional_data=json.dumps(additional_data)
+            )
+            raise
 
 
 class Picture(models.Model):

@@ -22,9 +22,11 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
+from rest_framework.utils import json
 
 from blitz_api.exceptions import MailServiceError
 from blitz_api.mixins import ExportMixin
+from log_management.models import Log
 
 from .models import Workplace, Picture, Period, TimeSlot, Reservation
 from .resources import (WorkplaceResource, PeriodResource, TimeSlotResource,
@@ -186,13 +188,29 @@ class PeriodViewSet(ExportMixin, viewsets.ModelViewSet):
                     "cancelation.html",
                     merge_data
                 )
-                django_send_mail(
-                    "Annulation d'un bloc de rédaction",
-                    plain_msg,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [reservation.user.email],
-                    html_message=msg_html,
-                )
+
+                try:
+                    django_send_mail(
+                        "Annulation d'un bloc de rédaction",
+                        plain_msg,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [reservation.user.email],
+                        html_message=msg_html,
+                    )
+                except Exception as err:
+                    additional_data = {
+                        'title': "Annulation d'un bloc de rédaction",
+                        'default_from': settings.DEFAULT_FROM_EMAIL,
+                        'user_email': user.email,
+                        'merge_data': merge_data,
+                        'template': 'cancelation'
+                    }
+                    Log.error(
+                        source='SENDING_BLUE_TEMPLATE',
+                        message=err,
+                        additional_data=json.dumps(additional_data)
+                    )
+                    raise
 
             instance.time_slots.all().delete()
 
@@ -378,13 +396,28 @@ class TimeSlotViewSet(ExportMixin, viewsets.ModelViewSet):
                     "cancelation.html",
                     merge_data
                 )
-                django_send_mail(
-                    "Annulation d'un bloc de rédaction",
-                    plain_msg,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [reservation.user.email],
-                    html_message=msg_html,
-                )
+                try:
+                    django_send_mail(
+                        "Annulation d'un bloc de rédaction",
+                        plain_msg,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [reservation.user.email],
+                        html_message=msg_html,
+                    )
+                except Exception as err:
+                    additional_data = {
+                        'title': "Annulation d'un bloc de rédaction",
+                        'default_from': settings.DEFAULT_FROM_EMAIL,
+                        'user_email': reservation.user.email,
+                        'merge_data': merge_data,
+                        'template': 'cancelation'
+                    }
+                    Log.error(
+                        source='SENDING_BLUE_TEMPLATE',
+                        message=err,
+                        additional_data=json.dumps(additional_data)
+                    )
+                    raise
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

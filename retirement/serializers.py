@@ -22,6 +22,7 @@ from rest_framework.validators import UniqueValidator
 from blitz_api.services import (check_if_translated_field,
                                 remove_translation_fields,
                                 getMessageTranslate)
+from log_management.models import Log
 from store.exceptions import PaymentAPIError
 from store.models import Order, OrderLine, PaymentProfile, Refund
 from store.serializers import BaseProductSerializer, CouponSerializer
@@ -825,13 +826,28 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             plain_msg = render_to_string("refund.txt", merge_data)
             msg_html = render_to_string("refund.html", merge_data)
 
-            send_mail(
-                "Confirmation de remboursement",
-                plain_msg,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                html_message=msg_html,
-            )
+            try:
+                send_mail(
+                    "Confirmation de remboursement",
+                    plain_msg,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    html_message=msg_html,
+                )
+            except Exception as err:
+                additional_data = {
+                    'title': "Confirmation de remboursement",
+                    'default_from': settings.DEFAULT_FROM_EMAIL,
+                    'user_email': user.email,
+                    'merge_data': merge_data,
+                    'template': 'refund'
+                }
+                Log.error(
+                    source='SENDING_BLUE_TEMPLATE',
+                    message=err,
+                    additional_data=json.dumps(additional_data)
+                )
+                raise
 
         # Send exchange confirmation email
         if validated_data.get('retreat'):
@@ -853,13 +869,28 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             plain_msg = render_to_string("exchange.txt", merge_data)
             msg_html = render_to_string("exchange.html", merge_data)
 
-            send_mail(
-                "Confirmation d'échange",
-                plain_msg,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                html_message=msg_html,
-            )
+            try:
+                send_mail(
+                    "Confirmation d'échange",
+                    plain_msg,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    html_message=msg_html,
+                )
+            except Exception as err:
+                additional_data = {
+                    'title': "Confirmation d'échange",
+                    'default_from': settings.DEFAULT_FROM_EMAIL,
+                    'user_email': user.email,
+                    'merge_data': merge_data,
+                    'template': 'exchange'
+                }
+                Log.error(
+                    source='SENDING_BLUE_TEMPLATE',
+                    message=err,
+                    additional_data=json.dumps(additional_data)
+                )
+                raise
 
             merge_data = {
                 'RETREAT': new_retreat,
@@ -875,13 +906,28 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 merge_data
             )
 
-            send_mail(
-                "Confirmation d'inscription à la retraite",
-                plain_msg,
-                settings.DEFAULT_FROM_EMAIL,
-                [instance.user.email],
-                html_message=msg_html,
-            )
+            try:
+                send_mail(
+                    "Confirmation d'inscription à la retraite",
+                    plain_msg,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [instance.user.email],
+                    html_message=msg_html,
+                )
+            except Exception as err:
+                additional_data = {
+                    'title': "Confirmation d'inscription à la retraite",
+                    'default_from': settings.DEFAULT_FROM_EMAIL,
+                    'user_email': user.email,
+                    'merge_data': merge_data,
+                    'template': 'retreat_info'
+                }
+                Log.error(
+                    source='SENDING_BLUE_TEMPLATE',
+                    message=err,
+                    additional_data=json.dumps(additional_data)
+                )
+                raise
 
         return Reservation.objects.get(id=instance_pk)
 
