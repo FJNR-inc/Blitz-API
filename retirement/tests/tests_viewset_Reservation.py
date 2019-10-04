@@ -76,6 +76,8 @@ class ReservationTests(APITestCase):
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
         )
         self.retreat2 = Retreat.objects.create(
             name="random_retreat",
@@ -97,6 +99,8 @@ class ReservationTests(APITestCase):
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
         )
         self.retreat_overlap = Retreat.objects.create(
             name="ultra_retreat",
@@ -118,6 +122,8 @@ class ReservationTests(APITestCase):
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
         )
         self.order = Order.objects.create(
             user=self.user,
@@ -295,6 +301,8 @@ class ReservationTests(APITestCase):
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
+                'room_type': Retreat.SINGLE_OCCUPATION,
+                'toilet_gendered': False,
             },
             'user_details': {
                 'academic_field': None,
