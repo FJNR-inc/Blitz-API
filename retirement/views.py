@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 from datetime import datetime, timedelta
 
@@ -21,6 +22,7 @@ from rest_framework.response import Response
 
 from blitz_api.models import ExportMedia
 from blitz_api.serializers import ExportMediaSerializer
+from log_management.models import Log
 from store.exceptions import PaymentAPIError
 from store.models import Refund, OptionProduct, OrderLineBaseProduct
 from store.services import refund_amount, PAYSAFE_EXCEPTION
@@ -486,13 +488,28 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         plain_msg = render_to_string("refund.txt", merge_data)
         msg_html = render_to_string("refund.html", merge_data)
 
-        django_send_mail(
-            "Confirmation de remboursement",
-            plain_msg,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            html_message=msg_html,
-        )
+        try:
+            django_send_mail(
+                "Confirmation de remboursement",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                html_message=msg_html,
+            )
+        except Exception as err:
+            additional_data = {
+                'title': "Confirmation de votre nouvelle adresse courriel",
+                'default_from': settings.DEFAULT_FROM_EMAIL,
+                'user_email': user.email,
+                'merge_data': merge_data,
+                'template': 'notify_user_of_change_email'
+            }
+            Log.error(
+                source='SENDING_BLUE_TEMPLATE',
+                message=err,
+                additional_data=json.dumps(additional_data)
+            )
+            raise
 
 
 class WaitQueueViewSet(ExportMixin, viewsets.ModelViewSet):

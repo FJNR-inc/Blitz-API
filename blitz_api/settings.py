@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'workplace',
     'store',
     'retirement',
+    'log_management',
     'storages',
     'anymail',
     'simple_history',
