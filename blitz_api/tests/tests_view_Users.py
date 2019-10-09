@@ -613,7 +613,6 @@ class UsersTests(APITestCase):
         membership = {
             'url': 'http://testserver/memberships/' + str(self.membership.id),
             'id': self.membership.id,
-            'order_lines': [],
             'name': 'basic_membership',
             'available': True,
             'available_on_product_types': [],

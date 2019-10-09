@@ -102,11 +102,7 @@ class OrderLineBaseProductSerializer(serializers.ModelSerializer):
 
 class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
-    order_lines = serializers.HyperlinkedRelatedField(
-        many=True,
-        read_only=True,
-        view_name='orderline-detail'
-    )
+
     price = serializers.DecimalField(
         max_digits=6,
         decimal_places=2,
@@ -150,7 +146,6 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
         self.fields['options'] = BaseProductManagerSerializer(many=True)
         data = super(BaseProductSerializer, self).to_representation(instance)
         if not user.is_staff:
-            data.pop("order_lines")
             data = remove_translation_fields(data)
 
         return data

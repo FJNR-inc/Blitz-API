@@ -77,7 +77,6 @@ class MembershipTests(APITestCase):
             'details': '3-Year student membership',
             'duration': '1095 00:00:00',
             'name': 'advanced_membership',
-            'order_lines': [],
             'price': '125.00',
             'academic_levels': ['http://testserver/academic_levels/' +
                                 str(self.academic_level.id)],
@@ -249,7 +248,6 @@ class MembershipTests(APITestCase):
             'details': '1-Year student membership',
             'duration': '365 00:00:00',
             'name': 'basic_membership_updated',
-            'order_lines': [],
             'price': '10.00',
             'url': 'http://testserver/memberships/' + str(self.membership.id),
             'id': self.membership.id,
@@ -383,7 +381,6 @@ class MembershipTests(APITestCase):
                 'details': '1-Year student membership',
                 'duration': '365 00:00:00',
                 'name': 'basic_membership',
-                'order_lines': [],
                 'price': '50.00',
                 'url': 'http://testserver/memberships/' +
                        str(self.membership.id),
@@ -398,7 +395,6 @@ class MembershipTests(APITestCase):
                 'details': 'todo',
                 'duration': '365 00:00:00',
                 'name': 'pending_membership',
-                'order_lines': [],
                 'price': '50.00',
                 'url': 'http://testserver/memberships/' +
                        str(self.membership_unavailable.id),
@@ -464,7 +460,6 @@ class MembershipTests(APITestCase):
             'details': '1-Year student membership',
             'duration': '365 00:00:00',
             'name': 'basic_membership',
-            'order_lines': [],
             'price': '50.00',
             'url': 'http://testserver/memberships/' + str(self.membership.id),
             'academic_levels': ['http://testserver/academic_levels/' +
