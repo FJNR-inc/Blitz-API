@@ -95,7 +95,6 @@ class PackageTests(APITestCase):
                 f'http://testserver/memberships/{self.membership.id}'],
             'available': True,
             'name': 'basic_package',
-            'order_lines': [],
             'price': '50.00',
             'reservations': 10,
             'available_on_product_types': [],
@@ -300,8 +299,6 @@ class PackageTests(APITestCase):
             'exclusive_memberships': [],
             'id': self.package.id,
             'name': 'extreme_package_updated',
-            'order_lines': [
-                f'http://testserver/order_lines/{self.order_line.id}'],
             'price': '1.00',
             'reservations': 999,
             'url': f'http://testserver/packages/{self.package.id}',
@@ -343,8 +340,6 @@ class PackageTests(APITestCase):
             'exclusive_memberships': [],
             'id': self.package.id,
             'name': 'extreme_package',
-            'order_lines': [
-                f'http://testserver/order_lines/{self.order_line.id}'],
             'price': '99.00',
             'reservations': 100,
             'url': f'http://testserver/packages/{self.package.id}',
@@ -474,8 +469,6 @@ class PackageTests(APITestCase):
                 'exclusive_memberships': [],
                 'id': self.package.id,
                 'name': 'extreme_package',
-                'order_lines': [
-                    f'http://testserver/order_lines/{self.order_line.id}'],
                 'price': '400.00',
                 'reservations': 100,
                 'url': f'http://testserver/packages/{self.package.id}',
@@ -488,7 +481,6 @@ class PackageTests(APITestCase):
                 'exclusive_memberships': [],
                 'id': self.package_unavailable.id,
                 'name': 'pending_package',
-                'order_lines': [],
                 'price': '400.00',
                 'reservations': 100,
                 'url':
@@ -553,8 +545,6 @@ class PackageTests(APITestCase):
             'exclusive_memberships': [],
             'id': self.package.id,
             'name': 'extreme_package',
-            'order_lines': [
-                f'http://testserver/order_lines/{self.order_line.id}'],
             'price': '400.00',
             'reservations': 100,
             'url': f'http://testserver/packages/{self.package.id}',
