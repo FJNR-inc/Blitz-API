@@ -30,11 +30,20 @@ User = get_user_model()
 
 class Retreat(Address, SafeDeleteModel, BaseProduct):
     """Represents a retreat physical place."""
+    DOUBLE_OCCUPATION = 'double_occupation'
+    SINGLE_OCCUPATION = 'single_occupation'
+    DOUBLE_SINGLE_OCCUPATION = 'double_single_occupation'
 
     ACTIVITY_LANGUAGE = (
         ('EN', _("English")),
         ('FR', _("French")),
         ('B', _("Bilingual")),
+    )
+
+    ROOM_CHOICES = (
+        (DOUBLE_OCCUPATION, _("Double occupation")),
+        (SINGLE_OCCUPATION, _("Single occupation")),
+        (DOUBLE_SINGLE_OCCUPATION, _("Single and double occupation")),
     )
 
     class Meta:
@@ -54,6 +63,12 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
     reserved_seats = models.IntegerField(
         verbose_name=_("Reserved seats"),
         default=0,
+    )
+
+    toilet_gendered = models.BooleanField(
+        null=True,
+        blank=True,
+        verbose_name=_("gendered toilet"),
     )
 
     next_user_notified = models.PositiveIntegerField(
@@ -76,6 +91,14 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         max_length=100,
         choices=ACTIVITY_LANGUAGE,
         verbose_name=_("Activity language"),
+    )
+
+    room_type = models.CharField(
+        null=True,
+        blank=True,
+        max_length=100,
+        choices=ROOM_CHOICES,
+        verbose_name=_("Room Type"),
     )
 
     start_time = models.DateTimeField(verbose_name=_("Start time"), )

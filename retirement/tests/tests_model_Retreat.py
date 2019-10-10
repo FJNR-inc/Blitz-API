@@ -35,6 +35,8 @@ class RetreatTests(APITestCase):
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            room_type=Retreat.DOUBLE_OCCUPATION,
+            toilet_gendered=True,
         )
 
         self.assertEqual(retreat.__str__(), "random_retreat")
