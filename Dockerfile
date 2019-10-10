@@ -8,7 +8,6 @@ RUN echo 'export PS1="\[\e[36m\]blitz_shell>\[\e[m\] "' >> /root/.bashrc
 COPY requirements.txt /requirements.txt
 COPY requirements-dev.txt /requirements-dev.txt
 
-RUN yum update -y && yum install -y postgresql-devel python3-devel
 # Virtualenv created for zappa
 RUN virtualenv ~/ve
 RUN source ~/ve/bin/activate \
