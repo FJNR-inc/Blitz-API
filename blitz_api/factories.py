@@ -22,6 +22,7 @@ class UserFactory(factory.DjangoModelFactory):
 
     first_name = factory.Faker('first_name')
     last_name = factory.Faker('last_name')
+    language = User.LANGUAGE_FR
     username = factory.Sequence(lambda n: f'John{n}')
     email = factory.Sequence(lambda n: f'john{n}@blitz.com')
     password = 'Test123!'

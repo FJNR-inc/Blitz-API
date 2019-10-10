@@ -432,18 +432,18 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                 instance.cancelation_date = timezone.now()
                 instance.save()
 
-                free_seats = retreat.seats - retreat.total_reservations
+                free_seats = retreat.places_remaining
                 if retreat.reserved_seats or free_seats == 1:
                     retreat.reserved_seats += 1
 
-                retrat_notification_url = request.build_absolute_uri(
+                retreat_notification_url = request.build_absolute_uri(
                     reverse(
                         'retreat:retreat-notify',
                         args=[retreat.id]
                     )
                 ),
                 retreat.notify_scheduler_waite_queue(
-                    retrat_notification_url)
+                    retreat_notification_url)
 
                 retreat.save()
 

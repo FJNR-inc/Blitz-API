@@ -40,6 +40,7 @@ class UsersIdTests(APITestCase):
             'academic_level',
             'academic_field',
             'gender',
+            'language',
             'birthdate',
             'groups',
             'user_permissions',
@@ -649,6 +650,7 @@ class UsersIdTests(APITestCase):
             'academic_field': {'name': "random_field"},
             'academic_level': {'name': "random_level"},
             'gender': "M",
+            'language': "en",
             'birthdate': "1999-11-11",
         }
 
@@ -676,6 +678,7 @@ class UsersIdTests(APITestCase):
 
         # Check if update was successful
         self.assertEqual(content['phone'], data['phone'])
+        self.assertEqual(content['language'], data['language'])
         self.assertTrue(self.user.check_password("!321tset"))
 
         # Check id of the user

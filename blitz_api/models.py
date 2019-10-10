@@ -19,12 +19,18 @@ from .managers import ActionTokenManager
 
 class User(AbstractUser):
     """Abstraction of the base User model. Needed to extend in the future."""
+    LANGUAGE_FR = 'fr'
+    LANGUAGE_EN = 'en'
 
     GENDER_CHOICES = (
         ('M', _("Male")),
         ('F', _("Female")),
         ('T', _("Trans")),
         ('A', _("Do not wish to identify myself")),
+    )
+    LANGUAGE_CHOICES = (
+        (LANGUAGE_EN, _('English')),
+        (LANGUAGE_FR, _('French')),
     )
 
     phone = models.CharField(
@@ -89,6 +95,13 @@ class User(AbstractUser):
         max_length=100,
         choices=GENDER_CHOICES,
         verbose_name=_("Gender"),
+    )
+    language = models.CharField(
+        max_length=100,
+        choices=LANGUAGE_CHOICES,
+        verbose_name=_("Language"),
+        null=True,
+        blank=True
     )
     membership = models.ForeignKey(
         'store.Membership',
