@@ -188,17 +188,25 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
     def total_reservations(self):
         return self.reservations.filter(is_active=True).count()
 
+    def free_places_for_reserve_invitations(self):
+
+        places_for_invitations = 0
+        for invitation in self.invitations.all():
+            if invitation.reserve_seat:
+                places_for_invitations += invitation.nb_places_free()
+
+        return places_for_invitations
+
     @property
     def places_remaining(self):
         # Nb places available without invitations
         seat_remaining = \
             self.seats - self.total_reservations - self.reserved_seats
 
-        # Remove places reserved by invitations
-        for invitation in self.invitations.all():
-            if invitation.reserve_seat:
-                seat_remaining = \
-                    seat_remaining - invitation.nb_places_free()
+        # We remove the free places of invitation to "block" those places
+        # Because we already count all invitation we remove only
+        # free places and not all places reserved for invitatioons
+        seat_remaining -= self.free_places_for_reserve_invitations()
 
         return seat_remaining
 
