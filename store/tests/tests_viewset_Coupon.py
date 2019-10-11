@@ -93,6 +93,8 @@ class CouponTests(APITestCase):
             activity_language='FR',
             accessibility=True,
             has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
         )
         cls.coupon = Coupon.objects.create(
             value=13,
@@ -1146,6 +1148,8 @@ class CouponTests(APITestCase):
                     'food_vege': False,
                     'google_maps_url': None,
                     'sub_title': None,
+                    'toilet_gendered': False,
+                    'room_type': Retreat.SINGLE_OCCUPATION,
                 }],
                 "applicable_timeslots": [{
                     'billing_price': 1.0,
@@ -1381,6 +1385,8 @@ class CouponTests(APITestCase):
                 'food_vege': False,
                 'google_maps_url': None,
                 'sub_title': None,
+                'toilet_gendered': False,
+                'room_type': Retreat.SINGLE_OCCUPATION,
             }],
             "applicable_timeslots": [{
                 'billing_price': 1.0,

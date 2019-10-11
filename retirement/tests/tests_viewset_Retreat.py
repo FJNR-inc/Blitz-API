@@ -56,6 +56,8 @@ class RetreatTests(APITestCase):
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
         )
 
         self.retreat2 = Retreat.objects.create(
@@ -79,6 +81,8 @@ class RetreatTests(APITestCase):
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
         )
 
         self.retreat_hidden = Retreat.objects.create(
@@ -102,7 +106,9 @@ class RetreatTests(APITestCase):
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
-            hidden=True
+            hidden=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
         )
 
     @override_settings(
@@ -163,6 +169,8 @@ class RetreatTests(APITestCase):
             'food_vege': False,
             'google_maps_url': None,
             'sub_title': None,
+            'toilet_gendered': True,
+            'room_type': Retreat.DOUBLE_OCCUPATION,
         }
 
         response = self.client.post(
@@ -227,6 +235,8 @@ class RetreatTests(APITestCase):
             'food_vege': False,
             'google_maps_url': None,
             'sub_title': None,
+            'toilet_gendered': True,
+            'room_type': Retreat.DOUBLE_OCCUPATION,
         }
 
         response_data = remove_translation_fields(json.loads(response.content))
@@ -288,6 +298,8 @@ class RetreatTests(APITestCase):
             'review_url': 'example3.com',
             'has_shared_rooms': True,
             'hidden': True,
+            'toilet_gendered': True,
+            'room_type': Retreat.DOUBLE_OCCUPATION,
         }
 
         response = self.client.post(
@@ -351,7 +363,136 @@ class RetreatTests(APITestCase):
             'food_vegan': False,
             'food_vege': False,
             'google_maps_url': None,
-            'sub_title': None
+            'sub_title': None,
+            'toilet_gendered': True,
+            'room_type': Retreat.DOUBLE_OCCUPATION,
+        }
+
+        response_data = remove_translation_fields(json.loads(response.content))
+        del response_data['id']
+        del response_data['url']
+
+        self.assertEqual(
+            response_data,
+            content
+        )
+
+    @override_settings(
+        EXTERNAL_SCHEDULER={
+            'URL': "http://example.com",
+            'USER': "user",
+            'PASSWORD': "password",
+        }
+    )
+    @responses.activate
+    def test_create_without_toilet_gendered_and_room_type(self):
+        """
+        Ensure we can create a retreat if user has permission.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/authentication",
+            json={"token": "1234567890"},
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/tasks",
+            status=200
+        )
+
+        data = {
+            'name': "random_retreat",
+            'seats': 40,
+            'details': "short_description",
+            'address_line1': 'random_address_1',
+            'city': 'random_city',
+            'country': 'Random_Country',
+            'postal_code': 'RAN_DOM',
+            'state_province': 'Random_State',
+            'timezone': "America/Montreal",
+            'price': '100.00',
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 16)),
+            'min_day_refund': 7,
+            'min_day_exchange': 7,
+            'refund_rate': 50,
+            'is_active': True,
+            'accessibility': True,
+            'form_url': "example.com",
+            'carpool_url': 'example2.com',
+            'review_url': 'example3.com',
+            'has_shared_rooms': True,
+            'hidden': True,
+        }
+
+        response = self.client.post(
+            reverse('retreat:retreat-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        content = {
+            'details': 'short_description',
+            'email_content': None,
+            'address_line1': 'random_address_1',
+            'address_line2': None,
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'city': 'random_city',
+            'country': 'Random_Country',
+            'postal_code': 'RAN_DOM',
+            'state_province': 'Random_State',
+            'latitude': None,
+            'longitude': None,
+            'name': 'random_retreat',
+            'next_user_notified': 0,
+            'notification_interval': '1 00:00:00',
+            'options': [],
+            'pictures': [],
+            'start_time': '2130-01-15T12:00:00-05:00',
+            'end_time': '2130-01-17T16:00:00-05:00',
+            'seats': 40,
+            'reserved_seats': 0,
+            'activity_language': None,
+            'price': '100.00',
+            'exclusive_memberships': [],
+            'timezone': "America/Montreal",
+            'is_active': True,
+            'places_remaining': 40,
+            'min_day_exchange': 7,
+            'min_day_refund': 7,
+            'refund_rate': 50,
+            'reservations': [],
+            'reservations_canceled': [],
+            'total_reservations': 0,
+            'users': [],
+            'accessibility': True,
+            'form_url': "example.com",
+            'carpool_url': 'example2.com',
+            'review_url': 'example3.com',
+            'place_name': '',
+            'has_shared_rooms': True,
+            'hidden': True,
+            'accessibility_detail': None,
+            'description': None,
+            'food_allergen_free': False,
+            'food_gluten_free': False,
+            'food_vegan': False,
+            'food_vege': False,
+            'google_maps_url': None,
+            'sub_title': None,
+            'toilet_gendered': None,
+            'room_type': None,
         }
 
         response_data = remove_translation_fields(json.loads(response.content))
@@ -629,6 +770,8 @@ class RetreatTests(APITestCase):
             'review_url': 'example3.com',
             'has_shared_rooms': True,
             'hidden': False,
+            'toilet_gendered': True,
+            'room_type': Retreat.DOUBLE_OCCUPATION,
         }
 
         response = self.client.put(
@@ -692,7 +835,9 @@ class RetreatTests(APITestCase):
             'food_vegan': False,
             'food_vege': False,
             'google_maps_url': None,
-            'sub_title': None
+            'sub_title': None,
+            'toilet_gendered': True,
+            'room_type': Retreat.DOUBLE_OCCUPATION,
         }
 
         self.assertEqual(
@@ -798,6 +943,8 @@ class RetreatTests(APITestCase):
                     'food_vege': False,
                     'google_maps_url': None,
                     'sub_title': None,
+                    'toilet_gendered': False,
+                    'room_type': Retreat.SINGLE_OCCUPATION,
                 }
             ]
         }
@@ -860,6 +1007,8 @@ class RetreatTests(APITestCase):
                 'food_vege': False,
                 'google_maps_url': None,
                 'sub_title': None,
+                'toilet_gendered': False,
+                'room_type': Retreat.SINGLE_OCCUPATION,
             },
             {
                 'places_remaining': 400, 'total_reservations': 0,
@@ -903,6 +1052,8 @@ class RetreatTests(APITestCase):
                 'food_vege': False,
                 'google_maps_url': None,
                 'sub_title': None,
+                'toilet_gendered': False,
+                'room_type': Retreat.SINGLE_OCCUPATION,
             },
             {
                 'places_remaining': 400, 'total_reservations': 0,
@@ -945,6 +1096,8 @@ class RetreatTests(APITestCase):
                 'food_vege': False,
                 'google_maps_url': None,
                 'sub_title': None,
+                'toilet_gendered': False,
+                'room_type': Retreat.SINGLE_OCCUPATION,
             }]}
 
         response_content = json.loads(response.content)
@@ -1028,6 +1181,8 @@ class RetreatTests(APITestCase):
                 'food_vege': False,
                 'google_maps_url': None,
                 'sub_title': None,
+                'toilet_gendered': False,
+                'room_type': Retreat.SINGLE_OCCUPATION,
             }]
         }
 
@@ -1100,6 +1255,8 @@ class RetreatTests(APITestCase):
             'food_vege': False,
             'google_maps_url': None,
             'sub_title': None,
+            'toilet_gendered': False,
+            'room_type': Retreat.SINGLE_OCCUPATION,
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -1178,6 +1335,8 @@ class RetreatTests(APITestCase):
             'food_vege': False,
             'google_maps_url': None,
             'sub_title': None,
+            'toilet_gendered': False,
+            'room_type': Retreat.SINGLE_OCCUPATION,
         }
 
         self.assertEqual(response_data, content)
