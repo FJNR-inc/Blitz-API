@@ -35,13 +35,13 @@ class CreateMemberTest(TestCase):
             name="Level 1",
         )
 
-    def test_create_member(self):
+    def test_offer_membership(self):
         out = StringIO()
 
         nb_users = User.objects.all().count()
 
         call_command(
-            'create_member',
+            'offer_membership',
             '--first_name=John',
             '--last_name=Doe',
             '--birthdate=1980-12-23',
@@ -68,14 +68,14 @@ class CreateMemberTest(TestCase):
         self.assertEqual(user.username, 'test@test.ca')
         self.assertTrue(user.membership_end)
 
-    def test_create_member_with_bad_academic_field(self):
+    def test_offer_membership_with_bad_academic_field(self):
         out = StringIO()
 
         nb_users = User.objects.all().count()
 
         with self.assertRaises(CommandError) as e:
             call_command(
-                'create_member',
+                'offer_membership',
                 '--first_name=John',
                 '--last_name=Doe',
                 '--birthdate=1980-12-23',
@@ -97,14 +97,14 @@ class CreateMemberTest(TestCase):
         nb_users = User.objects.all().count() - nb_users
         self.assertEqual(nb_users, 0)
 
-    def test_create_member_with_bad_academic_level(self):
+    def test_offer_membership_with_bad_academic_level(self):
         out = StringIO()
 
         nb_users = User.objects.all().count()
 
         with self.assertRaises(CommandError) as e:
             call_command(
-                'create_member',
+                'offer_membership',
                 '--first_name=John',
                 '--last_name=Doe',
                 '--birthdate=1980-12-23',
@@ -126,14 +126,14 @@ class CreateMemberTest(TestCase):
         nb_users = User.objects.all().count() - nb_users
         self.assertEqual(nb_users, 0)
 
-    def test_create_member_with_bad_university(self):
+    def test_offer_membership_with_bad_university(self):
         out = StringIO()
 
         nb_users = User.objects.all().count()
 
         with self.assertRaises(CommandError) as e:
             call_command(
-                'create_member',
+                'offer_membership',
                 '--first_name=John',
                 '--last_name=Doe',
                 '--birthdate=1980-12-23',
@@ -155,14 +155,14 @@ class CreateMemberTest(TestCase):
         nb_users = User.objects.all().count() - nb_users
         self.assertEqual(nb_users, 0)
 
-    def test_create_member_with_bad_membership(self):
+    def test_offer_membership_with_bad_membership(self):
         out = StringIO()
 
         nb_users = User.objects.all().count()
 
         with self.assertRaises(CommandError) as e:
             call_command(
-                'create_member',
+                'offer_membership',
                 '--first_name=John',
                 '--last_name=Doe',
                 '--birthdate=1980-12-23',
@@ -184,14 +184,14 @@ class CreateMemberTest(TestCase):
         nb_users = User.objects.all().count() - nb_users
         self.assertEqual(nb_users, 0)
 
-    def test_create_member_with_bad_email(self):
+    def test_offer_membership_with_bad_email(self):
         out = StringIO()
 
         nb_users = User.objects.all().count()
 
         with self.assertRaises(CommandError) as e:
             call_command(
-                'create_member',
+                'offer_membership',
                 '--first_name=John',
                 '--last_name=Doe',
                 '--birthdate=1980-12-23',
@@ -218,13 +218,13 @@ class CreateMemberTest(TestCase):
             "EMAIL_SERVICE": True,
         }
     )
-    def test_create_member_with_notification_active(self):
+    def test_offer_membership_with_notification_active(self):
         out = StringIO()
 
         nb_users = User.objects.all().count()
 
         call_command(
-            'create_member',
+            'offer_membership',
             '--first_name=John',
             '--last_name=Doe',
             '--birthdate=1980-12-23',
@@ -252,14 +252,14 @@ class CreateMemberTest(TestCase):
             "EMAIL_SERVICE": False,
         }
     )
-    def test_create_member_with_fail_notification(self):
+    def test_offer_membership_with_fail_notification(self):
         out = StringIO()
 
         nb_users = User.objects.all().count()
 
         with self.assertRaises(CommandError) as e:
             call_command(
-                'create_member',
+                'offer_membership',
                 '--first_name=John',
                 '--last_name=Doe',
                 '--birthdate=1980-12-23',
