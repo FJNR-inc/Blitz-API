@@ -61,7 +61,7 @@ class Command(BaseCommand):
                         if notify:
 
                             call_command(
-                                'create_member',
+                                'offer_membership',
                                 f'--first_name={user_data["first_name"]}',
                                 f'--last_name={user_data["last_name"]}',
                                 f'--birthdate={birthdate}',
@@ -80,7 +80,7 @@ class Command(BaseCommand):
                         else:
 
                             call_command(
-                                'create_member',
+                                'offer_membership',
                                 f'--first_name={user_data["first_name"]}',
                                 f'--last_name={user_data["last_name"]}',
                                 f'--birthdate={birthdate}',
