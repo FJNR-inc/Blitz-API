@@ -1,4 +1,5 @@
 import binascii
+import datetime
 import os
 from django.conf import settings
 from django.db import models
@@ -133,6 +134,82 @@ class User(AbstractUser):
         null=True,
     )
     history = HistoricalRecords()
+
+    @classmethod
+    def create_user(cls,
+                    first_name,
+                    last_name,
+                    birthdate,
+                    gender,
+                    email,
+                    password,
+                    academic_level=None,
+                    university=None,
+                    academic_field=None):
+
+        user = User.objects.create(
+            first_name=first_name[:30],
+            last_name=last_name[:150],
+            birthdate=birthdate,
+            gender=gender,
+            username=email,
+            email=email,
+            is_active=True,
+            tickets=1,
+        )
+        user.set_password(password)
+
+        if university:
+            try:
+                university = Organization.objects.get(pk=university)
+                user.university = university
+                user.save()
+            except Organization.DoesNotExist:
+                raise ValueError(
+                    'Organization "%s" does not exist' % university)
+
+        if academic_field:
+            try:
+                academic_field = AcademicField.objects.get(
+                    pk=academic_field)
+                user.academic_field = academic_field
+                user.save()
+            except AcademicField.DoesNotExist:
+                raise ValueError('AcademicField "%s" does not exist' %
+                                 academic_field)
+
+        if academic_level:
+            try:
+                academic_level = AcademicLevel.objects.get(
+                    pk=academic_level)
+                user.academic_level = academic_level
+                user.save()
+            except AcademicLevel.DoesNotExist:
+                raise ValueError('AcademicLevel "%s" does not exist' %
+                                 academic_level)
+
+        return user
+
+    def offer_free_membership(self, membership):
+        from store.models import Membership
+
+        if not self.membership:
+            try:
+                membership = Membership.objects.get(pk=membership)
+                self.membership = membership
+            except Membership.DoesNotExist:
+                raise ValueError(
+                    'Membership "%s" does not exist' % membership)
+
+        today = timezone.now().date()
+        if self.membership_end and self.membership_end > today:
+            self.membership_end = \
+                self.membership_end + self.membership.duration
+        else:
+            self.membership_end = (
+                    today + self.membership.duration
+            )
+        self.save()
 
 
 class TemporaryToken(Token):
