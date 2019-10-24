@@ -88,4 +88,5 @@ class UserResource(resources.ModelResource):
             'tickets',
             'date_joined',
             'last_login',
+            'language',
         )

@@ -74,6 +74,15 @@ class Command(BaseCommand):
                         academic_field=options['academic_field']
                     )
 
+                    if options['notify'] is True:
+                        try:
+                            notify_user_of_new_account(options['email'],
+                                                       options['password'])
+                        except MailServiceError:
+                            raise CommandError(
+                                'Email service is down, "--notify" '
+                                'option is not available')
+
                 except Exception as err:
                     raise CommandError(f'{err}')
             else:
@@ -83,14 +92,6 @@ class Command(BaseCommand):
 
             except Exception as err:
                 raise CommandError(f'{err}')
-
-            if options['notify'] is True:
-                try:
-                    notify_user_of_new_account(options['email'],
-                                               options['password'])
-                except MailServiceError:
-                    raise CommandError('Email service is down, "--notify" '
-                                       'option is not available')
 
             self.stdout.write(
                 self.style.SUCCESS(
