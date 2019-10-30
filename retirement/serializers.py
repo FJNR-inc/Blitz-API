@@ -863,7 +863,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             if len(new_retreat.pictures.all()):
                 merge_data['RETREAT_PICTURE'] = "{0}{1}".format(
                     settings.MEDIA_URL,
-                    new_retreat.pictures[0].picture.url
+                    new_retreat.pictures.first().picture.url
                 )
 
             plain_msg = render_to_string("exchange.txt", merge_data)
