@@ -468,6 +468,7 @@ class Reservation(SafeDeleteModel):
         verbose_name=_("Order line"),
         related_name='retreat_reservations',
         null=True,
+        blank=True
     )
     refundable = models.BooleanField(
         verbose_name=_("Refundable"),
