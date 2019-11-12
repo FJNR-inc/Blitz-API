@@ -395,7 +395,9 @@ class Membership(BaseProduct):
 
     old_id = models.IntegerField(
         verbose_name=_("Id before migrate to base product"),
-        null=True,)
+        null=True,
+        blank=True
+    )
 
     duration = models.DurationField()
 
@@ -419,7 +421,9 @@ class Package(BaseProduct):
 
     old_id = models.IntegerField(
         verbose_name=_("Id before migrate to base product"),
-        null=True,)
+        null=True,
+        blank=True,
+    )
 
     reservations = models.PositiveIntegerField(
         verbose_name=_("Reservations"),
@@ -551,12 +555,14 @@ class AbstractCoupon(SafeDeleteModel):
         decimal_places=2,
         verbose_name=_("Value"),
         null=True,
+        blank=True,
     )
 
     # is zero if value is not
     percent_off = models.PositiveIntegerField(
         verbose_name=_("Percentage off"),
         null=True,
+        blank=True,
     )
 
     max_use = models.PositiveIntegerField()
