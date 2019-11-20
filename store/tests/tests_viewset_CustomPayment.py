@@ -157,7 +157,9 @@ class CustomPaymentTests(APITestCase):
             ]
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            json.loads(response.content).get('non_field_errors'),
+            content.get('non_field_errors'))
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -230,7 +232,9 @@ class CustomPaymentTests(APITestCase):
             ]
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            json.loads(response.content).get('non_field_errors'),
+            content.get('non_field_errors'))
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 

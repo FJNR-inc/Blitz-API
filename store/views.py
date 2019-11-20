@@ -227,7 +227,10 @@ class PaymentProfileViewSet(
             )
         except PaymentAPIError as err:
             return Response(
-                {'message': str(err)},
+                {
+                    'message': str(err),
+                    'detail': err.detail
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
