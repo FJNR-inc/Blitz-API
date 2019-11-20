@@ -589,7 +589,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         )
                     except PaymentAPIError as err:
                         raise serializers.ValidationError({
-                            'message': err
+                            'message': err,
+                            'detail': err.detail
                         })
                     # Create local profile
                     profile = PaymentProfile.objects.create(
@@ -660,10 +661,12 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                                 'non_field_errors': [_(
                                     "The order has not been charged yet. "
                                     "Try again later."
-                                )]
+                                )],
+                                'detail': err.detail
                             })
                         raise serializers.ValidationError({
-                            'message': str(err)
+                            'message': str(err),
+                            'detail': err.detail
                         })
 
                     if payment_token and int(amount):
@@ -676,7 +679,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                             )
                         except PaymentAPIError as err:
                             raise serializers.ValidationError({
-                                'message': err
+                                'message': err,
+                                'detail': err.detail
                             })
 
                     elif single_use_token and int(amount):
@@ -693,7 +697,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                             )
                         except PaymentAPIError as err:
                             raise serializers.ValidationError({
-                                'message': err
+                                'message': err,
+                                'detail': err.detail
                             })
                     charge_res_content = charge_response.json()
                     order.authorization_id = charge_res_content['id']
@@ -738,10 +743,12 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                                 'non_field_errors': [_(
                                     "The order has not been charged yet. "
                                     "Try again later."
-                                )]
+                                )],
+                                'detail': err.detail
                             })
                         raise serializers.ValidationError({
-                            'message': str(err)
+                            'message': str(err),
+                            'detail': err.detail
                         })
 
                     new_retreat = retreat

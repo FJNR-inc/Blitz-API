@@ -413,6 +413,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                                     "The order has not been charged yet. Try "
                                     "again later."
                                 )],
+                                'detail': err.detail
                             })
                         raise rest_framework_serializers.ValidationError(
                             {
@@ -421,6 +422,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                                     "An error occured with the payment system."
                                     " Please try again later."
                                 )],
+                                'detail': err.detail
                             }
                         )
                     instance.cancelation_action = 'R'

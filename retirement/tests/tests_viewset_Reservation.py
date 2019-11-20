@@ -1150,7 +1150,9 @@ class ReservationTests(APITestCase):
             ]
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            json.loads(response.content).get('non_field_errors'),
+            content.get('non_field_errors'))
 
         self.reservation.refresh_from_db()
 

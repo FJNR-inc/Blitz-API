@@ -98,8 +98,9 @@ PAYSAFE_CARD_TYPE = {
 
 
 def manage_paysafe_error(err, additional_data):
+    content_dict = json.loads(err.response.content)
     try:
-        err_code = json.loads(err.response.content)['error']['code']
+        err_code = content_dict['error']['code']
 
         Log.error(
             source='PAYSAFE',
@@ -109,7 +110,10 @@ def manage_paysafe_error(err, additional_data):
         )
 
         if err_code in PAYSAFE_EXCEPTION:
-            raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
+            raise PaymentAPIError(
+                error=PAYSAFE_EXCEPTION[err_code],
+                detail=content_dict
+            )
     except json.decoder.JSONDecodeError as err:
         print(err.response)
 
@@ -119,7 +123,10 @@ def manage_paysafe_error(err, additional_data):
         message=err,
         additional_data=json.dumps(additional_data)
     )
-    raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
+    raise PaymentAPIError(
+        error=PAYSAFE_EXCEPTION['unknown'],
+        detail=content_dict
+    )
 
 
 def charge_payment(amount, payment_token, reference_number):
@@ -160,10 +167,10 @@ def charge_payment(amount, payment_token, reference_number):
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
         manage_paysafe_error(err, {
-                    'amount': amount,
-                    'payment_token': payment_token,
-                    'reference_number': reference_number
-                })
+            'amount': amount,
+            'payment_token': payment_token,
+            'reference_number': reference_number
+        })
     return r
 
 
@@ -345,12 +352,12 @@ def create_external_card(profile_id, single_use_token):
         )
         r.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        err = json.loads(err.response.content)
-        err_code = err['error']['code']
+        content_dict = json.loads(err.response.content)
+        err_code = content_dict['error']['code']
         if err_code == "7503":
             try:
                 r = get_external_card(
-                    err['links'][0]['href'].split("/")[-1]
+                    content_dict['links'][0]['href'].split("/")[-1]
                 )
                 card_data = json.loads(r.content)
                 delete_external_card(profile_id, card_data['id'])
@@ -366,11 +373,15 @@ def create_external_card(profile_id, single_use_token):
                 return r
             except requests.exceptions.HTTPError as err:
                 if err_code in PAYSAFE_EXCEPTION:
-                    raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
-                raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
+                    raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code],
+                                          detail=content_dict)
+                raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'],
+                                      detail=content_dict)
         if err_code in PAYSAFE_EXCEPTION:
-            raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code])
-        raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'])
+            raise PaymentAPIError(PAYSAFE_EXCEPTION[err_code],
+                                  detail=content_dict)
+        raise PaymentAPIError(PAYSAFE_EXCEPTION['unknown'],
+                              detail=content_dict)
 
     return r
 
