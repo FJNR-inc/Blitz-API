@@ -24,8 +24,8 @@ from blitz_api.models import ExportMedia
 from blitz_api.serializers import ExportMediaSerializer
 from log_management.models import Log
 from store.exceptions import PaymentAPIError
-from store.models import Refund, OptionProduct, OrderLineBaseProduct
-from store.services import refund_amount, PAYSAFE_EXCEPTION
+from store.models import OrderLineBaseProduct
+from store.services import PAYSAFE_EXCEPTION
 
 from . import permissions, serializers
 from .models import (Picture, Reservation, Retreat, WaitQueue,
@@ -384,28 +384,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                     })
                 if respects_minimum_days and refundable:
                     try:
-                        amount = retreat.price
-                        # The refund_rate converts in cents at the same time
-                        amount_no_tax = Decimal(
-                            amount * retreat.refund_rate
-                        )
-                        amount_tax = Decimal(TAX) * amount_no_tax
-                        total_amount = round(Decimal(
-                            amount_no_tax + amount_tax
-                        ), 2)
-                        refund_instance = Refund.objects.create(
-                            orderline=order_line,
-                            refund_date=timezone.now(),
-                            amount=total_amount / 100,
-                            details="Reservation canceled",
-                        )
-                        refund_response = refund_amount(
-                            order.settlement_id,
-                            int(round(total_amount))
-                        )
-                        refund_res_content = refund_response.json()
-                        refund_instance.refund_id = refund_res_content['id']
-                        refund_instance.save()
+                        refund = instance.make_refund("Reservation canceled")
                     except PaymentAPIError as err:
                         if str(err) == PAYSAFE_EXCEPTION['3406']:
                             raise rest_framework_serializers.ValidationError({
@@ -452,12 +431,12 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         # Send an email if a refund has been issued
         if reservation_active and instance.cancelation_action == 'R':
             self.send_refund_confirmation_email(
-                amount=amount,
+                amount=round(refund.amount - refund.amount * Decimal(TAX)),
                 retreat=retreat,
                 order=order,
                 user=user,
-                total_amount=total_amount,
-                amount_tax=amount_tax,
+                total_amount=refund.amount,
+                amount_tax=round(refund.amount * Decimal(TAX), 2),
             )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -4,14 +4,11 @@ import json
 import traceback
 from datetime import timedelta
 
-from django.conf import settings
-
 import requests
 from django.conf import settings
 from django.core.mail import mail_admins, send_mail
 from django.template.loader import render_to_string
 from django.utils import timezone
-from rest_framework.reverse import reverse
 
 from blitz_api.models import Address
 from django.contrib.auth import get_user_model
@@ -22,10 +19,12 @@ from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
 
 from log_management.models import Log
-from store.models import Membership, OrderLine, BaseProduct,\
-    Coupon
+from store.models import Membership, OrderLine, BaseProduct, \
+    Coupon, Refund
+from store.services import refund_amount
 
 User = get_user_model()
+TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
 class Retreat(Address, SafeDeleteModel, BaseProduct):
@@ -497,6 +496,47 @@ class Reservation(SafeDeleteModel):
 
     def __str__(self):
         return str(self.user)
+
+    def get_refund_value(self, total_refund=False):
+        # First get net pay: total cost
+        refund_value = float(self.order_line.cost)
+        # Add the tax rate, so we have the real value pay by the user
+        refund_value *= TAX_RATE + 1.0
+
+        if not total_refund:
+            # keep only the part that the retreat allow to refund
+            refund_value *= self.retreat.refund_rate / 100
+
+        # Remove value already refund
+        previous_refunds = self.order_line.refunds
+        if previous_refunds:
+            refund_value -= sum(
+                previous_refunds.all().values_list('amount', flat=True)
+            )
+
+        return round(refund_value, 2) if refund_value > 0 else 0
+
+    def make_refund(self, refund_reason, total_refund=False):
+
+        amount_to_refund = self.get_refund_value(total_refund)
+
+        # paysafe use value without cent
+        amount_to_refund_paysafe = int(round(amount_to_refund * 100))
+
+        refund_response = refund_amount(
+            self.order_line.order.settlement_id,
+            amount_to_refund_paysafe
+        )
+        refund_res_content = refund_response.json()
+
+        refund = Refund.objects.create(
+            orderline=self.order_line,
+            refund_date=timezone.now(),
+            amount=amount_to_refund,
+            details=refund_reason,
+            refund_id=refund_res_content['id'],
+        )
+        return refund
 
 
 class WaitQueue(models.Model):

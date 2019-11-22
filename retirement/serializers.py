@@ -1,6 +1,5 @@
-from copy import copy
 from datetime import timedelta
-from decimal import Decimal, DecimalException
+from decimal import Decimal
 import json
 import requests
 import traceback
@@ -11,11 +10,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.mail import mail_admins
 from django.core.mail import send_mail
 from django.db import transaction
-from django.db.models import F
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
-from rest_framework import serializers, status
+from rest_framework import serializers
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueValidator
 
@@ -23,13 +21,13 @@ from blitz_api.services import (check_if_translated_field,
                                 remove_translation_fields,
                                 getMessageTranslate)
 from log_management.models import Log
+from retirement.services import refund_retreat
 from store.exceptions import PaymentAPIError
 from store.models import Order, OrderLine, PaymentProfile, Refund
 from store.serializers import BaseProductSerializer, CouponSerializer
 from store.services import (charge_payment,
                             create_external_payment_profile,
                             create_external_card,
-                            get_external_cards,
                             PAYSAFE_CARD_TYPE,
                             PAYSAFE_EXCEPTION,
                             refund_amount, )
@@ -37,7 +35,6 @@ from store.services import (charge_payment,
 from .fields import TimezoneField
 from .models import (Picture, Reservation, Retreat, WaitQueue,
                      WaitQueueNotification, RetreatInvitation)
-from .services import refund_retreat
 
 User = get_user_model()
 

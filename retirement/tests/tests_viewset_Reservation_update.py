@@ -49,14 +49,12 @@ TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 )
 class ReservationTests(APITestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(ReservationTests, cls).setUpClass()
-        cls.client = APIClient()
-        cls.user = UserFactory()
-        cls.admin = AdminFactory()
-        cls.retreat_type = ContentType.objects.get_for_model(Retreat)
-        cls.retreat = Retreat.objects.create(
+    def setUp(self):
+        self.client = APIClient()
+        self.user = UserFactory()
+        self.admin = AdminFactory()
+        self.retreat_type = ContentType.objects.get_for_model(Retreat)
+        self.retreat = Retreat.objects.create(
             name="mega_retreat",
             details="This is a description of the mega retreat.",
             seats=400,
@@ -78,7 +76,7 @@ class ReservationTests(APITestCase):
             review_url='example3.com',
             has_shared_rooms=True,
         )
-        cls.retreat2 = Retreat.objects.create(
+        self.retreat2 = Retreat.objects.create(
             name="random_retreat",
             details="This is a description of the retreat.",
             seats=40,
@@ -99,7 +97,7 @@ class ReservationTests(APITestCase):
             review_url='example3.com',
             has_shared_rooms=True,
         )
-        cls.retreat_overlap = Retreat.objects.create(
+        self.retreat_overlap = Retreat.objects.create(
             name="ultra_retreat",
             details="This is a description of the ultra retreat.",
             seats=400,
@@ -120,37 +118,37 @@ class ReservationTests(APITestCase):
             review_url='example3.com',
             has_shared_rooms=True,
         )
-        cls.order = Order.objects.create(
-            user=cls.user,
+        self.order = Order.objects.create(
+            user=self.user,
             transaction_date=timezone.now(),
             authorization_id=1,
             settlement_id=1,
         )
-        cls.order_line = OrderLine.objects.create(
-            order=cls.order,
+        self.order_line = OrderLine.objects.create(
+            order=self.order,
             quantity=1,
-            content_type=cls.retreat_type,
-            object_id=cls.retreat.id,
-            cost=cls.retreat.price,
+            content_type=self.retreat_type,
+            object_id=self.retreat.id,
+            cost=self.retreat.price,
         )
-        cls.reservation = Reservation.objects.create(
-            user=cls.user,
-            retreat=cls.retreat,
-            order_line=cls.order_line,
+        self.reservation = Reservation.objects.create(
+            user=self.user,
+            retreat=self.retreat,
+            order_line=self.order_line,
             is_active=True,
         )
-        cls.reservation_expected_payload = {
-            'id': cls.reservation.id,
+        self.reservation_expected_payload = {
+            'id': self.reservation.id,
             'is_active': True,
             'is_present': False,
             'retreat': 'http://testserver/retreat/retreats/' +
-                       str(cls.reservation.retreat.id),
+                       str(self.reservation.retreat.id),
             'url': 'http://testserver/retreat/reservations/' +
-                   str(cls.reservation.id),
+                   str(self.reservation.id),
             'user': 'http://testserver/users/' +
-                    str(cls.user.id),
+                    str(self.user.id),
             'order_line': 'http://testserver/order_lines/' +
-                          str(cls.order_line.id),
+                          str(self.order_line.id),
             'cancelation_date': None,
             'cancelation_action': None,
             'cancelation_reason': None,
@@ -158,10 +156,10 @@ class ReservationTests(APITestCase):
             'exchangeable': True,
             'invitation': None,
         }
-        cls.reservation_non_exchangeable = Reservation.objects.create(
-            user=cls.admin,
-            retreat=cls.retreat,
-            order_line=cls.order_line,
+        self.reservation_non_exchangeable = Reservation.objects.create(
+            user=self.admin,
+            retreat=self.retreat,
+            order_line=self.order_line,
             is_active=True,
             exchangeable=False,
         )
@@ -663,6 +661,8 @@ class ReservationTests(APITestCase):
         self.assertEqual(new_order.transaction_date, FIXED_TIME)
         self.assertEqual(new_order.user, self.user)
 
+        previous_order_line = self.reservation.order_line
+
         # Validate the new orderline
         self.reservation.refresh_from_db()
         new_orderline = self.reservation.order_line
@@ -794,6 +794,8 @@ class ReservationTests(APITestCase):
         self.assertTrue(new_order)
         self.assertEqual(new_order.transaction_date, FIXED_TIME)
         self.assertEqual(new_order.user, self.user)
+
+        previous_order_line = self.reservation.order_line
 
         # Validate the new orderline
         self.reservation.refresh_from_db()
