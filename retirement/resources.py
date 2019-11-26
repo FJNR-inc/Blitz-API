@@ -12,7 +12,7 @@ User = get_user_model()
 
 
 # django-import-export models declaration
-# These represent the models data that will be importd/exported
+# These represent the models data that will be imported/exported
 class ReservationResource(resources.ModelResource):
 
     user = fields.Field(
@@ -250,7 +250,9 @@ class RetreatReservationResource(resources.ModelResource):
             'promo_code',
             'personnal_restrictions',
             'city',
-            'phone'
+            'phone',
+            'is_active',
+            'is_present'
         )
         export_order = (
             'last_name',
@@ -261,7 +263,9 @@ class RetreatReservationResource(resources.ModelResource):
             'promo_code',
             'personnal_restrictions',
             'city',
-            'phone'
+            'phone',
+            'is_active',
+            'is_present'
         )
 
 
