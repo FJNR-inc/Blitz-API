@@ -11,7 +11,7 @@ Pillow==6.2.1
 django-simple-history==2.7.3
 djangorestframework-filters==0.11.1
 python-decouple==3.3
-django-storages==1.7.2
+django-storages==1.8
 dj_database_url==0.5.0
 zappa==0.48.2
 psycopg2-binary==2.8.4
