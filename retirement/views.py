@@ -431,12 +431,12 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         # Send an email if a refund has been issued
         if reservation_active and instance.cancelation_action == 'R':
             self.send_refund_confirmation_email(
-                amount=round(refund.amount - refund.amount * Decimal(TAX)),
+                amount=round(refund.amount - refund.amount * TAX, 2),
                 retreat=retreat,
                 order=order,
                 user=user,
                 total_amount=refund.amount,
-                amount_tax=round(refund.amount * Decimal(TAX), 2),
+                amount_tax=round(refund.amount * TAX, 2),
             )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
