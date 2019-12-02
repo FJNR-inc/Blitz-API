@@ -422,7 +422,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                         'retreat:retreat-notify',
                         args=[retreat.id]
                     )
-                ),
+                )
                 retreat.notify_scheduler_waite_queue(
                     retreat_notification_url)
 

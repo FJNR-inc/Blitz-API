@@ -756,7 +756,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     'retreat:retreat-notify',
                     args=[current_retreat.id]
                 )
-            ),
+            )
             current_retreat.notify_scheduler_waite_queue(
                 retrat_notification_url)
 
