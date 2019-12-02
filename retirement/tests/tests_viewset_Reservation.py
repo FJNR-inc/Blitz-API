@@ -989,7 +989,7 @@ class ReservationTests(APITestCase):
 
         responses.add(
             responses.POST,
-            settings.EXTERNAL_SCHEDULER['URL'],
+            settings.EXTERNAL_SCHEDULER['URL'] + '/authentication',
             status=400
         )
 
@@ -1024,6 +1024,86 @@ class ReservationTests(APITestCase):
         # 1 mail for the refund
         # X mails to every admin
         self.assertGreater(len(mail.outbox), 1, "Invalid sent mail count")
+
+        self.retreat2.seats = 400
+        self.retreat2.save()
+
+    @responses.activate
+    def test_delete_scheduler_working(self):
+        """
+        Ensure emails were sent to admins if the API fails to schedule
+        notifications.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        self.retreat2.seats = self.retreat2.total_reservations
+        self.retreat2.save()
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/"
+            "settlements/1/refunds",
+            json=SAMPLE_REFUND_RESPONSE,
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            settings.EXTERNAL_SCHEDULER['URL'] + '/authentication',
+            json={'token': 'test_token'},
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            settings.EXTERNAL_SCHEDULER['URL'] + '/tasks',
+            status=200
+        )
+
+        return_data = {
+            "hour":
+                datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE).hour,
+            "minute":
+                (datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+                 .minute + 5) % 60,
+            "url":
+                f'http://testserver/retreat/retreats/'
+                f'{self.reservation_admin.retreat.id}/notify',
+            "description": "Retreat wait queue notification"
+        }
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'retreat:reservation-detail',
+                    kwargs={'pk': self.reservation_admin.id},
+                ),
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content
+        )
+
+        self.assertEqual(
+            json.loads(responses.calls[2].request.body),
+            return_data)
+
+        self.reservation_admin.refresh_from_db()
+
+        self.assertFalse(self.reservation_admin.is_active)
+        self.assertEqual(self.reservation_admin.cancelation_reason, 'U')
+        self.assertEqual(self.reservation_admin.cancelation_action, 'R')
+        self.assertEqual(self.reservation_admin.cancelation_date,
+                         FIXED_TIME)
+
+        self.reservation_admin.is_active = True
+        self.reservation_admin.cancelation_date = None
+        self.reservation_admin.cancelation_reason = None
 
         self.retreat2.seats = 400
         self.retreat2.save()
