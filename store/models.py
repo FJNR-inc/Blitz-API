@@ -23,7 +23,7 @@ from blitz_api.models import AcademicLevel
 
 from model_utils.managers import InheritanceManager
 
-from log_management.models import Log
+from log_management.models import Log, EmailLog
 
 User = get_user_model()
 
@@ -112,13 +112,15 @@ class Order(models.Model):
         msg_html = render_to_string("invoice.html", merge_data)
 
         try:
-            send_mail(
+            response_send_mail = send_mail(
                 "Confirmation d'achat",
                 plain_msg,
                 settings.DEFAULT_FROM_EMAIL,
                 to,
                 html_message=msg_html,
             )
+
+            EmailLog.add(to, 'INVOICE', response_send_mail)
         except Exception as err:
             additional_data = {
                 'title': "Confirmation d'achat",

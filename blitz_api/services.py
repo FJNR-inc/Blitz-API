@@ -13,7 +13,7 @@ from django.template.loader import render_to_string
 
 from rest_framework.pagination import PageNumberPagination
 
-from log_management.models import Log
+from log_management.models import Log, EmailLog
 from .exceptions import MailServiceError
 from django.core.mail import send_mail as django_send_mail
 
@@ -48,6 +48,7 @@ def send_mail(users, context, template):
         try:
             # return number of successfully sent emails
             response = message.send()
+            EmailLog.add(user.email, template, response)
         except Exception as err:
             additional_data = {
                 'email': user.email,
@@ -153,13 +154,17 @@ def notify_user_of_new_account(email, password):
         )
 
         try:
-            return django_send_mail(
+            response_send_mail = django_send_mail(
                 "Bienvenue à Thèsez-vous?",
                 plain_msg,
                 settings.DEFAULT_FROM_EMAIL,
                 [email],
                 html_message=msg_html,
             )
+
+            EmailLog.add(
+                email, 'notify_user_of_new_account', response_send_mail)
+            return response_send_mail
         except Exception as err:
             additional_data = {
                 'title': "Bienvenue à Thèsez-vous?",
@@ -195,13 +200,17 @@ def notify_user_of_change_email(email, activation_url, first_name):
         )
 
         try:
-            return django_send_mail(
+            response_send_mail = django_send_mail(
                 "Confirmation de votre nouvelle adresse courriel",
                 plain_msg,
                 settings.DEFAULT_FROM_EMAIL,
                 [email],
                 html_message=msg_html,
             )
+
+            EmailLog.add(
+                email, 'notify_user_of_change_email', response_send_mail)
+            return response_send_mail
         except Exception as err:
             additional_data = {
                 'title': "Confirmation de votre nouvelle adresse courriel",

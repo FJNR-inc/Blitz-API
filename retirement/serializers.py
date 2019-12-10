@@ -20,7 +20,7 @@ from rest_framework.validators import UniqueValidator
 from blitz_api.services import (check_if_translated_field,
                                 remove_translation_fields,
                                 getMessageTranslate)
-from log_management.models import Log
+from log_management.models import Log, EmailLog
 from retirement.services import refund_retreat
 from store.exceptions import PaymentAPIError
 from store.models import Order, OrderLine, PaymentProfile, Refund
@@ -831,13 +831,15 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             msg_html = render_to_string("refund.html", merge_data)
 
             try:
-                send_mail(
+                response_send_mail = send_mail(
                     "Confirmation de remboursement",
                     plain_msg,
                     settings.DEFAULT_FROM_EMAIL,
                     [user.email],
                     html_message=msg_html,
                 )
+
+                EmailLog.add(user.email, 'refund', response_send_mail)
             except Exception as err:
                 additional_data = {
                     'title': "Confirmation de remboursement",
@@ -874,13 +876,14 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             msg_html = render_to_string("exchange.html", merge_data)
 
             try:
-                send_mail(
+                response_send_mail = send_mail(
                     "Confirmation d'échange",
                     plain_msg,
                     settings.DEFAULT_FROM_EMAIL,
                     [user.email],
                     html_message=msg_html,
                 )
+                EmailLog.add(user.email, 'exchange', response_send_mail)
             except Exception as err:
                 additional_data = {
                     'title': "Confirmation d'échange",
@@ -911,13 +914,14 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             )
 
             try:
-                send_mail(
+                response_send_mail = send_mail(
                     "Confirmation d'inscription à la retraite",
                     plain_msg,
                     settings.DEFAULT_FROM_EMAIL,
                     [instance.user.email],
                     html_message=msg_html,
                 )
+                EmailLog.add(user.email, 'retreat_info', response_send_mail)
             except Exception as err:
                 additional_data = {
                     'title': "Confirmation d'inscription à la retraite",

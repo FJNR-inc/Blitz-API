@@ -25,7 +25,7 @@ from blitz_api.serializers import UserSerializer
 from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,
                                 getMessageTranslate,)
-from log_management.models import Log
+from log_management.models import Log, EmailLog
 
 from .models import Workplace, Picture, Period, TimeSlot, Reservation
 from .fields import TimezoneField
@@ -472,13 +472,17 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
                     )
 
                     try:
-                        send_mail(
+                        response_send_mail = send_mail(
                             "Annulation d'un bloc de rédaction",
                             plain_msg,
                             settings.DEFAULT_FROM_EMAIL,
                             [reservation.user.email],
                             html_message=msg_html,
                         )
+
+                        EmailLog.add(
+                            reservation.user.email,
+                            'cancelation', response_send_mail)
                     except Exception as err:
                         additional_data = {
                             'title': "Annulation d'un bloc de rédaction",

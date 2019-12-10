@@ -20,6 +20,7 @@ from unittest import mock
 
 from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.services import remove_translation_fields
+from log_management.models import EmailLog
 
 from store.models import Order, OrderLine, Refund
 from store.tests.paysafe_sample_responses import (SAMPLE_REFUND_RESPONSE,
@@ -1306,3 +1307,35 @@ class ReservationTests(APITestCase):
         self.reservation.cancelation_reason = None
 
         self.assertEqual(len(mail.outbox), 0)
+
+    def test_remind_users(self):
+        self.client.force_authenticate(user=self.admin)
+
+        FIXED_TIME = datetime(2130, 1, 10, tzinfo=LOCAL_TIMEZONE)
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.get(
+                reverse(
+                    'retreat:retreat-remind-users',
+                    kwargs={'pk': self.retreat.id},
+                ),
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertTrue(
+            EmailLog.objects.filter(
+                user_email=self.user.email,
+                type_email='reminder'))
+
+        self.assertEqual(
+            EmailLog.objects.filter(
+                user_email=self.user.email,
+                type_email='reminder')[0].nb_email_sent,
+            1
+        )

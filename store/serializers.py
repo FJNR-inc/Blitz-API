@@ -29,7 +29,7 @@ from django.template.loader import render_to_string
 from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,
                                 getMessageTranslate)
-from log_management.models import Log
+from log_management.models import Log, EmailLog
 from workplace.models import Reservation
 from retirement.models import Reservation as RetreatReservation, \
     RetreatInvitation
@@ -930,13 +930,14 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             )
 
             try:
-                send_mail(
+                response_send_mail = send_mail(
                     "Confirmation d'inscription à la retraite",
                     plain_msg,
                     settings.DEFAULT_FROM_EMAIL,
                     [retreat_reservation.user.email],
                     html_message=msg_html,
                 )
+                EmailLog.add(user.email, 'retreat_info', response_send_mail)
             except Exception as err:
                 additional_data = {
                     'title': "Confirmation d'inscription à la retraite",
