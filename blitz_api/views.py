@@ -23,6 +23,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 
 from blitz_api.mixins import ExportMixin
+from log_management.models import EmailLog
 from .models import (
     TemporaryToken, ActionToken, Domain, Organization, AcademicLevel,
     AcademicField,

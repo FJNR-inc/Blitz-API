@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ENV="dev"
-DB_INSTANCE_ID="thesezvous-postgresql-dev-latest"
+ENV="prod"
+DB_INSTANCE_ID="thesezvous-postgresql-prod3"
 
 DATE=$(date +"%Y-%m-%dT%H-%M")
 

@@ -26,7 +26,7 @@ from rest_framework.utils import json
 
 from blitz_api.exceptions import MailServiceError
 from blitz_api.mixins import ExportMixin
-from log_management.models import Log
+from log_management.models import Log, EmailLog
 
 from .models import Workplace, Picture, Period, TimeSlot, Reservation
 from .resources import (WorkplaceResource, PeriodResource, TimeSlotResource,
@@ -190,13 +190,17 @@ class PeriodViewSet(ExportMixin, viewsets.ModelViewSet):
                 )
 
                 try:
-                    django_send_mail(
+                    response_send_mail = django_send_mail(
                         "Annulation d'un bloc de rédaction",
                         plain_msg,
                         settings.DEFAULT_FROM_EMAIL,
                         [reservation.user.email],
                         html_message=msg_html,
                     )
+
+                    EmailLog.add(
+                        reservation.user.email, 'cancelation',
+                        response_send_mail)
                 except Exception as err:
                     additional_data = {
                         'title': "Annulation d'un bloc de rédaction",
@@ -397,13 +401,17 @@ class TimeSlotViewSet(ExportMixin, viewsets.ModelViewSet):
                     merge_data
                 )
                 try:
-                    django_send_mail(
+                    response_send_mail = django_send_mail(
                         "Annulation d'un bloc de rédaction",
                         plain_msg,
                         settings.DEFAULT_FROM_EMAIL,
                         [reservation.user.email],
                         html_message=msg_html,
                     )
+
+                    EmailLog.add(
+                        reservation.user.email,
+                        'cancelation', response_send_mail)
                 except Exception as err:
                     additional_data = {
                         'title': "Annulation d'un bloc de rédaction",

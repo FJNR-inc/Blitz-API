@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
-from log_management.models import Log
+from log_management.models import Log, EmailLog
 from .exceptions import PaymentAPIError
 from .models import CouponUser
 
@@ -604,13 +604,16 @@ def notify_for_coupon(email, coupon):
     msg_html = render_to_string("coupon_code.html", merge_data)
 
     try:
-        return send_mail(
+        response_send_mail = send_mail(
             "Coupon rabais",
             plain_msg,
             settings.DEFAULT_FROM_EMAIL,
             [email],
             html_message=msg_html,
         )
+
+        EmailLog.add(email, 'coupon_code', response_send_mail)
+        return response_send_mail
     except Exception as err:
         additional_data = {
             'title': "Coupon rabais",

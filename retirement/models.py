@@ -18,7 +18,7 @@ from django.utils.translation import ugettext_lazy as _
 from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
 
-from log_management.models import Log
+from log_management.models import Log, EmailLog
 from store.models import Membership, OrderLine, BaseProduct, \
     Coupon, Refund
 from store.services import refund_amount
@@ -349,13 +349,16 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         msg_html = render_to_string("reserved_place.html", merge_data)
 
         try:
-            return send_mail(
+            response_send_mail = send_mail(
                 "Place exclusive pour 24h",
                 plain_msg,
                 settings.DEFAULT_FROM_EMAIL,
                 [user.email],
                 html_message=msg_html,
             )
+
+            EmailLog.add(user.email, 'reserved_place', response_send_mail)
+            return response_send_mail
         except Exception as err:
             additional_data = {
                 'title': "Place exclusive pour 24h",

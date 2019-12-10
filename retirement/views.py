@@ -22,7 +22,7 @@ from rest_framework.response import Response
 
 from blitz_api.models import ExportMedia
 from blitz_api.serializers import ExportMediaSerializer
-from log_management.models import Log
+from log_management.models import Log, EmailLog
 from store.exceptions import PaymentAPIError
 from store.models import OrderLineBaseProduct
 from store.services import PAYSAFE_EXCEPTION
@@ -470,13 +470,15 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         msg_html = render_to_string("refund.html", merge_data)
 
         try:
-            django_send_mail(
+            response_send_mail = django_send_mail(
                 "Confirmation de remboursement",
                 plain_msg,
                 settings.DEFAULT_FROM_EMAIL,
                 [user.email],
                 html_message=msg_html,
             )
+
+            EmailLog.add(user.email, 'refund', response_send_mail)
         except Exception as err:
             additional_data = {
                 'title': "Confirmation de votre nouvelle adresse courriel",

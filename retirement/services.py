@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-from log_management.models import Log
+from log_management.models import Log, EmailLog
 from retirement.models import WaitQueue
 from store.models import Refund
 from store.services import (PAYSAFE_EXCEPTION,
@@ -39,13 +39,15 @@ def notify_reserved_retreat_seat(user, retreat):
     msg_html = render_to_string("reserved_place.html", merge_data)
 
     try:
-        return send_mail(
+        response_send_mail = send_mail(
             "Place exclusive pour 24h",
             plain_msg,
             settings.DEFAULT_FROM_EMAIL,
             [user.email],
             html_message=msg_html,
         )
+        EmailLog.add(user.email, 'reserved_place', response_send_mail)
+        return response_send_mail
 
     except Exception as err:
         additional_data = {
@@ -75,13 +77,15 @@ def send_retreat_7_days_email(user, retreat):
     msg_html = render_to_string("reminder.html", merge_data)
 
     try:
-        return send_mail(
+        response_send_mail = send_mail(
             "Rappel retraite",
             plain_msg,
             settings.DEFAULT_FROM_EMAIL,
             [user.email],
             html_message=msg_html,
         )
+        EmailLog.add(user.email, 'reminder', response_send_mail)
+        return response_send_mail
     except Exception as err:
         additional_data = {
             'title': "Rappel retraite",
@@ -113,13 +117,15 @@ def send_post_retreat_email(user, retreat):
     msg_html = render_to_string("throwback.html", merge_data)
 
     try:
-        return send_mail(
+        response_send_mail = send_mail(
             "Merci pour votre participation",
             plain_msg,
             settings.DEFAULT_FROM_EMAIL,
             [user.email],
             html_message=msg_html,
         )
+        EmailLog.add(user.email, 'reminder', response_send_mail)
+        return response_send_mail
     except Exception as err:
         additional_data = {
             'title': "Merci pour votre participation",

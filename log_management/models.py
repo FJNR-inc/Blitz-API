@@ -44,6 +44,12 @@ class Log(models.Model):
         null=True,
         verbose_name=_("TraceBack"),
     )
+    created = models.DateTimeField(
+        verbose_name="Creation date",
+        auto_now_add=True,
+        blank=True,
+        null=True
+    )
 
     class Meta:
         verbose_name = _("Log")
@@ -67,3 +73,40 @@ class Log(models.Model):
         new_log.save()
 
         return new_log
+
+
+class EmailLog(models.Model):
+
+    user_email = models.CharField(
+        max_length=1024,
+        verbose_name=_("User email")
+    )
+
+    type_email = models.CharField(
+        max_length=1024,
+        verbose_name=_("Type email")
+    )
+
+    nb_email_sent = models.IntegerField(
+        verbose_name=_("Number email sent")
+    )
+
+    created = models.DateTimeField(
+        verbose_name="Creation date",
+        auto_now_add=True
+    )
+
+    class Meta:
+        verbose_name = _("Email Log")
+        verbose_name_plural = _("Email Logs")
+
+    @classmethod
+    def add(cls, user_email, type_email, nb_email_sent):
+
+        new_email_log = cls.objects.create(
+            user_email=user_email,
+            type_email=type_email,
+            nb_email_sent=nb_email_sent
+        )
+
+        return new_email_log
