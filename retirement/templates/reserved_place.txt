@@ -6,7 +6,7 @@
 ** EXCLUSIVITÉ 24H
 ------------------------------------------------------------
 
-Des places se sont libérées pour une retraite à laquelle vous êtes intéressés. Une place a été réservée pour vous pour les prochaines 24 heures. Faites vite!
+Des places se sont libérées pour une retraite à laquelle vous êtes intéressés. Faites vite, les places s'envolent vite. Premier arrivé premier servi! Faites vite!
 
  
 ** RETRAITE: {{RETREAT_NAME}}
