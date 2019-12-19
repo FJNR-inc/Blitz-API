@@ -462,8 +462,8 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
             'CUSTOMER_NUMBER': user.id,
             'TYPE': "Remboursement",
             'OLD_RETREAT': old_retreat,
-            'COST': round(total_amount / 100, 2),
-            'TAX': round(Decimal(amount_tax / 100), 2),
+            'COST': total_amount,
+            'TAX': amount_tax,
         }
 
         plain_msg = render_to_string("refund.txt", merge_data)
