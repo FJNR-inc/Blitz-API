@@ -36,8 +36,10 @@ router.register('retreats', views.RetreatViewSet)
 router.register('pictures', views.PictureViewSet)
 router.register('reservations', views.ReservationViewSet)
 router.register('wait_queues', views.WaitQueueViewSet)
-router.register('wait_queue_notifications', views.WaitQueueNotificationViewSet)
 router.register('retreat_invitation', views.RetreatInvitationViewSet)
+router.register('wait_queue_places', views.WaitQueuePlaceViewSet)
+router.register('wait_queue_places_reserved',
+                views.WaitQueuePlaceReservedViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),  # includes router generated URL

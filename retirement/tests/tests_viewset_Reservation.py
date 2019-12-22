@@ -71,7 +71,6 @@ class ReservationTests(APITestCase):
             min_day_exchange=7,
             refund_rate=50,
             is_active=True,
-            reserved_seats=1,
             accessibility=True,
             form_url="example.com",
             carpool_url='example2.com',
@@ -80,6 +79,8 @@ class ReservationTests(APITestCase):
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
         )
+        self.retreat.add_wait_queue_place(self.user, generate_cron=False)
+
         self.retreat2 = Retreat.objects.create(
             name="random_retreat",
             details="This is a description of the retreat.",
@@ -262,7 +263,6 @@ class ReservationTests(APITestCase):
                 'id': self.retreat2.id,
                 'exclusive_memberships': [],
                 'places_remaining': 38,
-                'next_user_notified': 0,
                 'notification_interval': '1 00:00:00',
                 'price': '199.00',
                 'start_time': '2130-02-15T08:00:00-05:00',
@@ -758,6 +758,17 @@ class ReservationTests(APITestCase):
             json=SAMPLE_REFUND_RESPONSE,
             status=200
         )
+        responses.add(
+            responses.POST,
+            settings.EXTERNAL_SCHEDULER['URL'] + '/authentication',
+            json={'token': 'test_token'},
+            status=200
+        )
+        responses.add(
+            responses.POST,
+            settings.EXTERNAL_SCHEDULER['URL'] + '/tasks',
+            status=200
+        )
 
         FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
 
@@ -789,6 +800,7 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(len(mail.outbox), 1)
 
+    @responses.activate
     def test_delete_late(self):
         """
         Ensure that a user can cancel one of his retreat reservations.
@@ -799,6 +811,18 @@ class ReservationTests(APITestCase):
         self.client.force_authenticate(user=self.user)
 
         FIXED_TIME = datetime(2130, 1, 10, tzinfo=LOCAL_TIMEZONE)
+
+        responses.add(
+            responses.POST,
+            settings.EXTERNAL_SCHEDULER['URL'] + '/authentication',
+            json={'token': 'test_token'},
+            status=200
+        )
+        responses.add(
+            responses.POST,
+            settings.EXTERNAL_SCHEDULER['URL'] + '/tasks',
+            status=200
+        )
 
         with mock.patch(
                 'django.utils.timezone.now', return_value=FIXED_TIME):
@@ -828,6 +852,7 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(len(mail.outbox), 0)
 
+    @responses.activate
     def test_delete_non_refundable(self):
         """
         Ensure that a user can cancel one of his retreat reservations.
@@ -841,6 +866,18 @@ class ReservationTests(APITestCase):
         self.reservation.save()
 
         FIXED_TIME = datetime(2000, 1, 10, tzinfo=LOCAL_TIMEZONE)
+
+        responses.add(
+            responses.POST,
+            settings.EXTERNAL_SCHEDULER['URL'] + '/authentication',
+            json={'token': 'test_token'},
+            status=200
+        )
+        responses.add(
+            responses.POST,
+            settings.EXTERNAL_SCHEDULER['URL'] + '/tasks',
+            status=200
+        )
 
         with mock.patch(
                 'django.utils.timezone.now', return_value=FIXED_TIME):
@@ -873,6 +910,7 @@ class ReservationTests(APITestCase):
         self.reservation.refundable = True
         self.reservation.save()
 
+    @responses.activate
     def test_delete_retirement_refundable_created_by_administrator(self):
         """
         Ensure that a user can cancel one of his retreat reservations
@@ -889,6 +927,18 @@ class ReservationTests(APITestCase):
         FIXED_TIME = datetime(2000, 1, 10, tzinfo=LOCAL_TIMEZONE)
 
         self.assertTrue(self.reservation2.refundable)
+
+        responses.add(
+            responses.POST,
+            settings.EXTERNAL_SCHEDULER['URL'] + '/authentication',
+            json={'token': 'test_token'},
+            status=200
+        )
+        responses.add(
+            responses.POST,
+            settings.EXTERNAL_SCHEDULER['URL'] + '/tasks',
+            status=200
+        )
 
         with mock.patch(
                 'django.utils.timezone.now', return_value=FIXED_TIME):
@@ -918,6 +968,7 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(len(mail.outbox), 0)
 
+    @responses.activate
     def test_delete_retirement_not_refundable_created_by_administrator(self):
         """
         Ensure that a user can cancel one of his retreat reservations
@@ -939,6 +990,18 @@ class ReservationTests(APITestCase):
         self.reservation2.refresh_from_db()
 
         self.assertFalse(self.reservation2.refundable)
+
+        responses.add(
+            responses.POST,
+            settings.EXTERNAL_SCHEDULER['URL'] + '/authentication',
+            json={'token': 'test_token'},
+            status=200
+        )
+        responses.add(
+            responses.POST,
+            settings.EXTERNAL_SCHEDULER['URL'] + '/tasks',
+            status=200
+        )
 
         with mock.patch(
                 'django.utils.timezone.now', return_value=FIXED_TIME):
@@ -1042,36 +1105,23 @@ class ReservationTests(APITestCase):
 
         responses.add(
             responses.POST,
-            "http://example.com/cardpayments/v1/accounts/0123456789/"
-            "settlements/1/refunds",
-            json=SAMPLE_REFUND_RESPONSE,
-            status=200
-        )
-
-        responses.add(
-            responses.POST,
             settings.EXTERNAL_SCHEDULER['URL'] + '/authentication',
             json={'token': 'test_token'},
-            status=200
+            status=400
         )
 
         responses.add(
             responses.POST,
             settings.EXTERNAL_SCHEDULER['URL'] + '/tasks',
+            status=400
+        )
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/"
+            "settlements/1/refunds",
+            json=SAMPLE_REFUND_RESPONSE,
             status=200
         )
-
-        return_data = {
-            "hour":
-                datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE).hour,
-            "minute":
-                (datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
-                 .minute + 5) % 60,
-            "url":
-                f'http://testserver/retreat/retreats/'
-                f'{self.reservation_admin.retreat.id}/notify',
-            "description": "Retreat wait queue notification"
-        }
 
         FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
 
@@ -1089,6 +1139,24 @@ class ReservationTests(APITestCase):
             status.HTTP_204_NO_CONTENT,
             response.content
         )
+
+        last_wait_queue_place_id = \
+            self.reservation_admin.retreat.wait_queue_places.last().id
+        return_url = settings.EXTERNAL_SCHEDULER['URL_TO_CALL'] + reverse(
+                    'retreat:waitqueueplace-notify',
+                    args=[last_wait_queue_place_id]
+                )
+
+        return_data = {
+            "hour":
+                datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE).hour,
+            "minute":
+                (datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+                 .minute + 5) % 60,
+            "url":
+                return_url,
+            "description": "Retreat wait queue notification"
+        }
 
         self.assertEqual(
             json.loads(responses.calls[2].request.body),
@@ -1160,6 +1228,18 @@ class ReservationTests(APITestCase):
         """
         self.client.force_authenticate(user=self.user)
 
+        responses.add(
+            responses.POST,
+            settings.EXTERNAL_SCHEDULER['URL'] + '/authentication',
+            json={'token': 'test_token'},
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            settings.EXTERNAL_SCHEDULER['URL'] + '/tasks',
+            status=200
+        )
         responses.add(
             responses.POST,
             "http://example.com/cardpayments/v1/accounts/0123456789/"

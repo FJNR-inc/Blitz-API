@@ -28,10 +28,13 @@ from store.models import OrderLineBaseProduct
 from store.services import PAYSAFE_EXCEPTION
 
 from . import permissions, serializers
-from .models import (Picture, Reservation, Retreat, WaitQueue,
-                     WaitQueueNotification, RetreatInvitation)
+from .models import (
+    Picture, Reservation, Retreat, WaitQueue,
+    RetreatInvitation, WaitQueuePlace,
+    WaitQueuePlaceReserved
+)
 from .resources import (ReservationResource, RetreatResource,
-                        WaitQueueNotificationResource, WaitQueueResource,
+                        WaitQueueResource,
                         RetreatReservationResource, OptionProductResource)
 from .services import (send_retreat_7_days_email,
                        send_post_retreat_email, )
@@ -108,59 +111,6 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             'stop': True,
         }
         return Response(response_data, status=status.HTTP_200_OK)
-
-    @action(detail=True, permission_classes=[])
-    def notify(self, request, pk=None):
-        """
-        That custom action allows anyone to notify
-        users in wait queues of a retreat.
-        For this retreat, there will be as many users notified as there are
-        reserved seats.
-        At the same time, this clears older notification logs. That part should
-        be moved somewhere else.
-        """
-        # Checks if lastest notification is older than 24h
-        # This is a hard-coded limitation to allow anonymous users to call
-        # the function.
-        # Keep a 5 minutes gap.
-        time_limit = timezone.now() - timedelta(hours=23, minutes=55)
-        notified_someone = False
-        ready_retreat = False
-
-        retreat: Retreat = self.get_object()
-
-        # Remove older notifications
-        remove_before = timezone.now() - timedelta(
-            days=settings.LOCAL_SETTINGS[
-                'RETREAT_NOTIFICATION_LIFETIME_DAYS'
-            ]
-        )
-        WaitQueueNotification.objects.filter(
-            created_at__lt=remove_before,
-            retreat=retreat
-        ).delete()
-
-        if not retreat.wait_queue_notifications.filter(
-                created_at__gt=time_limit):
-            # Next iteration, since this wait_queue has been notified less
-            # than 24h ago.
-            ready_retreat = True
-            notified_someone = retreat.notify_users()
-
-        if not ready_retreat:
-            response_data = {
-                'detail': "Last notification was sent less than 24h ago."
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        if not notified_someone:
-            response_data = {
-                'detail': "No reserved seats.",
-                'stop': True,
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, permission_classes=[])
     def recap(self, request, pk=None):
@@ -415,16 +365,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
 
                 free_seats = retreat.places_remaining
                 if retreat.reserved_seats or free_seats == 1:
-                    retreat.reserved_seats += 1
-
-                retreat_notification_url = request.build_absolute_uri(
-                    reverse(
-                        'retreat:retreat-notify',
-                        args=[retreat.id]
-                    )
-                )
-                retreat.notify_scheduler_waite_queue(
-                    retreat_notification_url)
+                    retreat.add_wait_queue_place(user)
 
                 retreat.save()
 
@@ -537,52 +478,13 @@ class WaitQueueViewSet(ExportMixin, viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         wait_queue_object: WaitQueue = self.get_object()
         retreat = wait_queue_object.retreat
-        retreat_wait_queue_list = retreat.wait_queue.all()\
-            .order_by('created_at')
 
-        wait_queue_pos = list(retreat_wait_queue_list).index(wait_queue_object)
-
-        if wait_queue_pos < retreat.next_user_notified:
-            retreat.next_user_notified -= 1
-            retreat.save()
-
-        # Delete also WaitqueueNotification link to this waitqueue
-        WaitQueueNotification.objects.filter(
-            retreat=retreat,
-            user=wait_queue_object.user).delete()
+        WaitQueuePlaceReserved.objects.filter(
+            user=wait_queue_object.user,
+            wait_queue_place__retreat=retreat
+        ).delete()
 
         return super(WaitQueueViewSet, self).destroy(request, *args, **kwargs)
-
-
-class WaitQueueNotificationViewSet(ExportMixin, mixins.ListModelMixin,
-                                   mixins.RetrieveModelMixin,
-                                   viewsets.GenericViewSet, ):
-    """
-    list:
-    Return a list of all owned notification.
-
-    read:
-    Return a single owned notification.
-    """
-    serializer_class = serializers.WaitQueueNotificationSerializer
-    queryset = WaitQueueNotification.objects.all()
-    permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
-    filterset_fields = '__all__'
-    ordering_fields = (
-        'created_at',
-        'retreat__start_time',
-        'retreat__end_time',
-    )
-
-    export_resource = WaitQueueNotificationResource()
-
-    def get_queryset(self):
-        """
-        The queryset contains all objects for admins else only owned objects.
-        """
-        if self.request.user.is_staff:
-            return WaitQueueNotification.objects.all()
-        return WaitQueueNotification.objects.filter(user=self.request.user)
 
 
 class RetreatInvitationViewSet(viewsets.ModelViewSet):
@@ -591,3 +493,46 @@ class RetreatInvitationViewSet(viewsets.ModelViewSet):
     queryset = RetreatInvitation.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_fields = '__all__'
+
+
+class WaitQueuePlaceViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.WaitQueuePlaceSerializer
+    queryset = WaitQueuePlace.objects.all()
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+
+    @action(detail=True, permission_classes=[])
+    def notify(self, request, pk=None):
+
+        time_limit = timezone.now() - timedelta(hours=23, minutes=55)
+
+        wait_queue_place: WaitQueuePlace = self.get_object()
+
+        if not wait_queue_place.wait_queue_places_reserved.filter(
+                create__gt=time_limit):
+            detail, stop = wait_queue_place.notify()
+            response_data = {
+                'detail': detail,
+                'stop': stop,
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        else:
+            response_data = {
+                'detail': "Last notification was sent less than 24h ago."
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+
+class WaitQueuePlaceReservedViewSet(mixins.ListModelMixin,
+                                    mixins.RetrieveModelMixin,
+                                    viewsets.GenericViewSet, ):
+
+    serializer_class = serializers.WaitQueuePlaceReservedSerializer
+    queryset = WaitQueuePlaceReserved.objects.all()
+    permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
+    filterset_fields = '__all__'
+
+    def get_queryset(self):
+
+        if self.request.user.is_staff:
+            return WaitQueuePlaceReserved.objects.all()
+        return WaitQueuePlaceReserved.objects.filter(user=self.request.user)

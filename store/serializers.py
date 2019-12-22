@@ -33,7 +33,7 @@ from log_management.models import Log, EmailLog
 from workplace.models import Reservation
 from retirement.models import Reservation as RetreatReservation, \
     RetreatInvitation
-from retirement.models import WaitQueueNotification, Retreat
+from retirement.models import Retreat
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
@@ -738,7 +738,6 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     reservations = retreat.reservations.filter(
                         is_active=True
                     )
-                    reserved = reservations.count()
                     if reservations.filter(user=user):
                         raise serializers.ValidationError({
                             'non_field_errors': [_(
@@ -748,10 +747,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         })
 
                     invitation = retreat_orderline.get_invitation()
-                    if ((retreat.has_places_remaining(invitation))
-                            or (retreat.reserved_seats
-                                and WaitQueueNotification.objects.filter(
-                                        user=user, retreat=retreat))):
+                    if retreat.can_order_the_retreat(user, invitation):
 
                         # Manage invitation to retreat
                         # The invitation id is store in the orderline metadata
@@ -772,12 +768,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                             new_retreat_reservation
                         )
 
-                        # Decrement reserved_seats if > 0
-                        if retreat.reserved_seats:
-                            retreat.reserved_seats = (
-                                    retreat.reserved_seats - 1
-                            )
-                            retreat.save()
+                        retreat.check_and_use_reserved_place(user)
+
                     else:
                         raise serializers.ValidationError({
                             'non_field_errors': [_(

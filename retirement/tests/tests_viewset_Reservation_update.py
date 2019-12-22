@@ -69,13 +69,14 @@ class ReservationTests(APITestCase):
             min_day_exchange=7,
             refund_rate=50,
             is_active=True,
-            reserved_seats=1,
             accessibility=True,
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
         )
+        self.retreat.add_wait_queue_place(self.user, generate_cron=False)
+
         self.retreat2 = Retreat.objects.create(
             name="random_retreat",
             details="This is a description of the retreat.",

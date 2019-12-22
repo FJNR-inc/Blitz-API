@@ -6,7 +6,7 @@ from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 from simple_history.admin import SimpleHistoryAdmin
 
 from .models import (Picture, Reservation, Retreat, WaitQueue,
-                     WaitQueueNotification, RetreatInvitation)
+                     RetreatInvitation)
 from .resources import (ReservationResource, RetreatResource,
                         WaitQueueResource)
 
@@ -97,19 +97,6 @@ class WaitQueueAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
     )
 
 
-class WaitQueueNotificationAdmin(SimpleHistoryAdmin):
-    list_display = (
-        'retreat',
-        'user',
-        'created_at',
-    )
-    list_filter = (
-        ('retreat', admin.RelatedOnlyFieldListFilter),
-        ('user', admin.RelatedOnlyFieldListFilter),
-        'created_at',
-    )
-
-
 class ReservationAdminInline(admin.TabularInline):
     model = Reservation
 
@@ -144,5 +131,4 @@ admin.site.register(Retreat, RetreatAdmin)
 admin.site.register(Picture, PictureAdmin)
 admin.site.register(Reservation, ReservationAdmin)
 admin.site.register(WaitQueue, WaitQueueAdmin)
-admin.site.register(WaitQueueNotification, WaitQueueNotificationAdmin)
 admin.site.register(RetreatInvitation, RetreatInvitationAdmin)
