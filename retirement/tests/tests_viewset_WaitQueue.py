@@ -45,7 +45,6 @@ class WaitQueueTests(APITestCase):
             refund_rate=50,
             is_active=True,
             activity_language='FR',
-            next_user_notified=3,
             accessibility=True,
             form_url="example.com",
             carpool_url='example2.com',
@@ -326,9 +325,6 @@ class WaitQueueTests(APITestCase):
             status.HTTP_204_NO_CONTENT,
             response.content
         )
-
-        self.retreat.refresh_from_db()
-        self.assertEqual(self.retreat.next_user_notified, 2)
 
     def test_list(self):
         """

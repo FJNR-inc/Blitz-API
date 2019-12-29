@@ -33,8 +33,11 @@ from store.services import (charge_payment,
                             refund_amount, )
 
 from .fields import TimezoneField
-from .models import (Picture, Reservation, Retreat, WaitQueue,
-                     WaitQueueNotification, RetreatInvitation)
+from .models import (
+    Picture, Reservation, Retreat, WaitQueue,
+    RetreatInvitation, WaitQueuePlace,
+    WaitQueuePlaceReserved
+)
 
 User = get_user_model()
 
@@ -44,6 +47,7 @@ TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 class RetreatSerializer(BaseProductSerializer):
     places_remaining = serializers.ReadOnlyField()
     total_reservations = serializers.ReadOnlyField()
+    reserved_seats = serializers.ReadOnlyField()
     reservations = serializers.SerializerMethodField()
     reservations_canceled = serializers.SerializerMethodField()
     timezone = TimezoneField(
@@ -480,13 +484,9 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             )
 
             # Update retreat seats
-            free_seats = (
-                current_retreat.seats -
-                current_retreat.total_reservations
-            )
-            if (current_retreat.reserved_seats or free_seats == 1):
-                current_retreat.reserved_seats += 1
-                current_retreat.save()
+            free_seats = current_retreat.places_remaining
+            if current_retreat.reserved_seats or free_seats == 1:
+                current_retreat.add_wait_queue_place(user, generate_cron=False)
 
             if validated_data.get('retreat'):
                 # Validate if user has the right to reserve a seat in the new
@@ -495,20 +495,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 old_retreat = current_retreat
 
                 user_waiting = new_retreat.wait_queue.filter(user=user)
-                free_seats = (
-                    new_retreat.seats -
-                    new_retreat.total_reservations -
-                    new_retreat.reserved_seats +
-                    1
-                )
-                reserved_for_user = (
-                    new_retreat.reserved_seats and
-                    WaitQueueNotification.objects.filter(
-                        user=user,
-                        retreat=new_retreat
-                    )
-                )
-                if not (free_seats > 0 or reserved_for_user):
+
+                if not new_retreat.can_order_the_retreat(user):
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
                             "There are no places left in the requested "
@@ -751,15 +739,6 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     new_retreat = retreat
                     old_retreat = current_retreat
 
-            retrat_notification_url = request.build_absolute_uri(
-                reverse(
-                    'retreat:retreat-notify',
-                    args=[current_retreat.id]
-                )
-            )
-            current_retreat.notify_scheduler_waite_queue(
-                retrat_notification_url)
-
         # Send appropriate emails
         # Send order confirmation email
         if need_transaction:
@@ -992,21 +971,12 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
         return WaitQueue.objects.filter(retreat=obj.retreat).count()
 
 
-class WaitQueueNotificationSerializer(serializers.HyperlinkedModelSerializer):
+class WaitQueuePlaceSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
-    created_at = serializers.ReadOnlyField()
 
     class Meta:
-        model = WaitQueue
+        model = WaitQueuePlace
         fields = '__all__'
-        extra_kwargs = {
-            'retreat': {
-                'view_name': 'retreat:retreat-detail',
-            },
-            'url': {
-                'view_name': 'retreat:waitqueuenotification-detail',
-            },
-        }
 
 
 class RetreatInvitationSerializer(serializers.HyperlinkedModelSerializer):
@@ -1029,3 +999,12 @@ class RetreatInvitationSerializer(serializers.HyperlinkedModelSerializer):
                 'view_name': 'retreat:retreatinvitation-detail',
             },
         }
+
+
+class WaitQueuePlaceReservedSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+    create = serializers.ReadOnlyField()
+
+    class Meta:
+        model = WaitQueuePlaceReserved
+        fields = '__all__'

@@ -82,8 +82,6 @@ class RetreatFactory(factory.DjangoModelFactory):
     timezone = factory.Faker('timezone')
     details = factory.Faker('text', max_nb_chars=1000)
     seats = factory.fuzzy.FuzzyInteger(0)
-    reserved_seats = 0
-    next_user_notified = 0
     notification_interval = timedelta(hours=24)
     activity_language = factory.fuzzy.FuzzyChoice(Retreat.ACTIVITY_LANGUAGE)
     price = factory.fuzzy.FuzzyDecimal(0, 9999, 2)

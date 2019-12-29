@@ -148,42 +148,6 @@ class WaitQueueResource(resources.ModelResource):
         )
 
 
-class WaitQueueNotificationResource(resources.ModelResource):
-
-    user = fields.Field(
-        column_name='user',
-        attribute='user',
-        widget=ForeignKeyWidget(User, 'email'),
-    )
-
-    retreat = fields.Field(
-        column_name='retreat',
-        attribute='retreat',
-        widget=ForeignKeyWidget(Retreat, 'name'),
-    )
-
-    created_at = fields.Field(
-        column_name='created_at',
-        attribute='created_at',
-        widget=DateTimeWidget(),
-    )
-
-    class Meta:
-        model = Retreat
-        fields = (
-            'id',
-            'user',
-            'retreat',
-            'created_at',
-        )
-        export_order = (
-            'id',
-            'user',
-            'retreat',
-            'created_at',
-        )
-
-
 class RetreatReservationResource(resources.ModelResource):
     last_name = fields.Field(
         column_name='last_name',
