@@ -24,6 +24,7 @@ from django.conf.urls.static import static
 from workplace.urls import router as workplace_router
 from store.urls import router as store_router
 from retirement.urls import router as retirement_router
+from cron_manager.urls import router as cron_manager_router
 
 from . import views
 
@@ -44,6 +45,7 @@ router = OptionalSlashDefaultRouter()
 #   it is included separately at the bottom of this file.
 router.registry.extend(workplace_router.registry)
 router.registry.extend(store_router.registry)
+router.registry.extend(cron_manager_router.registry)
 # router.registry.extend(retirement_router.registry)
 
 router.register('users', views.UserViewSet)

@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'store',
     'retirement',
     'log_management',
+    'cron_manager',
     'storages',
     'anymail',
     'simple_history',
