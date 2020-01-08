@@ -9,6 +9,10 @@
         "memory_size": 1024,
         "runtime": "python3.6",
         "s3_bucket": "thesezvous-api",
+        "events": [{
+                  "function": "cron_manager.cron_function.execute_tasks",
+                  "expression": "rate(10 minutes)"
+              }],
         "aws_environment_variables": {
             "SENDINBLUE_API_KEY": "",
             "SECRET_KEY": "",
