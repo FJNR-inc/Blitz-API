@@ -6,7 +6,7 @@ from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 from simple_history.admin import SimpleHistoryAdmin
 
 from .models import (Picture, Reservation, Retreat, WaitQueue,
-                     RetreatInvitation)
+                     RetreatInvitation, WaitQueuePlace, WaitQueuePlaceReserved)
 from .resources import (ReservationResource, RetreatResource,
                         WaitQueueResource)
 
@@ -132,3 +132,5 @@ admin.site.register(Picture, PictureAdmin)
 admin.site.register(Reservation, ReservationAdmin)
 admin.site.register(WaitQueue, WaitQueueAdmin)
 admin.site.register(RetreatInvitation, RetreatInvitationAdmin)
+admin.site.register(WaitQueuePlace)
+admin.site.register(WaitQueuePlaceReserved)
