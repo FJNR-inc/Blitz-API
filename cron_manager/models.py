@@ -50,12 +50,22 @@ class Task(models.Model):
         now_less_intervals = timezone.now() - timezone.timedelta(
             milliseconds=self.execution_interval)
 
-        return now_less_intervals > self.last_execution.executed_at
+        last_execution = self.last_execution
+
+        if last_execution:
+            return now_less_intervals > last_execution.executed_at
+        else:
+            return True
 
     def execute(self):
 
-        executed_at = self.last_execution.executed_at + timezone.timedelta(
-            milliseconds=self.execution_interval)
+        last_execution = self.last_execution
+        if last_execution:
+            executed_at = last_execution.executed_at + timezone.timedelta(
+                milliseconds=self.execution_interval)
+        else:
+            executed_at = self.execution_datetime
+
         execution = Execution.objects.create(
             task=self,
             executed_at=executed_at
