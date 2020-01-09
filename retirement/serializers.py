@@ -17,6 +17,7 @@ from rest_framework import serializers
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueValidator
 
+from blitz_api.cron_manager_api import CronManager
 from blitz_api.services import (check_if_translated_field,
                                 remove_translation_fields,
                                 getMessageTranslate)
@@ -154,111 +155,16 @@ class RetreatSerializer(BaseProductSerializer):
         """
         retreat = super().create(validated_data)
 
-        scheduler_url = '{0}'.format(
-            settings.EXTERNAL_SCHEDULER['URL'],
-        )
-
+        cron_manager = CronManager()
         # Set reminder email
         reminder_date = validated_data['start_time'] - timedelta(days=7)
-
-        data = {
-            "hour": 8,
-            "minute": 0,
-            "day_of_month": reminder_date.day,
-            "month": reminder_date.month,
-            "url": '{0}{1}'.format(
-                self.context['request'].build_absolute_uri(
-                    reverse(
-                        'retreat:retreat-detail',
-                        args=(retreat.id, )
-                    )
-                ),
-                "/remind_users"
-            ),
-            "description": "Retreat 7-days reminder notification"
-        }
-
-        try:
-            auth_data = {
-                "username": settings.EXTERNAL_SCHEDULER['USER'],
-                "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
-            }
-            auth = requests.post(
-                scheduler_url + "/authentication",
-                json=auth_data,
-            )
-            auth.raise_for_status()
-
-            r = requests.post(
-                scheduler_url + "/tasks",
-                json=data,
-                headers={
-                    'Authorization':
-                    'Token ' + json.loads(auth.content)['token']},
-            )
-            r.raise_for_status()
-        except (requests.exceptions.HTTPError,
-                requests.exceptions.ConnectionError) as err:
-            mail_admins(
-                "Thèsez-vous: external scheduler error",
-                "{0}\nRetreat:{1}\nException:\n{2}\n".format(
-                    "Pre-event email task scheduling failed!",
-                    retreat.__dict__,
-                    traceback.format_exc(),
-                )
-            )
+        cron_manager.create_remind_user(
+            retreat.id, reminder_date)
 
         # Set post-event email
-        # Send the email at midnight the next day.
         throwback_date = validated_data['end_time'] + timedelta(days=1)
-
-        data = {
-            "hour": 0,
-            "minute": 0,
-            "day_of_month": throwback_date.day,
-            "month": throwback_date.month,
-            "url": '{0}{1}'.format(
-                self.context['request'].build_absolute_uri(
-                    reverse(
-                        'retreat:retreat-detail',
-                        args=(retreat.id, )
-                    )
-                ),
-                "/recap"
-            ),
-            "description": "Retreat post-event notification"
-        }
-
-        try:
-            auth_data = {
-                "username": settings.EXTERNAL_SCHEDULER['USER'],
-                "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
-            }
-            auth = requests.post(
-                scheduler_url + "/authentication",
-                json=auth_data,
-            )
-            auth.raise_for_status()
-
-            r = requests.post(
-                scheduler_url + "/tasks",
-                json=data,
-                headers={
-                    'Authorization':
-                    'Token ' + json.loads(auth.content)['token']},
-                timeout=(10, 10),
-            )
-            r.raise_for_status()
-        except (requests.exceptions.HTTPError,
-                requests.exceptions.ConnectionError) as err:
-            mail_admins(
-                "Thèsez-vous: external scheduler error",
-                "{0}\nRetreat:{1}\nException:\n{2}\n".format(
-                    "Post-event email task scheduling failed!",
-                    retreat.__dict__,
-                    traceback.format_exc(),
-                )
-            )
+        cron_manager.create_remind_user(
+            retreat.id, throwback_date)
 
         return retreat
 
@@ -486,7 +392,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             # Update retreat seats
             free_seats = current_retreat.places_remaining
             if current_retreat.reserved_seats or free_seats == 1:
-                current_retreat.add_wait_queue_place(user, generate_cron=False)
+                current_retreat.add_wait_queue_place(user)
 
             if validated_data.get('retreat'):
                 # Validate if user has the right to reserve a seat in the new
