@@ -7,58 +7,16 @@ from django.core.mail import mail_admins
 from django.urls import reverse
 
 from blitz_api import settings
+from cron_manager.models import Task
 
 
 class CronManager:
 
-    url: str = None
-    token: str = None
-    task_path = '/tasks'
-
     def __init__(self):
-        self.url = settings.EXTERNAL_SCHEDULER['URL']
         self.url_to_call = settings.EXTERNAL_SCHEDULER['URL_TO_CALL']
-        self.login()
-
-    def login(self):
-        try:
-            auth_data = {
-                "username": settings.EXTERNAL_SCHEDULER['USER'],
-                "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
-            }
-            auth = requests.post(
-                self.url + "/authentication",
-                json=auth_data,
-            )
-            auth.raise_for_status()
-
-            self.token = json.loads(auth.content)['token']
-        except (requests.exceptions.HTTPError,
-                requests.exceptions.ConnectionError) as err:
-            mail_admins(
-                "Thèsez-vous: external scheduler error",
-                traceback.format_exc()
-            )
 
     def create_task(self, data):
-
-        try:
-            r = requests.post(
-                self.url + self.task_path,
-                json=data,
-                headers={
-                    'Authorization':
-                        f'Token {self.token}'
-                },
-                timeout=(10, 10),
-            )
-            r.raise_for_status()
-        except (requests.exceptions.HTTPError,
-                requests.exceptions.ConnectionError) as err:
-            mail_admins(
-                "Thèsez-vous: external scheduler error",
-                traceback.format_exc()
-            )
+        Task.objects.create(**data)
 
     def create_wait_queue_place_notification(self, wait_queue_place_id):
         wait_queue_place_url = self.url_to_call + reverse(
@@ -67,10 +25,36 @@ class CronManager:
             )
 
         data = {
-            "hour": timezone.now().hour,
-            "minute": (timezone.now().minute + 5) % 60,
+            "execution_datetime": timezone.now(),
+            "execution_interval": 1000 * 60 * 60 * 24,
             "url": wait_queue_place_url,
             "description": "Retreat wait queue notification"
+        }
+
+        self.create_task(data)
+
+    def create_remind_user(self, retreat_id, reminder_date):
+        remind_users_url = self.url_to_call + reverse(
+            'retreat:retreat-detail',
+            args=[retreat_id]
+        ) + "/remind_users"
+        data = {
+            "execution_datetime": reminder_date,
+            "url": remind_users_url,
+            "description": "Retreat 7-days reminder notification"
+        }
+
+        self.create_task(data)
+
+    def create_recap(self, retreat_id, throwback_date):
+        remind_users_url = self.url_to_call + reverse(
+            'retreat:retreat-detail',
+            args=[retreat_id]
+        ) + "/recap"
+        data = {
+            "execution_datetime": throwback_date,
+            "url": remind_users_url,
+            "description": "Retreat post-event notification"
         }
 
         self.create_task(data)

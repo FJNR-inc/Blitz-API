@@ -1462,17 +1462,6 @@ class OrderTests(APITestCase):
 
         responses.add(
             responses.POST,
-            settings.EXTERNAL_SCHEDULER['URL'] + '/authentication',
-            json={'token': 'test_token'},
-            status=200
-        )
-        responses.add(
-            responses.POST,
-            settings.EXTERNAL_SCHEDULER['URL'] + '/tasks',
-            status=200
-        )
-        responses.add(
-            responses.POST,
             "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
             json=SAMPLE_PAYMENT_RESPONSE,
             status=200

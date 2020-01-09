@@ -79,7 +79,7 @@ class Task(models.Model):
             try:
                 content = response.json()
                 stop_cron_task = content.get('stop', False)
-                if stop_cron_task:
+                if stop_cron_task or not self.execution_interval:
                     self.active = False
                     self.save()
             except Exception:
