@@ -299,7 +299,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
         try:
             response_send_mail = send_mail(
-                "Place exclusive pour 24h",
+                f"Une place est disponible pour la retraite: {self.name}",
                 plain_msg,
                 settings.DEFAULT_FROM_EMAIL,
                 [user.email],
