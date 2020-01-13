@@ -1,16 +1,22 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.utils.translation import ugettext_lazy as _
 from import_export.admin import ExportActionModelAdmin
 from modeltranslation.admin import TranslationAdmin
 from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 from simple_history.admin import SimpleHistoryAdmin
 
+from blitz_api.admin import UserFilter, OwnerFilter
+from .AutoCompleteFilter import CustomAutocompleteFilter
 from .models import (Membership, Order, OrderLine, Package, PaymentProfile,
                      CustomPayment, Coupon, MembershipCoupon, CouponUser,
                      Refund, BaseProduct, OrderLineBaseProduct, OptionProduct)
 from .resources import (MembershipResource, OrderResource, OrderLineResource,
                         PackageResource, CustomPaymentResource, CouponResource,
                         CouponUserResource, RefundResource, )
+from admin_auto_filters.filters import AutocompleteFilter
+
+User = get_user_model()
 
 
 class OrderLineInline(admin.StackedInline):
@@ -68,7 +74,7 @@ class CustomPaymentAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'price',
     )
     list_filter = (
-        ('user', admin.RelatedOnlyFieldListFilter),
+        UserFilter,
         'transaction_date',
     )
     search_fields = (
@@ -89,7 +95,7 @@ class OrderAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'user',
     )
     list_filter = (
-        ('user', admin.RelatedOnlyFieldListFilter),
+        UserFilter,
         'transaction_date',
     )
     search_fields = (
@@ -97,6 +103,13 @@ class OrderAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'user__username',
     )
     autocomplete_fields = ('user',)
+
+
+class OrderUserFilter(CustomAutocompleteFilter):
+    title = 'User'
+    field_name = 'user'
+    rel_model = Order
+    parameter_name = 'order__user'
 
 
 class OrderLineAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
@@ -114,7 +127,7 @@ class OrderLineAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         ('content_type', admin.RelatedOnlyFieldListFilter),
         ('coupon', admin.RelatedOnlyFieldListFilter),
         'quantity',
-        ('order__user', admin.RelatedOnlyFieldListFilter),
+        OrderUserFilter,
     )
     search_fields = [
         'order__user__email',
@@ -145,7 +158,7 @@ class PaymentProfileAdmin(SimpleHistoryAdmin):
         'external_api_url',
     )
     list_filter = (
-        ('owner', admin.RelatedOnlyFieldListFilter),
+        OwnerFilter,
     )
     search_fields = (
         'owner__email',
@@ -174,7 +187,7 @@ class CouponAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'details',
     )
     list_filter = (
-        ('owner', admin.RelatedOnlyFieldListFilter),
+        OwnerFilter,
     )
     search_fields = (
         'code',
@@ -194,7 +207,7 @@ class CouponUserAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
         highlight_deleted,
     )
     list_filter = (
-        ('user', admin.RelatedOnlyFieldListFilter),
+        UserFilter,
         ('coupon', admin.RelatedOnlyFieldListFilter),
     ) + SafeDeleteAdmin.list_display
     search_fields = (

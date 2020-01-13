@@ -5,6 +5,7 @@ from modeltranslation.admin import TranslationAdmin
 from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 from simple_history.admin import SimpleHistoryAdmin
 
+from blitz_api.admin import UserFilter
 from .models import Period, Picture, Reservation, TimeSlot, Workplace
 from .resources import (PeriodResource, ReservationResource, TimeSlotResource,
                         WorkplaceResource)
@@ -93,7 +94,7 @@ class ReservationAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
         highlight_deleted,
     ) + SafeDeleteAdmin.list_display
     list_filter = (
-        ('user', admin.RelatedOnlyFieldListFilter),
+        UserFilter,
         ('timeslot', admin.RelatedOnlyFieldListFilter),
         ('timeslot__period', admin.RelatedOnlyFieldListFilter),
         ('timeslot__period__workplace', admin.RelatedOnlyFieldListFilter),

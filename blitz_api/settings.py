@@ -58,7 +58,8 @@ INSTALLED_APPS = [
     'rest_framework_filters',
     'safedelete',
     'import_export',
-    'django_filters'
+    'django_filters',
+    'admin_auto_filters'
 ]
 
 MIDDLEWARE = [

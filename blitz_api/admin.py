@@ -7,6 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from import_export.admin import ExportActionModelAdmin
 from modeltranslation.admin import TranslationAdmin
 from simple_history.admin import SimpleHistoryAdmin
+from admin_auto_filters.filters import AutocompleteFilter
 
 from .models import (AcademicField, AcademicLevel, ActionToken, Domain,
                      Organization, TemporaryToken, User)
@@ -98,6 +99,16 @@ class AcademicFieldAdmin(SimpleHistoryAdmin, TranslationAdmin,
 class AcademicLevelAdmin(SimpleHistoryAdmin, TranslationAdmin,
                          ExportActionModelAdmin):
     resource_class = AcademicLevelResource
+
+
+class UserFilter(AutocompleteFilter):
+    title = 'User'
+    field_name = 'user'
+
+
+class OwnerFilter(AutocompleteFilter):
+    title = 'Owner'
+    field_name = 'owner'
 
 
 admin.site.register(User, CustomUserAdmin)

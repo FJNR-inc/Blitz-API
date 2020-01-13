@@ -5,6 +5,7 @@ from modeltranslation.admin import TranslationAdmin
 from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 from simple_history.admin import SimpleHistoryAdmin
 
+from blitz_api.admin import UserFilter
 from .models import (Picture, Reservation, Retreat, WaitQueue,
                      RetreatInvitation, WaitQueuePlace, WaitQueuePlaceReserved)
 from .resources import (ReservationResource, RetreatResource,
@@ -70,7 +71,7 @@ class ReservationAdmin(SimpleHistoryAdmin,
         highlight_deleted,
     ) + SafeDeleteAdmin.list_display
     list_filter = (
-        ('user', admin.RelatedOnlyFieldListFilter),
+        UserFilter,
         ('retreat', admin.RelatedOnlyFieldListFilter),
         'is_active',
         'cancelation_date',
@@ -91,7 +92,7 @@ class WaitQueueAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'created_at',
     )
     list_filter = (
-        ('user', admin.RelatedOnlyFieldListFilter),
+        UserFilter,
         ('retreat', admin.RelatedOnlyFieldListFilter),
         'created_at',
     )
@@ -164,7 +165,7 @@ class WaitQueuePlaceReservedAdmin(admin.ModelAdmin):
     )
     list_filter = (
         'wait_queue_place',
-        'user'
+        UserFilter
     )
     autocomplete_fields = ('user', 'wait_queue_place')
 
