@@ -163,7 +163,7 @@ class RetreatSerializer(BaseProductSerializer):
 
         # Set post-event email
         throwback_date = validated_data['end_time'] + timedelta(days=1)
-        cron_manager.create_remind_user(
+        cron_manager.create_recap(
             retreat.id, throwback_date)
 
         return retreat

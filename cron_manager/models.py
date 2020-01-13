@@ -47,22 +47,31 @@ class Task(models.Model):
     @property
     def can_be_execute(self):
 
-        now_less_intervals = timezone.now() - timezone.timedelta(
-            milliseconds=self.execution_interval)
+        if self.active:
+            if self.execution_interval:
+                now_less_intervals = timezone.now() - timezone.timedelta(
+                    milliseconds=self.execution_interval)
+            else:
+                now_less_intervals = timezone.now()
 
-        last_execution = self.last_execution
+            last_execution = self.last_execution
 
-        if last_execution:
-            return now_less_intervals > last_execution.executed_at
+            if last_execution:
+                return now_less_intervals > last_execution.executed_at
+            else:
+                return now_less_intervals > self.execution_datetime
         else:
-            return True
+            return False
 
     def execute(self):
 
         last_execution = self.last_execution
         if last_execution:
-            executed_at = last_execution.executed_at + timezone.timedelta(
-                milliseconds=self.execution_interval)
+            if self.execution_interval:
+                executed_at = last_execution.executed_at - timezone.timedelta(
+                    milliseconds=self.execution_interval)
+            else:
+                executed_at = last_execution.executed_at
         else:
             executed_at = self.execution_datetime
 
