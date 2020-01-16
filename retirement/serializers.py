@@ -17,6 +17,7 @@ from rest_framework import serializers
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueValidator
 
+from blitz_api.cron_manager_api import CronManager
 from blitz_api.services import (check_if_translated_field,
                                 remove_translation_fields,
                                 getMessageTranslate)
@@ -33,8 +34,11 @@ from store.services import (charge_payment,
                             refund_amount, )
 
 from .fields import TimezoneField
-from .models import (Picture, Reservation, Retreat, WaitQueue,
-                     WaitQueueNotification, RetreatInvitation)
+from .models import (
+    Picture, Reservation, Retreat, WaitQueue,
+    RetreatInvitation, WaitQueuePlace,
+    WaitQueuePlaceReserved
+)
 
 User = get_user_model()
 
@@ -44,6 +48,7 @@ TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 class RetreatSerializer(BaseProductSerializer):
     places_remaining = serializers.ReadOnlyField()
     total_reservations = serializers.ReadOnlyField()
+    reserved_seats = serializers.ReadOnlyField()
     reservations = serializers.SerializerMethodField()
     reservations_canceled = serializers.SerializerMethodField()
     timezone = TimezoneField(
@@ -150,111 +155,16 @@ class RetreatSerializer(BaseProductSerializer):
         """
         retreat = super().create(validated_data)
 
-        scheduler_url = '{0}'.format(
-            settings.EXTERNAL_SCHEDULER['URL'],
-        )
-
+        cron_manager = CronManager()
         # Set reminder email
         reminder_date = validated_data['start_time'] - timedelta(days=7)
-
-        data = {
-            "hour": 8,
-            "minute": 0,
-            "day_of_month": reminder_date.day,
-            "month": reminder_date.month,
-            "url": '{0}{1}'.format(
-                self.context['request'].build_absolute_uri(
-                    reverse(
-                        'retreat:retreat-detail',
-                        args=(retreat.id, )
-                    )
-                ),
-                "/remind_users"
-            ),
-            "description": "Retreat 7-days reminder notification"
-        }
-
-        try:
-            auth_data = {
-                "username": settings.EXTERNAL_SCHEDULER['USER'],
-                "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
-            }
-            auth = requests.post(
-                scheduler_url + "/authentication",
-                json=auth_data,
-            )
-            auth.raise_for_status()
-
-            r = requests.post(
-                scheduler_url + "/tasks",
-                json=data,
-                headers={
-                    'Authorization':
-                    'Token ' + json.loads(auth.content)['token']},
-            )
-            r.raise_for_status()
-        except (requests.exceptions.HTTPError,
-                requests.exceptions.ConnectionError) as err:
-            mail_admins(
-                "Thèsez-vous: external scheduler error",
-                "{0}\nRetreat:{1}\nException:\n{2}\n".format(
-                    "Pre-event email task scheduling failed!",
-                    retreat.__dict__,
-                    traceback.format_exc(),
-                )
-            )
+        cron_manager.create_remind_user(
+            retreat.id, reminder_date)
 
         # Set post-event email
-        # Send the email at midnight the next day.
         throwback_date = validated_data['end_time'] + timedelta(days=1)
-
-        data = {
-            "hour": 0,
-            "minute": 0,
-            "day_of_month": throwback_date.day,
-            "month": throwback_date.month,
-            "url": '{0}{1}'.format(
-                self.context['request'].build_absolute_uri(
-                    reverse(
-                        'retreat:retreat-detail',
-                        args=(retreat.id, )
-                    )
-                ),
-                "/recap"
-            ),
-            "description": "Retreat post-event notification"
-        }
-
-        try:
-            auth_data = {
-                "username": settings.EXTERNAL_SCHEDULER['USER'],
-                "password": settings.EXTERNAL_SCHEDULER['PASSWORD']
-            }
-            auth = requests.post(
-                scheduler_url + "/authentication",
-                json=auth_data,
-            )
-            auth.raise_for_status()
-
-            r = requests.post(
-                scheduler_url + "/tasks",
-                json=data,
-                headers={
-                    'Authorization':
-                    'Token ' + json.loads(auth.content)['token']},
-                timeout=(10, 10),
-            )
-            r.raise_for_status()
-        except (requests.exceptions.HTTPError,
-                requests.exceptions.ConnectionError) as err:
-            mail_admins(
-                "Thèsez-vous: external scheduler error",
-                "{0}\nRetreat:{1}\nException:\n{2}\n".format(
-                    "Post-event email task scheduling failed!",
-                    retreat.__dict__,
-                    traceback.format_exc(),
-                )
-            )
+        cron_manager.create_recap(
+            retreat.id, throwback_date)
 
         return retreat
 
@@ -480,13 +390,9 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             )
 
             # Update retreat seats
-            free_seats = (
-                current_retreat.seats -
-                current_retreat.total_reservations
-            )
-            if (current_retreat.reserved_seats or free_seats == 1):
-                current_retreat.reserved_seats += 1
-                current_retreat.save()
+            free_seats = current_retreat.places_remaining
+            if current_retreat.reserved_seats or free_seats == 1:
+                current_retreat.add_wait_queue_place(user)
 
             if validated_data.get('retreat'):
                 # Validate if user has the right to reserve a seat in the new
@@ -495,20 +401,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 old_retreat = current_retreat
 
                 user_waiting = new_retreat.wait_queue.filter(user=user)
-                free_seats = (
-                    new_retreat.seats -
-                    new_retreat.total_reservations -
-                    new_retreat.reserved_seats +
-                    1
-                )
-                reserved_for_user = (
-                    new_retreat.reserved_seats and
-                    WaitQueueNotification.objects.filter(
-                        user=user,
-                        retreat=new_retreat
-                    )
-                )
-                if not (free_seats > 0 or reserved_for_user):
+
+                if not new_retreat.can_order_the_retreat(user):
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
                             "There are no places left in the requested "
@@ -751,15 +645,6 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     new_retreat = retreat
                     old_retreat = current_retreat
 
-            retrat_notification_url = request.build_absolute_uri(
-                reverse(
-                    'retreat:retreat-notify',
-                    args=[current_retreat.id]
-                )
-            )
-            current_retreat.notify_scheduler_waite_queue(
-                retrat_notification_url)
-
         # Send appropriate emails
         # Send order confirmation email
         if need_transaction:
@@ -992,21 +877,12 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
         return WaitQueue.objects.filter(retreat=obj.retreat).count()
 
 
-class WaitQueueNotificationSerializer(serializers.HyperlinkedModelSerializer):
+class WaitQueuePlaceSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
-    created_at = serializers.ReadOnlyField()
 
     class Meta:
-        model = WaitQueue
+        model = WaitQueuePlace
         fields = '__all__'
-        extra_kwargs = {
-            'retreat': {
-                'view_name': 'retreat:retreat-detail',
-            },
-            'url': {
-                'view_name': 'retreat:waitqueuenotification-detail',
-            },
-        }
 
 
 class RetreatInvitationSerializer(serializers.HyperlinkedModelSerializer):
@@ -1029,3 +905,12 @@ class RetreatInvitationSerializer(serializers.HyperlinkedModelSerializer):
                 'view_name': 'retreat:retreatinvitation-detail',
             },
         }
+
+
+class WaitQueuePlaceReservedSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+    create = serializers.ReadOnlyField()
+
+    class Meta:
+        model = WaitQueuePlaceReserved
+        fields = '__all__'

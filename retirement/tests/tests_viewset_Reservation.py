@@ -71,7 +71,6 @@ class ReservationTests(APITestCase):
             min_day_exchange=7,
             refund_rate=50,
             is_active=True,
-            reserved_seats=1,
             accessibility=True,
             form_url="example.com",
             carpool_url='example2.com',
@@ -80,6 +79,8 @@ class ReservationTests(APITestCase):
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
         )
+        self.retreat.add_wait_queue_place(self.user, generate_cron=False)
+
         self.retreat2 = Retreat.objects.create(
             name="random_retreat",
             details="This is a description of the retreat.",
@@ -262,7 +263,6 @@ class ReservationTests(APITestCase):
                 'id': self.retreat2.id,
                 'exclusive_memberships': [],
                 'places_remaining': 38,
-                'next_user_notified': 0,
                 'notification_interval': '1 00:00:00',
                 'price': '199.00',
                 'start_time': '2130-02-15T08:00:00-05:00',
@@ -789,6 +789,7 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(len(mail.outbox), 1)
 
+    @responses.activate
     def test_delete_late(self):
         """
         Ensure that a user can cancel one of his retreat reservations.
@@ -828,6 +829,7 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(len(mail.outbox), 0)
 
+    @responses.activate
     def test_delete_non_refundable(self):
         """
         Ensure that a user can cancel one of his retreat reservations.
@@ -873,6 +875,7 @@ class ReservationTests(APITestCase):
         self.reservation.refundable = True
         self.reservation.save()
 
+    @responses.activate
     def test_delete_retirement_refundable_created_by_administrator(self):
         """
         Ensure that a user can cancel one of his retreat reservations
@@ -918,6 +921,7 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(len(mail.outbox), 0)
 
+    @responses.activate
     def test_delete_retirement_not_refundable_created_by_administrator(self):
         """
         Ensure that a user can cancel one of his retreat reservations
@@ -969,67 +973,6 @@ class ReservationTests(APITestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     @responses.activate
-    @override_settings(ADMINS=[("You", "you@example.com")])
-    def test_delete_scheduler_error(self):
-        """
-        Ensure emails were sent to admins if the API fails to schedule
-        notifications.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        self.retreat2.seats = self.retreat2.total_reservations
-        self.retreat2.save()
-
-        responses.add(
-            responses.POST,
-            "http://example.com/cardpayments/v1/accounts/0123456789/"
-            "settlements/1/refunds",
-            json=SAMPLE_REFUND_RESPONSE,
-            status=200
-        )
-
-        responses.add(
-            responses.POST,
-            settings.EXTERNAL_SCHEDULER['URL'] + '/authentication',
-            status=400
-        )
-
-        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
-
-        with mock.patch(
-                'django.utils.timezone.now', return_value=FIXED_TIME):
-            response = self.client.delete(
-                reverse(
-                    'retreat:reservation-detail',
-                    kwargs={'pk': self.reservation_admin.id},
-                ),
-            )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_204_NO_CONTENT,
-            response.content
-        )
-
-        self.reservation_admin.refresh_from_db()
-
-        self.assertFalse(self.reservation_admin.is_active)
-        self.assertEqual(self.reservation_admin.cancelation_reason, 'U')
-        self.assertEqual(self.reservation_admin.cancelation_action, 'R')
-        self.assertEqual(self.reservation_admin.cancelation_date, FIXED_TIME)
-
-        self.reservation_admin.is_active = True
-        self.reservation_admin.cancelation_date = None
-        self.reservation_admin.cancelation_reason = None
-
-        # 1 mail for the refund
-        # X mails to every admin
-        self.assertGreater(len(mail.outbox), 1, "Invalid sent mail count")
-
-        self.retreat2.seats = 400
-        self.retreat2.save()
-
-    @responses.activate
     def test_delete_scheduler_working(self):
         """
         Ensure emails were sent to admins if the API fails to schedule
@@ -1048,31 +991,6 @@ class ReservationTests(APITestCase):
             status=200
         )
 
-        responses.add(
-            responses.POST,
-            settings.EXTERNAL_SCHEDULER['URL'] + '/authentication',
-            json={'token': 'test_token'},
-            status=200
-        )
-
-        responses.add(
-            responses.POST,
-            settings.EXTERNAL_SCHEDULER['URL'] + '/tasks',
-            status=200
-        )
-
-        return_data = {
-            "hour":
-                datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE).hour,
-            "minute":
-                (datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
-                 .minute + 5) % 60,
-            "url":
-                f'http://testserver/retreat/retreats/'
-                f'{self.reservation_admin.retreat.id}/notify',
-            "description": "Retreat wait queue notification"
-        }
-
         FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
 
         with mock.patch(
@@ -1089,10 +1007,6 @@ class ReservationTests(APITestCase):
             status.HTTP_204_NO_CONTENT,
             response.content
         )
-
-        self.assertEqual(
-            json.loads(responses.calls[2].request.body),
-            return_data)
 
         self.reservation_admin.refresh_from_db()
 

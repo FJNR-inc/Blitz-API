@@ -8,8 +8,10 @@ import requests
 from django.conf import settings
 from django.core.mail import mail_admins, send_mail
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
 
+from blitz_api.cron_manager_api import CronManager
 from blitz_api.models import Address
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -51,30 +53,18 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
     old_id = models.IntegerField(
         verbose_name=_("Id before migrate to base product"),
-        null=True,)
+        null=True, )
 
     seats = models.IntegerField(verbose_name=_("Seats"), )
 
-    # number of seats reserved for people in queue
-    # when someone cancels their reservation and there is a queue,
-    # reserved_seat is incremented by 1. If reserved_seats > 0, only
-    # people with a waitQueueNotification can order a reservation
-    reserved_seats = models.IntegerField(
-        verbose_name=_("Reserved seats"),
-        default=0,
-    )
+    @property
+    def reserved_seats(self):
+        return self.wait_queue_places.count()
 
     toilet_gendered = models.BooleanField(
         null=True,
         blank=True,
         verbose_name=_("gendered toilet"),
-    )
-
-    next_user_notified = models.PositiveIntegerField(
-        verbose_name=_(
-            "Index of the user to be notified next for a resserved place."
-        ),
-        default=0,
     )
 
     notification_interval = models.DurationField(
@@ -211,7 +201,6 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         return self.reservations.filter(is_active=True).count()
 
     def free_places_for_reserve_invitations(self):
-
         places_for_invitations = 0
         for invitation in self.invitations.all():
             if invitation.reserve_seat:
@@ -283,58 +272,18 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                     headers={
                         'Authorization':
                             'Token ' + json.loads(auth.content)[
-                                'token']},
+                                'token']
+                    },
                     timeout=(10, 10),
                 )
                 r.raise_for_status()
-            except (requests.exceptions.HTTPError,
+            except (
+                    requests.exceptions.HTTPError,
                     requests.exceptions.ConnectionError) as err:
                 mail_admins(
                     "Thèsez-vous: external scheduler error",
                     traceback.format_exc()
                 )
-
-    def notify_users(self):
-        notified_someone = False
-
-        datetime_refund = self.start_time - timedelta(days=self.min_day_refund)
-        # if we are after the refund delay, we notify every waiting user
-        if timezone.now() >= datetime_refund:
-
-            for wait_queue in self.wait_queue.all():
-                user = wait_queue.user
-
-                self.notify_reserved_seat(user)
-                notified_someone = True
-
-            # set seat and user_index to 0 because we notify everyone
-            self.reserved_seats = 0
-
-        else:
-            # Get the wait queue with elements ordered by ascending date
-            wait_queue = self.wait_queue.all().order_by('created_at')
-            # Get number of waiting users
-            nb_waiting_users = wait_queue.count()
-            # If all users have already been notified, free all reserved seats
-            if self.next_user_notified >= nb_waiting_users:
-                self.reserved_seats = 0
-                self.next_user_notified = 0
-            # Else notify a user for every reserved seat
-            for seat in range(self.reserved_seats):
-                if self.next_user_notified >= nb_waiting_users:
-                    self.reserved_seats -= 1
-                else:
-                    user = wait_queue[self.next_user_notified].user
-                    self.notify_reserved_seat(user)
-                    self.next_user_notified += 1
-                    WaitQueueNotification.objects.create(
-                        user=user,
-                        retreat=self,
-                    )
-                    notified_someone = True
-
-        self.save()
-        return notified_someone
 
     def notify_reserved_seat(self, user):
         """
@@ -350,7 +299,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
         try:
             response_send_mail = send_mail(
-                "Place exclusive pour 24h",
+                f"Une place est disponible pour la retraite: {self.name}",
                 plain_msg,
                 settings.DEFAULT_FROM_EMAIL,
                 [user.email],
@@ -373,6 +322,47 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 additional_data=json.dumps(additional_data)
             )
             raise
+
+    def add_wait_queue_place(self, user_cancel, generate_cron=True):
+        new_wait_queue_place = WaitQueuePlace.objects.create(
+            retreat=self,
+            cancel_by=user_cancel
+        )
+        if generate_cron:
+            new_wait_queue_place.generate_cron_task()
+        return new_wait_queue_place
+
+    def add_user_to_wait_queue(self, user):
+        return WaitQueue.objects.create(
+            user=user,
+            retreat=self,
+        )
+
+    def get_wait_queue_place_reserved(self, user):
+        return self.wait_queue_places.filter(
+            wait_queue_places_reserved__user=user
+        ).order_by('create').first()
+
+    def check_and_use_reserved_place(self, user):
+        wait_queue_place = self.get_wait_queue_place_reserved(user)
+        if wait_queue_place:
+            self.wait_queue.filter(user=user).delete()
+            wait_queue_place.available = False
+            wait_queue_place.save()
+
+            WaitQueuePlaceReserved.objects.filter(
+                wait_queue_place__retreat=self,
+                user=user
+            ).delete()
+
+    def can_order_the_retreat(self, user, invitation=None):
+        has_raimimng_place = self.has_places_remaining(invitation)
+
+        wait_queue_place = self.get_wait_queue_place_reserved(user)
+        has_reserved_place = wait_queue_place is not None
+        can_order_the_retreat = has_raimimng_place or has_reserved_place
+
+        return can_order_the_retreat
 
 
 class Picture(models.Model):
@@ -520,7 +510,6 @@ class Reservation(SafeDeleteModel):
         return round(refund_value, 2) if refund_value > 0 else 0
 
     def make_refund(self, refund_reason, total_refund=False):
-
         amount_to_refund = self.get_refund_value(total_refund)
 
         # paysafe use value without cent
@@ -578,43 +567,7 @@ class WaitQueue(models.Model):
         return ', '.join([str(self.retreat), str(self.user)])
 
 
-class WaitQueueNotification(models.Model):
-    """
-    Represents a notification instance for the retreat wait queues.
-    Each time a user is notified, we create an instance of this object as a
-    journal. Sent notifications can then be listed by admins.
-    """
-
-    class Meta:
-        verbose_name = _("Wait queue notification")
-        verbose_name_plural = _("Wait queue notification")
-
-    retreat = models.ForeignKey(
-        Retreat,
-        on_delete=models.CASCADE,
-        verbose_name=_("Retreat"),
-        related_name='wait_queue_notifications',
-    )
-
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name=_("User"),
-        related_name='wait_queue_notifications',
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    history = HistoricalRecords()
-
-    def __str__(self):
-        return ', '.join(
-            [str(self.retreat), str(self.user)]
-        )
-
-
 class RetreatInvitation(SafeDeleteModel):
-
     url_token = models.CharField(
         _("Key"),
         max_length=40,
@@ -677,7 +630,6 @@ class RetreatInvitation(SafeDeleteModel):
 
     @property
     def nb_places_used(self):
-
         return self.retreat_reservations.filter(is_active=True).count()
 
     def nb_places_free(self):
@@ -685,3 +637,109 @@ class RetreatInvitation(SafeDeleteModel):
 
     def has_free_places(self):
         return self.nb_places_used < self.nb_places
+
+
+class WaitQueuePlace(models.Model):
+    retreat = models.ForeignKey(
+        Retreat,
+        on_delete=models.CASCADE,
+        verbose_name=_("Retreat"),
+        related_name='wait_queue_places',
+    )
+    create = models.DateTimeField(
+        verbose_name=_("Create"),
+        auto_now_add=True,
+    )
+    cancel_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_("Cancel by"),
+        related_name='wait_queue_places',
+    )
+
+    available = models.BooleanField(
+        verbose_name=_("Available"),
+        default=True
+    )
+
+    def __str__(self):
+        return f'{self.retreat} {self.pk}'
+
+    def notify(self):
+        # Get all user that have no wait_queue_places_reserved
+        # for this WaitQueuePlace
+
+        wait_queue_places_reserved_ids = \
+            self.wait_queue_places_reserved.filter(
+                notified=True).values('user_id')
+
+        retreat_wait_queues = self.retreat.wait_queue \
+            .exclude(user_id__in=wait_queue_places_reserved_ids) \
+            .order_by('created_at')
+
+        datetime_refund = self.retreat.start_time - timedelta(
+            days=self.retreat.min_day_refund)
+        # if we are after the refund delay, we notify every waiting user
+        less_than_min_day_refund = timezone.now() >= datetime_refund
+
+        stop = timezone.now() >= self.retreat.start_time
+
+        users_notified = []
+
+        if stop:
+            return users_notified, stop
+        for wait_queue in retreat_wait_queues:
+            user_already_notified = WaitQueuePlaceReserved.objects.filter(
+                wait_queue_place__available=True,
+                user=wait_queue.user,
+                notified=True,
+                wait_queue_place__retreat=self.retreat
+            ).exists()
+
+            wait_queue_reserved = WaitQueuePlaceReserved.objects.create(
+                wait_queue_place=self,
+                user=wait_queue.user
+            )
+            if not user_already_notified:
+                users_notified.append(wait_queue_reserved.notify())
+                if not less_than_min_day_refund:
+                    break
+
+        return users_notified, False
+
+    def generate_cron_task(self):
+        cron_manager = CronManager()
+        cron_manager.create_wait_queue_place_notification(self.id)
+
+
+class WaitQueuePlaceReserved(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_("User"),
+        related_name='wait_queue_places_reserved',
+    )
+    wait_queue_place = models.ForeignKey(
+        WaitQueuePlace,
+        on_delete=models.CASCADE,
+        verbose_name=_("Wait Queue Place"),
+        related_name='wait_queue_places_reserved',
+    )
+    create = models.DateTimeField(
+        verbose_name=_("Create"),
+        auto_now_add=True,
+    )
+    notified = models.BooleanField(
+        verbose_name=_("Notified"),
+        default=False
+    )
+
+    def __str__(self):
+        return f'{self.wait_queue_place}-{self.user}'
+
+    def notify(self):
+        self.wait_queue_place.retreat.notify_reserved_seat(self.user)
+        self.notified = True
+        self.save()
+
+        return self.user.email

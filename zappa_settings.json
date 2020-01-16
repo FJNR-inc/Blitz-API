@@ -9,6 +9,10 @@
         "memory_size": 1024,
         "runtime": "python3.6",
         "s3_bucket": "thesezvous-api",
+        "events": [{
+                  "function": "cron_manager.cron_function.execute_tasks",
+                  "expression": "rate(10 minutes)"
+              }],
         "aws_environment_variables": {
             "SENDINBLUE_API_KEY": "",
             "SECRET_KEY": "",
@@ -53,7 +57,8 @@
             "FILE_UPLOAD_MAX_MEMORY_SIZE": "5242880",
             "EXTERNAL_SCHEDULER_URL": "https://cron-manager.fjnr.ca",
             "EXTERNAL_SCHEDULER_USER": "",
-            "EXTERNAL_SCHEDULER_PASSWORD": ""
+            "EXTERNAL_SCHEDULER_PASSWORD": "",
+            "URL_TO_CALL":  "https://api-dev.thesez-vous.org"
         },
         "vpc_config" : {
             "SubnetIds": [ "subnet-0bd158ff494029446","subnet-087e1408264ff9358" ],

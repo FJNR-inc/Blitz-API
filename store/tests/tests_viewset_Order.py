@@ -18,11 +18,9 @@ import responses
 from unittest import mock
 
 from blitz_api.factories import UserFactory, AdminFactory
-from blitz_api.models import AcademicLevel
 
 from workplace.models import TimeSlot, Period, Workplace
-from retirement.models import Retreat, WaitQueueNotification, WaitQueue, \
-    RetreatInvitation
+from retirement.models import Retreat, RetreatInvitation
 
 from .paysafe_sample_responses import (
     SAMPLE_PROFILE_RESPONSE,
@@ -34,8 +32,10 @@ from .paysafe_sample_responses import (
     SAMPLE_CARD_REFUSED,
 )
 
-from ..models import (Package, Order, OrderLine, Membership, PaymentProfile,
-                      Coupon, CouponUser, MembershipCoupon, OptionProduct)
+from ..models import (
+    Package, Order, OrderLine, Membership, PaymentProfile,
+    Coupon, CouponUser, MembershipCoupon, OptionProduct
+)
 
 User = get_user_model()
 
@@ -181,9 +181,9 @@ class OrderTests(APITestCase):
             is_active=True,
             activity_language='FR',
             accessibility=True,
-            reserved_seats=1,
             has_shared_rooms=True,
         )
+        self.retreat.add_wait_queue_place(self.user, generate_cron=False)
         self.retreat_no_seats = Retreat.objects.create(
             name="no_place_left_retreat",
             seats=0,
@@ -354,7 +354,7 @@ class OrderTests(APITestCase):
                 'metadata':
                     json.dumps({'invitation_id': self.invitation.id}),
                 'cost': 199.0 + self.options.price,
-                'options':  [{
+                'options': [{
                     'id': self.options.id,
                     'quantity': 1
                 }]
@@ -389,12 +389,6 @@ class OrderTests(APITestCase):
         admin.tickets = 1
         admin.membership = None
         admin.save()
-
-        # Validate that reserved_seats count is decremented
-        self.retreat.refresh_from_db()
-        self.assertFalse(self.retreat.reserved_seats)
-        self.retreat.reserved_seats = 1
-        self.retreat.save()
 
         # 1 email for the order details
         # 1 email for the retreat informations
@@ -676,7 +670,6 @@ class OrderTests(APITestCase):
 
     @responses.activate
     def test_create_reservation_only_from_admin(self):
-
         FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
 
         self.client.force_authenticate(user=self.admin)
@@ -742,7 +735,6 @@ class OrderTests(APITestCase):
 
     @responses.activate
     def test_create_reservation_only_from_admin_without_payment(self):
-
         FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
 
         self.client.force_authenticate(user=self.admin)
@@ -809,7 +801,6 @@ class OrderTests(APITestCase):
 
     @responses.activate
     def test_create_reservation_only_from_not_admin(self):
-
         FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
 
         self.client.force_authenticate(user=self.user)
@@ -1421,7 +1412,9 @@ class OrderTests(APITestCase):
         """
         self.client.force_authenticate(user=self.user)
 
-        self.retreat_no_seats.reserved_seats = 1
+        self.retreat_no_seats.wait_queue_places.all().delete()
+        self.retreat_no_seats.add_wait_queue_place(self.user,
+                                                   generate_cron=False)
         self.retreat_no_seats.save()
 
         responses.add(
@@ -1467,26 +1460,18 @@ class OrderTests(APITestCase):
         """
         self.client.force_authenticate(user=self.user)
 
-        self.retreat_no_seats.reserved_seats = 1
-        self.retreat_no_seats.save()
-        # The API checks if the user has been notified for a reserved seat in
-        # the specified retreat in the past.
-        WaitQueueNotification.objects.create(
-            user=self.user,
-            retreat=self.retreat_no_seats
-        )
-        # The API should unsubscribe the user from the mailing list.
-        WaitQueue.objects.create(
-            user=self.user,
-            retreat=self.retreat_no_seats,
-        )
-
         responses.add(
             responses.POST,
             "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
             json=SAMPLE_PAYMENT_RESPONSE,
             status=200
         )
+
+        self.retreat_no_seats.wait_queue_places.all().delete()
+        new_wait_queue_place = \
+            self.retreat_no_seats.add_wait_queue_place(self.user)
+        self.retreat_no_seats.add_user_to_wait_queue(self.user)
+        new_wait_queue_place.notify()
 
         data = {
             'payment_token': "CZgD1NlBzPuSefg",
@@ -1537,8 +1522,9 @@ class OrderTests(APITestCase):
         self.assertEqual(response_data, content)
 
         # 1 email for the order details
+        # 1 email for the notification
         # 1 email for the retreat informations
-        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(len(mail.outbox), 3)
 
     @responses.activate
     def test_create_retreat_twice(self):

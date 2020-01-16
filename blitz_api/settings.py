@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'store',
     'retirement',
     'log_management',
+    'cron_manager',
     'storages',
     'anymail',
     'simple_history',
@@ -376,4 +377,5 @@ EXTERNAL_SCHEDULER = {
     'URL': config('EXTERNAL_SCHEDULER_URL', default='http://example.com'),
     'USER': config('EXTERNAL_SCHEDULER_USER', default='user'),
     'PASSWORD': config('EXTERNAL_SCHEDULER_PASSWORD', default='password'),
+    'URL_TO_CALL': config('URL_TO_CALL', default='http://example.com'),
 }

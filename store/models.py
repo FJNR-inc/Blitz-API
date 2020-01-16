@@ -278,6 +278,9 @@ class OrderLineBaseProduct(models.Model):
         verbose_name=_("Quantity"),
     )
 
+    def __str__(self):
+        return f'{self.order_line}'
+
 
 class Refund(SafeDeleteModel):
     """
@@ -638,7 +641,7 @@ class Coupon(AbstractCoupon):
     owner = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name=_("User"),
+        verbose_name=_("Owner"),
         related_name='coupons',
     )
 

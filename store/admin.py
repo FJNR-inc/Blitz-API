@@ -37,6 +37,7 @@ class RefundAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'orderline__order__user__username',
         'amount',
     )
+    autocomplete_fields = ('orderline',)
 
 
 class MembershipAdmin(SimpleHistoryAdmin, TranslationAdmin,
@@ -75,6 +76,7 @@ class CustomPaymentAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'user__username',
         'name',
     )
+    autocomplete_fields = ('user',)
 
 
 class OrderAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
@@ -94,6 +96,7 @@ class OrderAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'user__email',
         'user__username',
     )
+    autocomplete_fields = ('user',)
 
 
 class OrderLineAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
@@ -105,6 +108,7 @@ class OrderLineAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'order',
         'coupon',
         'owner',
+        'date'
     )
     list_filter = (
         ('content_type', admin.RelatedOnlyFieldListFilter),
@@ -118,12 +122,19 @@ class OrderLineAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'coupon__code',
         'id'
     ]
+    autocomplete_fields = ('order', 'coupon',)
 
     def owner(self, instance):
         return instance.order.user
 
     owner.short_description = _('User')
     owner.admin_order_field = 'order__user'
+
+    def date(self, instance):
+        return instance.order.transaction_date
+
+    date.short_description = _('Date')
+    date.admin_order_field = 'order__transaction_date'
 
 
 class PaymentProfileAdmin(SimpleHistoryAdmin):
@@ -140,6 +151,7 @@ class PaymentProfileAdmin(SimpleHistoryAdmin):
         'owner__email',
         'owner__username',
     )
+    autocomplete_fields = ('owner',)
 
 
 class CouponUserInline(admin.StackedInline):
@@ -169,6 +181,7 @@ class CouponAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'owner__email',
         'owner__username',
     )
+    autocomplete_fields = ('owner',)
 
 
 class CouponUserAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
@@ -189,8 +202,57 @@ class CouponUserAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
         'user__email',
         'user__username',
     ) + SafeDeleteAdmin.list_filter
+    autocomplete_fields = ('user', 'coupon',)
 
     actions = ['undelete_selected', 'export_admin_action']
+
+
+class OrderLineBaseProductAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
+                                ExportActionModelAdmin, ):
+    list_display = (
+        'order_line',
+        'option',
+        'quantity',
+    )
+    list_filter = (
+        'option',
+    )
+    autocomplete_fields = ('order_line', 'option',)
+    search_fields = (
+        'order_line__order__user__email',
+        'order_line__order__user__username',
+        'order_line__coupon__code',
+        'id',
+        'option__name'
+    )
+
+
+class OptionProductAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'price',
+        'available'
+    )
+    list_filter = (
+        'available',
+    )
+    search_fields = (
+        'name',
+    )
+
+
+class BaseProductAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'price',
+        'available'
+    )
+    list_filter = (
+        'available',
+    )
+    search_fields = (
+        'name',
+    )
 
 
 admin.site.register(Membership, MembershipAdmin)
@@ -203,6 +265,6 @@ admin.site.register(Coupon, CouponAdmin)
 admin.site.register(MembershipCoupon)
 admin.site.register(CouponUser, CouponUserAdmin)
 admin.site.register(Refund, RefundAdmin)
-admin.site.register(BaseProduct)
-admin.site.register(OrderLineBaseProduct)
-admin.site.register(OptionProduct)
+admin.site.register(BaseProduct, BaseProductAdmin)
+admin.site.register(OrderLineBaseProduct, OrderLineBaseProductAdmin)
+admin.site.register(OptionProduct, OptionProductAdmin)
