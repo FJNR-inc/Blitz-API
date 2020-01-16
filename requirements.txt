@@ -23,3 +23,4 @@ jsonfield==2.0.2
 django-model-utils==3.2.0
 tqdm==4.41.1
 colorama==0.4.3
+tablib[all]==1.0.0
