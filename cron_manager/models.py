@@ -42,38 +42,35 @@ class Task(models.Model):
 
     @property
     def last_execution(self):
-        return self.executions.order_by('-executed_at').first()
+        return self.executions.filter(success=True)\
+            .order_by('-executed_at').first()
+
+    def next_execution_datetime(self):
+        if self.last_execution:
+            if self.execution_interval:
+                next_execution_datetime = False
+            else:
+                next_execution_datetime = \
+                    self.last_execution.executed_at + self.execution_interval
+        else:
+            next_execution_datetime = self.execution_datetime
+        return next_execution_datetime
 
     @property
     def can_be_execute(self):
 
         if self.active:
-            if self.execution_interval:
-                now_less_intervals = timezone.now() - timezone.timedelta(
-                    milliseconds=self.execution_interval)
+            next_execution_datetime = self.next_execution_datetime()
+            if next_execution_datetime:
+                return timezone.now() >= self.next_execution_datetime()
             else:
-                now_less_intervals = timezone.now()
-
-            last_execution = self.last_execution
-
-            if last_execution:
-                return now_less_intervals > last_execution.executed_at
-            else:
-                return now_less_intervals > self.execution_datetime
+                return False
         else:
             return False
 
     def execute(self):
 
-        last_execution = self.last_execution
-        if last_execution:
-            if self.execution_interval:
-                executed_at = last_execution.executed_at - timezone.timedelta(
-                    milliseconds=self.execution_interval)
-            else:
-                executed_at = last_execution.executed_at
-        else:
-            executed_at = self.execution_datetime
+        executed_at = self.next_execution_datetime()
 
         execution = Execution.objects.create(
             task=self,
