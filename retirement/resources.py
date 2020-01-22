@@ -6,7 +6,7 @@ from import_export.widgets import (ForeignKeyWidget, ManyToManyWidget,
                                    DateTimeWidget)
 
 from store.models import OrderLine, OrderLineBaseProduct, OptionProduct
-from .models import Reservation, Retreat
+from .models import Reservation, Retreat, RetreatInvitation
 
 User = get_user_model()
 
@@ -203,6 +203,12 @@ class RetreatReservationResource(resources.ModelResource):
         widget=ForeignKeyWidget(User, 'phone'),
     )
 
+    invitation = fields.Field(
+        column_name='invitation',
+        attribute='invitation',
+        widget=ForeignKeyWidget(RetreatInvitation, 'name'),
+    )
+
     class Meta:
         model = Reservation
         fields = (
@@ -216,7 +222,8 @@ class RetreatReservationResource(resources.ModelResource):
             'city',
             'phone',
             'is_active',
-            'is_present'
+            'is_present',
+            'invitation'
         )
         export_order = (
             'last_name',
@@ -229,7 +236,8 @@ class RetreatReservationResource(resources.ModelResource):
             'city',
             'phone',
             'is_active',
-            'is_present'
+            'is_present',
+            'invitation'
         )
 
 
