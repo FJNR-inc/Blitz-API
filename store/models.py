@@ -641,7 +641,7 @@ class Coupon(AbstractCoupon):
     owner = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name=_("Owner"),
+        verbose_name=_("User"),
         related_name='coupons',
     )
 

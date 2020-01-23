@@ -135,6 +135,7 @@ class WaitQueuePlaceReservedInline(admin.StackedInline):
     model = WaitQueuePlaceReserved
     can_delete = True
     show_change_link = True
+    autocomplete_fields = ('user', 'wait_queue_place')
     verbose_name_plural = _('Wait Queue places reserved')
 
 
@@ -160,10 +161,14 @@ class WaitQueuePlaceReservedAdmin(admin.ModelAdmin):
         'wait_queue_place',
         'user',
         'create',
-        'notified'
+        'notified',
+        'used',
     )
     list_filter = (
+        'wait_queue_place__retreat',
         'wait_queue_place',
+        'notified',
+        'used',
         'user'
     )
     autocomplete_fields = ('user', 'wait_queue_place')
