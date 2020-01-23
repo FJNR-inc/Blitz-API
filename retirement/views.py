@@ -512,14 +512,21 @@ class WaitQueuePlaceViewSet(viewsets.ModelViewSet):
             detail, stop = wait_queue_place.notify()
             response_data = {
                 'detail': detail,
+                'wait_queue_place': wait_queue_place.id,
                 'stop': stop,
             }
-            return Response(response_data, status=status.HTTP_200_OK)
+            if stop:
+                return Response(response_data, status=status.HTTP_200_OK)
+            else:
+                return Response(response_data, status=status.HTTP_202_ACCEPTED)
         else:
             response_data = {
+                'wait_queue_place': wait_queue_place.id,
                 'detail': "Last notification was sent less than 24h ago."
             }
-            return Response(response_data, status=status.HTTP_200_OK)
+            return Response(
+                response_data,
+                status=status.HTTP_429_TOO_MANY_REQUESTS)
 
 
 class WaitQueuePlaceReservedViewSet(mixins.ListModelMixin,

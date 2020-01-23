@@ -346,23 +346,34 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
     def check_and_use_reserved_place(self, user):
         wait_queue_place = self.get_wait_queue_place_reserved(user)
         if wait_queue_place:
-            self.wait_queue.filter(user=user).delete()
+            wait_queues = self.wait_queue.filter(user=user)
+            for wait_queue in wait_queues:
+                wait_queue.used = True
+                wait_queue.save()
+
             wait_queue_place.available = False
             wait_queue_place.save()
 
-            WaitQueuePlaceReserved.objects.filter(
+            user_places_reserved = WaitQueuePlaceReserved.objects.filter(
                 wait_queue_place__retreat=self,
                 user=user
-            ).delete()
+            )
+            for user_place_reserved in user_places_reserved:
+                user_place_reserved.used = True
+                user_place_reserved.save()
 
     def can_order_the_retreat(self, user, invitation=None):
-        has_raimimng_place = self.has_places_remaining(invitation)
+        has_remaining_place = self.has_places_remaining(invitation)
 
         wait_queue_place = self.get_wait_queue_place_reserved(user)
         has_reserved_place = wait_queue_place is not None
-        can_order_the_retreat = has_raimimng_place or has_reserved_place
+        can_order_the_retreat = has_remaining_place or has_reserved_place
 
         return can_order_the_retreat
+
+    def get_datetime_refund(self):
+        return self.start_time - timedelta(
+            days=self.min_day_refund)
 
 
 class Picture(models.Model):
@@ -559,6 +570,11 @@ class WaitQueue(models.Model):
         related_name='wait_queue',
     )
 
+    used = models.BooleanField(
+        verbose_name=_("Used"),
+        default=False
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     history = HistoricalRecords()
@@ -665,34 +681,45 @@ class WaitQueuePlace(models.Model):
     def __str__(self):
         return f'{self.retreat} {self.pk}'
 
-    def notify(self):
-        # Get all user that have no wait_queue_places_reserved
-        # for this WaitQueuePlace
-
+    def get_user_without_places_reserved(self):
         wait_queue_places_reserved_ids = \
             self.wait_queue_places_reserved.filter(
-                notified=True).values('user_id')
+                used=False).values('user_id')
 
-        retreat_wait_queues = self.retreat.wait_queue \
+        retreat_wait_queues = self.retreat.wait_queue\
+            .filter(used=False) \
             .exclude(user_id__in=wait_queue_places_reserved_ids) \
             .order_by('created_at')
 
-        datetime_refund = self.retreat.start_time - timedelta(
-            days=self.retreat.min_day_refund)
-        # if we are after the refund delay, we notify every waiting user
-        less_than_min_day_refund = timezone.now() >= datetime_refund
+        return retreat_wait_queues
 
-        stop = timezone.now() >= self.retreat.start_time
+    def notify(self):
 
         users_notified = []
 
+        # Stop the notification process if place not available
+        if not self.available:
+            return 'Wait queue place not available', True
+
+        stop = timezone.now() >= self.retreat.start_time
         if stop:
-            return users_notified, stop
+            return 'Retreat already started', stop
+
+        # Get all user that have no wait_queue_places_reserved
+        # for this WaitQueuePlace
+        retreat_wait_queues = self.get_user_without_places_reserved()
+
+        # if we are after the refund delay, we notify every waiting user
+        less_than_min_day_refund = \
+            timezone.now() >= self.retreat.get_datetime_refund()
+
         for wait_queue in retreat_wait_queues:
+            # check if the user is already notified for this retreat
             user_already_notified = WaitQueuePlaceReserved.objects.filter(
-                wait_queue_place__available=True,
                 user=wait_queue.user,
                 notified=True,
+                used=False,
+                wait_queue_place__available=True,
                 wait_queue_place__retreat=self.retreat
             ).exists()
 
@@ -731,6 +758,11 @@ class WaitQueuePlaceReserved(models.Model):
     )
     notified = models.BooleanField(
         verbose_name=_("Notified"),
+        default=False
+    )
+
+    used = models.BooleanField(
+        verbose_name=_("Used"),
         default=False
     )
 

@@ -19,12 +19,12 @@ class RetreatTests(APITestCase):
     def setUp(self) -> None:
         self.admin = AdminFactory()
 
-        self.user1 = UserFactory()
-        self.user2 = UserFactory()
-        self.user3 = UserFactory()
-        self.user4 = UserFactory()
-        self.user5 = UserFactory()
-        self.user6 = UserFactory()
+        self.user1 = UserFactory(email='user1@test.com')
+        self.user2 = UserFactory(email='user2@test.com')
+        self.user3 = UserFactory(email='user3@test.com')
+        self.user4 = UserFactory(email='user4@test.com')
+        self.user5 = UserFactory(email='user5@test.com')
+        self.user6 = UserFactory(email='user6@test.com')
         self.user_cancel = UserFactory()
 
         self.retreat = RetreatFactory()
@@ -36,59 +36,88 @@ class RetreatTests(APITestCase):
             cancel_by=self.user_cancel
         )
 
-        self.wait_queue1 = WaitQueue.objects.create(
+        self.wait_queue_user1 = WaitQueue.objects.create(
             retreat=self.retreat,
             user=self.user1
         )
-        self.wait_queue2 = WaitQueue.objects.create(
+        self.wait_queue_user2 = WaitQueue.objects.create(
             retreat=self.retreat,
             user=self.user2
         )
-        self.wait_queue3 = WaitQueue.objects.create(
+        self.wait_queue_user3 = WaitQueue.objects.create(
             retreat=self.retreat,
             user=self.user3
         )
-        self.wait_queue4 = WaitQueue.objects.create(
+        self.wait_queue_user4 = WaitQueue.objects.create(
             retreat=self.retreat,
             user=self.user4
         )
-        self.wait_queue5 = WaitQueue.objects.create(
+        self.wait_queue_user5 = WaitQueue.objects.create(
             retreat=self.retreat,
             user=self.user5
         )
-        self.wait_queue6 = WaitQueue.objects.create(
+        self.wait_queue_user6 = WaitQueue.objects.create(
             retreat=self.retreat,
             user=self.user6
+        )
+
+    def check_user_has_reserved_place_notify(
+            self,
+            user,
+            wait_queue_place):
+        self.assertTrue(
+            WaitQueuePlaceReserved.objects.filter(
+                user=user,
+                notified=True,
+                used=False,
+                wait_queue_place=wait_queue_place
+            ).exists()
+        )
+
+    def check_user_has_reserved_place(
+            self,
+            user,
+            wait_queue_place):
+        self.assertTrue(
+            WaitQueuePlaceReserved.objects.filter(
+                user=user,
+                notified=False,
+                used=False,
+                wait_queue_place=wait_queue_place
+            ).exists()
+        )
+
+    def check_count_wait_queue_place(self, wait_queue_place, count):
+        self.assertEquals(
+            WaitQueuePlaceReserved.objects.filter(
+                wait_queue_place=wait_queue_place,
+                used=False,
+            ).count(),
+            count
+        )
+
+    def check_place_reserved_used(self, wait_queue_place, user):
+        self.assertTrue(
+            WaitQueuePlaceReserved.objects.get(
+                user=user,
+                wait_queue_place=wait_queue_place
+            ).used
         )
 
     def test_notify_wait_queue_place(self):
         self.wait_queue_place.notify()
 
-        self.assertTrue(
-            WaitQueuePlaceReserved.objects.filter(
-                user=self.user1,
-                notified=True,
-                wait_queue_place=self.wait_queue_place
-            ).exists()
-        )
+        self.check_user_has_reserved_place_notify(self.user1,
+                                                  self.wait_queue_place)
+        self.check_count_wait_queue_place(self.wait_queue_place, 1)
 
         self.wait_queue_place.notify()
 
-        self.assertTrue(
-            WaitQueuePlaceReserved.objects.filter(
-                user=self.user2,
-                notified=True,
-                wait_queue_place=self.wait_queue_place
-            ).exists()
-        )
-
-        self.assertTrue(
-            WaitQueuePlaceReserved.objects.filter(
-                user=self.user1,
-                notified=True,
-                wait_queue_place=self.wait_queue_place
-            ).exists()
-        )
+        self.check_user_has_reserved_place_notify(self.user2,
+                                                  self.wait_queue_place)
+        self.check_user_has_reserved_place_notify(self.user1,
+                                                  self.wait_queue_place)
+        self.check_count_wait_queue_place(self.wait_queue_place, 2)
 
         wait_queue_place2 = WaitQueuePlace.objects.create(
             retreat=self.retreat,
@@ -97,88 +126,38 @@ class RetreatTests(APITestCase):
 
         wait_queue_place2.notify()
 
-        self.assertTrue(
-            WaitQueuePlaceReserved.objects.filter(
-                user=self.user3,
-                notified=True,
-                wait_queue_place=wait_queue_place2
-            ).exists()
-        )
-
-        self.assertTrue(
-            WaitQueuePlaceReserved.objects.filter(
-                user=self.user2,
-                notified=False,
-                wait_queue_place=wait_queue_place2
-            ).exists()
-        )
-
-        self.assertTrue(
-            WaitQueuePlaceReserved.objects.filter(
-                user=self.user1,
-                notified=False,
-                wait_queue_place=wait_queue_place2
-            ).exists()
-        )
+        self.check_user_has_reserved_place_notify(self.user3,
+                                                  wait_queue_place2)
+        self.check_user_has_reserved_place(self.user2, wait_queue_place2)
+        self.check_user_has_reserved_place(self.user1, wait_queue_place2)
+        self.check_count_wait_queue_place(wait_queue_place2, 3)
 
         self.retreat.check_and_use_reserved_place(self.user2)
 
-        self.assertFalse(
-            WaitQueuePlaceReserved.objects.filter(
-                user=self.user2,
-                wait_queue_place=wait_queue_place2
-            ).exists()
-        )
-        wait_queue_place2.notify()
+        self.check_place_reserved_used(wait_queue_place2, self.user2)
+        self.check_place_reserved_used(self.wait_queue_place, self.user2)
 
+        self.wait_queue_user2.refresh_from_db()
         self.assertTrue(
-            WaitQueuePlaceReserved.objects.filter(
-                user=self.user3,
-                notified=True,
-                wait_queue_place=wait_queue_place2
-            ).exists()
+            self.wait_queue_user2.used
         )
 
-        self.assertTrue(
-            WaitQueuePlaceReserved.objects.filter(
-                user=self.user1,
-                notified=True,
-                wait_queue_place=wait_queue_place2
-            ).exists()
-        )
-
+        self.wait_queue_place.refresh_from_db()
         self.assertFalse(
-            WaitQueuePlaceReserved.objects.filter(
-                user=self.user4,
-                wait_queue_place=wait_queue_place2
-            ).exists()
+            self.wait_queue_place.available
         )
+
+        detail, stop = self.wait_queue_place.notify()
+        self.assertTrue(stop)
+        self.assertEqual(detail, 'Wait queue place not available')
 
         wait_queue_place2.notify()
-
-        self.assertTrue(
-            WaitQueuePlaceReserved.objects.filter(
-                user=self.user3,
-                notified=True,
-                wait_queue_place=wait_queue_place2
-            ).exists()
-        )
-
-        self.assertTrue(
-            WaitQueuePlaceReserved.objects.filter(
-                user=self.user1,
-                notified=True,
-                wait_queue_place=wait_queue_place2
-            ).exists()
-        )
-
-        self.assertTrue(
-            WaitQueuePlaceReserved.objects.filter(
-                user=self.user4,
-                notified=True,
-                wait_queue_place=wait_queue_place2
-            ).exists()
-        )
+        self.check_user_has_reserved_place_notify(self.user4,
+                                                  wait_queue_place2)
+        self.check_user_has_reserved_place_notify(self.user3,
+                                                  wait_queue_place2)
+        self.check_user_has_reserved_place(self.user1, wait_queue_place2)
+        self.check_count_wait_queue_place(wait_queue_place2, 3)
 
         FIXED_TIME = self.retreat.start_time - timedelta(days=2)
 
@@ -189,12 +168,23 @@ class RetreatTests(APITestCase):
             self.assertIn(self.user6.email, users_notified)
             self.assertFalse(stop)
 
+            self.check_user_has_reserved_place_notify(self.user6,
+                                                      wait_queue_place2)
+            self.check_user_has_reserved_place_notify(self.user5,
+                                                      wait_queue_place2)
+            self.check_user_has_reserved_place_notify(self.user4,
+                                                      wait_queue_place2)
+            self.check_user_has_reserved_place_notify(self.user3,
+                                                      wait_queue_place2)
+            self.check_user_has_reserved_place(self.user1, wait_queue_place2)
+            self.check_count_wait_queue_place(wait_queue_place2, 5)
+
         FIXED_TIME = self.retreat.start_time + timedelta(days=2)
 
         with mock.patch(
                 'django.utils.timezone.now', return_value=FIXED_TIME):
-            users_notified, stop = wait_queue_place2.notify()
-            self.assertEqual(len(users_notified), 0)
+            detail, stop = wait_queue_place2.notify()
+            self.assertEqual(detail, 'Retreat already started')
             self.assertTrue(stop)
 
     def test_view_notify_wait_queue_place(self):
@@ -209,7 +199,7 @@ class RetreatTests(APITestCase):
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_200_OK,
+            status.HTTP_202_ACCEPTED,
             response.content
         )
 
@@ -217,6 +207,7 @@ class RetreatTests(APITestCase):
 
         content = {
             'detail': [self.user1.email],
+            'wait_queue_place': self.wait_queue_place.id,
             'stop': False
         }
 
@@ -239,7 +230,7 @@ class RetreatTests(APITestCase):
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_200_OK,
+            status.HTTP_429_TOO_MANY_REQUESTS,
             response.content
         )
 
@@ -247,6 +238,7 @@ class RetreatTests(APITestCase):
 
         content = {
             'detail': "Last notification was sent less than 24h ago.",
+            'wait_queue_place': self.wait_queue_place.id,
         }
 
         self.assertEqual(response_data, content)
