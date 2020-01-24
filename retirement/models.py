@@ -59,7 +59,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
     @property
     def reserved_seats(self):
-        return self.wait_queue_places.count()
+        return self.wait_queue_places.filter(available=True).count()
 
     toilet_gendered = models.BooleanField(
         null=True,
@@ -340,6 +340,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
     def get_wait_queue_place_reserved(self, user):
         return self.wait_queue_places.filter(
+            available=True,
             wait_queue_places_reserved__user=user
         ).order_by('create').first()
 
