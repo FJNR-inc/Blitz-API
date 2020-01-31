@@ -203,6 +203,12 @@ class RetreatReservationResource(resources.ModelResource):
         widget=ForeignKeyWidget(User, 'phone'),
     )
 
+    gender = fields.Field(
+        column_name='gender',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'gender'),
+    )
+
     invitation = fields.Field(
         column_name='invitation',
         attribute='invitation',
@@ -223,7 +229,8 @@ class RetreatReservationResource(resources.ModelResource):
             'phone',
             'is_active',
             'is_present',
-            'invitation'
+            'invitation',
+            'gender'
         )
         export_order = (
             'last_name',
@@ -237,7 +244,8 @@ class RetreatReservationResource(resources.ModelResource):
             'phone',
             'is_active',
             'is_present',
-            'invitation'
+            'invitation',
+            'gender'
         )
 
 
