@@ -497,6 +497,16 @@ class Reservation(SafeDeleteModel):
         blank=True
     )
 
+    post_event_send = models.BooleanField(
+        verbose_name=_('Post event notification send'),
+        default=False
+    )
+
+    pre_event_send = models.BooleanField(
+        verbose_name=_('Pre event notification send'),
+        default=False
+    )
+
     history = HistoricalRecords()
 
     def __str__(self):
