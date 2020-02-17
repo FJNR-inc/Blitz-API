@@ -162,6 +162,8 @@ class CouponUserInline(admin.StackedInline):
     fk_name = 'coupon'
     extra = 0
 
+    autocomplete_fields = ('user', 'coupon',)
+
 
 class CouponAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
     inlines = (CouponUserInline, )
