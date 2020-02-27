@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'retirement',
     'log_management',
     'cron_manager',
+    'ckeditor_api',
     'storages',
     'anymail',
     'simple_history',
