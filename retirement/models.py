@@ -219,7 +219,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         # free places and not all places reserved for invitatioons
         seat_remaining -= self.free_places_for_reserve_invitations()
 
-        return seat_remaining
+        return seat_remaining if seat_remaining > 0 else 0
 
     def has_places_remaining(self, selected_invitation=None):
         seat_remaining = self.places_remaining
