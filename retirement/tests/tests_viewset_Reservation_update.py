@@ -156,6 +156,8 @@ class ReservationTests(APITestCase):
             'refundable': True,
             'exchangeable': True,
             'invitation': None,
+            'post_event_send': False,
+            'pre_event_send': False,
         }
         self.reservation_non_exchangeable = Reservation.objects.create(
             user=self.admin,

@@ -1370,7 +1370,10 @@ class RetreatTests(APITestCase):
                 ),
             )
 
-        content = {'stop': True}
+        content = {
+            'stop': True,
+            'emails': [],  # No reservation on this retreat
+        }
 
         self.assertEqual(json.loads(response.content), content)
 
@@ -1421,7 +1424,10 @@ class RetreatTests(APITestCase):
                 ),
             )
 
-        content = {'stop': True}
+        content = {
+            'stop': True,
+            'emails': [],  # No reservation on this retreat
+        }
 
         self.assertEqual(json.loads(response.content), content)
 

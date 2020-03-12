@@ -10,6 +10,7 @@ class ExecutionInline(admin.StackedInline):
     show_change_link = True
     verbose_name_plural = _('Executions')
     fk_name = 'task'
+    readonly_fields = ('created_at',)
 
 
 class TaskAdmin(admin.ModelAdmin):
@@ -47,6 +48,7 @@ class ExecutionAdmin(admin.ModelAdmin):
         'http_code'
     )
     autocomplete_fields = ('task',)
+    readonly_fields = ('created_at',)
 
 
 admin.site.register(models.Task, TaskAdmin)
