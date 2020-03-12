@@ -163,6 +163,8 @@ class ReservationTests(APITestCase):
             'refundable': True,
             'exchangeable': True,
             'invitation': None,
+            'post_event_send': False,
+            'pre_event_send': False,
         }
         self.reservation2 = Reservation.objects.create(
             user=self.user2,
@@ -185,6 +187,8 @@ class ReservationTests(APITestCase):
             'refundable': True,
             'exchangeable': True,
             'invitation': None,
+            'post_event_send': False,
+            'pre_event_send': False,
         }
         self.reservation_admin = Reservation.objects.create(
             user=self.admin,
@@ -249,6 +253,8 @@ class ReservationTests(APITestCase):
                        str(self.retreat2.id),
             'order_line': None,
             'invitation': None,
+            'post_event_send': False,
+            'pre_event_send': False,
             'retreat_details': {
                 'accessibility_detail': None,
                 'description': None,
@@ -638,6 +644,8 @@ class ReservationTests(APITestCase):
                     'refundable': True,
                     'exchangeable': True,
                     'invitation': None,
+                    'post_event_send': False,
+                    'pre_event_send': False,
                 }
             ]
         }

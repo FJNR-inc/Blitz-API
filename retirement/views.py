@@ -104,11 +104,17 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             return Response(response_data, status=status.HTTP_200_OK)
 
         # Notify a user for every reserved seat
-        for reservation in retreat.reservations.filter(is_active=True):
+        emails = []
+        for reservation in retreat.reservations.filter(
+                is_active=True, pre_event_send=False):
             send_retreat_7_days_email(reservation.user, retreat)
+            reservation.pre_event_send = True
+            reservation.save()
+            emails.append(reservation.user.email)
 
         response_data = {
             'stop': True,
+            'emails': emails
         }
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -129,11 +135,18 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             return Response(response_data, status=status.HTTP_200_OK)
 
         # Notify a user for every reserved seat
-        for reservation in retreat.reservations.filter(is_active=True):
+        emails = []
+        for reservation in retreat.reservations.filter(
+                is_active=True,
+                post_event_send=False):
             send_post_retreat_email(reservation.user, retreat)
+            reservation.post_event_send = True
+            reservation.save()
+            emails.append(reservation.user.email)
 
         response_data = {
             'stop': True,
+            'emails': emails
         }
         return Response(response_data, status=status.HTTP_200_OK)
 
