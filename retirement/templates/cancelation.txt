@@ -12,7 +12,7 @@ Nous comprenons que la fermeture de l'espace peut affecter votre horaire et nous
 {% if CUSTOM_MESSAGE %}
 
  
-** INFORMATIONS ADDITIONNELS
+** INFORMATIONS ADDITIONNELLES
 ------------------------------------------------------------
 
 {{CUSTOM_MESSAGE}}
