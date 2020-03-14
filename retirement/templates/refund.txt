@@ -20,7 +20,7 @@ Ceci est un reçu pour votre remboursement. Merci d'en garder une copie.
 {% if CUSTOM_MESSAGE %}
 
  
-** INFORMATIONS ADDITIONNELS
+** INFORMATIONS ADDITIONNELLES
 ------------------------------------------------------------
 
 {{CUSTOM_MESSAGE}}
