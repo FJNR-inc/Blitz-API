@@ -17,6 +17,28 @@ class PictureAdminInline(admin.TabularInline):
     readonly_fields = ('picture_tag', )
 
 
+def make_reservation_refundable(self, request, queryset):
+
+    Reservation.objects.filter(
+        retreat__in=queryset
+    ).update(refundable=True)
+
+
+make_reservation_refundable.\
+    short_description = 'Make reservation refundable'
+
+
+def make_reservation_not_refundable(self, request, queryset):
+
+    Reservation.objects.filter(
+        retreat__in=queryset
+    ).update(refundable=False)
+
+
+make_reservation_not_refundable.\
+    short_description = 'Make reservation not refundable'
+
+
 class RetreatAdmin(SimpleHistoryAdmin,
                    ExportActionModelAdmin,
                    SafeDeleteAdmin,
@@ -45,7 +67,12 @@ class RetreatAdmin(SimpleHistoryAdmin,
         'id'
     ]
 
-    actions = ['undelete_selected', 'export_admin_action']
+    actions = [
+        'undelete_selected',
+        'export_admin_action',
+        make_reservation_not_refundable,
+        make_reservation_refundable
+    ]
 
 
 class PictureAdmin(SimpleHistoryAdmin, TranslationAdmin):
