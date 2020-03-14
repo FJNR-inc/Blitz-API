@@ -18,7 +18,7 @@ Ceci est une confirmation d'échange. Merci d'en garder une copie.
 {% if CUSTOM_MESSAGE %}
 
  
-** INFORMATIONS ADDITIONNELS
+** INFORMATIONS ADDITIONNELLES
 ------------------------------------------------------------
 
 {{CUSTOM_MESSAGE}}
