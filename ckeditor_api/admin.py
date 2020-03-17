@@ -5,4 +5,4 @@ from ckeditor_api.models import CKEditorPage
 
 @admin.register(CKEditorPage)
 class CKEditorPageAdmin(admin.ModelAdmin):
-    pass
+    readonly_fields = ('updated_at',)
