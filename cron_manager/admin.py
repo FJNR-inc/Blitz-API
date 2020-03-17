@@ -11,6 +11,7 @@ class ExecutionInline(admin.StackedInline):
     verbose_name_plural = _('Executions')
     fk_name = 'task'
     readonly_fields = ('created_at',)
+    max_num = 10
 
 
 class TaskAdmin(admin.ModelAdmin):

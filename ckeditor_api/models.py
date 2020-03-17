@@ -16,8 +16,8 @@ class CKEditorPage(models.Model):
     )
 
     updated_at = models.DateTimeField(
-        verbose_name=_('Data'),
-        auto_now_add=True
+        verbose_name=_('Updated at'),
+        auto_now=True
     )
 
     def __str__(self):
