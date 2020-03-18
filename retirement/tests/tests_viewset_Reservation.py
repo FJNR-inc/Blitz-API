@@ -1046,6 +1046,52 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    @responses.activate
+    def test_delete_reservation_of_user_as_admin_no_refundable(self):
+        """
+        Ensure that an admin can cancel the reservations of a user.
+        This cancelation does not respect 'refundable', the user
+        will not be refunded.
+        The user won't receive any email.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        self.reservation.refundable = False
+        self.reservation.save()
+
+        FIXED_TIME = datetime(2000, 1, 10, tzinfo=LOCAL_TIMEZONE)
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'retreat:reservation-detail',
+                    kwargs={'pk': self.reservation.pk},
+                ),
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content
+        )
+
+        self.reservation.refresh_from_db()
+
+        self.assertFalse(self.reservation.is_active)
+        self.assertEqual(self.reservation.cancelation_reason, 'A')
+        self.assertEqual(self.reservation.cancelation_action, 'N')
+        self.assertEqual(self.reservation.cancelation_date, FIXED_TIME)
+
+        self.reservation.is_active = True
+        self.reservation.cancelation_date = None
+        self.reservation.cancelation_reason = None
+
+        self.assertEqual(len(mail.outbox), 0)
+
+        self.reservation.refundable = True
+        self.reservation.save()
+
     def test_delete_orderline_quantity_too_big(self):
         """
         Ensure that a user can't delete a reservation if the orderline
