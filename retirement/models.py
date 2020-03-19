@@ -422,6 +422,7 @@ class Reservation(SafeDeleteModel):
         ('U', _("User canceled")),
         ('RD', _("Retreat deleted")),
         ('RM', _("Retreat modified")),
+        ('A', _("Admin canceled")),
     )
 
     CANCELATION_ACTION = (

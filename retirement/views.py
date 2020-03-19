@@ -14,6 +14,8 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
+
+import rest_framework
 from rest_framework import mixins, status, viewsets
 from rest_framework import serializers as rest_framework_serializers
 from rest_framework.decorators import action
@@ -321,6 +323,11 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         user = instance.user
         reservation_active = instance.is_active
         order_line = instance.order_line
+        data = request.data
+        force_refund = False
+
+        if self.request.user.is_staff:
+            force_refund = data.get('force_refund', False)
 
         if order_line:
             order = order_line.order
@@ -332,6 +339,18 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         respects_minimum_days = (
                 (retreat.start_time - timezone.now()) >=
                 timedelta(days=retreat.min_day_refund))
+
+        # In order to process a refund we need to be in one of those
+        # two cases:
+        #
+        #  1 - We respect the date limit to be refund and the retreat is
+        #  refundable
+        #
+        #  2 - An admin want to force a refund and the user paid for
+        #  his reservation
+
+        process_refund = (respects_minimum_days and refundable) or\
+                         (force_refund and order_line)
 
         with transaction.atomic():
             # No need to check for previous refunds because a refunded
@@ -345,7 +364,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                             "support team."
                         )]
                     })
-                if respects_minimum_days and refundable:
+                if process_refund:
                     try:
                         refund = instance.make_refund("Reservation canceled")
                     except PaymentAPIError as err:
@@ -372,7 +391,12 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                     instance.cancelation_action = 'N'
 
                 instance.is_active = False
-                instance.cancelation_reason = 'U'
+
+                if self.request.user.id != user.id:
+                    instance.cancelation_reason = 'A'
+                else:
+                    instance.cancelation_reason = 'U'
+
                 instance.cancelation_date = timezone.now()
                 instance.save()
 
