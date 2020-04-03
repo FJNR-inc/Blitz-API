@@ -59,7 +59,8 @@ INSTALLED_APPS = [
     'rest_framework_filters',
     'safedelete',
     'import_export',
-    'django_filters'
+    'django_filters',
+    'admin_auto_filters'
 ]
 
 MIDDLEWARE = [
@@ -221,6 +222,8 @@ else:
     STATIC_URL = config('STATIC_URL', default='/static/')
     STATICFILES_STORAGE = config('STATICFILES_STORAGE',
                                  default='django.contrib.staticfiles.storage.StaticFilesStorage')
+if STATICFILES_STORAGE == 'django.contrib.staticfiles.storage.StaticFilesStorage':
+    STATIC_ROOT = 'static/'
 
 # User uploaded files (MEDIA)
 MEDIA_URL = config('MEDIA_URL', default='/media/')

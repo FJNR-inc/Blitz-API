@@ -1,3 +1,4 @@
+from admin_auto_filters.filters import AutocompleteFilter
 from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
@@ -12,6 +13,16 @@ from .models import (AcademicField, AcademicLevel, ActionToken, Domain,
                      Organization, TemporaryToken, User)
 from .resources import (AcademicFieldResource, AcademicLevelResource,
                         OrganizationResource, UserResource)
+
+
+class UserFilter(AutocompleteFilter):
+    title = 'User'
+    field_name = 'user'
+
+
+class OwnerFilter(AutocompleteFilter):
+    title = 'Owner'
+    field_name = 'owner'
 
 
 class CustomUserChangeForm(UserChangeForm):
@@ -80,6 +91,7 @@ class ActionTokenAdmin(admin.ModelAdmin):
         'type',
         'expires',
     )
+    autocomplete_fields = ('user',)
 
 
 class TemporaryTokenAdmin(SimpleHistoryAdmin):
@@ -88,6 +100,7 @@ class TemporaryTokenAdmin(SimpleHistoryAdmin):
     list_filter = (
         'expires',
     )
+    autocomplete_fields = ('user',)
 
 
 class AcademicFieldAdmin(SimpleHistoryAdmin, TranslationAdmin,
