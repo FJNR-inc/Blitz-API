@@ -55,7 +55,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         verbose_name=_("Id before migrate to base product"),
         null=True, )
 
-    seats = models.IntegerField(verbose_name=_("Seats"), )
+    seats = models.PositiveIntegerField(verbose_name=_("Seats"), )
 
     @property
     def reserved_seats(self):
