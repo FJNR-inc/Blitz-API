@@ -23,3 +23,4 @@ jsonfield==3.1.0
 django-model-utils==3.2.0
 tqdm==4.43.0
 colorama==0.4.3
+django-admin-autocomplete-filter==0.4

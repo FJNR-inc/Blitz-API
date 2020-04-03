@@ -1,3 +1,4 @@
+from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from import_export.admin import ExportActionModelAdmin
@@ -5,6 +6,7 @@ from modeltranslation.admin import TranslationAdmin
 from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 from simple_history.admin import SimpleHistoryAdmin
 
+from blitz_api.admin import UserFilter
 from .models import Period, Picture, Reservation, TimeSlot, Workplace
 from .resources import (PeriodResource, ReservationResource, TimeSlotResource,
                         WorkplaceResource)
@@ -80,6 +82,17 @@ class TimeSlotAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
 
     actions = ['undelete_selected', 'export_admin_action']
 
+    search_fields = (
+        'period__name',
+        'period__workplace__name',
+    )
+    autocomplete_fields = ('user', 'timeslot')
+
+
+class TimeSlotFilter(AutocompleteFilter):
+    title = 'Time Slot'
+    field_name = 'timeslot'
+
 
 class ReservationAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
                        ExportActionModelAdmin):
@@ -93,8 +106,8 @@ class ReservationAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
         highlight_deleted,
     ) + SafeDeleteAdmin.list_display
     list_filter = (
-        ('user', admin.RelatedOnlyFieldListFilter),
-        ('timeslot', admin.RelatedOnlyFieldListFilter),
+        UserFilter,
+        TimeSlotFilter,
         ('timeslot__period', admin.RelatedOnlyFieldListFilter),
         ('timeslot__period__workplace', admin.RelatedOnlyFieldListFilter),
         'is_active',
@@ -104,6 +117,15 @@ class ReservationAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
 
     actions = ['undelete_selected', 'export_admin_action']
 
+    search_fields = (
+        'user__email',
+        'user__username',
+    )
+    autocomplete_fields = ('user', 'timeslot')
+
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
 
 admin.site.register(Workplace, WorkplaceAdmin)
 admin.site.register(Picture, PictureAdmin)
