@@ -53,6 +53,8 @@ class UsersIdTests(APITestCase):
             'faculty',
             'student_number',
             'volunteer_for_workplace',
+            'hide_newsletter',
+            'is_in_newsletter',
         ]
 
     def setUp(self):

@@ -338,6 +338,8 @@ class ReservationTests(APITestCase):
                 'faculty': None,
                 'student_number': None,
                 'volunteer_for_workplace': [],
+                'hide_newsletter': False,
+                'is_in_newsletter': False,
             }
         }
 

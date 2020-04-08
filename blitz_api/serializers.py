@@ -1,4 +1,6 @@
 import re
+
+from mailchimp3.mailchimpclient import MailChimpError
 from rest_framework import serializers
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from django.contrib.auth import (get_user_model, password_validation,
@@ -12,7 +14,7 @@ from .models import (
     ExportMedia
 )
 from .services import remove_translation_fields, check_if_translated_field
-from . import services
+from . import services, mailchimp
 from store.serializers import MembershipSerializer
 
 User = get_user_model()
@@ -178,6 +180,7 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
         max_length=254,
         required=True,
     )
+    is_in_newsletter = serializers.ReadOnlyField()
 
     def validate_email(self, value):
         """
@@ -391,6 +394,7 @@ class UserSerializer(UserUpdateSerializer):
         view_name='workplace-detail',
         source='workplaces',
     )
+    is_in_newsletter = serializers.ReadOnlyField()
 
     def validate_email(self, value):
         """
@@ -585,3 +589,37 @@ class ExportMediaSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = ExportMedia
         fields = '__all__'
+
+
+class MailChimpSerializer(serializers.Serializer):
+
+    email = serializers.EmailField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+
+    def update(self, instance, validated_data):
+        pass
+
+    def create(self, validated_data):
+
+        try:
+            response = mailchimp.add_to_list(
+                email=validated_data['email'],
+                first_name=validated_data['first_name'],
+                last_name=validated_data['last_name']
+            )
+            print(response)
+        except MailChimpError as e:
+            print(e.args[0])
+            if e.args[0]['title'] == 'Member Exists':
+                raise serializers.ValidationError({
+                    'email': [
+                        _(
+                            "Email already register to this newsletter"
+                        )
+                    ]
+                })
+            raise serializers.ValidationError({
+                'non_field_errors': [e.args[0]['detail']]
+            })
+        return validated_data

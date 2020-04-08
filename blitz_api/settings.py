@@ -383,3 +383,9 @@ EXTERNAL_SCHEDULER = {
     'PASSWORD': config('EXTERNAL_SCHEDULER_PASSWORD', default='password'),
     'URL_TO_CALL': config('URL_TO_CALL', default='http://example.com'),
 }
+
+MAILCHIMP_API_KEY = config('MAILCHIMP_API_KEY', default='')
+MAILCHIMP_SUBSCRIBE_LIST_ID = config(
+    'MAILCHIMP_SUBSCRIBE_LIST_ID', default='')
+MAILCHIMP_ENABLED = config(
+    'MAILCHIMP_ENABLED', default=False, cast=bool)
