@@ -86,7 +86,6 @@ class TimeSlotAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
         'period__name',
         'period__workplace__name',
     )
-    autocomplete_fields = ('user', 'timeslot')
 
 
 class TimeSlotFilter(AutocompleteFilter):

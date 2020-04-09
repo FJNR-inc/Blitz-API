@@ -15,6 +15,7 @@ from simple_history.models import HistoricalRecords
 
 from django.utils.translation import ugettext_lazy as _
 
+from . import mailchimp
 from .managers import ActionTokenManager
 
 
@@ -133,7 +134,17 @@ class User(AbstractUser):
         blank=True,
         null=True,
     )
+
+    hide_newsletter = models.BooleanField(
+        default=False,
+        verbose_name=_("Hide newsletter"),
+    )
+
     history = HistoricalRecords()
+
+    @property
+    def is_in_newsletter(self):
+        return mailchimp.is_email_on_list(self.email)
 
     @classmethod
     def create_user(cls,

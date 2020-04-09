@@ -70,6 +70,11 @@ urlpatterns = [
         name='token_api'
     ),
     path(
+        'mail_chimp',
+        views.MailChimpView.as_view(),
+        name='mail_chimp'
+    ),
+    path(
         'users/activate',
         views.UsersActivation.as_view(),
         name='users_activation',

@@ -661,6 +661,8 @@ class UsersTests(APITestCase):
             'faculty',
             'student_number',
             'volunteer_for_workplace',
+            'hide_newsletter',
+            'is_in_newsletter',
         ]
         for key in first_user.keys():
             self.assertTrue(
@@ -723,6 +725,8 @@ class UsersTests(APITestCase):
             'faculty',
             'student_number',
             'volunteer_for_workplace',
+            'hide_newsletter',
+            'is_in_newsletter',
         ]
         for key in first_user.keys():
             self.assertTrue(
