@@ -49,5 +49,3 @@ def is_email_on_list(
     except MailChimpError:
         return False
     return True if member else False
-
-

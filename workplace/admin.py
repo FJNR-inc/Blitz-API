@@ -126,6 +126,7 @@ class ReservationAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
     class Media:
         pass
 
+
 admin.site.register(Workplace, WorkplaceAdmin)
 admin.site.register(Picture, PictureAdmin)
 admin.site.register(Period, PeriodAdmin)
