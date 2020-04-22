@@ -58,7 +58,7 @@ router.register('academic_fields', views.AcademicFieldViewSet)
 router.register(
     'authentication',
     views.TemporaryTokenDestroy,
-    base_name="authentication",
+    basename="authentication",
 )
 
 router.register('export_media', views.ExportMediaViewSet)
