@@ -1116,7 +1116,7 @@ class CouponTests(APITestCase):
                     'name': 'mega_retreat',
                     'notification_interval': '1 00:00:00',
                     'pictures': [],
-                    'place_name': '',
+                    'place_name': None,
                     'places_remaining': 400,
                     'postal_code': '123 456',
                     'price': '199.00',
@@ -1126,6 +1126,7 @@ class CouponTests(APITestCase):
                     'reserved_seats': 0,
                     'review_url': None,
                     'seats': 400,
+                    'type': 'P',
                     'start_time': '2130-01-15T08:00:00-05:00',
                     'state_province': 'Random state',
                     'timezone': None,
@@ -1149,6 +1150,8 @@ class CouponTests(APITestCase):
                     'sub_title': None,
                     'toilet_gendered': False,
                     'room_type': Retreat.SINGLE_OCCUPATION,
+                    'videoconference_tool': None,
+                    'videoconference_link': None
                 }],
                 "applicable_timeslots": [{
                     'billing_price': 1.0,
@@ -1352,7 +1355,7 @@ class CouponTests(APITestCase):
                 'name': 'mega_retreat',
                 'notification_interval': '1 00:00:00',
                 'pictures': [],
-                'place_name': '',
+                'place_name': None,
                 'places_remaining': 400,
                 'postal_code': '123 456',
                 'price': '199.00',
@@ -1385,6 +1388,9 @@ class CouponTests(APITestCase):
                 'sub_title': None,
                 'toilet_gendered': False,
                 'room_type': Retreat.SINGLE_OCCUPATION,
+                'type': 'P',
+                'videoconference_tool': None,
+                'videoconference_link': None
             }],
             "applicable_timeslots": [{
                 'billing_price': 1.0,

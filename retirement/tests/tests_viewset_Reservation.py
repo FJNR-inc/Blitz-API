@@ -198,7 +198,7 @@ class ReservationTests(APITestCase):
         )
 
     def test_create(self):
-        self.maxDiff = 4000
+        self.maxDiff = None
         """
         Ensure we can create a reservation if user has permission.
         It is possible to create reservations for INACTIVE retreats.
@@ -301,7 +301,7 @@ class ReservationTests(APITestCase):
                 'form_url': 'example.com',
                 'carpool_url': 'example2.com',
                 'review_url': 'example3.com',
-                'place_name': '',
+                'place_name': None,
                 'url': 'http://testserver/retreat/retreats/' +
                        str(self.retreat2.id),
                 'has_shared_rooms': True,
@@ -311,6 +311,9 @@ class ReservationTests(APITestCase):
                 'options': [],
                 'room_type': Retreat.SINGLE_OCCUPATION,
                 'toilet_gendered': False,
+                'type': 'P',
+                'videoconference_tool': None,
+                'videoconference_link': None
             },
             'user_details': {
                 'academic_field': None,

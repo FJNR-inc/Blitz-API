@@ -47,9 +47,21 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         (DOUBLE_SINGLE_OCCUPATION, _("Single and double occupation")),
     )
 
+    TYPE_VIRTUAL = 'V'
+    TYPE_PHYSICAL = 'P'
+
+    TYPE_CHOICES = (
+        (TYPE_VIRTUAL, _("Virtual")),
+        (TYPE_PHYSICAL, _("Physical")),
+    )
+
     class Meta:
         verbose_name = _("Retreat")
         verbose_name_plural = _("Retreats")
+
+    Address._meta.get_field('place_name').null = True
+    Address._meta.get_field('postal_code').blank = True
+    Address._meta.get_field('postal_code').null = True
 
     old_id = models.IntegerField(
         verbose_name=_("Id before migrate to base product"),
@@ -80,6 +92,26 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         max_length=100,
         choices=ACTIVITY_LANGUAGE,
         verbose_name=_("Activity language"),
+    )
+
+    type = models.CharField(
+        max_length=100,
+        default=TYPE_PHYSICAL,
+        choices=TYPE_CHOICES,
+        verbose_name=_("Type of retreat"),
+    )
+
+    videoconference_tool = models.CharField(
+        verbose_name=_("Videoconference tool"),
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+
+    videoconference_link = models.TextField(
+        verbose_name=_("Videoconference link"),
+        null=True,
+        blank=True,
     )
 
     room_type = models.CharField(
@@ -126,7 +158,11 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         blank=True,
     )
 
-    accessibility = models.BooleanField(verbose_name=_("Accessibility"), )
+    accessibility = models.BooleanField(
+        blank=True,
+        null=True,
+        verbose_name=_("Accessibility"),
+    )
 
     form_url = models.TextField(
         blank=True,
@@ -146,7 +182,10 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         verbose_name=_("Review URL"),
     )
 
-    has_shared_rooms = models.BooleanField()
+    has_shared_rooms = models.BooleanField(
+        blank=True,
+        null=True,
+    )
 
     hidden = models.BooleanField(
         verbose_name=_("Hidden"),
@@ -179,19 +218,23 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
     food_vege = models.BooleanField(
         verbose_name=_("Food vege"),
-        default=False)
+        default=False
+    )
 
     food_vegan = models.BooleanField(
         verbose_name=_("Food vegan"),
-        default=False)
+        default=False
+    )
 
     food_allergen_free = models.BooleanField(
         verbose_name=_("Food allergen_free"),
-        default=False)
+        default=False
+    )
 
     food_gluten_free = models.BooleanField(
         verbose_name=_("Food gluten free"),
-        default=False)
+        default=False
+    )
 
     # History is registered in translation.py
     # history = HistoricalRecords()
