@@ -658,7 +658,12 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         start_time=timezone.now(),
                         end_time=timezone.now() + membership_orderlines[
                             0].content_object.duration,
-                        owner=user)
+                        owner=user,
+                        is_applicable_to_physical_retreat=membership_coupon
+                        .is_applicable_to_physical_retreat,
+                        is_applicable_to_virtual_retreat=membership_coupon
+                        .is_applicable_to_virtual_retreat,
+                    )
                     coupon.applicable_retreats.set(
                         membership_coupon.applicable_retreats.all())
                     coupon.applicable_timeslots.set(

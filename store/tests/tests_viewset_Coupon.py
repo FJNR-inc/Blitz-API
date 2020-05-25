@@ -166,7 +166,9 @@ class CouponTests(APITestCase):
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
-            "users": []
+            "users": [],
+            "is_applicable_to_physical_retreat": False,
+            "is_applicable_to_virtual_retreat": False
         }
 
         self.assertEqual(
@@ -228,7 +230,9 @@ class CouponTests(APITestCase):
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
-            "users": []
+            "users": [],
+            "is_applicable_to_physical_retreat": False,
+            "is_applicable_to_virtual_retreat": False
         }
 
         self.assertEqual(
@@ -288,7 +292,9 @@ class CouponTests(APITestCase):
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
-            "users": []
+            "users": [],
+            "is_applicable_to_physical_retreat": False,
+            "is_applicable_to_virtual_retreat": False
         }
 
         self.assertEqual(
@@ -904,7 +910,9 @@ class CouponTests(APITestCase):
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
-            "users": []
+            "users": [],
+            "is_applicable_to_physical_retreat": False,
+            "is_applicable_to_virtual_retreat": False
         }
 
         self.assertEqual(
@@ -962,7 +970,9 @@ class CouponTests(APITestCase):
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
-            "users": []
+            "users": [],
+            "is_applicable_to_physical_retreat": False,
+            "is_applicable_to_virtual_retreat": False
         }
 
         self.assertEqual(
@@ -1189,7 +1199,9 @@ class CouponTests(APITestCase):
                         'volunteers': []
                         }
                 }],
-                "users": []
+                "users": [],
+                "is_applicable_to_physical_retreat": False,
+                "is_applicable_to_virtual_retreat": False
             }]
         }
 
@@ -1238,7 +1250,9 @@ class CouponTests(APITestCase):
                 "applicable_timeslots": [],
                 "applicable_packages": [],
                 "applicable_memberships": [],
-                "users": []
+                "users": [],
+                "is_applicable_to_physical_retreat": False,
+                "is_applicable_to_virtual_retreat": False
             }, {
                 "url": "http://testserver/coupons/" + str(self.coupon2.id),
                 "id": self.coupon2.id,
@@ -1256,7 +1270,9 @@ class CouponTests(APITestCase):
                 "applicable_timeslots": [],
                 "applicable_packages": [],
                 "applicable_memberships": [],
-                "users": []
+                "users": [],
+                "is_applicable_to_physical_retreat": False,
+                "is_applicable_to_virtual_retreat": False
             }]
         }
 
@@ -1425,7 +1441,9 @@ class CouponTests(APITestCase):
                     'url': f'http://testserver/workplaces/{self.workplace.id}'
                 }
             }],
-            "users": []
+            "users": [],
+            "is_applicable_to_physical_retreat": False,
+            "is_applicable_to_virtual_retreat": False
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -1477,7 +1495,9 @@ class CouponTests(APITestCase):
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
-            "users": []
+            "users": [],
+            "is_applicable_to_physical_retreat": False,
+            "is_applicable_to_virtual_retreat": False
         }
 
         self.assertEqual(

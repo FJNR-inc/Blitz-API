@@ -618,6 +618,16 @@ class AbstractCoupon(SafeDeleteModel):
         blank=True,
     )
 
+    is_applicable_to_virtual_retreat = models.BooleanField(
+        verbose_name=_("Applicable to virtual retreat"),
+        default=False
+    )
+
+    is_applicable_to_physical_retreat = models.BooleanField(
+        verbose_name=_("Applicable to physical retreat"),
+        default=False
+    )
+
     class Meta:
         abstract = True
 
