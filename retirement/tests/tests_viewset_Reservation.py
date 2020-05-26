@@ -1281,6 +1281,11 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(len(mail.outbox), 0)
 
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+        }
+    )
     def test_remind_users(self):
         self.client.force_authenticate(user=self.admin)
 
@@ -1304,11 +1309,14 @@ class ReservationTests(APITestCase):
         self.assertTrue(
             EmailLog.objects.filter(
                 user_email=self.user.email,
-                type_email='reminder'))
+                type_email='REMINDER_PHYSICAL_RETREAT'
+            )
+        )
 
         self.assertEqual(
             EmailLog.objects.filter(
                 user_email=self.user.email,
-                type_email='reminder')[0].nb_email_sent,
+                type_email='REMINDER_PHYSICAL_RETREAT'
+            )[0].nb_email_sent,
             1
         )

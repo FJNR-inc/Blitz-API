@@ -59,6 +59,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         verbose_name = _("Retreat")
         verbose_name_plural = _("Retreats")
 
+    Address._meta.get_field('place_name').blank = True
     Address._meta.get_field('place_name').null = True
     Address._meta.get_field('postal_code').blank = True
     Address._meta.get_field('postal_code').null = True
