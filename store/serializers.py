@@ -645,7 +645,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 user.save()
 
                 membership_coupons = MembershipCoupon.objects.filter(
-                    membership__pk=membership_orderlines[0].content_object.pk
+                    membership__pk=membership_orderlines[0].content_object.pk,
+                ).exclude(
+                    limit_date__lte=timezone.now()
                 )
 
                 for membership_coupon in membership_coupons:

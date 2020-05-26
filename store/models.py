@@ -683,6 +683,14 @@ class MembershipCoupon(AbstractCoupon):
     # membership with which this coupon is given
     membership = models.ForeignKey(Membership, on_delete=models.CASCADE)
 
+    # Date when the membership coupon is no more valid and do not
+    # automatically generate new coupon
+    limit_date = models.DateTimeField(
+        verbose_name=_("Limit date"),
+        null=True,
+        blank=True
+    )
+
     history = HistoricalRecords()
 
 
