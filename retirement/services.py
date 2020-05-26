@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.core.mail import send_mail
+from blitz_api.services import send_mail as send_templated_email
 from django.template.loader import render_to_string
 from django.utils import timezone
 
@@ -68,78 +69,130 @@ def notify_reserved_retreat_seat(user, retreat):
 def send_retreat_7_days_email(user, retreat):
     """
     This function sends an email to notify a user that a retreat in which he
-    has bought a seat is starting in 7 days.
+    has bought a seat is starting soon.
+    :param user: The user on the reservation
+    :param retreat: The retreat that will begin soon
+    :return:
+    """
+    if retreat.type == retreat.TYPE_VIRTUAL:
+        return send_virtual_retreat_reminder_email(user, retreat)
+    else:
+        return send_physical_retreat_reminder_email(user, retreat)
+
+
+def send_virtual_retreat_reminder_email(user, retreat):
+    """
+    This function sends an email to notify a user that a virtual retreat in
+    which he has bought a seat is starting soon.
     """
 
-    merge_data = {'RETREAT': retreat}
+    context = {
+        'USER_FIRST_NAME': user.first_name,
+        'USER_LAST_NAME': user.last_name,
+        'USER_EMAIL': user.email,
+        'RETREAT_NAME': retreat.name,
+        'RETREAT_START_TIME': retreat.start_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_END_TIME': retreat.end_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_VIDEOCONFERENCE_TOOL': retreat.videoconference_tool,
+        'RETREAT_VIDEOCONFERENCE_LINK': retreat.videoconference_link
+    }
 
-    plain_msg = render_to_string("reminder.txt", merge_data)
-    msg_html = render_to_string("reminder.html", merge_data)
+    response_send_mail = send_templated_email(
+        [user],
+        context,
+        'REMINDER_VIRTUAL_RETREAT'
+    )
+    return response_send_mail
 
-    try:
-        response_send_mail = send_mail(
-            "Rappel retraite",
-            plain_msg,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            html_message=msg_html,
-        )
-        EmailLog.add(user.email, 'reminder', response_send_mail)
-        return response_send_mail
-    except Exception as err:
-        additional_data = {
-            'title': "Rappel retraite",
-            'default_from': settings.DEFAULT_FROM_EMAIL,
-            'user_email': user.email,
-            'merge_data': merge_data,
-            'template': 'reminder'
-        }
-        Log.error(
-            source='SENDING_BLUE_TEMPLATE',
-            message=err,
-            additional_data=json.dumps(additional_data)
-        )
-        raise
+
+def send_physical_retreat_reminder_email(user, retreat):
+    """
+    This function sends an email to notify a user that a physical retreat in
+    which he has bought a seat is starting soon.
+    """
+
+    context = {
+        'USER_FIRST_NAME': user.first_name,
+        'USER_LAST_NAME': user.last_name,
+        'USER_EMAIL': user.email,
+        'RETREAT_NAME': retreat.name,
+        'RETREAT_PLACE': retreat.place_name,
+        'RETREAT_START_TIME': retreat.start_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_END_TIME': retreat.end_time.strftime('%Y-%m-%d %H:%M'),
+    }
+
+    response_send_mail = send_templated_email(
+        [user],
+        context,
+        'REMINDER_PHYSICAL_RETREAT'
+    )
+
+    return response_send_mail
 
 
 def send_post_retreat_email(user, retreat):
     """
     This function sends an email to get back to a user after a retreat has
     ended.
+    :param user: The user on the reservation
+    :param retreat: The ended retreat
+    :return:
+    """
+    if retreat.type == retreat.TYPE_VIRTUAL:
+        return send_post_virtual_retreat_email(user, retreat)
+    else:
+        return send_post_physical_retreat_email(user, retreat)
+
+
+def send_post_physical_retreat_email(user, retreat):
+    """
+    This function sends an email to get back to a user after a
+    physical retreat has ended.
     """
 
-    merge_data = {
-        'RETREAT': retreat,
-        'USER': user,
+    context = {
+        'USER_FIRST_NAME': user.first_name,
+        'USER_LAST_NAME': user.last_name,
+        'USER_EMAIL': user.email,
+        'RETREAT_NAME': retreat.name,
+        'RETREAT_PLACE': retreat.place_name,
+        'RETREAT_START_TIME': retreat.start_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_END_TIME': retreat.end_time.strftime('%Y-%m-%d %H:%M'),
     }
 
-    plain_msg = render_to_string("throwback.txt", merge_data)
-    msg_html = render_to_string("throwback.html", merge_data)
+    response_send_mail = send_templated_email(
+        [user],
+        context,
+        'THROWBACK_PHYSICAL_RETREAT'
+    )
 
-    try:
-        response_send_mail = send_mail(
-            "Merci pour votre participation",
-            plain_msg,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            html_message=msg_html,
-        )
-        EmailLog.add(user.email, 'reminder', response_send_mail)
-        return response_send_mail
-    except Exception as err:
-        additional_data = {
-            'title': "Merci pour votre participation",
-            'default_from': settings.DEFAULT_FROM_EMAIL,
-            'user_email': user.email,
-            'merge_data': merge_data,
-            'template': 'throwback'
-        }
-        Log.error(
-            source='SENDING_BLUE_TEMPLATE',
-            message=err,
-            additional_data=json.dumps(additional_data)
-        )
-        raise
+    return response_send_mail
+
+
+def send_post_virtual_retreat_email(user, retreat):
+    """
+    This function sends an email to get back to a user after a
+    virtual retreat has ended.
+    """
+
+    context = {
+        'USER_FIRST_NAME': user.first_name,
+        'USER_LAST_NAME': user.last_name,
+        'USER_EMAIL': user.email,
+        'RETREAT_NAME': retreat.name,
+        'RETREAT_START_TIME': retreat.start_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_END_TIME': retreat.end_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_VIDEOCONFERENCE_TOOL': retreat.videoconference_tool,
+        'RETREAT_VIDEOCONFERENCE_LINK': retreat.videoconference_link
+    }
+
+    response_send_mail = send_templated_email(
+        [user],
+        context,
+        'THROWBACK_VIRTUAL_RETREAT'
+    )
+
+    return response_send_mail
 
 
 def refund_retreat(reservation, refund_rate, refund_reason):

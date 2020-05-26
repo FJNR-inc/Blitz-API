@@ -645,7 +645,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 user.save()
 
                 membership_coupons = MembershipCoupon.objects.filter(
-                    membership__pk=membership_orderlines[0].content_object.pk
+                    membership__pk=membership_orderlines[0].content_object.pk,
+                ).exclude(
+                    limit_date__lte=timezone.now()
                 )
 
                 for membership_coupon in membership_coupons:
@@ -658,7 +660,12 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         start_time=timezone.now(),
                         end_time=timezone.now() + membership_orderlines[
                             0].content_object.duration,
-                        owner=user)
+                        owner=user,
+                        is_applicable_to_physical_retreat=membership_coupon
+                        .is_applicable_to_physical_retreat,
+                        is_applicable_to_virtual_retreat=membership_coupon
+                        .is_applicable_to_virtual_retreat,
+                    )
                     coupon.applicable_retreats.set(
                         membership_coupon.applicable_retreats.all())
                     coupon.applicable_timeslots.set(

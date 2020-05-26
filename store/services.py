@@ -497,8 +497,8 @@ def validate_coupon_for_order(coupon, order):
         'orderline': None,
     }
 
-    # Check if the ocupon is active
-    if (coupon.start_time > now or coupon.end_time < now):
+    # Check if the coupon is active
+    if coupon.start_time > now or coupon.end_time < now:
         coupon_info['error'] = {
             'non_field_errors': [_(
                 "This coupon is only valid between {0} and {1}."
@@ -545,6 +545,19 @@ def validate_coupon_for_order(coupon, order):
         return coupon_info
 
     # Check if the coupon can be applied to a product in the order
+    from retirement.models import Retreat
+    list_physical_retreat_id_applicable = Retreat.objects.none()
+    if coupon.is_applicable_to_physical_retreat:
+        list_physical_retreat_id_applicable = Retreat.objects.filter(
+            type=Retreat.TYPE_PHYSICAL
+        )
+
+    list_virtual_retreat_id_applicable = Retreat.objects.none()
+    if coupon.is_applicable_to_virtual_retreat:
+        list_virtual_retreat_id_applicable = Retreat.objects.filter(
+            type=Retreat.TYPE_VIRTUAL
+        )
+
     applicable_orderlines = order.order_lines.filter(
         Q(content_type__in=coupon.applicable_product_types.all())
         | Q(content_type__model='package',
@@ -559,7 +572,14 @@ def validate_coupon_for_order(coupon, order):
         | Q(content_type__model='retreat',
             object_id__in=coupon.applicable_retreats.all().
             values_list('id', flat=True))
+        | Q(content_type__model='retreat',
+            object_id__in=list_physical_retreat_id_applicable.
+            values_list('id', flat=True))
+        | Q(content_type__model='retreat',
+            object_id__in=list_virtual_retreat_id_applicable.
+            values_list('id', flat=True))
     )
+
     if not applicable_orderlines:
         coupon_info['error'] = {
             'non_field_errors': [_(

@@ -618,6 +618,16 @@ class AbstractCoupon(SafeDeleteModel):
         blank=True,
     )
 
+    is_applicable_to_virtual_retreat = models.BooleanField(
+        verbose_name=_("Applicable to virtual retreat"),
+        default=False
+    )
+
+    is_applicable_to_physical_retreat = models.BooleanField(
+        verbose_name=_("Applicable to physical retreat"),
+        default=False
+    )
+
     class Meta:
         abstract = True
 
@@ -672,6 +682,14 @@ class MembershipCoupon(AbstractCoupon):
 
     # membership with which this coupon is given
     membership = models.ForeignKey(Membership, on_delete=models.CASCADE)
+
+    # Date when the membership coupon is no more valid and do not
+    # automatically generate new coupon
+    limit_date = models.DateTimeField(
+        verbose_name=_("Limit date"),
+        null=True,
+        blank=True
+    )
 
     history = HistoricalRecords()
 

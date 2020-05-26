@@ -67,6 +67,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         'end_time': ['exact', 'gte', 'lte'],
         'is_active': ['exact'],
         'hidden': ['exact'],
+        'type': ['exact']
     }
     ordering = ('name', 'start_time', 'end_time')
 

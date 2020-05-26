@@ -283,14 +283,46 @@ ANYMAIL = {
     'REQUESTS_TIMEOUT': config('REQUESTS_TIMEOUT', default=(30, 30),
                                cast=tuple),
     'TEMPLATES': {
-        'CONFIRM_SIGN_UP':
-            config('CONFIRM_SIGN_UP', default='0', cast=int),
-        'FORGOT_PASSWORD':
-            config('FORGOT_PASSWORD', default='0', cast=int),
-        'RESERVATION_CANCELLED': config('RESERVATION_CANCELLED',
-                                        default='0', cast=int),
-        'CONFIRM_CHANGE_EMAIL': config('CONFIRM_CHANGE_EMAIL',
-                                       default='0', cast=int),
+        'CONFIRM_SIGN_UP': config(
+            'CONFIRM_SIGN_UP',
+            default='0',
+            cast=int
+        ),
+        'FORGOT_PASSWORD': config(
+            'FORGOT_PASSWORD',
+            default='0',
+            cast=int
+        ),
+        'RESERVATION_CANCELLED': config(
+            'RESERVATION_CANCELLED',
+            default='0',
+            cast=int
+        ),
+        'CONFIRM_CHANGE_EMAIL': config(
+            'CONFIRM_CHANGE_EMAIL',
+            default='0',
+            cast=int
+        ),
+        'THROWBACK_VIRTUAL_RETREAT': config(
+            'TEMPLATE_EMAIL_THROWBACK_VIRTUAL_RETREAT',
+            default='0',
+            cast=int
+        ),
+        'THROWBACK_PHYSICAL_RETREAT': config(
+            'TEMPLATE_EMAIL_THROWBACK_PHYSICAL_RETREAT',
+            default='0',
+            cast=int
+        ),
+        'REMINDER_PHYSICAL_RETREAT': config(
+            'TEMPLATE_EMAIL_REMINDER_PHYSICAL_RETREAT',
+            default='0',
+            cast=int
+        ),
+        'REMINDER_VIRTUAL_RETREAT': config(
+            'TEMPLATE_EMAIL_REMINDER_VIRTUAL_RETREAT',
+            default='0',
+            cast=int
+        ),
     },
 }
 EMAIL_BACKEND = config('EMAIL_BACKEND',
