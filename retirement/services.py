@@ -66,7 +66,84 @@ def notify_reserved_retreat_seat(user, retreat):
         raise
 
 
-def send_retreat_7_days_email(user, retreat):
+def send_retreat_confirmation_email(user, retreat):
+    """
+    This function sends an email to notify a user that his reservation to a
+    specific retreat is confirmed.
+    :param user: The user on the reservation
+    :param retreat: The retreat that the user just bought
+    :return:
+    """
+    if retreat.type == retreat.TYPE_VIRTUAL:
+        return send_virtual_retreat_confirmation_email(user, retreat)
+    else:
+        return send_physical_retreat_confirmation_email(user, retreat)
+
+
+def send_virtual_retreat_confirmation_email(user, retreat):
+    """
+    This function sends an email to notify a user that a virtual retreat in
+    which he has bought a seat is starting soon.
+    """
+
+    context = {
+        'USER_FIRST_NAME': user.first_name,
+        'USER_LAST_NAME': user.last_name,
+        'USER_EMAIL': user.email,
+        'RETREAT_NAME': retreat.name,
+        'RETREAT_START_TIME': retreat.start_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_END_TIME': retreat.end_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_VIDEOCONFERENCE_TOOL': retreat.videoconference_tool,
+        'RETREAT_VIDEOCONFERENCE_LINK': retreat.videoconference_link
+    }
+
+    if len(retreat.pictures.all()):
+        context['RETREAT_PICTURE'] = "{0}{1}".format(
+            settings.MEDIA_URL,
+            retreat.pictures.first().picture.url
+        )
+
+    response_send_mail = send_templated_email(
+        [user],
+        context,
+        'WELCOME_VIRTUAL_RETREAT'
+    )
+    return response_send_mail
+
+
+def send_physical_retreat_confirmation_email(user, retreat):
+    """
+    This function sends an email to notify a user that a physical retreat in
+    which he has bought a seat is starting soon.
+    """
+
+    context = {
+        'USER_FIRST_NAME': user.first_name,
+        'USER_LAST_NAME': user.last_name,
+        'USER_EMAIL': user.email,
+        'RETREAT_NAME': retreat.name,
+        'RETREAT_START_TIME': retreat.start_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_END_TIME': retreat.end_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_VIDEOCONFERENCE_TOOL': retreat.videoconference_tool,
+        'RETREAT_VIDEOCONFERENCE_LINK': retreat.videoconference_link
+    }
+
+    if len(retreat.pictures.all()):
+        context['RETREAT_PICTURE'] = "{0}{1}".format(
+            settings.MEDIA_URL,
+            retreat.pictures.first().picture.url
+        )
+
+    response_send_mail = send_templated_email(
+        [user],
+        context,
+        'WELCOME_PHYSICAL_RETREAT'
+    )
+
+    return response_send_mail
+
+
+def send_retreat_reminder_email(user, retreat):
     """
     This function sends an email to notify a user that a retreat in which he
     has bought a seat is starting soon.
