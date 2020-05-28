@@ -209,6 +209,11 @@ class Order(models.Model):
                     retreat.save()
                     number_of_free_virtual_retreat_applied += 1
 
+        self.user.number_of_free_virtual_retreat += number_of_memberships
+        self.user.number_of_free_virtual_retreat -= \
+            number_of_free_virtual_retreat_applied
+        self.user.save()
+
 
 class OrderLine(models.Model):
     """

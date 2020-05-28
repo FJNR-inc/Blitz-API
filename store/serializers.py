@@ -631,7 +631,6 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                             "You already have an active membership."
                         )]
                     })
-                user.number_of_free_virtual_retreat += 1
                 user.membership = membership_orderlines[0].content_object
                 # If the user has already a membership end that
                 # is after today,

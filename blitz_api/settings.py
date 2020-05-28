@@ -323,6 +323,16 @@ ANYMAIL = {
             default='0',
             cast=int
         ),
+        'WELCOME_PHYSICAL_RETREAT': config(
+            'TEMPLATE_EMAIL_WELCOME_PHYSICAL_RETREAT',
+            default='0',
+            cast=int
+        ),
+        'WELCOME_VIRTUAL_RETREAT': config(
+            'TEMPLATE_EMAIL_WELCOME_VIRTUAL_RETREAT',
+            default='0',
+            cast=int
+        )
     },
 }
 EMAIL_BACKEND = config('EMAIL_BACKEND',

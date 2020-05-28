@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core import mail
-from django.test import override_settings
+from django.test import modify_settings, override_settings
 from django.utils import timezone
 from django.urls import reverse
 
@@ -50,6 +50,13 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
         'BASE_URL': "http://example.com/",
         'VAULT_URL': "customervault/v1/",
         'CARD_URL': "cardpayments/v1/"
+    },
+    LOCAL_SETTINGS={
+        "EMAIL_SERVICE": True,
+        "FRONTEND_INTEGRATION": {
+            "POLICY_URL": "fake_url",
+
+        }
     }
 )
 class OrderTests(APITestCase):
@@ -1663,6 +1670,9 @@ class OrderTests(APITestCase):
         self.user.phone = "123-456-7890"
         self.user.save()
 
+        number_of_free_virtual_retreat_in_bank = \
+            self.user.number_of_free_virtual_retreat
+
         responses.add(
             responses.POST,
             "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
@@ -1737,11 +1747,104 @@ class OrderTests(APITestCase):
             'reference_number': '751',
         }
 
+        refreshed_user = User.objects.get(id=self.user.id)
+
+        self.assertEqual(
+            number_of_free_virtual_retreat_in_bank,
+            refreshed_user.number_of_free_virtual_retreat
+        )
+
         self.assertEqual(response_data, content)
 
         # 1 email for the order details
         # 1 email for the retreat informations
         self.assertEqual(len(mail.outbox), 2)
+
+    @responses.activate
+    @override_settings(
+        LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP='5000-01-01'
+    )
+    def test_create_membership_before_end_of_limit_free_virtual_retreat(self):
+        """
+        Ensure we can create an order with a membership and get
+        a free virtual retreat in bank
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.save()
+
+        number_of_free_virtual_retreat_in_bank =\
+            self.user.number_of_free_virtual_retreat
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'membership',
+                    'object_id': self.membership.id,
+                    'quantity': 1,
+                }
+            ],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+        content = {
+            'order_lines': [
+                {
+                    'content_type': 'membership',
+                    'quantity': 1,
+                    'coupon': None,
+                    'coupon_real_value': 0.0,
+                    'cost': 50.0,
+                    'metadata': None,
+                    'options': []
+                }
+            ],
+            'user': 'http://testserver/users/' + str(self.user.id),
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '1',
+            'settlement_id': '1',
+            'reference_number': '751',
+        }
+
+        refreshed_user = User.objects.get(id=self.user.id)
+
+        self.assertEqual(
+            number_of_free_virtual_retreat_in_bank + 1,
+            refreshed_user.number_of_free_virtual_retreat
+        )
+
+        self.assertEqual(response_data, content)
+
+        # 1 email for the order details
+        self.assertEqual(len(mail.outbox), 1)
 
     @responses.activate
     def test_create_virtual_retreat_with_membership_after_limit(self):
