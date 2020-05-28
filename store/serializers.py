@@ -30,6 +30,7 @@ from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,
                                 getMessageTranslate)
 from log_management.models import Log, EmailLog
+from retirement.services import send_retreat_confirmation_email
 from workplace.models import Reservation
 from retirement.models import Reservation as RetreatReservation, \
     RetreatInvitation
@@ -908,49 +909,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
         # Send retreat informations emails
         for retreat_reservation in retreat_reservations:
-            # Send info email
-            merge_data = {
-                'RETREAT': retreat_reservation.retreat,
-                'USER': user,
-            }
-            if len(retreat_reservation.retreat.pictures.all()):
-                merge_data['RETREAT_PICTURE'] = "{0}{1}".format(
-                    settings.MEDIA_URL,
-                    retreat_reservation.retreat.pictures.first().picture.url
-                )
-
-            plain_msg = render_to_string(
-                "retreat_info.txt",
-                merge_data
-            )
-            msg_html = render_to_string(
-                "retreat_info.html",
-                merge_data
-            )
-
-            try:
-                response_send_mail = send_mail(
-                    "Confirmation d'inscription à la retraite",
-                    plain_msg,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [retreat_reservation.user.email],
-                    html_message=msg_html,
-                )
-                EmailLog.add(user.email, 'retreat_info', response_send_mail)
-            except Exception as err:
-                additional_data = {
-                    'title': "Confirmation d'inscription à la retraite",
-                    'default_from': settings.DEFAULT_FROM_EMAIL,
-                    'user_email': retreat_reservation.user.email,
-                    'merge_data': merge_data,
-                    'template': 'retreat_info'
-                }
-                Log.error(
-                    source='SENDING_BLUE_TEMPLATE',
-                    message=err,
-                    additional_data=json.dumps(additional_data)
-                )
-                raise
+            send_retreat_confirmation_email(user, retreat_reservation.retreat)
 
         return order
 

@@ -171,9 +171,16 @@ class RetreatSerializer(BaseProductSerializer):
 
         cron_manager = CronManager()
         # Set reminder email
-        reminder_date = validated_data['start_time'] - timedelta(days=7)
+        # 24H for virtual retreat
+        # 7 Days for physical retreat
+        if retreat.type == Retreat.TYPE_VIRTUAL:
+            reminder_date = validated_data['start_time'] - timedelta(days=1)
+        else:
+            reminder_date = validated_data['start_time'] - timedelta(days=7)
+
         cron_manager.create_remind_user(
-            retreat.id, reminder_date)
+            retreat.id, reminder_date
+        )
 
         # Set post-event email
         throwback_date = validated_data['end_time'] + timedelta(days=1)

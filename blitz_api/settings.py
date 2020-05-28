@@ -323,6 +323,16 @@ ANYMAIL = {
             default='0',
             cast=int
         ),
+        'WELCOME_PHYSICAL_RETREAT': config(
+            'TEMPLATE_EMAIL_WELCOME_PHYSICAL_RETREAT',
+            default='0',
+            cast=int
+        ),
+        'WELCOME_VIRTUAL_RETREAT': config(
+            'TEMPLATE_EMAIL_WELCOME_VIRTUAL_RETREAT',
+            default='0',
+            cast=int
+        )
     },
 }
 EMAIL_BACKEND = config('EMAIL_BACKEND',
@@ -345,6 +355,11 @@ SERVER_EMAIL = config('SERVER_EMAIL', default='example@gmail.com')
 SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='admin@fjnr.ca')
 
 # User specific settings
+
+LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP = config(
+    'LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP',
+    default='1990-01-01',
+)
 
 LOCAL_SETTINGS = {
     'ORGANIZATION': config(

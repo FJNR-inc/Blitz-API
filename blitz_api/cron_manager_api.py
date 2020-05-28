@@ -41,7 +41,7 @@ class CronManager:
         data = {
             "execution_datetime": reminder_date,
             "url": remind_users_url,
-            "description": "Retreat 7-days reminder notification"
+            "description": "Retreat reminder notification"
         }
 
         self.create_task(data)
