@@ -123,6 +123,10 @@ class User(AbstractUser):
         null=True,
         verbose_name=_("Tickets"),
     )
+    number_of_free_virtual_retreat = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name=_("Number of free virtual retreat"),
+    )
     city = models.CharField(
         verbose_name=_("City"),
         blank=True,

@@ -2,6 +2,7 @@ import decimal
 import json
 import random
 import string
+from datetime import datetime
 from decimal import Decimal
 
 from django.db import models
@@ -158,6 +159,9 @@ class Order(models.Model):
             coupon_info['value']
 
     def add_line_from_data(self, orderlines_data):
+        from retirement.models import Retreat
+
+        # We add orderline in the order
         for orderline_data in orderlines_data:
             options_ids_quantity = orderline_data.pop('options', None)
             order_line: OrderLine = OrderLine.objects.create(
@@ -175,6 +179,35 @@ class Order(models.Model):
                     )
                     order_line.cost += option.price
                 order_line.save()
+
+        # A free virtual retreat is offered for all membership bought
+        # We check number of virtual retreat we have in stock
+        # We add the number of virtual retreat offered by others item in cart
+        number_of_memberships = 0
+        LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP = datetime.strptime(
+            settings.LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP,
+            "%Y-%m-%d"
+        )
+        if LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP > datetime.now():
+            number_of_memberships = self.order_lines.filter(
+                models.Q(content_type__model='membership')
+            ).count()
+
+        number_of_free_virtual_retreat_applied = 0
+        number_of_free_virtual_retreat_available = \
+            self.user.number_of_free_virtual_retreat + number_of_memberships
+
+        retreats = self.order_lines.filter(
+            models.Q(content_type__model='retreat')
+        )
+
+        for retreat in retreats:
+            if retreat.content_object.type == Retreat.TYPE_VIRTUAL:
+                if number_of_free_virtual_retreat_available > \
+                        number_of_free_virtual_retreat_applied:
+                    retreat.cost = 0
+                    retreat.save()
+                    number_of_free_virtual_retreat_applied += 1
 
 
 class OrderLine(models.Model):

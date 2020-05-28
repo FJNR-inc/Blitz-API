@@ -346,6 +346,11 @@ SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='admin@fjnr.ca')
 
 # User specific settings
 
+LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP = config(
+    'LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP',
+    default='1990-01-01',
+)
+
 LOCAL_SETTINGS = {
     'ORGANIZATION': config(
         'ORGANIZATION',

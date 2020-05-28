@@ -343,6 +343,7 @@ class ReservationTests(APITestCase):
                 'volunteer_for_workplace': [],
                 'hide_newsletter': False,
                 'is_in_newsletter': False,
+                'number_of_free_virtual_retreat': 0,
             }
         }
 
