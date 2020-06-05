@@ -394,7 +394,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
 
         user = self.context['request'].user
 
-        user_membership = user.membership
+        user_membership = user.get_active_membership()
         user_academic_level = user.academic_level
 
         content_type = validated_data.get(
@@ -414,19 +414,6 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
                 ],
             })
 
-        if (not user.is_staff
-                and (content_type.model == 'package'
-                     or content_type.model == 'retreat')
-                and obj.exclusive_memberships.all()
-                and user_membership not in obj.exclusive_memberships.all()):
-            raise serializers.ValidationError({
-                'object_id': [
-                    _(
-                        "User does not have the required membership to order "
-                        "this package."
-                    )
-                ],
-            })
         if (not user.is_staff and
                 content_type.model == 'membership' and
                 obj.academic_levels.all() and
@@ -683,11 +670,26 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             if package_orderlines:
                 need_transaction = True
                 for package_orderline in package_orderlines:
-                    user.tickets += (
-                            package_orderline.content_object.reservations *
-                            package_orderline.quantity
-                    )
-                    user.save()
+                    package = package_orderline.content_object
+                    if (not user.is_staff
+                            and package.exclusive_memberships.all()
+                            and user.get_active_membership() not in
+                            package.exclusive_memberships.all()):
+                        raise serializers.ValidationError({
+                            'non_field_errors': [
+                                _(
+                                    "User does not have the required "
+                                    "membership to order "
+                                    "this package."
+                                )
+                            ],
+                        })
+                    else:
+                        user.tickets += (
+                                package_orderline.content_object.reservations *
+                                package_orderline.quantity
+                        )
+                        user.save()
             if reservation_orderlines:
                 for reservation_orderline in reservation_orderlines:
                     timeslot = reservation_orderline.content_object
@@ -742,6 +744,20 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
                 for retreat_orderline in retreat_orderlines:
                     retreat = retreat_orderline.content_object
+
+                    if (not user.is_staff
+                            and retreat.exclusive_memberships.all()
+                            and user.get_active_membership() not in
+                            retreat.exclusive_memberships.all()):
+                        raise serializers.ValidationError({
+                            'non_field_errors': [
+                                _(
+                                    "User does not have the required "
+                                    "membership to order this retreat."
+                                )
+                            ],
+                        })
+
                     user_waiting = retreat.wait_queue.filter(user=user)
                     reservations = retreat.reservations.filter(
                         is_active=True
