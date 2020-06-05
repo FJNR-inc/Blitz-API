@@ -305,7 +305,7 @@ ANYMAIL = {
         ),
         'THROWBACK_VIRTUAL_RETREAT': config(
             'TEMPLATE_EMAIL_THROWBACK_VIRTUAL_RETREAT',
-            default='0',
+            default='14',
             cast=int
         ),
         'THROWBACK_PHYSICAL_RETREAT': config(
@@ -320,7 +320,7 @@ ANYMAIL = {
         ),
         'REMINDER_VIRTUAL_RETREAT': config(
             'TEMPLATE_EMAIL_REMINDER_VIRTUAL_RETREAT',
-            default='0',
+            default='11',
             cast=int
         ),
         'WELCOME_PHYSICAL_RETREAT': config(
@@ -330,7 +330,7 @@ ANYMAIL = {
         ),
         'WELCOME_VIRTUAL_RETREAT': config(
             'TEMPLATE_EMAIL_WELCOME_VIRTUAL_RETREAT',
-            default='0',
+            default='12',
             cast=int
         )
     },
@@ -377,8 +377,16 @@ LOCAL_SETTINGS = {
         cast=bool,
     ),
     'FRONTEND_INTEGRATION': {
+        'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT': config(
+            'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT',
+            default='https://www.thesez-vous.com/syprerparervirtuel.html',
+        ),
+        'PROFILE_URL': config(
+            'PROFILE_URL',
+            default='https://www.thesez-vous.org/profile',
+        ),
         'POLICY_URL': config(
-            'ACTIVATION_URL',
+            'POLICY_URL',
             default='http://thesez-vous.org/policy',
         ),
         'ACTIVATION_URL': config(
