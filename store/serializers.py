@@ -394,7 +394,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
 
         user = self.context['request'].user
 
-        user_membership = user.membership
+        user_membership = user.get_active_membership()
         user_academic_level = user.academic_level
 
         content_type = validated_data.get(

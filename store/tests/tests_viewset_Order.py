@@ -541,7 +541,7 @@ class OrderTests(APITestCase):
         """
         Ensure we can renew a membership
         """
-        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+        FIXED_TIME = timezone.datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
 
         end_time_membership = date(2018, 1, 15)
         end_time_membership_updated = \
