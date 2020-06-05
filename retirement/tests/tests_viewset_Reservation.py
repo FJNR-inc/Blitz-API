@@ -278,7 +278,7 @@ class ReservationTests(APITestCase):
                 ],
                 'address_line1': '123 random street',
                 'address_line2': None,
-                'city': '',
+                'city': None,
                 'country': 'Random country',
                 'details': 'This is a description of the retreat.',
                 'email_content': None,
