@@ -125,37 +125,6 @@ class OrderLineTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_create_without_membership(self):
-        """
-        Ensure we can't create an order line if user does not have the required
-        membership.
-        """
-        self.client.force_authenticate(user=self.user)
-
-        data = {
-            'order': reverse('order-detail', args=[self.order.id]),
-            'quantity': 2,
-            'content_type': "package",
-            'object_id': self.package.id,
-        }
-
-        response = self.client.post(
-            reverse('orderline-list'),
-            data,
-            format='json',
-        )
-
-        content = {
-            'object_id': [
-                'User does not have the required membership to order this '
-                'package.'
-            ]
-        }
-
-        self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
     def test_create_without_academic_level(self):
         """
         Ensure we can't create an order line with a membership if the user does
@@ -480,38 +449,6 @@ class OrderLineTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
-    def test_update_partial_without_membership(self):
-        """
-        Ensure we can't partially update an order line without required
-        membership for ordered package.
-        """
-        self.client.force_authenticate(user=self.user)
-
-        data = {
-            'order': reverse('order-detail', args=[self.order.id]),
-            'quantity': 9999,
-        }
-
-        response = self.client.patch(
-            reverse(
-                'orderline-detail',
-                args=[self.order_line.id]
-            ),
-            data,
-            format='json',
-        )
-
-        content = {
-            'object_id': [
-                'User does not have the required membership to order this '
-                'package.'
-            ]
-        }
-
-        self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_list(self):
         """

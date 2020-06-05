@@ -1565,7 +1565,7 @@ class OrderTests(APITestCase):
         self.assertEqual(len(mail.outbox), 3)
 
     @responses.activate
-    def test_fail_order_retreat_that_need_a_membership(self):
+    def test_fail_order_retreat_no_membership(self):
         """
         Ensure we can't create an order with a physical retreat that need a
         membership of we do not have a membership in profile or in cart
@@ -1620,18 +1620,204 @@ class OrderTests(APITestCase):
 
         response_data = json.loads(response.content)
         content = {
-            "order_lines": [
-                {
-                    "object_id": [
-                        "User does not have the required membership to "
-                        "order this package."
-                    ]
-                }
+            "non_field_errors": [
+                "User does not have the required membership to "
+                "order this retreat."
             ]
         }
         self.assertEqual(
             response_data,
             content
+        )
+
+    @responses.activate
+    def test_fail_order_retreat_membership_expired(self):
+        """
+        Ensure we can't create an order with a physical retreat that need a
+        membership of we do not have a membership in profile or in cart
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.membership = self.membership
+        self.user.membership_end = date.today()
+        self.user.save()
+
+        self.assertEqual(
+            self.user.get_active_membership(),
+            None
+        )
+
+        self.retreat.exclusive_memberships.add(self.membership)
+        self.retreat.save()
+
+        self.assertTrue(
+            self.retreat.exclusive_memberships.all().exists()
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'retreat',
+                    'object_id': self.retreat.id,
+                    'quantity': 1,
+                },
+            ],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+        content = {
+            "non_field_errors": [
+                "User does not have the required membership to "
+                "order this retreat."
+            ]
+        }
+        self.assertEqual(
+            response_data,
+            content
+        )
+
+    @responses.activate
+    def test_buy_retreat_with_membership_expired(self):
+        """
+        Ensure we can create an order with a physical retreat that need a
+        membership of we do not have a membership in profile but have one in
+        cart
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.membership = self.membership
+        self.user.membership_end = date.today()
+        self.user.save()
+
+        self.assertEqual(
+            self.user.get_active_membership(),
+            None
+        )
+
+        self.retreat.exclusive_memberships.add(self.membership)
+        self.retreat.save()
+
+        self.assertTrue(
+            self.retreat.exclusive_memberships.all().exists()
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'membership',
+                    'object_id': self.membership.id,
+                    'quantity': 1,
+                },
+                {
+                    'content_type': 'retreat',
+                    'object_id': self.retreat.id,
+                    'quantity': 1,
+                },
+            ],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
+        )
+
+    @responses.activate
+    def test_buy_retreat_without_membership(self):
+        """
+        Ensure we can create an order with a physical retreat that need a
+        membership of we do not have a membership in profile but have one in
+        cart
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.save()
+
+        self.assertEqual(
+            self.user.get_active_membership(),
+            None
+        )
+
+        self.retreat.exclusive_memberships.add(self.membership)
+        self.retreat.save()
+
+        self.assertTrue(
+            self.retreat.exclusive_memberships.all().exists()
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'membership',
+                    'object_id': self.membership.id,
+                    'quantity': 1,
+                },
+                {
+                    'content_type': 'retreat',
+                    'object_id': self.retreat.id,
+                    'quantity': 1,
+                },
+            ],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
         )
 
     @responses.activate

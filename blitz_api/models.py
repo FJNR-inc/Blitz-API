@@ -147,7 +147,7 @@ class User(AbstractUser):
     history = HistoricalRecords()
 
     def get_active_membership(self):
-        if self.membership_end and self.membership_end > timezone.now():
+        if self.membership_end and self.membership_end > datetime.date.today():
             return self.membership
         else:
             return None
