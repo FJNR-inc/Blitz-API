@@ -91,10 +91,15 @@ def send_virtual_retreat_confirmation_email(user, retreat):
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
-        'RETREAT_START_TIME': retreat.start_time.strftime('%Y-%m-%d %H:%M'),
-        'RETREAT_END_TIME': retreat.end_time.strftime('%Y-%m-%d %H:%M'),
-        'RETREAT_VIDEOCONFERENCE_TOOL': retreat.videoconference_tool,
-        'RETREAT_VIDEOCONFERENCE_LINK': retreat.videoconference_link
+        'RETREAT_START_DATE': retreat.start_time.strftime('%-d %B %Y'),
+        'RETREAT_START_TIME': retreat.start_time.strftime('%-Hh%M'),
+        'RETREAT_END_DATE': retreat.end_time.strftime('%-d %B %Y'),
+        'RETREAT_END_TIME': retreat.end_time.strftime('%-Hh%M'),
+        'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[
+            'FRONTEND_INTEGRATION'][
+            'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT'],
+        'LINK_TO_USER_PROFILE': settings.LOCAL_SETTINGS[
+            'FRONTEND_INTEGRATION']['PROFILE_URL'],
     }
 
     if len(retreat.pictures.all()):
@@ -168,10 +173,15 @@ def send_virtual_retreat_reminder_email(user, retreat):
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
-        'RETREAT_START_TIME': retreat.start_time.strftime('%Y-%m-%d %H:%M'),
-        'RETREAT_END_TIME': retreat.end_time.strftime('%Y-%m-%d %H:%M'),
-        'RETREAT_VIDEOCONFERENCE_TOOL': retreat.videoconference_tool,
-        'RETREAT_VIDEOCONFERENCE_LINK': retreat.videoconference_link
+        'RETREAT_START_DATE': retreat.start_time.strftime('%-d %B %Y'),
+        'RETREAT_START_TIME': retreat.start_time.strftime('%-Hh%M'),
+        'RETREAT_END_DATE': retreat.end_time.strftime('%-d %B %Y'),
+        'RETREAT_END_TIME': retreat.end_time.strftime('%-Hh%M'),
+        'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[
+            'FRONTEND_INTEGRATION'][
+            'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT'],
+        'LINK_TO_USER_PROFILE': settings.LOCAL_SETTINGS[
+            'FRONTEND_INTEGRATION']['PROFILE_URL'],
     }
 
     response_send_mail = send_templated_email(
@@ -257,10 +267,16 @@ def send_post_virtual_retreat_email(user, retreat):
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
-        'RETREAT_START_TIME': retreat.start_time.strftime('%Y-%m-%d %H:%M'),
-        'RETREAT_END_TIME': retreat.end_time.strftime('%Y-%m-%d %H:%M'),
-        'RETREAT_VIDEOCONFERENCE_TOOL': retreat.videoconference_tool,
-        'RETREAT_VIDEOCONFERENCE_LINK': retreat.videoconference_link
+        'RETREAT_START_DATE': retreat.start_time.strftime('%-d %B %Y'),
+        'RETREAT_START_TIME': retreat.start_time.strftime('%-Hh%M'),
+        'RETREAT_END_DATE': retreat.end_time.strftime('%-d %B %Y'),
+        'RETREAT_END_TIME': retreat.end_time.strftime('%-Hh%M'),
+        'LINK_TO_REVIEW_FORM': retreat.review_url,
+        'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[
+            'FRONTEND_INTEGRATION'][
+            'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT'],
+        'LINK_TO_USER_PROFILE': settings.LOCAL_SETTINGS[
+            'FRONTEND_INTEGRATION']['PROFILE_URL'],
     }
 
     response_send_mail = send_templated_email(
