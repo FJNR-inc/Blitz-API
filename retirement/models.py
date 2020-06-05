@@ -63,10 +63,20 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
     Address._meta.get_field('place_name').null = True
     Address._meta.get_field('postal_code').blank = True
     Address._meta.get_field('postal_code').null = True
+    Address._meta.get_field('country').blank = True
+    Address._meta.get_field('country').null = True
+    Address._meta.get_field('state_province').blank = True
+    Address._meta.get_field('state_province').null = True
+    Address._meta.get_field('city').blank = True
+    Address._meta.get_field('city').null = True
+    Address._meta.get_field('address_line1').blank = True
+    Address._meta.get_field('address_line1').null = True
 
     old_id = models.IntegerField(
         verbose_name=_("Id before migrate to base product"),
-        null=True, )
+        null=True,
+        blank=True
+    )
 
     seats = models.PositiveIntegerField(verbose_name=_("Seats"), )
 

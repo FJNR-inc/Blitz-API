@@ -146,6 +146,12 @@ class User(AbstractUser):
 
     history = HistoricalRecords()
 
+    def get_active_membership(self):
+        if self.membership_end and self.membership_end > timezone.now():
+            return self.membership
+        else:
+            return None
+
     @property
     def is_in_newsletter(self):
         return mailchimp.is_email_on_list(self.email)
