@@ -1,4 +1,5 @@
 import json
+from babel.dates import format_date
 from decimal import Decimal
 
 from django.conf import settings
@@ -91,9 +92,17 @@ def send_virtual_retreat_confirmation_email(user, retreat):
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
-        'RETREAT_START_DATE': retreat.start_time.strftime('%-d %B %Y'),
+        'RETREAT_START_DATE': format_date(
+            retreat.start_time,
+            format='long',
+            locale='fr'
+        ),
         'RETREAT_START_TIME': retreat.start_time.strftime('%-Hh%M'),
-        'RETREAT_END_DATE': retreat.end_time.strftime('%-d %B %Y'),
+        'RETREAT_END_DATE': format_date(
+            retreat.end_time,
+            format='long',
+            locale='fr'
+        ),
         'RETREAT_END_TIME': retreat.end_time.strftime('%-Hh%M'),
         'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[
             'FRONTEND_INTEGRATION'][
