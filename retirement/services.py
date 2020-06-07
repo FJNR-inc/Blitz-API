@@ -1,4 +1,5 @@
 import json
+import pytz
 from babel.dates import format_date
 from decimal import Decimal
 
@@ -87,30 +88,34 @@ def send_virtual_retreat_confirmation_email(user, retreat):
     which he has bought a seat is starting soon.
     """
 
+    start_time = retreat.start_time
+    start_time = start_time.astimezone(pytz.timezone('US/Eastern'))
+
+    end_time = retreat.end_time
+    end_time = end_time.astimezone(pytz.timezone('US/Eastern'))
     context = {
         'USER_FIRST_NAME': user.first_name,
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
         'RETREAT_START_DATE': format_date(
-            retreat.start_time,
+            start_time,
             format='long',
             locale='fr'
         ),
-        'RETREAT_START_TIME': retreat.start_time.strftime('%-Hh%M'),
+        'RETREAT_START_TIME': start_time.strftime('%-Hh%M'),
         'RETREAT_END_DATE': format_date(
-            retreat.end_time,
+            end_time,
             format='long',
             locale='fr'
         ),
-        'RETREAT_END_TIME': retreat.end_time.strftime('%-Hh%M'),
+        'RETREAT_END_TIME': end_time.strftime('%-Hh%M'),
         'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[
             'FRONTEND_INTEGRATION'][
             'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT'],
         'LINK_TO_USER_PROFILE': settings.LOCAL_SETTINGS[
             'FRONTEND_INTEGRATION']['PROFILE_URL'],
     }
-
     if len(retreat.pictures.all()):
         context['RETREAT_PICTURE'] = "{0}{1}".format(
             settings.MEDIA_URL,
@@ -131,13 +136,18 @@ def send_physical_retreat_confirmation_email(user, retreat):
     which he has bought a seat is starting soon.
     """
 
+    start_time = retreat.start_time
+    start_time = start_time.astimezone(pytz.timezone('US/Eastern'))
+
+    end_time = retreat.end_time
+    end_time = end_time.astimezone(pytz.timezone('US/Eastern'))
     context = {
         'USER_FIRST_NAME': user.first_name,
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
-        'RETREAT_START_TIME': retreat.start_time.strftime('%Y-%m-%d %H:%M'),
-        'RETREAT_END_TIME': retreat.end_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_START_TIME': start_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_END_TIME': end_time.strftime('%Y-%m-%d %H:%M'),
         'RETREAT_VIDEOCONFERENCE_TOOL': retreat.videoconference_tool,
         'RETREAT_VIDEOCONFERENCE_LINK': retreat.videoconference_link
     }
@@ -177,15 +187,20 @@ def send_virtual_retreat_reminder_email(user, retreat):
     which he has bought a seat is starting soon.
     """
 
+    start_time = retreat.start_time
+    start_time = start_time.astimezone(pytz.timezone('US/Eastern'))
+
+    end_time = retreat.end_time
+    end_time = end_time.astimezone(pytz.timezone('US/Eastern'))
     context = {
         'USER_FIRST_NAME': user.first_name,
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
-        'RETREAT_START_DATE': retreat.start_time.strftime('%-d %B %Y'),
-        'RETREAT_START_TIME': retreat.start_time.strftime('%-Hh%M'),
-        'RETREAT_END_DATE': retreat.end_time.strftime('%-d %B %Y'),
-        'RETREAT_END_TIME': retreat.end_time.strftime('%-Hh%M'),
+        'RETREAT_START_DATE': start_time.strftime('%-d %B %Y'),
+        'RETREAT_START_TIME': start_time.strftime('%-Hh%M'),
+        'RETREAT_END_DATE': end_time.strftime('%-d %B %Y'),
+        'RETREAT_END_TIME': end_time.strftime('%-Hh%M'),
         'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[
             'FRONTEND_INTEGRATION'][
             'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT'],
@@ -207,14 +222,19 @@ def send_physical_retreat_reminder_email(user, retreat):
     which he has bought a seat is starting soon.
     """
 
+    start_time = retreat.start_time
+    start_time = start_time.astimezone(pytz.timezone('US/Eastern'))
+
+    end_time = retreat.end_time
+    end_time = end_time.astimezone(pytz.timezone('US/Eastern'))
     context = {
         'USER_FIRST_NAME': user.first_name,
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
         'RETREAT_PLACE': retreat.place_name,
-        'RETREAT_START_TIME': retreat.start_time.strftime('%Y-%m-%d %H:%M'),
-        'RETREAT_END_TIME': retreat.end_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_START_TIME': start_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_END_TIME': end_time.strftime('%Y-%m-%d %H:%M'),
     }
 
     response_send_mail = send_templated_email(
@@ -246,14 +266,19 @@ def send_post_physical_retreat_email(user, retreat):
     physical retreat has ended.
     """
 
+    start_time = retreat.start_time
+    start_time = start_time.astimezone(pytz.timezone('US/Eastern'))
+
+    end_time = retreat.end_time
+    end_time = end_time.astimezone(pytz.timezone('US/Eastern'))
     context = {
         'USER_FIRST_NAME': user.first_name,
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
         'RETREAT_PLACE': retreat.place_name,
-        'RETREAT_START_TIME': retreat.start_time.strftime('%Y-%m-%d %H:%M'),
-        'RETREAT_END_TIME': retreat.end_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_START_TIME': start_time.strftime('%Y-%m-%d %H:%M'),
+        'RETREAT_END_TIME': end_time.strftime('%Y-%m-%d %H:%M'),
     }
 
     response_send_mail = send_templated_email(
@@ -271,15 +296,20 @@ def send_post_virtual_retreat_email(user, retreat):
     virtual retreat has ended.
     """
 
+    start_time = retreat.start_time
+    start_time = start_time.astimezone(pytz.timezone('US/Eastern'))
+
+    end_time = retreat.end_time
+    end_time = end_time.astimezone(pytz.timezone('US/Eastern'))
     context = {
         'USER_FIRST_NAME': user.first_name,
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
-        'RETREAT_START_DATE': retreat.start_time.strftime('%-d %B %Y'),
-        'RETREAT_START_TIME': retreat.start_time.strftime('%-Hh%M'),
-        'RETREAT_END_DATE': retreat.end_time.strftime('%-d %B %Y'),
-        'RETREAT_END_TIME': retreat.end_time.strftime('%-Hh%M'),
+        'RETREAT_START_DATE': start_time.strftime('%-d %B %Y'),
+        'RETREAT_START_TIME': start_time.strftime('%-Hh%M'),
+        'RETREAT_END_DATE': end_time.strftime('%-d %B %Y'),
+        'RETREAT_END_TIME': end_time.strftime('%-Hh%M'),
         'LINK_TO_REVIEW_FORM': retreat.review_url,
         'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[
             'FRONTEND_INTEGRATION'][
