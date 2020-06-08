@@ -198,7 +198,7 @@ class ReservationTests(APITestCase):
         )
 
     def test_create(self):
-        self.maxDiff = 4000
+        self.maxDiff = None
         """
         Ensure we can create a reservation if user has permission.
         It is possible to create reservations for INACTIVE retreats.
@@ -278,7 +278,7 @@ class ReservationTests(APITestCase):
                 ],
                 'address_line1': '123 random street',
                 'address_line2': None,
-                'city': '',
+                'city': None,
                 'country': 'Random country',
                 'details': 'This is a description of the retreat.',
                 'email_content': None,
@@ -301,7 +301,7 @@ class ReservationTests(APITestCase):
                 'form_url': 'example.com',
                 'carpool_url': 'example2.com',
                 'review_url': 'example3.com',
-                'place_name': '',
+                'place_name': None,
                 'url': 'http://testserver/retreat/retreats/' +
                        str(self.retreat2.id),
                 'has_shared_rooms': True,
@@ -311,6 +311,9 @@ class ReservationTests(APITestCase):
                 'options': [],
                 'room_type': Retreat.SINGLE_OCCUPATION,
                 'toilet_gendered': False,
+                'type': 'P',
+                'videoconference_tool': None,
+                'videoconference_link': None
             },
             'user_details': {
                 'academic_field': None,
@@ -338,6 +341,9 @@ class ReservationTests(APITestCase):
                 'faculty': None,
                 'student_number': None,
                 'volunteer_for_workplace': [],
+                'hide_newsletter': False,
+                'is_in_newsletter': False,
+                'number_of_free_virtual_retreat': 0,
             }
         }
 
@@ -1276,6 +1282,11 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(len(mail.outbox), 0)
 
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+        }
+    )
     def test_remind_users(self):
         self.client.force_authenticate(user=self.admin)
 
@@ -1299,11 +1310,14 @@ class ReservationTests(APITestCase):
         self.assertTrue(
             EmailLog.objects.filter(
                 user_email=self.user.email,
-                type_email='reminder'))
+                type_email='REMINDER_PHYSICAL_RETREAT'
+            )
+        )
 
         self.assertEqual(
             EmailLog.objects.filter(
                 user_email=self.user.email,
-                type_email='reminder')[0].nb_email_sent,
+                type_email='REMINDER_PHYSICAL_RETREAT'
+            )[0].nb_email_sent,
             1
         )

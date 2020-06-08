@@ -1,7 +1,13 @@
+from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
 
 from . import models
 from django.utils.translation import ugettext_lazy as _
+
+
+class TaskFilter(AutocompleteFilter):
+    title = 'Task'
+    field_name = 'task'
 
 
 class ExecutionInline(admin.StackedInline):
@@ -45,11 +51,15 @@ class ExecutionAdmin(admin.ModelAdmin):
     )
     list_filter = (
         'success',
-        'task',
+        TaskFilter,
         'http_code'
     )
     autocomplete_fields = ('task',)
     readonly_fields = ('created_at',)
+
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
 
 
 admin.site.register(models.Task, TaskAdmin)

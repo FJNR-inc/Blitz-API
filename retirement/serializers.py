@@ -132,20 +132,34 @@ class RetreatSerializer(BaseProductSerializer):
 
     def validate(self, attr):
         err = {}
-        if not check_if_translated_field('name', attr):
-            err.update(getMessageTranslate('name', attr, True))
-        if not check_if_translated_field('details', attr):
-            err.update(getMessageTranslate('details', attr, True))
-        if not check_if_translated_field('country', attr):
-            err.update(getMessageTranslate('country', attr, True))
-        if not check_if_translated_field('state_province', attr):
-            err.update(getMessageTranslate('state_province', attr, True))
-        if not check_if_translated_field('city', attr):
-            err.update(getMessageTranslate('city', attr, True))
-        if not check_if_translated_field('address_line1', attr):
-            err.update(getMessageTranslate('address_line1', attr, True))
-        if err:
-            raise serializers.ValidationError(err)
+        if attr.get('type', Retreat.TYPE_PHYSICAL) == Retreat.TYPE_PHYSICAL:
+            required_attrs = [
+                'accessibility',
+                'postal_code',
+                'has_shared_rooms'
+            ]
+            for key in required_attrs:
+                if attr.get(key, None) is None:
+                    err.update(
+                        {
+                            key: _("This field is required.")
+                        }
+                    )
+
+            if not check_if_translated_field('name', attr):
+                err.update(getMessageTranslate('name', attr, True))
+            if not check_if_translated_field('details', attr):
+                err.update(getMessageTranslate('details', attr, True))
+            if not check_if_translated_field('country', attr):
+                err.update(getMessageTranslate('country', attr, True))
+            if not check_if_translated_field('state_province', attr):
+                err.update(getMessageTranslate('state_province', attr, True))
+            if not check_if_translated_field('city', attr):
+                err.update(getMessageTranslate('city', attr, True))
+            if not check_if_translated_field('address_line1', attr):
+                err.update(getMessageTranslate('address_line1', attr, True))
+            if err:
+                raise serializers.ValidationError(err)
         return super(RetreatSerializer, self).validate(attr)
 
     def create(self, validated_data):
@@ -157,9 +171,16 @@ class RetreatSerializer(BaseProductSerializer):
 
         cron_manager = CronManager()
         # Set reminder email
-        reminder_date = validated_data['start_time'] - timedelta(days=7)
+        # 24H for virtual retreat
+        # 7 Days for physical retreat
+        if retreat.type == Retreat.TYPE_VIRTUAL:
+            reminder_date = validated_data['start_time'] - timedelta(days=1)
+        else:
+            reminder_date = validated_data['start_time'] - timedelta(days=7)
+
         cron_manager.create_remind_user(
-            retreat.id, reminder_date)
+            retreat.id, reminder_date
+        )
 
         # Set post-event email
         throwback_date = validated_data['end_time'] + timedelta(days=1)

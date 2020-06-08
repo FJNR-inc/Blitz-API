@@ -38,7 +38,7 @@ from .models import (
 from .resources import (ReservationResource, RetreatResource,
                         WaitQueueResource,
                         RetreatReservationResource, OptionProductResource)
-from .services import (send_retreat_7_days_email,
+from .services import (send_retreat_reminder_email,
                        send_post_retreat_email, )
 
 User = get_user_model()
@@ -67,6 +67,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         'end_time': ['exact', 'gte', 'lte'],
         'is_active': ['exact'],
         'hidden': ['exact'],
+        'type': ['exact']
     }
     ordering = ('name', 'start_time', 'end_time')
 
@@ -109,7 +110,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         emails = []
         for reservation in retreat.reservations.filter(
                 is_active=True, pre_event_send=False):
-            send_retreat_7_days_email(reservation.user, retreat)
+            send_retreat_reminder_email(reservation.user, retreat)
             reservation.pre_event_send = True
             reservation.save()
             emails.append(reservation.user.email)

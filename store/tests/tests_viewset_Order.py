@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core import mail
-from django.test.utils import override_settings
+from django.test import modify_settings, override_settings
 from django.utils import timezone
 from django.urls import reverse
 
@@ -50,6 +50,14 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
         'BASE_URL': "http://example.com/",
         'VAULT_URL': "customervault/v1/",
         'CARD_URL': "cardpayments/v1/"
+    },
+    LOCAL_SETTINGS={
+        "EMAIL_SERVICE": True,
+        "FRONTEND_INTEGRATION": {
+            "POLICY_URL": "fake_url",
+            "LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT": "fake_url",
+            "PROFILE_URL": "fake_url"
+        }
     }
 )
 class OrderTests(APITestCase):
@@ -202,6 +210,36 @@ class OrderTests(APITestCase):
             activity_language='FR',
             accessibility=True,
             has_shared_rooms=True,
+        )
+        self.virtualRetreat = Retreat.objects.create(
+            name="virtual retreat",
+            seats=400,
+            details="This is a description of the virtual retreat.",
+            price=200,
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            is_active=True,
+            activity_language='FR',
+            videoconference_tool='Jitsi',
+            type=Retreat.TYPE_VIRTUAL,
+        )
+        self.virtualRetreat2 = Retreat.objects.create(
+            name="virtual retreat 2",
+            seats=400,
+            details="This is a description of the virtual retreat 2.",
+            price=100,
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            is_active=True,
+            activity_language='FR',
+            videoconference_tool='Jitsi',
+            type=Retreat.TYPE_VIRTUAL,
         )
         self.coupon = Coupon.objects.create(
             code="ABCD1234",
@@ -1527,6 +1565,807 @@ class OrderTests(APITestCase):
         self.assertEqual(len(mail.outbox), 3)
 
     @responses.activate
+    def test_fail_order_retreat_no_membership(self):
+        """
+        Ensure we can't create an order with a physical retreat that need a
+        membership of we do not have a membership in profile or in cart
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.save()
+
+        self.assertEqual(
+            self.user.get_active_membership(),
+            None
+        )
+
+        self.retreat.exclusive_memberships.add(self.membership)
+        self.retreat.save()
+
+        self.assertTrue(
+            self.retreat.exclusive_memberships.all().exists()
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'retreat',
+                    'object_id': self.retreat.id,
+                    'quantity': 1,
+                },
+            ],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+        content = {
+            "non_field_errors": [
+                "User does not have the required membership to "
+                "order this retreat."
+            ]
+        }
+        self.assertEqual(
+            response_data,
+            content
+        )
+
+    @responses.activate
+    def test_fail_order_retreat_membership_expired(self):
+        """
+        Ensure we can't create an order with a physical retreat that need a
+        membership of we do not have a membership in profile or in cart
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.membership = self.membership
+        self.user.membership_end = date.today()
+        self.user.save()
+
+        self.assertEqual(
+            self.user.get_active_membership(),
+            None
+        )
+
+        self.retreat.exclusive_memberships.add(self.membership)
+        self.retreat.save()
+
+        self.assertTrue(
+            self.retreat.exclusive_memberships.all().exists()
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'retreat',
+                    'object_id': self.retreat.id,
+                    'quantity': 1,
+                },
+            ],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+        content = {
+            "non_field_errors": [
+                "User does not have the required membership to "
+                "order this retreat."
+            ]
+        }
+        self.assertEqual(
+            response_data,
+            content
+        )
+
+    @responses.activate
+    def test_buy_retreat_with_membership_expired(self):
+        """
+        Ensure we can create an order with a physical retreat that need a
+        membership of we do not have a membership in profile but have one in
+        cart
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.membership = self.membership
+        self.user.membership_end = date.today()
+        self.user.save()
+
+        self.assertEqual(
+            self.user.get_active_membership(),
+            None
+        )
+
+        self.retreat.exclusive_memberships.add(self.membership)
+        self.retreat.save()
+
+        self.assertTrue(
+            self.retreat.exclusive_memberships.all().exists()
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'membership',
+                    'object_id': self.membership.id,
+                    'quantity': 1,
+                },
+                {
+                    'content_type': 'retreat',
+                    'object_id': self.retreat.id,
+                    'quantity': 1,
+                },
+            ],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
+        )
+
+    @responses.activate
+    def test_buy_retreat_without_membership(self):
+        """
+        Ensure we can create an order with a physical retreat that need a
+        membership of we do not have a membership in profile but have one in
+        cart
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.save()
+
+        self.assertEqual(
+            self.user.get_active_membership(),
+            None
+        )
+
+        self.retreat.exclusive_memberships.add(self.membership)
+        self.retreat.save()
+
+        self.assertTrue(
+            self.retreat.exclusive_memberships.all().exists()
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'membership',
+                    'object_id': self.membership.id,
+                    'quantity': 1,
+                },
+                {
+                    'content_type': 'retreat',
+                    'object_id': self.retreat.id,
+                    'quantity': 1,
+                },
+            ],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
+        )
+
+    @responses.activate
+    def test_create_retreat(self):
+        """
+        Ensure we can create an order with a physical retreat and a
+        membership and that we pay for all
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.save()
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'retreat',
+                    'object_id': self.retreat.id,
+                    'quantity': 1,
+                },
+                {
+                    'content_type': 'membership',
+                    'object_id': self.membership.id,
+                    'quantity': 1,
+                }
+            ],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][1]['order']
+        del response_data['order_lines'][1]['object_id']
+        del response_data['order_lines'][1]['url']
+        del response_data['order_lines'][1]['id']
+        content = {
+            'order_lines': [
+                {
+                    'content_type': 'retreat',
+                    'quantity': 1,
+                    'coupon': None,
+                    'coupon_real_value': 0.0,
+                    'cost': 199.0,
+                    'metadata': None,
+                    'options': []
+                },
+                {
+                    'content_type': 'membership',
+                    'quantity': 1,
+                    'coupon': None,
+                    'coupon_real_value': 0.0,
+                    'cost': 50.0,
+                    'metadata': None,
+                    'options': []
+                }
+            ],
+            'user': 'http://testserver/users/' + str(self.user.id),
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '1',
+            'settlement_id': '1',
+            'reference_number': '751',
+        }
+
+        self.assertEqual(response_data, content)
+
+        # 1 email for the order details
+        # 1 email for the retreat informations
+        self.assertEqual(len(mail.outbox), 2)
+
+    @responses.activate
+    @override_settings(
+        LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP='5000-01-01'
+    )
+    def test_create_virtual_retreat_with_membership(self):
+        """
+        Ensure we can create an order with a virtual retreat and a
+        membership and that the virtual retreat is free
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.save()
+
+        number_of_free_virtual_retreat_in_bank = \
+            self.user.number_of_free_virtual_retreat
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'retreat',
+                    'object_id': self.virtualRetreat.id,
+                    'quantity': 1,
+                },
+                {
+                    'content_type': 'membership',
+                    'object_id': self.membership.id,
+                    'quantity': 1,
+                }
+            ],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][1]['order']
+        del response_data['order_lines'][1]['object_id']
+        del response_data['order_lines'][1]['url']
+        del response_data['order_lines'][1]['id']
+        content = {
+            'order_lines': [
+                {
+                    'content_type': 'retreat',
+                    'quantity': 1,
+                    'coupon': None,
+                    'coupon_real_value': 0.0,
+                    'cost': 0.0,
+                    'metadata': None,
+                    'options': []
+                },
+                {
+                    'content_type': 'membership',
+                    'quantity': 1,
+                    'coupon': None,
+                    'coupon_real_value': 0.0,
+                    'cost': 50.0,
+                    'metadata': None,
+                    'options': []
+                }
+            ],
+            'user': 'http://testserver/users/' + str(self.user.id),
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '1',
+            'settlement_id': '1',
+            'reference_number': '751',
+        }
+
+        refreshed_user = User.objects.get(id=self.user.id)
+
+        self.assertEqual(
+            number_of_free_virtual_retreat_in_bank,
+            refreshed_user.number_of_free_virtual_retreat
+        )
+
+        self.assertEqual(response_data, content)
+
+        # 1 email for the order details
+        # 1 email for the retreat informations
+        self.assertEqual(len(mail.outbox), 2)
+
+    @responses.activate
+    @override_settings(
+        LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP='5000-01-01'
+    )
+    def test_create_membership_before_end_of_limit_free_virtual_retreat(self):
+        """
+        Ensure we can create an order with a membership and get
+        a free virtual retreat in bank
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.save()
+
+        number_of_free_virtual_retreat_in_bank =\
+            self.user.number_of_free_virtual_retreat
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'membership',
+                    'object_id': self.membership.id,
+                    'quantity': 1,
+                }
+            ],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+        content = {
+            'order_lines': [
+                {
+                    'content_type': 'membership',
+                    'quantity': 1,
+                    'coupon': None,
+                    'coupon_real_value': 0.0,
+                    'cost': 50.0,
+                    'metadata': None,
+                    'options': []
+                }
+            ],
+            'user': 'http://testserver/users/' + str(self.user.id),
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '1',
+            'settlement_id': '1',
+            'reference_number': '751',
+        }
+
+        refreshed_user = User.objects.get(id=self.user.id)
+
+        self.assertEqual(
+            number_of_free_virtual_retreat_in_bank + 1,
+            refreshed_user.number_of_free_virtual_retreat
+        )
+
+        self.assertEqual(response_data, content)
+
+        # 1 email for the order details
+        self.assertEqual(len(mail.outbox), 1)
+
+    @responses.activate
+    def test_create_virtual_retreat_with_membership_after_limit(self):
+        """
+        Ensure we can create an order with a virtual retreat and a
+        membership and that the virtual retreat is not free since the limit
+        is passed
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.save()
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'retreat',
+                    'object_id': self.virtualRetreat.id,
+                    'quantity': 1,
+                },
+                {
+                    'content_type': 'membership',
+                    'object_id': self.membership.id,
+                    'quantity': 1,
+                }
+            ],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['object_id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][1]['order']
+        del response_data['order_lines'][1]['object_id']
+        del response_data['order_lines'][1]['url']
+        del response_data['order_lines'][1]['id']
+        content = {
+            'order_lines': [
+                {
+                    'content_type': 'retreat',
+                    'quantity': 1,
+                    'coupon': None,
+                    'coupon_real_value': 0.0,
+                    'cost': 200.0,
+                    'metadata': None,
+                    'options': []
+                },
+                {
+                    'content_type': 'membership',
+                    'quantity': 1,
+                    'coupon': None,
+                    'coupon_real_value': 0.0,
+                    'cost': 50.0,
+                    'metadata': None,
+                    'options': []
+                }
+            ],
+            'user': 'http://testserver/users/' + str(self.user.id),
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '1',
+            'settlement_id': '1',
+            'reference_number': '751',
+        }
+
+        self.assertEqual(response_data, content)
+
+        # 1 email for the order details
+        # 1 email for the retreat informations
+        self.assertEqual(len(mail.outbox), 2)
+
+    @responses.activate
+    def test_create_virtual_retreat_with_free_retreat_in_profile(self):
+        """
+        Ensure we can create an order with a virtual retreat and a
+        free virtual retreat in banks and that the virtual retreat is free
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.number_of_free_virtual_retreat = 1
+        self.user.save()
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'retreat',
+                    'object_id': self.virtualRetreat.id,
+                    'quantity': 1,
+                }
+            ],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['reference_number']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+        content = {
+            'order_lines': [
+                {
+                    'object_id': self.virtualRetreat.id,
+                    'content_type': 'retreat',
+                    'quantity': 1,
+                    'coupon': None,
+                    'coupon_real_value': 0.0,
+                    'cost': 0.0,
+                    'metadata': None,
+                    'options': []
+                }
+            ],
+            'user': 'http://testserver/users/' + str(self.user.id),
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': 0,
+            'settlement_id': 0,
+        }
+
+        self.assertEqual(response_data, content)
+
+        # 1 email for the order details
+        # 1 email for the retreat informations
+        self.assertEqual(len(mail.outbox), 2)
+
+    @responses.activate
+    def test_create_two_virtual_retreat_with_free_retreat_in_profile(self):
+        """
+        Ensure we can create an order with two virtual retreat and that the
+        first virtual retreat is free
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.user.city = "Current city"
+        self.user.phone = "123-456-7890"
+        self.user.number_of_free_virtual_retreat = 1
+        self.user.save()
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [
+                {
+                    'content_type': 'retreat',
+                    'object_id': self.virtualRetreat.id,
+                    'quantity': 1,
+                },
+                {
+                    'content_type': 'retreat',
+                    'object_id': self.virtualRetreat2.id,
+                    'quantity': 1,
+                }
+            ],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+        del response_data['reference_number']
+        del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][1]['order']
+        del response_data['order_lines'][1]['url']
+        del response_data['order_lines'][1]['id']
+        content = {
+            'order_lines': [
+                {
+                    'object_id': self.virtualRetreat.id,
+                    'content_type': 'retreat',
+                    'quantity': 1,
+                    'coupon': None,
+                    'coupon_real_value': 0.0,
+                    'cost': 0.0,
+                    'metadata': None,
+                    'options': []
+                },
+                {
+                    'object_id': self.virtualRetreat2.id,
+                    'content_type': 'retreat',
+                    'quantity': 1,
+                    'coupon': None,
+                    'coupon_real_value': 0.0,
+                    'cost': 100.0,
+                    'metadata': None,
+                    'options': []
+                }
+            ],
+            'user': 'http://testserver/users/' + str(self.user.id),
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '1',
+            'settlement_id': '1',
+        }
+
+        self.assertEqual(response_data, content)
+
+        # 1 email for the order details
+        # 1 email for the free retreat informations
+        # 1 email for the payed retreat informations
+        self.assertEqual(len(mail.outbox), 3)
+
+    @responses.activate
     def test_create_retreat_twice(self):
         """
         Ensure we can't create an order with a reservation for a retreat
@@ -2497,6 +3336,94 @@ class OrderTests(APITestCase):
             new_coupon.end_time <
             timezone.now() + self.membership.duration
         )
+
+    @responses.activate
+    def test_create_with_membership_coupon_after_limit(self):
+        """
+        Ensure we can order a membership that includes a membership coupon
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        nb_coupon_start = self.admin.coupons.all().count()
+
+        membership_coupon = MembershipCoupon.objects.create(
+            value=100,
+            percent_off=0,
+            max_use=4,
+            max_use_per_user=4,
+            details="",
+            membership=self.membership,
+            limit_date=timezone.now()
+        )
+
+        membership_coupon.applicable_product_types.set(
+            [ContentType.objects.get_for_model(Membership)]
+        )
+
+        membership_coupon.save()
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'quantity': 1,
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        response_data = json.loads(response.content)
+        del response_data['url']
+        del response_data['id']
+
+        del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['url']
+        del response_data['order_lines'][0]['order']
+
+        content = {
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'quantity': 1,
+                'coupon': None,
+                'coupon_real_value': 0.0,
+                'cost': 50.0,
+                'metadata': None,
+                'options': []
+            }],
+            'user': 'http://testserver/users/' + str(self.admin.id),
+            'transaction_date': response_data['transaction_date'],
+            'authorization_id': '1',
+            'settlement_id': '1',
+            'reference_number': '751',
+        }
+
+        self.assertEqual(response_data, content)
+
+        # The number of coupon does not change since the limit_date is expired
+        self.assertEqual(self.admin.coupons.all().count(), nb_coupon_start)
 
     def test_update(self):
         """

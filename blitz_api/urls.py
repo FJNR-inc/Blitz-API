@@ -58,7 +58,7 @@ router.register('academic_fields', views.AcademicFieldViewSet)
 router.register(
     'authentication',
     views.TemporaryTokenDestroy,
-    base_name="authentication",
+    basename="authentication",
 )
 
 router.register('export_media', views.ExportMediaViewSet)
@@ -68,6 +68,11 @@ urlpatterns = [
         'authentication',
         views.ObtainTemporaryAuthToken.as_view(),
         name='token_api'
+    ),
+    path(
+        'mail_chimp',
+        views.MailChimpView.as_view(),
+        name='mail_chimp'
     ),
     path(
         'users/activate',

@@ -15,6 +15,7 @@ from simple_history.models import HistoricalRecords
 
 from django.utils.translation import ugettext_lazy as _
 
+from . import mailchimp
 from .managers import ActionTokenManager
 
 
@@ -122,6 +123,10 @@ class User(AbstractUser):
         null=True,
         verbose_name=_("Tickets"),
     )
+    number_of_free_virtual_retreat = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name=_("Number of free virtual retreat"),
+    )
     city = models.CharField(
         verbose_name=_("City"),
         blank=True,
@@ -133,7 +138,23 @@ class User(AbstractUser):
         blank=True,
         null=True,
     )
+
+    hide_newsletter = models.BooleanField(
+        default=False,
+        verbose_name=_("Hide newsletter"),
+    )
+
     history = HistoricalRecords()
+
+    def get_active_membership(self):
+        if self.membership_end and self.membership_end > datetime.date.today():
+            return self.membership
+        else:
+            return None
+
+    @property
+    def is_in_newsletter(self):
+        return mailchimp.is_email_on_list(self.email)
 
     @classmethod
     def create_user(cls,

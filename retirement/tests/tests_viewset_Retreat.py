@@ -10,7 +10,6 @@ from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test.utils import override_settings
 from django.urls import reverse
-from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
@@ -119,7 +118,7 @@ class RetreatTests(APITestCase):
         }
     )
     @responses.activate
-    def test_create(self):
+    def test_create_physical_retreat(self):
         """
         Ensure we can create a retreat if user has permission.
         """
@@ -222,7 +221,7 @@ class RetreatTests(APITestCase):
             'form_url': "example.com",
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
-            'place_name': '',
+            'place_name': None,
             'has_shared_rooms': True,
             'options': [],
             'hidden': False,
@@ -236,6 +235,133 @@ class RetreatTests(APITestCase):
             'sub_title': None,
             'toilet_gendered': True,
             'room_type': Retreat.DOUBLE_OCCUPATION,
+            'type': 'P',
+            'videoconference_tool': None,
+            'videoconference_link': None
+        }
+
+        response_data = remove_translation_fields(json.loads(response.content))
+        del response_data['id']
+        del response_data['url']
+
+        self.assertEqual(
+            response_data,
+            content
+        )
+
+    @override_settings(
+        EXTERNAL_SCHEDULER={
+            'URL': "http://example.com",
+            'USER': "user",
+            'PASSWORD': "password",
+        }
+    )
+    @responses.activate
+    def test_create_virtual_retreat(self):
+        """
+        Ensure we can create a retreat if user has permission.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/authentication",
+            json={"token": "1234567890"},
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/tasks",
+            status=200
+        )
+
+        data = {
+            'name': "random_retreat",
+            'seats': 40,
+            'type': 'V',
+            'details': "short_description",
+            'timezone': "America/Montreal",
+            'price': '100.00',
+            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
+            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 16)),
+            'min_day_refund': 7,
+            'min_day_exchange': 7,
+            'refund_rate': 50,
+            'is_active': True,
+            'hidden': False,
+            'description': None,
+            'sub_title': None,
+            'postal_code': None,
+            'place_name': None
+        }
+
+        response = self.client.post(
+            reverse('retreat:retreat-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        content = {
+            'details': 'short_description',
+            'email_content': None,
+            'address_line1': None,
+            'address_line2': None,
+            'available_on_product_types': [],
+            'available_on_products': [],
+            'city': None,
+            'country': None,
+            'postal_code': None,
+            'state_province': None,
+            'latitude': None,
+            'longitude': None,
+            'name': 'random_retreat',
+            'notification_interval': '1 00:00:00',
+            'pictures': [],
+            'start_time': '2130-01-15T12:00:00-05:00',
+            'end_time': '2130-01-17T16:00:00-05:00',
+            'seats': 40,
+            'reserved_seats': 0,
+            'activity_language': None,
+            'price': '100.00',
+            'exclusive_memberships': [],
+            'timezone': "America/Montreal",
+            'is_active': True,
+            'places_remaining': 40,
+            'min_day_exchange': 7,
+            'min_day_refund': 7,
+            'refund_rate': 50,
+            'reservations': [],
+            'reservations_canceled': [],
+            'total_reservations': 0,
+            'users': [],
+            'accessibility': None,
+            'form_url': None,
+            'carpool_url': None,
+            'review_url': None,
+            'place_name': None,
+            'has_shared_rooms': None,
+            'options': [],
+            'hidden': False,
+            'accessibility_detail': None,
+            'description': None,
+            'food_allergen_free': False,
+            'food_gluten_free': False,
+            'food_vegan': False,
+            'food_vege': False,
+            'google_maps_url': None,
+            'sub_title': None,
+            'toilet_gendered': None,
+            'room_type': None,
+            'type': 'V',
+            'videoconference_tool': None,
+            'videoconference_link': None
         }
 
         response_data = remove_translation_fields(json.loads(response.content))
@@ -351,7 +477,7 @@ class RetreatTests(APITestCase):
             'form_url': "example.com",
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
-            'place_name': '',
+            'place_name': None,
             'has_shared_rooms': True,
             'hidden': True,
             'accessibility_detail': None,
@@ -364,6 +490,9 @@ class RetreatTests(APITestCase):
             'sub_title': None,
             'toilet_gendered': True,
             'room_type': Retreat.DOUBLE_OCCUPATION,
+            'type': 'P',
+            'videoconference_tool': None,
+            'videoconference_link': None
         }
 
         response_data = remove_translation_fields(json.loads(response.content))
@@ -477,7 +606,7 @@ class RetreatTests(APITestCase):
             'form_url': "example.com",
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
-            'place_name': '',
+            'place_name': None,
             'has_shared_rooms': True,
             'hidden': True,
             'accessibility_detail': None,
@@ -490,6 +619,9 @@ class RetreatTests(APITestCase):
             'sub_title': None,
             'toilet_gendered': None,
             'room_type': None,
+            'type': 'P',
+            'videoconference_tool': None,
+            'videoconference_link': None
         }
 
         response_data = remove_translation_fields(json.loads(response.content))
@@ -687,13 +819,15 @@ class RetreatTests(APITestCase):
             'min_day_exchange': (1,),
             'min_day_refund': (1,),
             'refund_rate': (1,),
-            'accessibility': "",
+            'accessibility': (1,),
             'form_url': (1,),
             'carpool_url': (1,),
             'review_url': (1,),
             'place_name': (1,),
-            'has_shared_rooms': "",
+            'has_shared_rooms': (1, ),
             'hidden': False,
+            'type': (1,),
+            'videoconference_tool': (1, )
         }
 
         response = self.client.post(
@@ -732,6 +866,8 @@ class RetreatTests(APITestCase):
             'review_url': ['Not a valid string.'],
             'has_shared_rooms': ['Must be a valid boolean.'],
             'place_name': ['Not a valid string.'],
+            'type': ['"[1]" is not a valid choice.'],
+            'videoconference_tool': ['Not a valid string.']
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -815,7 +951,7 @@ class RetreatTests(APITestCase):
             'form_url': "example.com",
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
-            'place_name': '',
+            'place_name': None,
             'users': [],
             'url': 'http://testserver/retreat/retreats/' +
                    str(self.retreat.id),
@@ -834,6 +970,9 @@ class RetreatTests(APITestCase):
             'sub_title': None,
             'toilet_gendered': True,
             'room_type': Retreat.DOUBLE_OCCUPATION,
+            'type': 'P',
+            'videoconference_tool': None,
+            'videoconference_link': None
         }
 
         self.assertEqual(
@@ -893,7 +1032,7 @@ class RetreatTests(APITestCase):
                     'id': self.retreat.id,
                     'address_line1': '123 random street',
                     'address_line2': None,
-                    'city': '',
+                    'city': None,
                     'country': 'Random country',
                     'postal_code': '123 456',
                     'state_province': 'Random state',
@@ -921,7 +1060,7 @@ class RetreatTests(APITestCase):
                     'form_url': "example.com",
                     'carpool_url': 'example2.com',
                     'review_url': 'example3.com',
-                    'place_name': '',
+                    'place_name': None,
                     'users': [],
                     'url': 'http://testserver/retreat/retreats/' +
                            str(self.retreat.id),
@@ -940,6 +1079,9 @@ class RetreatTests(APITestCase):
                     'sub_title': None,
                     'toilet_gendered': False,
                     'room_type': Retreat.SINGLE_OCCUPATION,
+                    'type': 'P',
+                    'videoconference_tool': None,
+                    'videoconference_link': None
                 }
             ]
         }
@@ -968,10 +1110,10 @@ class RetreatTests(APITestCase):
                 'name_en': 'hidden_retreat',
                 'details': 'This is a description of the hidden retreat.',
                 'country': 'Random country', 'state_province': 'Random state',
-                'city': '', 'address_line1': '123 random street',
+                'city': None, 'address_line1': '123 random street',
                 'has_shared_rooms': True, 'is_active': True,
                 'accessibility': True,
-                'pictures': [], 'place_name': '', 'country_fr': None,
+                'pictures': [], 'place_name': None, 'country_fr': None,
                 'country_en': 'Random country', 'state_province_fr': None,
                 'state_province_en': 'Random state', 'city_fr': None,
                 'city_en': None, 'address_line1_fr': None,
@@ -1004,6 +1146,9 @@ class RetreatTests(APITestCase):
                 'sub_title': None,
                 'toilet_gendered': False,
                 'room_type': Retreat.SINGLE_OCCUPATION,
+                'type': 'P',
+                'videoconference_tool': None,
+                'videoconference_link': None
             },
             {
                 'places_remaining': 400, 'total_reservations': 0,
@@ -1013,10 +1158,10 @@ class RetreatTests(APITestCase):
                 'name_en': 'mega_retreat',
                 'details': 'This is a description of the mega retreat.',
                 'country': 'Random country', 'state_province': 'Random state',
-                'city': '', 'address_line1': '123 random street',
+                'city': None, 'address_line1': '123 random street',
                 'has_shared_rooms': True, 'is_active': True,
                 'accessibility': True,
-                'pictures': [], 'place_name': '', 'country_fr': None,
+                'pictures': [], 'place_name': None, 'country_fr': None,
                 'country_en': 'Random country', 'state_province_fr': None,
                 'state_province_en': 'Random state', 'city_fr': None,
                 'city_en': None, 'address_line1_fr': None,
@@ -1049,6 +1194,9 @@ class RetreatTests(APITestCase):
                 'sub_title': None,
                 'toilet_gendered': False,
                 'room_type': Retreat.SINGLE_OCCUPATION,
+                'type': 'P',
+                'videoconference_tool': None,
+                'videoconference_link': None
             },
             {
                 'places_remaining': 400, 'total_reservations': 0,
@@ -1058,9 +1206,9 @@ class RetreatTests(APITestCase):
                 'name_en': 'ultra_retreat',
                 'details': 'This is a description of the ultra retreat.',
                 'country': 'Random country', 'state_province': 'Random state',
-                'city': '', 'address_line1': '123 random street',
+                'city': None, 'address_line1': '123 random street',
                 'has_shared_rooms': True, 'is_active': False,
-                'accessibility': True, 'pictures': [], 'place_name': '',
+                'accessibility': True, 'pictures': [], 'place_name': None,
                 'country_fr': None, 'country_en': 'Random country',
                 'state_province_fr': None, 'state_province_en': 'Random state',
                 'city_fr': None, 'city_en': None, 'address_line1_fr': None,
@@ -1093,6 +1241,9 @@ class RetreatTests(APITestCase):
                 'sub_title': None,
                 'toilet_gendered': False,
                 'room_type': Retreat.SINGLE_OCCUPATION,
+                'type': 'P',
+                'videoconference_tool': None,
+                'videoconference_link': None
             }]}
 
         response_content = json.loads(response.content)
@@ -1130,7 +1281,7 @@ class RetreatTests(APITestCase):
                 'id': self.retreat2.id,
                 'address_line1': '123 random street',
                 'address_line2': None,
-                'city': '',
+                'city': None,
                 'country': 'Random country',
                 'postal_code': '123 456',
                 'state_province': 'Random state',
@@ -1158,7 +1309,7 @@ class RetreatTests(APITestCase):
                 'form_url': "example.com",
                 'carpool_url': 'example2.com',
                 'review_url': 'example3.com',
-                'place_name': '',
+                'place_name': None,
                 'users': [],
                 'url': 'http://testserver/retreat/retreats/' +
                        str(self.retreat2.id),
@@ -1177,6 +1328,9 @@ class RetreatTests(APITestCase):
                 'sub_title': None,
                 'toilet_gendered': False,
                 'room_type': Retreat.SINGLE_OCCUPATION,
+                'type': 'P',
+                'videoconference_tool': None,
+                'videoconference_link': None
             }]
         }
 
@@ -1203,7 +1357,7 @@ class RetreatTests(APITestCase):
             'id': self.retreat.id,
             'address_line1': '123 random street',
             'address_line2': None,
-            'city': '',
+            'city': None,
             'country': 'Random country',
             'postal_code': '123 456',
             'state_province': 'Random state',
@@ -1231,7 +1385,7 @@ class RetreatTests(APITestCase):
             'form_url': "example.com",
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
-            'place_name': '',
+            'place_name': None,
             'users': [],
             'url': 'http://testserver/retreat/retreats/' +
                    str(self.retreat.id),
@@ -1250,6 +1404,9 @@ class RetreatTests(APITestCase):
             'sub_title': None,
             'toilet_gendered': False,
             'room_type': Retreat.SINGLE_OCCUPATION,
+            'type': 'P',
+            'videoconference_tool': None,
+            'videoconference_link': None
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -1282,7 +1439,7 @@ class RetreatTests(APITestCase):
             'id': self.retreat.id,
             'address_line1': '123 random street',
             'address_line2': None,
-            'city': '',
+            'city': None,
             'country': 'Random country',
             'postal_code': '123 456',
             'state_province': 'Random state',
@@ -1310,7 +1467,7 @@ class RetreatTests(APITestCase):
             'form_url': "example.com",
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
-            'place_name': '',
+            'place_name': None,
             'users': [],
             'url': 'http://testserver/retreat/retreats/' +
                    str(self.retreat.id),
@@ -1329,6 +1486,9 @@ class RetreatTests(APITestCase):
             'sub_title': None,
             'toilet_gendered': False,
             'room_type': Retreat.SINGLE_OCCUPATION,
+            'type': 'P',
+            'videoconference_tool': None,
+            'videoconference_link': None
         }
 
         self.assertEqual(response_data, content)

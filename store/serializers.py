@@ -30,6 +30,7 @@ from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,
                                 getMessageTranslate)
 from log_management.models import Log, EmailLog
+from retirement.services import send_retreat_confirmation_email
 from workplace.models import Reservation
 from retirement.models import Reservation as RetreatReservation, \
     RetreatInvitation
@@ -393,7 +394,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
 
         user = self.context['request'].user
 
-        user_membership = user.membership
+        user_membership = user.get_active_membership()
         user_academic_level = user.academic_level
 
         content_type = validated_data.get(
@@ -413,19 +414,6 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
                 ],
             })
 
-        if (not user.is_staff
-                and (content_type.model == 'package'
-                     or content_type.model == 'retreat')
-                and obj.exclusive_memberships.all()
-                and user_membership not in obj.exclusive_memberships.all()):
-            raise serializers.ValidationError({
-                'object_id': [
-                    _(
-                        "User does not have the required membership to order "
-                        "this package."
-                    )
-                ],
-            })
         if (not user.is_staff and
                 content_type.model == 'membership' and
                 obj.academic_levels.all() and
@@ -645,7 +633,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 user.save()
 
                 membership_coupons = MembershipCoupon.objects.filter(
-                    membership__pk=membership_orderlines[0].content_object.pk
+                    membership__pk=membership_orderlines[0].content_object.pk,
+                ).exclude(
+                    limit_date__lte=timezone.now()
                 )
 
                 for membership_coupon in membership_coupons:
@@ -658,7 +648,12 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                         start_time=timezone.now(),
                         end_time=timezone.now() + membership_orderlines[
                             0].content_object.duration,
-                        owner=user)
+                        owner=user,
+                        is_applicable_to_physical_retreat=membership_coupon
+                        .is_applicable_to_physical_retreat,
+                        is_applicable_to_virtual_retreat=membership_coupon
+                        .is_applicable_to_virtual_retreat,
+                    )
                     coupon.applicable_retreats.set(
                         membership_coupon.applicable_retreats.all())
                     coupon.applicable_timeslots.set(
@@ -675,11 +670,26 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             if package_orderlines:
                 need_transaction = True
                 for package_orderline in package_orderlines:
-                    user.tickets += (
-                            package_orderline.content_object.reservations *
-                            package_orderline.quantity
-                    )
-                    user.save()
+                    package = package_orderline.content_object
+                    if (not user.is_staff
+                            and package.exclusive_memberships.all()
+                            and user.get_active_membership() not in
+                            package.exclusive_memberships.all()):
+                        raise serializers.ValidationError({
+                            'non_field_errors': [
+                                _(
+                                    "User does not have the required "
+                                    "membership to order "
+                                    "this package."
+                                )
+                            ],
+                        })
+                    else:
+                        user.tickets += (
+                                package_orderline.content_object.reservations *
+                                package_orderline.quantity
+                        )
+                        user.save()
             if reservation_orderlines:
                 for reservation_orderline in reservation_orderlines:
                     timeslot = reservation_orderline.content_object
@@ -734,6 +744,20 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
                 for retreat_orderline in retreat_orderlines:
                     retreat = retreat_orderline.content_object
+
+                    if (not user.is_staff
+                            and retreat.exclusive_memberships.all()
+                            and user.get_active_membership() not in
+                            retreat.exclusive_memberships.all()):
+                        raise serializers.ValidationError({
+                            'non_field_errors': [
+                                _(
+                                    "User does not have the required "
+                                    "membership to order this retreat."
+                                )
+                            ],
+                        })
+
                     user_waiting = retreat.wait_queue.filter(user=user)
                     reservations = retreat.reservations.filter(
                         is_active=True
@@ -901,49 +925,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
         # Send retreat informations emails
         for retreat_reservation in retreat_reservations:
-            # Send info email
-            merge_data = {
-                'RETREAT': retreat_reservation.retreat,
-                'USER': user,
-            }
-            if len(retreat_reservation.retreat.pictures.all()):
-                merge_data['RETREAT_PICTURE'] = "{0}{1}".format(
-                    settings.MEDIA_URL,
-                    retreat_reservation.retreat.pictures.first().picture.url
-                )
-
-            plain_msg = render_to_string(
-                "retreat_info.txt",
-                merge_data
-            )
-            msg_html = render_to_string(
-                "retreat_info.html",
-                merge_data
-            )
-
-            try:
-                response_send_mail = send_mail(
-                    "Confirmation d'inscription à la retraite",
-                    plain_msg,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [retreat_reservation.user.email],
-                    html_message=msg_html,
-                )
-                EmailLog.add(user.email, 'retreat_info', response_send_mail)
-            except Exception as err:
-                additional_data = {
-                    'title': "Confirmation d'inscription à la retraite",
-                    'default_from': settings.DEFAULT_FROM_EMAIL,
-                    'user_email': retreat_reservation.user.email,
-                    'merge_data': merge_data,
-                    'template': 'retreat_info'
-                }
-                Log.error(
-                    source='SENDING_BLUE_TEMPLATE',
-                    message=err,
-                    additional_data=json.dumps(additional_data)
-                )
-                raise
+            send_retreat_confirmation_email(user, retreat_reservation.retreat)
 
         return order
 

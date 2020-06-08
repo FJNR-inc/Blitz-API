@@ -59,7 +59,8 @@ INSTALLED_APPS = [
     'rest_framework_filters',
     'safedelete',
     'import_export',
-    'django_filters'
+    'django_filters',
+    'admin_auto_filters'
 ]
 
 MIDDLEWARE = [
@@ -221,6 +222,8 @@ else:
     STATIC_URL = config('STATIC_URL', default='/static/')
     STATICFILES_STORAGE = config('STATICFILES_STORAGE',
                                  default='django.contrib.staticfiles.storage.StaticFilesStorage')
+if STATICFILES_STORAGE == 'django.contrib.staticfiles.storage.StaticFilesStorage':
+    STATIC_ROOT = 'static/'
 
 # User uploaded files (MEDIA)
 MEDIA_URL = config('MEDIA_URL', default='/media/')
@@ -280,12 +283,56 @@ ANYMAIL = {
     'REQUESTS_TIMEOUT': config('REQUESTS_TIMEOUT', default=(30, 30),
                                cast=tuple),
     'TEMPLATES': {
-        'CONFIRM_SIGN_UP': config('CONFIRM_SIGN_UP', default='example_id'),
-        'FORGOT_PASSWORD': config('FORGOT_PASSWORD', default='example_id'),
-        'RESERVATION_CANCELLED': config('RESERVATION_CANCELLED',
-                                        default='example_id'),
-        'CONFIRM_CHANGE_EMAIL': config('CONFIRM_CHANGE_EMAIL',
-                                       default='example_id'),
+        'CONFIRM_SIGN_UP': config(
+            'CONFIRM_SIGN_UP',
+            default='0',
+            cast=int
+        ),
+        'FORGOT_PASSWORD': config(
+            'FORGOT_PASSWORD',
+            default='0',
+            cast=int
+        ),
+        'RESERVATION_CANCELLED': config(
+            'RESERVATION_CANCELLED',
+            default='0',
+            cast=int
+        ),
+        'CONFIRM_CHANGE_EMAIL': config(
+            'CONFIRM_CHANGE_EMAIL',
+            default='0',
+            cast=int
+        ),
+        'THROWBACK_VIRTUAL_RETREAT': config(
+            'TEMPLATE_EMAIL_THROWBACK_VIRTUAL_RETREAT',
+            default='14',
+            cast=int
+        ),
+        'THROWBACK_PHYSICAL_RETREAT': config(
+            'TEMPLATE_EMAIL_THROWBACK_PHYSICAL_RETREAT',
+            default='0',
+            cast=int
+        ),
+        'REMINDER_PHYSICAL_RETREAT': config(
+            'TEMPLATE_EMAIL_REMINDER_PHYSICAL_RETREAT',
+            default='0',
+            cast=int
+        ),
+        'REMINDER_VIRTUAL_RETREAT': config(
+            'TEMPLATE_EMAIL_REMINDER_VIRTUAL_RETREAT',
+            default='11',
+            cast=int
+        ),
+        'WELCOME_PHYSICAL_RETREAT': config(
+            'TEMPLATE_EMAIL_WELCOME_PHYSICAL_RETREAT',
+            default='0',
+            cast=int
+        ),
+        'WELCOME_VIRTUAL_RETREAT': config(
+            'TEMPLATE_EMAIL_WELCOME_VIRTUAL_RETREAT',
+            default='12',
+            cast=int
+        )
     },
 }
 EMAIL_BACKEND = config('EMAIL_BACKEND',
@@ -309,6 +356,11 @@ SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='admin@fjnr.ca')
 
 # User specific settings
 
+LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP = config(
+    'LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP',
+    default='1990-01-01',
+)
+
 LOCAL_SETTINGS = {
     'ORGANIZATION': config(
         'ORGANIZATION',
@@ -325,8 +377,16 @@ LOCAL_SETTINGS = {
         cast=bool,
     ),
     'FRONTEND_INTEGRATION': {
+        'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT': config(
+            'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT',
+            default='https://www.thesez-vous.com/syprerparervirtuel.html',
+        ),
+        'PROFILE_URL': config(
+            'PROFILE_URL',
+            default='https://www.thesez-vous.org/profile',
+        ),
         'POLICY_URL': config(
-            'ACTIVATION_URL',
+            'POLICY_URL',
             default='http://thesez-vous.org/policy',
         ),
         'ACTIVATION_URL': config(
@@ -380,3 +440,9 @@ EXTERNAL_SCHEDULER = {
     'PASSWORD': config('EXTERNAL_SCHEDULER_PASSWORD', default='password'),
     'URL_TO_CALL': config('URL_TO_CALL', default='http://example.com'),
 }
+
+MAILCHIMP_API_KEY = config('MAILCHIMP_API_KEY', default='')
+MAILCHIMP_SUBSCRIBE_LIST_ID = config(
+    'MAILCHIMP_SUBSCRIBE_LIST_ID', default='')
+MAILCHIMP_ENABLED = config(
+    'MAILCHIMP_ENABLED', default=False, cast=bool)

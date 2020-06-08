@@ -1,3 +1,4 @@
+from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from import_export.admin import ExportActionModelAdmin
@@ -5,10 +6,27 @@ from modeltranslation.admin import TranslationAdmin
 from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 from simple_history.admin import SimpleHistoryAdmin
 
+from blitz_api.admin import UserFilter
+from store.admin import CouponFilter
 from .models import (Picture, Reservation, Retreat, WaitQueue,
                      RetreatInvitation, WaitQueuePlace, WaitQueuePlaceReserved)
 from .resources import (ReservationResource, RetreatResource,
                         WaitQueueResource)
+
+
+class RetreatFilter(AutocompleteFilter):
+    title = 'Retreat'
+    field_name = 'retreat'
+
+
+class CancelByFilter(AutocompleteFilter):
+    title = 'Cancel by'
+    field_name = 'cancel_by'
+
+
+class WaitQueuePlaceFilter(AutocompleteFilter):
+    title = 'Wait Queue Place'
+    field_name = 'wait_queue_place'
 
 
 class PictureAdminInline(admin.TabularInline):
@@ -97,8 +115,8 @@ class ReservationAdmin(SimpleHistoryAdmin,
         highlight_deleted,
     ) + SafeDeleteAdmin.list_display
     list_filter = (
-        ('user', admin.RelatedOnlyFieldListFilter),
-        ('retreat', admin.RelatedOnlyFieldListFilter),
+        UserFilter,
+        RetreatFilter,
         'is_active',
         'cancelation_date',
         'cancelation_reason',
@@ -109,6 +127,10 @@ class ReservationAdmin(SimpleHistoryAdmin,
 
     actions = ['undelete_selected', 'export_admin_action']
 
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
+
 
 class WaitQueueAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
     resource_class = WaitQueueResource
@@ -118,14 +140,26 @@ class WaitQueueAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'created_at',
     )
     list_filter = (
-        ('user', admin.RelatedOnlyFieldListFilter),
-        ('retreat', admin.RelatedOnlyFieldListFilter),
+        UserFilter,
+        RetreatFilter,
         'created_at',
     )
+    autocomplete_fields = ('user', 'retreat',)
+    search_fields = (
+        'user__email',
+        'user__username',
+        'retreat__name',
+    )
+
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
 
 
 class ReservationAdminInline(admin.TabularInline):
     model = Reservation
+
+    autocomplete_fields = ['user', 'order_line', 'retreat', 'invitation']
 
     def has_change_permission(self, request, obj=None):
         return False
@@ -149,13 +183,17 @@ class RetreatInvitationAdmin(SimpleHistoryAdmin,
     ) + SafeDeleteAdmin.list_display
 
     list_filter = (
-        ('retreat', admin.RelatedOnlyFieldListFilter),
-        ('coupon', admin.RelatedOnlyFieldListFilter)
+        RetreatFilter,
+        CouponFilter
     ) + SafeDeleteAdmin.list_filter
 
     search_fields = (
         'name', 'id',
     )
+
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
 
 
 class WaitQueuePlaceReservedInline(admin.StackedInline):
@@ -175,11 +213,15 @@ class WaitQueuePlaceAdmin(admin.ModelAdmin):
         'available'
     )
     list_filter = (
-        'retreat',
-        'cancel_by'
+        RetreatFilter,
+        CancelByFilter
     )
     autocomplete_fields = ('cancel_by', 'retreat')
     search_fields = ('retreat', 'id')
+
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
 
 
 class WaitQueuePlaceReservedAdmin(admin.ModelAdmin):
@@ -192,13 +234,17 @@ class WaitQueuePlaceReservedAdmin(admin.ModelAdmin):
         'used',
     )
     list_filter = (
+        WaitQueuePlaceFilter,
+        UserFilter,
         'wait_queue_place__retreat',
-        'wait_queue_place',
         'notified',
         'used',
-        'user'
     )
     autocomplete_fields = ('user', 'wait_queue_place')
+
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
 
 
 admin.site.register(Retreat, RetreatAdmin)

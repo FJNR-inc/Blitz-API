@@ -1,3 +1,4 @@
+from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from import_export.admin import ExportActionModelAdmin
@@ -5,12 +6,46 @@ from modeltranslation.admin import TranslationAdmin
 from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 from simple_history.admin import SimpleHistoryAdmin
 
+from blitz_api.admin import UserFilter, OwnerFilter
 from .models import (Membership, Order, OrderLine, Package, PaymentProfile,
                      CustomPayment, Coupon, MembershipCoupon, CouponUser,
                      Refund, BaseProduct, OrderLineBaseProduct, OptionProduct)
 from .resources import (MembershipResource, OrderResource, OrderLineResource,
                         PackageResource, CustomPaymentResource, CouponResource,
                         CouponUserResource, RefundResource, )
+
+
+class CouponFilter(AutocompleteFilter):
+    title = 'Coupon'
+    field_name = 'coupon'
+
+
+class OrderUserFilter(AutocompleteFilter):
+    title = 'User'
+    field_name = 'user'
+    rel_model = Order
+
+    @property
+    def parameter_name(self):
+        return "order__user"
+
+    @parameter_name.setter
+    def parameter_name(self, value):
+        pass
+
+
+class OrderLineUserFilter(AutocompleteFilter):
+    title = 'User'
+    field_name = 'user'
+    rel_model = Order
+
+    @property
+    def parameter_name(self):
+        return "orderline__order__user"
+
+    @parameter_name.setter
+    def parameter_name(self, value):
+        pass
 
 
 class OrderLineInline(admin.StackedInline):
@@ -20,6 +55,7 @@ class OrderLineInline(admin.StackedInline):
     verbose_name_plural = _('Orderlines')
     fk_name = 'order'
     extra = 0
+    autocomplete_fields = ('coupon',)
 
 
 class RefundAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
@@ -31,6 +67,7 @@ class RefundAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
     )
     list_filter = (
         'refund_date',
+        OrderLineUserFilter
     )
     search_fields = (
         'orderline__order__user__email',
@@ -38,6 +75,15 @@ class RefundAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'amount',
     )
     autocomplete_fields = ('orderline',)
+
+    def lookup_allowed(self, lookup, value):
+        if lookup == "orderline__order__user":
+            return True
+        return super().lookup_allowed(lookup, value)
+
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
 
 
 class MembershipAdmin(SimpleHistoryAdmin, TranslationAdmin,
@@ -68,7 +114,7 @@ class CustomPaymentAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'price',
     )
     list_filter = (
-        ('user', admin.RelatedOnlyFieldListFilter),
+        UserFilter,
         'transaction_date',
     )
     search_fields = (
@@ -77,6 +123,10 @@ class CustomPaymentAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'name',
     )
     autocomplete_fields = ('user',)
+
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
 
 
 class OrderAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
@@ -89,7 +139,7 @@ class OrderAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'user',
     )
     list_filter = (
-        ('user', admin.RelatedOnlyFieldListFilter),
+        UserFilter,
         'transaction_date',
     )
     search_fields = (
@@ -97,6 +147,10 @@ class OrderAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'user__username',
     )
     autocomplete_fields = ('user',)
+
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
 
 
 class OrderLineAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
@@ -112,9 +166,9 @@ class OrderLineAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
     )
     list_filter = (
         ('content_type', admin.RelatedOnlyFieldListFilter),
-        ('coupon', admin.RelatedOnlyFieldListFilter),
+        CouponFilter,
         'quantity',
-        ('order__user', admin.RelatedOnlyFieldListFilter),
+        OrderUserFilter,
     )
     search_fields = [
         'order__user__email',
@@ -136,6 +190,15 @@ class OrderLineAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
     date.short_description = _('Date')
     date.admin_order_field = 'order__transaction_date'
 
+    def lookup_allowed(self, lookup, value):
+        if lookup == "order__user":
+            return True
+        return super().lookup_allowed(lookup, value)
+
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
+
 
 class PaymentProfileAdmin(SimpleHistoryAdmin):
     list_display = (
@@ -145,13 +208,17 @@ class PaymentProfileAdmin(SimpleHistoryAdmin):
         'external_api_url',
     )
     list_filter = (
-        ('owner', admin.RelatedOnlyFieldListFilter),
+        OwnerFilter,
     )
     search_fields = (
         'owner__email',
         'owner__username',
     )
     autocomplete_fields = ('owner',)
+
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
 
 
 class CouponUserInline(admin.StackedInline):
@@ -176,7 +243,7 @@ class CouponAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'details',
     )
     list_filter = (
-        ('owner', admin.RelatedOnlyFieldListFilter),
+        OwnerFilter,
     )
     search_fields = (
         'code',
@@ -184,6 +251,10 @@ class CouponAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         'owner__username',
     )
     autocomplete_fields = ('owner',)
+
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
 
 
 class CouponUserAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
@@ -196,8 +267,8 @@ class CouponUserAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
         highlight_deleted,
     )
     list_filter = (
-        ('user', admin.RelatedOnlyFieldListFilter),
-        ('coupon', admin.RelatedOnlyFieldListFilter),
+        UserFilter,
+        CouponFilter,
     ) + SafeDeleteAdmin.list_display
     search_fields = (
         'coupon__code',
@@ -207,6 +278,10 @@ class CouponUserAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
     autocomplete_fields = ('user', 'coupon',)
 
     actions = ['undelete_selected', 'export_admin_action']
+
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
 
 
 class OrderLineBaseProductAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
