@@ -27,5 +27,14 @@ services:
     ports:
       - 8000:8000
 
+  documentation:
+      restart: always
+      build: ./
+      command: "mkdocs serve"
+      volumes:
+        - .:/opt/project
+      ports:
+        - "8001:8001"
+
 volumes:
   db:

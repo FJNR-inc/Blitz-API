@@ -1,6 +1,4 @@
-# Wait Queue Management
-
-This document is here to illustrate the wait queue functionnality of this system.
+This document is here to illustrate the wait queue functionnality of the system.
 
 ## Terminology
 

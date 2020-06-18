@@ -197,9 +197,17 @@ def send_virtual_retreat_reminder_email(user, retreat):
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
-        'RETREAT_START_DATE': start_time.strftime('%-d %B %Y'),
+        'RETREAT_START_DATE': format_date(
+            start_time,
+            format='long',
+            locale='fr'
+        ),
         'RETREAT_START_TIME': start_time.strftime('%-Hh%M'),
-        'RETREAT_END_DATE': end_time.strftime('%-d %B %Y'),
+        'RETREAT_END_DATE': format_date(
+            end_time,
+            format='long',
+            locale='fr'
+        ),
         'RETREAT_END_TIME': end_time.strftime('%-Hh%M'),
         'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[
             'FRONTEND_INTEGRATION'][
@@ -306,9 +314,17 @@ def send_post_virtual_retreat_email(user, retreat):
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
-        'RETREAT_START_DATE': start_time.strftime('%-d %B %Y'),
+        'RETREAT_START_DATE': format_date(
+            start_time,
+            format='long',
+            locale='fr'
+        ),
         'RETREAT_START_TIME': start_time.strftime('%-Hh%M'),
-        'RETREAT_END_DATE': end_time.strftime('%-d %B %Y'),
+        'RETREAT_END_DATE': format_date(
+            end_time,
+            format='long',
+            locale='fr'
+        ),
         'RETREAT_END_TIME': end_time.strftime('%-Hh%M'),
         'LINK_TO_REVIEW_FORM': retreat.review_url,
         'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[

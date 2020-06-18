@@ -1,0 +1,32 @@
+site_name: Plateforme Thesez-Vous
+site_description: Plateforme de vente et de gestion des membres
+repo_name: FJNR-inc/blitz-api
+repo_url: https://github.com/FJNR-inc/blitz-api
+site_dir: site
+copyright: Copyright &copy; 2020, <a href="https://www.thesez-vous.com/">Thesez-Vous</a>.
+dev_addr: 0.0.0.0:8001
+edit_uri: ''
+nav:
+  - Home: 'index.md'
+  - Getting started:
+    - Install with Docker: 'getting_started/docker.md'
+    - Install manually: 'getting_started/virtualenv.md'
+  - API:
+    - Wait queue management: 'api/wait_queue_management.md'
+    - Membership management: 'api/memberships.md'
+    - Retreat management: 'api/retreats.md'
+  - Emails:
+      - Getting started: 'emails/getting_started.md'
+      - Templates: 'emails/templates.md'
+  - Policies:
+    - Code of conduct: 'CODE_OF_CONDUCT.md'
+theme:
+  name: material
+  features:
+    - tabs
+  palette:
+    primary: indigo
+    accent: orange
+
+markdown_extensions:
+  - admonition

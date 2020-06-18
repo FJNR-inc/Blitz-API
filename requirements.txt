@@ -1,3 +1,7 @@
+# Documentation tools
+mkdocs==1.1.2
+mkdocs-material==5.2.3
+
 Django==2.2.12
 djangorestframework==3.11.0
 django-cors-headers==3.2.1
