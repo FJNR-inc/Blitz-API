@@ -25,3 +25,4 @@ duration will be the duration of membership selected in addition to the time rem
 !!! warning
     If user bought a membership for 10$ and renew 30 days before to a membership at 100$ he got 30 days of a 
     better membership without paying the difference. You always need to keep that in mind in case of specific usage.
+   Test Thèsez-vous
