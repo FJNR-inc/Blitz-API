@@ -379,7 +379,7 @@ LOCAL_SETTINGS = {
     'FRONTEND_INTEGRATION': {
         'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT': config(
             'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT',
-            default='https://www.thesez-vous.com/syprerparervirtuel.html',
+            default='https://www.thesez-vous.com/sypreparer_retraitevirtuelle.html',
         ),
         'PROFILE_URL': config(
             'PROFILE_URL',
