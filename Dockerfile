@@ -21,4 +21,7 @@ RUN mkdir -p /opt/project
 
 WORKDIR /opt/project
 
-CMD ["bash"]
+EXPOSE 8000
+
+# Run the production server
+CMD newrelic-admin run-program gunicorn --bind 0.0.0.0:$PORT --access-logfile - Blitz-API.wsgi:application
