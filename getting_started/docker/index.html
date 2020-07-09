@@ -356,8 +356,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#initial-configurations" class="md-nav__link">
-    Initial configurations
+  <a href="#configurations" class="md-nav__link">
+    Configurations
   </a>
   
 </li>
@@ -602,8 +602,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#initial-configurations" class="md-nav__link">
-    Initial configurations
+  <a href="#configurations" class="md-nav__link">
+    Configurations
   </a>
   
 </li>
@@ -637,27 +637,51 @@
 <li><a href="https://docs.docker.com/get-docker/">Docker</a></li>
 </ul>
 <h2 id="initialize-the-project">Initialize the project</h2>
-<p>Start the dev server for local development:</p>
+<p>One command only will allow you to initialize the database, run the migration on it, configure you API, 
+launch your documentation website and allow you to begin use the project:</p>
 <pre><code class="bash">docker-compose up
 </code></pre>
 
-<h2 id="create-super-admin">Create super admin</h2>
-<div class="admonition danger">
-<p class="admonition-title">Danger</p>
-<p>This section is not documented and any contribution on this part of the documentation is welcome</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This step can take some time on first launch but you should see periodic message to inform you that the work 
+is in progress. Breathe in, breathe out, have a coffee and come back in 2-3 minutes</p>
 </div>
-<h2 id="initial-configurations">Initial configurations</h2>
+<h2 id="create-super-admin">Create super admin</h2>
+<p>Since you don't have user the first time you launch the API you will need to execute this command in a separate 
+terminal.</p>
+<pre><code class="bash">docker-compose run api python manage.py createsuperuser
+</code></pre>
+
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If you try to understand this command you can see that we ask docker-compose to <code>run</code> a command on the <code>api</code> image
+that represent our API in the <code>docker-compose.yml</code>. The command is <code>python manage.py createsuperuser</code>, the 
+default Django command to create a new superuser. With this technique you can execute other Django commands like
+<code>migrate</code>, <code>makemigrations</code>, <code>makemessages</code> or even custom command you create to automatise your tasks.</p>
+</div>
+<h2 id="configurations">Configurations</h2>
+<p>If you want to modify some settings of your Docker image you can just overwrite your <code>.env.docker</code> file with the 
+ENV variable that you want. Differents Django settings are based on ENV variables as you can see 
+in <code>blitz_api/settings.py</code></p>
 <div class="admonition danger">
 <p class="admonition-title">Danger</p>
-<p>This section is not documented and any contribution on this part of the documentation is welcome</p>
+<p>Take care to not push your confidentials credentials when you push code to our repository or on your open-source 
+forks. You can review your change by using <code>git diff</code> before committing your change.</p>
+</div>
+<div class="admonition danger">
+<p class="admonition-title">Danger</p>
+<p>Try to always use <code>python-decouple</code> to manage your settings and to not directly edit the <code>settings.py</code>. </p>
 </div>
 <h2 id="using-the-services">Using the services</h2>
 <p>You can now visit these links to validate the installation:</p>
 <ul>
-<li>The root of the API: <a href="http://localhost:8000/">http://localhost:8000/</a></li>
+<li>The root of the API (will need authentication as a first step): <a href="http://localhost:8000/">http://localhost:8000/</a></li>
 <li>The admin site: <a href="http://localhost:8000/admin/">http://localhost:8000/admin/</a></li>
 <li>The documentation you're reading: <a href="http://localhost:8001/">http://localhost:8001/</a></li>
 </ul>
+<p>Do not hesitate to check the API section of this documentation to know how to authenticate yourself with the API 
+and begin asking queries. </p>
                 
               
               
