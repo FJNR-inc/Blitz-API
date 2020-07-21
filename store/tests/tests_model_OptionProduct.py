@@ -1,22 +1,52 @@
-from datetime import timedelta
-
+import pytz
 from django.utils import timezone
+from django.conf import settings
+from datetime import datetime
 from django.contrib.contenttypes.models import ContentType
-
 from rest_framework.test import APITestCase
-
 from blitz_api.factories import UserFactory, RetreatFactory
-from blitz_api.models import AcademicLevel
-from retirement.models import Retreat
+from retirement.models import Retreat, RetreatDate, RetreatType
+from store.models import Order, OptionProduct, Package
 
-from ..models import Order, OptionProduct, Package
+LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
 class OptionProductTests(APITestCase):
 
     def setUp(self):
         self.user = UserFactory()
-        self.retreat = RetreatFactory()
+        self.retreatType = RetreatType.objects.create(
+            name="Type 1",
+            minutes_before_display_link=10,
+            number_of_tomatoes=4,
+        )
+        self.retreat = Retreat.objects.create(
+            name="mega_retreat",
+            details="This is a description of the mega retreat.",
+            seats=400,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+            price=199,
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            accessibility=True,
+            form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            type=self.retreatType,
+        )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=self.retreat,
+        )
+        self.retreat.activate()
         self.retreat_content_types = ContentType.objects.get_for_model(Retreat)
         self.order = Order.objects.create(
             user=self.user,

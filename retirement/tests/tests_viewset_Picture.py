@@ -13,7 +13,11 @@ from rest_framework.test import APIClient, APITestCase
 from blitz_api.factories import AdminFactory, UserFactory
 from blitz_api.services import remove_translation_fields
 
-from ..models import Picture, Retreat
+from retirement.models import (
+    Picture,
+    Retreat,
+    RetreatType,
+)
 
 User = get_user_model()
 MEDIA_ROOT = tempfile.mkdtemp()
@@ -45,6 +49,11 @@ class PictureTests(APITestCase):
         cls.admin = AdminFactory()
 
     def setUp(self):
+        self.retreatType = RetreatType.objects.create(
+            name="Type 1",
+            minutes_before_display_link=10,
+            number_of_tomatoes=4,
+        )
         self.retreat = Retreat.objects.create(
             name="random_retreat",
             details="This is a description of the retreat.",
@@ -54,8 +63,6 @@ class PictureTests(APITestCase):
             state_province="Random state",
             country="Random country",
             price=3,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=100,
@@ -65,6 +72,7 @@ class PictureTests(APITestCase):
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            type=self.retreatType,
         )
         self.picture = Picture.objects.create(
             name="random_picture",

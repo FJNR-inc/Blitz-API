@@ -3,15 +3,32 @@ from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from import_export.admin import ExportActionModelAdmin
 from modeltranslation.admin import TranslationAdmin
-from safedelete.admin import SafeDeleteAdmin, highlight_deleted
+from safedelete.admin import (
+    SafeDeleteAdmin,
+    highlight_deleted,
+)
 from simple_history.admin import SimpleHistoryAdmin
 
 from blitz_api.admin import UserFilter
 from store.admin import CouponFilter
-from .models import (Picture, Reservation, Retreat, WaitQueue,
-                     RetreatInvitation, WaitQueuePlace, WaitQueuePlaceReserved)
-from .resources import (ReservationResource, RetreatResource,
-                        WaitQueueResource)
+from .models import (
+    Picture,
+    Reservation,
+    Retreat,
+    WaitQueue,
+    RetreatInvitation,
+    WaitQueuePlace,
+    WaitQueuePlaceReserved,
+    RetreatType,
+    AutomaticEmail,
+    AutomaticEmailLog,
+    RetreatDate,
+)
+from .resources import (
+    ReservationResource,
+    RetreatResource,
+    WaitQueueResource
+)
 
 
 class RetreatFilter(AutocompleteFilter):
@@ -74,8 +91,6 @@ class RetreatAdmin(SimpleHistoryAdmin,
     list_filter = (
         'name',
         'seats',
-        'start_time',
-        'end_time',
         'price',
     ) + SafeDeleteAdmin.list_filter
 
@@ -247,7 +262,19 @@ class WaitQueuePlaceReservedAdmin(admin.ModelAdmin):
         pass
 
 
+class RetreatDateAdmin(admin.ModelAdmin):
+    list_display = (
+        'retreat',
+        'start_time',
+        'end_time',
+    )
+
+
 admin.site.register(Retreat, RetreatAdmin)
+admin.site.register(RetreatType)
+admin.site.register(RetreatDate, RetreatDateAdmin)
+admin.site.register(AutomaticEmail)
+admin.site.register(AutomaticEmailLog)
 admin.site.register(Picture, PictureAdmin)
 admin.site.register(Reservation, ReservationAdmin)
 admin.site.register(WaitQueue, WaitQueueAdmin)

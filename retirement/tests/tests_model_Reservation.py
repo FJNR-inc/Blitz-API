@@ -8,9 +8,18 @@ from rest_framework.test import APITestCase
 
 from blitz_api.factories import UserFactory
 
-from store.models import Order, OrderLine, Coupon
+from store.models import (
+    Order,
+    OrderLine,
+    Coupon,
+)
 
-from ..models import Reservation, Retreat
+from retirement.models import (
+    Reservation,
+    Retreat,
+    RetreatDate,
+    RetreatType,
+)
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
@@ -22,27 +31,38 @@ class ReservationTests(APITestCase):
     def setUp(self):
         self.user = UserFactory()
         self.retreat_type = ContentType.objects.get_for_model(Retreat)
+        self.retreatType = RetreatType.objects.create(
+            name="Type 1",
+            minutes_before_display_link=10,
+            number_of_tomatoes=4,
+        )
         self.retreat = Retreat.objects.create(
-            name="random_retreat",
-            details="This is a description of the retreat.",
-            seats=40,
+            name="mega_retreat",
+            details="This is a description of the mega retreat.",
+            seats=400,
             address_line1="123 random street",
             postal_code="123 456",
             state_province="Random state",
             country="Random country",
-            price=3,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            price=199,
             min_day_refund=7,
             min_day_exchange=7,
-            refund_rate=100,
-            is_active=True,
+            refund_rate=50,
             accessibility=True,
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
-            has_shared_rooms=True
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            type=self.retreatType,
         )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=self.retreat,
+        )
+        self.retreat.activate()
         self.order = Order.objects.create(
             user=self.user,
             transaction_date=timezone.now(),
@@ -70,28 +90,33 @@ class ReservationTests(APITestCase):
         self.assertEqual(str(reservation), str(self.user))
 
     def test_refund_value_with_coupon(self):
-
         retreat = Retreat.objects.create(
-            name="random_retreat",
-            details="This is a description of the retreat.",
-            seats=40,
+            name="mega_retreat",
+            details="This is a description of the mega retreat.",
+            seats=400,
             address_line1="123 random street",
             postal_code="123 456",
             state_province="Random state",
             country="Random country",
             price=100,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=90,
-            is_active=True,
             accessibility=True,
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
-            has_shared_rooms=True
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            type=self.retreatType,
         )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=retreat,
+        )
+        retreat.activate()
 
         order = Order.objects.create(
             user=self.user,
@@ -133,28 +158,33 @@ class ReservationTests(APITestCase):
         self.assertEqual(refund_value, round(72 * (TAX_RATE + 1.0), 2))
 
     def test_refund_value_100(self):
-
         retreat = Retreat.objects.create(
-            name="random_retreat",
-            details="This is a description of the retreat.",
-            seats=40,
+            name="mega_retreat",
+            details="This is a description of the mega retreat.",
+            seats=400,
             address_line1="123 random street",
             postal_code="123 456",
             state_province="Random state",
             country="Random country",
             price=100,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=100,
-            is_active=True,
             accessibility=True,
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
-            has_shared_rooms=True
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            type=self.retreatType,
         )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=retreat,
+        )
+        retreat.activate()
 
         order = Order.objects.create(
             user=self.user,
