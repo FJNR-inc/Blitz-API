@@ -8,12 +8,22 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from rest_framework import status
 from rest_framework.reverse import reverse
-from rest_framework.test import APIClient, APITestCase, APIRequestFactory
+from rest_framework.test import (
+    APIClient,
+    APITestCase,
+    APIRequestFactory,
+)
 
-from blitz_api.factories import AdminFactory, UserFactory
+from blitz_api.factories import (
+    AdminFactory,
+    UserFactory,
+)
 from store.models import Coupon
 
-from ..models import Retreat
+from retirement.models import (
+    Retreat,
+    RetreatType,
+)
 
 User = get_user_model()
 
@@ -31,7 +41,12 @@ class InvitationViewTests(APITestCase):
 
     def setUp(self):
 
-        self.retreat_type = ContentType.objects.get_for_model(Retreat)
+        self.retreat_content_type = ContentType.objects.get_for_model(Retreat)
+        self.retreatType = RetreatType.objects.create(
+            name="Type 1",
+            minutes_before_display_link=10,
+            number_of_tomatoes=4,
+        )
         self.retreat = Retreat.objects.create(
             name="mega_retreat",
             details="This is a description of the mega retreat.",
@@ -41,8 +56,6 @@ class InvitationViewTests(APITestCase):
             state_province="Random state",
             country="Random country",
             price=199,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=50,
@@ -53,6 +66,7 @@ class InvitationViewTests(APITestCase):
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            type=self.retreatType,
         )
 
         self.coupon = Coupon.objects.create(
@@ -66,7 +80,7 @@ class InvitationViewTests(APITestCase):
             owner=self.user,
         )
         self.coupon.applicable_retreats.add(self.retreat)
-        self.coupon.applicable_product_types.add(self.retreat_type)
+        self.coupon.applicable_product_types.add(self.retreat_content_type)
 
         factory = APIRequestFactory()
         self.request = factory.get('/')

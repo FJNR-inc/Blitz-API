@@ -19,17 +19,18 @@ from django.test.utils import override_settings
 from unittest import mock
 
 from blitz_api.factories import UserFactory, AdminFactory
-from blitz_api.services import remove_translation_fields
 
 from store.models import Order, OrderLine, Refund
-from store.tests.paysafe_sample_responses import (SAMPLE_REFUND_RESPONSE,
-                                                  SAMPLE_NO_AMOUNT_TO_REFUND,
-                                                  SAMPLE_PAYMENT_RESPONSE,
-                                                  SAMPLE_PROFILE_RESPONSE,
-                                                  SAMPLE_CARD_RESPONSE,
-                                                  UNKNOWN_EXCEPTION, )
+from store.tests.paysafe_sample_responses import (
+    SAMPLE_REFUND_RESPONSE,
+    SAMPLE_NO_AMOUNT_TO_REFUND,
+    SAMPLE_PAYMENT_RESPONSE,
+    SAMPLE_PROFILE_RESPONSE,
+    SAMPLE_CARD_RESPONSE,
+    UNKNOWN_EXCEPTION,
+)
 
-from ..models import Retreat, Reservation
+from ..models import Retreat, Reservation, RetreatType, RetreatDate
 
 User = get_user_model()
 
@@ -53,7 +54,12 @@ class ReservationTests(APITestCase):
         self.client = APIClient()
         self.user = UserFactory()
         self.admin = AdminFactory()
-        self.retreat_type = ContentType.objects.get_for_model(Retreat)
+        self.retreat_content_type = ContentType.objects.get_for_model(Retreat)
+        self.retreatType = RetreatType.objects.create(
+            name="Type 1",
+            minutes_before_display_link=10,
+            number_of_tomatoes=4,
+        )
         self.retreat = Retreat.objects.create(
             name="mega_retreat",
             details="This is a description of the mega retreat.",
@@ -63,18 +69,22 @@ class ReservationTests(APITestCase):
             state_province="Random state",
             country="Random country",
             price=199,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=50,
-            is_active=True,
             accessibility=True,
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            type=self.retreatType,
         )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=self.retreat,
+        )
+        self.retreat.activate()
         self.retreat.add_wait_queue_place(self.user, generate_cron=False)
 
         self.retreat2 = Retreat.objects.create(
@@ -86,18 +96,22 @@ class ReservationTests(APITestCase):
             state_province="Random state",
             country="Random country",
             price=199,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 2, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 2, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=100,
-            is_active=False,
             accessibility=True,
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            type=self.retreatType,
         )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 2, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 2, 17, 12)),
+            retreat=self.retreat2,
+        )
+
         self.retreat_overlap = Retreat.objects.create(
             name="ultra_retreat",
             details="This is a description of the ultra retreat.",
@@ -107,18 +121,23 @@ class ReservationTests(APITestCase):
             state_province="Random state 2",
             country="Random country 2",
             price=199,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=50,
-            is_active=True,
             accessibility=True,
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            type=self.retreatType,
         )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=self.retreat_overlap,
+        )
+        self.retreat_overlap.activate()
+
         self.order = Order.objects.create(
             user=self.user,
             transaction_date=timezone.now(),
@@ -128,7 +147,7 @@ class ReservationTests(APITestCase):
         self.order_line = OrderLine.objects.create(
             order=self.order,
             quantity=1,
-            content_type=self.retreat_type,
+            content_type=self.retreat_content_type,
             object_id=self.retreat.id,
             cost=self.retreat.price,
         )

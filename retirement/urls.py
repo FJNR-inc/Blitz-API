@@ -40,6 +40,8 @@ router.register('retreat_invitation', views.RetreatInvitationViewSet)
 router.register('wait_queue_places', views.WaitQueuePlaceViewSet)
 router.register('wait_queue_places_reserved',
                 views.WaitQueuePlaceReservedViewSet)
+router.register('retreat_types', views.RetreatTypeViewSet)
+router.register('automatic_emails', views.RetreatTypeViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),  # includes router generated URL

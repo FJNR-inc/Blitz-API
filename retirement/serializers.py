@@ -18,26 +18,44 @@ from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueValidator
 
 from blitz_api.cron_manager_api import CronManager
-from blitz_api.services import (check_if_translated_field,
-                                remove_translation_fields,
-                                getMessageTranslate)
+from blitz_api.services import (
+    check_if_translated_field,
+    remove_translation_fields,
+    getMessageTranslate,
+)
 from log_management.models import Log, EmailLog
 from retirement.services import refund_retreat
 from store.exceptions import PaymentAPIError
-from store.models import Order, OrderLine, PaymentProfile, Refund
-from store.serializers import BaseProductSerializer, CouponSerializer
-from store.services import (charge_payment,
-                            create_external_payment_profile,
-                            create_external_card,
-                            PAYSAFE_CARD_TYPE,
-                            PAYSAFE_EXCEPTION,
-                            refund_amount, )
+from store.models import (
+    Order,
+    OrderLine,
+    PaymentProfile,
+    Refund,
+)
+from store.serializers import (
+    BaseProductSerializer,
+    CouponSerializer,
+)
+from store.services import (
+    charge_payment,
+    create_external_payment_profile,
+    create_external_card,
+    PAYSAFE_CARD_TYPE,
+    PAYSAFE_EXCEPTION,
+    refund_amount,
+)
 
 from .fields import TimezoneField
 from .models import (
-    Picture, Reservation, Retreat, WaitQueue,
-    RetreatInvitation, WaitQueuePlace,
-    WaitQueuePlaceReserved
+    Picture,
+    Reservation,
+    Retreat,
+    WaitQueue,
+    RetreatInvitation,
+    WaitQueuePlace,
+    WaitQueuePlaceReserved,
+    RetreatType,
+    AutomaticEmail,
 )
 
 User = get_user_model()
@@ -45,9 +63,68 @@ User = get_user_model()
 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
+class RetreatTypeSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    name = serializers.CharField(
+        required=False,
+        validators=[UniqueValidator(queryset=RetreatType.objects.all())],
+    )
+    name_fr = serializers.CharField(
+        required=False,
+        allow_null=True,
+        validators=[UniqueValidator(queryset=RetreatType.objects.all())],
+    )
+    name_en = serializers.CharField(
+        required=False,
+        allow_null=True,
+        validators=[UniqueValidator(queryset=RetreatType.objects.all())],
+    )
+
+    class Meta:
+        model = RetreatType
+        fields = '__all__'
+        extra_kwargs = {
+            'url': {
+                'view_name': 'retreat:retreattype-detail',
+            },
+            'name': {
+                'help_text': _("Name of the retreat type."),
+                'validators':
+                    [UniqueValidator(queryset=RetreatType.objects.all())],
+            },
+        }
+
+    def validate(self, attr):
+        err = {}
+
+        if not check_if_translated_field('name', attr):
+            err.update(getMessageTranslate('name', attr, True))
+        if err:
+            raise serializers.ValidationError(err)
+
+        return super(RetreatTypeSerializer, self).validate(attr)
+
+
+class AutomaticEmailSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = AutomaticEmail
+        fields = '__all__'
+        extra_kwargs = {
+            'url': {
+                'view_name': 'retreat:automaticemail-detail',
+            },
+        }
+
+
 class RetreatSerializer(BaseProductSerializer):
+    start_time = serializers.ReadOnlyField()
+    end_time = serializers.ReadOnlyField()
     places_remaining = serializers.ReadOnlyField()
     total_reservations = serializers.ReadOnlyField()
+    is_active = serializers.BooleanField(read_only=True)
     reserved_seats = serializers.ReadOnlyField()
     reservations = serializers.SerializerMethodField()
     reservations_canceled = serializers.SerializerMethodField()
@@ -132,34 +209,11 @@ class RetreatSerializer(BaseProductSerializer):
 
     def validate(self, attr):
         err = {}
-        if attr.get('type', Retreat.TYPE_PHYSICAL) == Retreat.TYPE_PHYSICAL:
-            required_attrs = [
-                'accessibility',
-                'postal_code',
-                'has_shared_rooms'
-            ]
-            for key in required_attrs:
-                if attr.get(key, None) is None:
-                    err.update(
-                        {
-                            key: _("This field is required.")
-                        }
-                    )
 
-            if not check_if_translated_field('name', attr):
-                err.update(getMessageTranslate('name', attr, True))
-            if not check_if_translated_field('details', attr):
-                err.update(getMessageTranslate('details', attr, True))
-            if not check_if_translated_field('country', attr):
-                err.update(getMessageTranslate('country', attr, True))
-            if not check_if_translated_field('state_province', attr):
-                err.update(getMessageTranslate('state_province', attr, True))
-            if not check_if_translated_field('city', attr):
-                err.update(getMessageTranslate('city', attr, True))
-            if not check_if_translated_field('address_line1', attr):
-                err.update(getMessageTranslate('address_line1', attr, True))
-            if err:
-                raise serializers.ValidationError(err)
+        if not check_if_translated_field('name', attr):
+            err.update(getMessageTranslate('name', attr, True))
+        if err:
+            raise serializers.ValidationError(err)
         return super(RetreatSerializer, self).validate(attr)
 
     def create(self, validated_data):
@@ -168,24 +222,6 @@ class RetreatSerializer(BaseProductSerializer):
         UPDATE: Commenting out reminder email since they are no longer desired.
         """
         retreat = super().create(validated_data)
-
-        cron_manager = CronManager()
-        # Set reminder email
-        # 24H for virtual retreat
-        # 7 Days for physical retreat
-        if retreat.type == Retreat.TYPE_VIRTUAL:
-            reminder_date = validated_data['start_time'] - timedelta(days=1)
-        else:
-            reminder_date = validated_data['start_time'] - timedelta(days=7)
-
-        cron_manager.create_remind_user(
-            retreat.id, reminder_date
-        )
-
-        # Set post-event email
-        throwback_date = validated_data['end_time'] + timedelta(days=1)
-        cron_manager.create_recap(
-            retreat.id, throwback_date)
 
         return retreat
 
@@ -202,6 +238,11 @@ class RetreatSerializer(BaseProductSerializer):
 
         # TODO put back available after migration from is_active
         data.pop("available")
+
+        data['type'] = RetreatTypeSerializer(
+            instance.type,
+            context=self.context
+        ).data
 
         if is_staff:
             return data
@@ -224,6 +265,9 @@ class RetreatSerializer(BaseProductSerializer):
             },
             'url': {
                 'view_name': 'retreat:retreat-detail',
+            },
+            'type': {
+                'view_name': 'retreat:retreattype-detail',
             },
         }
 
@@ -319,14 +363,12 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             is_active=True,
         )
 
-        active_reservations = active_reservations.values_list(
-            'retreat__start_time',
-            'retreat__end_time',
+        active_reservations = active_reservations.all()
 
-        )
-
-        for retreats in active_reservations:
-            if max(retreats[0], start) < min(retreats[1], end):
+        for reservation in active_reservations:
+            latest_start = max(reservation.retreat.start_time, start)
+            shortest_end = min(reservation.retreat.end_time, end)
+            if latest_start < shortest_end:
                 raise serializers.ValidationError({
                     'non_field_errors': [_(
                         "This reservation overlaps with another active "
@@ -521,13 +563,12 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 active_reservations = Reservation.objects.filter(
                     user=user,
                     is_active=True,
-                ).exclude(pk=instance.pk).values_list(
-                    'retreat__start_time',
-                    'retreat__end_time',
-                )
+                ).exclude(pk=instance.pk)
 
-                for retreats in active_reservations:
-                    if max(retreats[0], start) < min(retreats[1], end):
+                for reservation in active_reservations:
+                    latest_start = max(reservation.retreat.start_time, start)
+                    shortest_end = min(reservation.retreat.end_time, end)
+                    if latest_start < shortest_end:
                         raise serializers.ValidationError({
                             'non_field_errors': [_(
                                 "This reservation overlaps with another "
