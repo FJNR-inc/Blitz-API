@@ -38,7 +38,7 @@ from retirement.models import (
     Retreat,
     RetreatInvitation,
     RetreatType,
-    RetreatDate,
+    RetreatDate, Reservation,
 )
 
 from store.tests.paysafe_sample_responses import (
@@ -89,6 +89,7 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 class OrderTests(APITestCase):
 
     def setUp(self):
+        self.retreat_content_type = ContentType.objects.get_for_model(Retreat)
         self.client = APIClient()
         self.user: User = UserFactory()
         self.user.city = "Current city"
@@ -101,6 +102,7 @@ class OrderTests(APITestCase):
         self.admin.student_number = "Random code"
         self.admin.academic_program_code = "Random code"
         self.admin.save()
+        self.user_for_no_place_retreat: User = UserFactory()
         self.membership = Membership.objects.create(
             name="basic_membership",
             details="1-Year student membership",
@@ -234,7 +236,7 @@ class OrderTests(APITestCase):
         self.retreat_no_seats = Retreat.objects.create(
             name="mega_retreat",
             details="This is a description of the mega retreat.",
-            seats=0,
+            seats=1,
             address_line1="123 random street",
             postal_code="123 456",
             state_province="Random state",
@@ -256,6 +258,11 @@ class OrderTests(APITestCase):
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
             retreat=self.retreat_no_seats,
+        )
+        Reservation.objects.create(
+            user=self.user_for_no_place_retreat,
+            retreat=self.retreat_no_seats,
+            is_active=True,
         )
         self.retreat_no_seats.activate()
         self.coupon = Coupon.objects.create(

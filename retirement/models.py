@@ -36,6 +36,7 @@ class RetreatType(models.Model):
     class Meta:
         verbose_name = _("Type of retreat")
         verbose_name_plural = _("Types of retreat")
+        ordering = ['index_ordering']
 
     name = models.CharField(
         verbose_name=_("Name"),
@@ -49,6 +50,45 @@ class RetreatType(models.Model):
 
     number_of_tomatoes = models.PositiveIntegerField(
         verbose_name=_("Number of tomatoes"),
+    )
+
+    description = models.TextField(
+        verbose_name=_("Description"),
+    )
+
+    short_description = models.TextField(
+        verbose_name=_("Short description"),
+    )
+
+    duration_description = models.TextField(
+        verbose_name=_("Description of duration")
+    )
+
+    cancellation_policies = models.TextField(
+        verbose_name=_("Cancellation policies")
+    )
+
+    icon = models.ImageField(
+        _('icon'),
+        upload_to='retreat-type-icon',
+        null=True,
+        blank=True,
+    )
+
+    is_virtual = models.BooleanField(
+        verbose_name=_("Is virtual"),
+        default=False,
+    )
+
+    index_ordering = models.PositiveIntegerField(
+        verbose_name=_('Index for display'),
+        default=1,
+    )
+
+    know_more_link = models.TextField(
+        verbose_name=_("Know more link"),
+        blank=True,
+        null=True,
     )
 
     def __str__(self):
@@ -146,7 +186,10 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         blank=True
     )
 
-    seats = models.PositiveIntegerField(verbose_name=_("Seats"), )
+    seats = models.PositiveIntegerField(
+        verbose_name=_("Seats"),
+        default=0,
+    )
 
     @property
     def reserved_seats(self):
@@ -201,12 +244,22 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
     )
 
     min_day_refund = models.PositiveIntegerField(
-        verbose_name=_("Minimum days before the event for refund"), )
+        verbose_name=_("Minimum days before the event for refund"),
+        blank=True,
+        null=True,
+    )
 
-    refund_rate = models.PositiveIntegerField(verbose_name=_("Refund rate"), )
+    refund_rate = models.PositiveIntegerField(
+        verbose_name=_("Refund rate"),
+        blank=True,
+        null=True,
+    )
 
     min_day_exchange = models.PositiveIntegerField(
-        verbose_name=_("Minimum days before the event for exchange"), )
+        verbose_name=_("Minimum days before the event for exchange"),
+        blank=True,
+        null=True,
+    )
 
     users = models.ManyToManyField(
         User,
@@ -289,6 +342,13 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
     description = models.TextField(
         verbose_name=_("Description"),
+        null=True,
+        blank=True,
+    )
+
+    animator = models.CharField(
+        verbose_name=_("animator"),
+        max_length=100,
         null=True,
         blank=True,
     )
@@ -514,13 +574,33 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
     def activate(self):
         if not self.start_time:
-            raise PermissionError(
-                "Retreat need to have a start time before activate it"
+            raise ValueError(
+                _("Retreat need to have a start time before activate it")
             )
 
         if not self.end_time:
-            raise PermissionError(
-                "Retreat need to have a end time before activate it"
+            raise ValueError(
+                _("Retreat need to have a end time before activate it")
+            )
+
+        if self.seats <= 0:
+            raise ValueError(
+                _("Retreat need to have at least one seat available")
+            )
+
+        if self.min_day_refund is None:
+            raise ValueError(
+                _("Retreat need to have a minimum day refund policy")
+            )
+
+        if self.min_day_exchange is None:
+            raise ValueError(
+                _("Retreat need to have a minimum day exchange policy")
+            )
+
+        if self.refund_rate is None:
+            raise ValueError(
+                _("Retreat need to have a refund rate policy")
             )
 
         cron_manager = CronManager()
@@ -548,6 +628,7 @@ class RetreatDate(models.Model):
     class Meta:
         verbose_name = _("Retreat date")
         verbose_name_plural = _("Retreat dates")
+        ordering = ["start_time"]
 
     retreat = models.ForeignKey(
         Retreat,

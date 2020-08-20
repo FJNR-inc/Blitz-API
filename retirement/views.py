@@ -1,5 +1,4 @@
 import json
-from decimal import Decimal
 from datetime import datetime, timedelta
 
 import pytz
@@ -11,11 +10,9 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail as django_send_mail
 from django.db import transaction
 from django.template.loader import render_to_string
-from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
-import rest_framework
 from rest_framework import (
     mixins,
     status,
@@ -52,7 +49,9 @@ from .models import (
     WaitQueuePlace,
     WaitQueuePlaceReserved,
     RetreatType,
-    AutomaticEmail, AutomaticEmailLog,
+    AutomaticEmail,
+    AutomaticEmailLog,
+    RetreatDate,
 )
 from .resources import (
     ReservationResource,
@@ -64,10 +63,12 @@ from .resources import (
 from .serializers import (
     RetreatTypeSerializer,
     AutomaticEmailSerializer,
+    RetreatDateSerializer,
 )
 from .services import (
     send_retreat_reminder_email,
-    send_post_retreat_email, send_automatic_email,
+    send_post_retreat_email,
+    send_automatic_email,
 )
 
 User = get_user_model()
@@ -119,14 +120,23 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, permission_classes=[IsAdminUser])
+    @action(detail=True, permission_classes=[IsAdminUser], methods=['post'])
     def activate(self, request, pk=None):
         """
         That custom action allows an admin to activate
         a retreat and to run all the automations related.
         """
         retreat = self.get_object()
-        retreat.activate()
+
+        try:
+            retreat.activate()
+        except ValueError as error:
+            return Response(
+                {
+                    'non_field_errors': [str(error)],
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         serializer = self.get_serializer(retreat)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -338,7 +348,12 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     serializer_class = serializers.ReservationSerializer
     queryset = Reservation.objects.all()
-    filterset_fields = '__all__'
+    filterset_fields = [
+        'user',
+        'retreat',
+        'is_active',
+        'retreat__type__is_virtual'
+    ]
     ordering_fields = (
         'is_active',
         'is_present',
@@ -663,15 +678,22 @@ class WaitQueuePlaceReservedViewSet(mixins.ListModelMixin,
         return WaitQueuePlaceReserved.objects.filter(user=self.request.user)
 
 
+class RetreatDateViewSet(viewsets.ModelViewSet):
+    serializer_class = RetreatDateSerializer
+    queryset = RetreatDate.objects.all()
+    permission_classes = [permissions.IsAdminOrReadOnly]
+    filter_fields = '__all__'
+
+
 class RetreatTypeViewSet(viewsets.ModelViewSet):
     serializer_class = RetreatTypeSerializer
     queryset = RetreatType.objects.all()
-    permission_classes = permissions.IsAdminOrReadOnly
-    filter_fields = '__all__'
+    permission_classes = [permissions.IsAdminOrReadOnly]
+    filter_fields = ['is_virtual']
 
 
 class AutomaticEmailViewSet(viewsets.ModelViewSet):
     serializer_class = AutomaticEmailSerializer
     queryset = AutomaticEmail.objects.all()
-    permission_classes = permissions.IsAdminOrReadOnly
+    permission_classes = [permissions.IsAdminOrReadOnly]
     filter_fields = '__all__'

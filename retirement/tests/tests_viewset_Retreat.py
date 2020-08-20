@@ -81,6 +81,8 @@ class RetreatTests(CustomAPITestCase):
         'type',
         'videoconference_tool',
         'videoconference_link',
+        'dates',
+        'animator'
     ]
 
     @classmethod
@@ -581,12 +583,8 @@ class RetreatTests(CustomAPITestCase):
         content = {
             "price": ["This field is required."],
             "timezone": ["This field is required."],
-            "seats": ["This field is required."],
-            "min_day_refund": ["This field is required."],
-            "refund_rate": ["This field is required."],
-            "min_day_exchange": ["This field is required."],
             "type": ["This field is required."],
-            "name": ["This field is required."]
+            "name": ["This field is required."],
         }
 
         self.assertEqual(
