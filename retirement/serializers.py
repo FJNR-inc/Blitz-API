@@ -1,13 +1,10 @@
 from datetime import timedelta
 from decimal import Decimal
 import json
-import requests
-import traceback
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
-from django.core.mail import mail_admins
 from django.core.mail import send_mail
 from django.db import transaction
 from django.template.loader import render_to_string
@@ -17,7 +14,6 @@ from rest_framework import serializers
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueValidator
 
-from blitz_api.cron_manager_api import CronManager
 from blitz_api.services import (
     check_if_translated_field,
     remove_translation_fields,
@@ -56,11 +52,28 @@ from .models import (
     WaitQueuePlaceReserved,
     RetreatType,
     AutomaticEmail,
+    RetreatDate,
 )
 
 User = get_user_model()
 
 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
+
+
+class RetreatDateSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = RetreatDate
+        fields = '__all__'
+        extra_kwargs = {
+            'url': {
+                'view_name': 'retreat:retreatdate-detail',
+            },
+            'retreat': {
+                'view_name': 'retreat:retreat-detail',
+            }
+        }
 
 
 class RetreatTypeSerializer(serializers.HyperlinkedModelSerializer):
@@ -163,8 +176,14 @@ class RetreatSerializer(BaseProductSerializer):
     # Note: this is a read-only field so it isn't used for Workplace creation.
     pictures = serializers.SerializerMethodField()
 
+    dates = RetreatDateSerializer(
+        source='retreat_dates',
+        many=True,
+        read_only=True,
+    )
+
     def validate_refund_rate(self, value):
-        if value > 100:
+        if value is None or value > 100:
             raise serializers.ValidationError(_(
                 "Refund rate must be between 0 and 100 (%)."
             ))
