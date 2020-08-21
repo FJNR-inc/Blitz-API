@@ -14,7 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='retreat',
             name='type',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='retreats', to='retirement.RetreatType'),
-            preserve_default=False,
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='retreats', to='retirement.RetreatType'),
         ),
     ]
