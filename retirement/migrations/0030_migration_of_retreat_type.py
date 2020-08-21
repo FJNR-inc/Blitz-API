@@ -8,13 +8,13 @@ def migrate_type_of_retreat(apps, schema_editor):
     Retreat = apps.get_model('retirement', 'Retreat')
     RetreatType = apps.get_model('retirement', 'RetreatType')
 
-    physical = RetreatType.objects.get_or_create(
+    physical, created = RetreatType.objects.get_or_create(
         name_fr='Physique',
         name_en='Physical',
         minutes_before_display_link=0
     )
 
-    virtual = RetreatType.objects.get_or_create(
+    virtual, created = RetreatType.objects.get_or_create(
         name_fr='Virtuelle',
         name_en='Virtual',
         minutes_before_display_link=30
