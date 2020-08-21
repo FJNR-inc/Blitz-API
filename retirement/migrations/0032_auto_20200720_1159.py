@@ -16,13 +16,9 @@ class Migration(migrations.Migration):
             old_name='type_new',
             new_name='type',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='retreat',
-            name='type_new',
-        ),
-        migrations.AddField(
-            model_name='retreat',
-            name='type',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='retreats', to='retirement.RetreatType'),
+            old_name='type_new',
+            new_name='type',
         ),
     ]
