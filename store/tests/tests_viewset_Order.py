@@ -1,15 +1,22 @@
 import json
 
-from datetime import datetime, timedelta, date
+from datetime import (
+    datetime,
+    timedelta,
+    date,
+)
 
 from rest_framework import status
-from rest_framework.test import APIClient, APITestCase
+from rest_framework.test import (
+    APIClient,
+    APITestCase,
+)
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core import mail
-from django.test import modify_settings, override_settings
+from django.test import override_settings
 from django.utils import timezone
 from django.urls import reverse
 
@@ -17,12 +24,24 @@ import pytz
 import responses
 from unittest import mock
 
-from blitz_api.factories import UserFactory, AdminFactory
+from blitz_api.factories import (
+    UserFactory,
+    AdminFactory,
+)
 
-from workplace.models import TimeSlot, Period, Workplace
-from retirement.models import Retreat, RetreatInvitation
+from workplace.models import (
+    TimeSlot,
+    Period,
+    Workplace,
+)
+from retirement.models import (
+    Retreat,
+    RetreatInvitation,
+    RetreatType,
+    RetreatDate, Reservation,
+)
 
-from .paysafe_sample_responses import (
+from store.tests.paysafe_sample_responses import (
     SAMPLE_PROFILE_RESPONSE,
     SAMPLE_PAYMENT_RESPONSE,
     SAMPLE_CARD_RESPONSE,
@@ -32,9 +51,16 @@ from .paysafe_sample_responses import (
     SAMPLE_CARD_REFUSED,
 )
 
-from ..models import (
-    Package, Order, OrderLine, Membership, PaymentProfile,
-    Coupon, CouponUser, MembershipCoupon, OptionProduct
+from store.models import (
+    Package,
+    Order,
+    OrderLine,
+    Membership,
+    PaymentProfile,
+    Coupon,
+    CouponUser,
+    MembershipCoupon,
+    OptionProduct,
 )
 
 User = get_user_model()
@@ -63,6 +89,7 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 class OrderTests(APITestCase):
 
     def setUp(self):
+        self.retreat_content_type = ContentType.objects.get_for_model(Retreat)
         self.client = APIClient()
         self.user: User = UserFactory()
         self.user.city = "Current city"
@@ -75,6 +102,7 @@ class OrderTests(APITestCase):
         self.admin.student_number = "Random code"
         self.admin.academic_program_code = "Random code"
         self.admin.save()
+        self.user_for_no_place_retreat: User = UserFactory()
         self.membership = Membership.objects.create(
             name="basic_membership",
             details="1-Year student membership",
@@ -172,75 +200,71 @@ class OrderTests(APITestCase):
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
+        self.retreatType = RetreatType.objects.create(
+            name="Type 1",
+            minutes_before_display_link=10,
+            number_of_tomatoes=4,
+        )
         self.retreat = Retreat.objects.create(
             name="mega_retreat",
-            seats=400,
             details="This is a description of the mega retreat.",
+            seats=400,
             address_line1="123 random street",
             postal_code="123 456",
             state_province="Random state",
             country="Random country",
             price=199,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=50,
-            is_active=True,
-            activity_language='FR',
             accessibility=True,
+            form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
             has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            type=self.retreatType,
         )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=self.retreat,
+        )
+        self.retreat.activate()
         self.retreat.add_wait_queue_place(self.user, generate_cron=False)
         self.retreat_no_seats = Retreat.objects.create(
-            name="no_place_left_retreat",
-            seats=0,
-            details="This is a description of the full retreat.",
+            name="mega_retreat",
+            details="This is a description of the mega retreat.",
+            seats=1,
             address_line1="123 random street",
             postal_code="123 456",
             state_province="Random state",
             country="Random country",
             price=199,
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            accessibility=True,
+            form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            type=self.retreatType,
+        )
+        RetreatDate.objects.create(
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
-            min_day_refund=7,
-            min_day_exchange=7,
-            refund_rate=50,
-            is_active=True,
-            activity_language='FR',
-            accessibility=True,
-            has_shared_rooms=True,
+            retreat=self.retreat_no_seats,
         )
-        self.virtualRetreat = Retreat.objects.create(
-            name="virtual retreat",
-            seats=400,
-            details="This is a description of the virtual retreat.",
-            price=200,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
-            min_day_refund=7,
-            min_day_exchange=7,
-            refund_rate=50,
+        Reservation.objects.create(
+            user=self.user_for_no_place_retreat,
+            retreat=self.retreat_no_seats,
             is_active=True,
-            activity_language='FR',
-            videoconference_tool='Jitsi',
-            type=Retreat.TYPE_VIRTUAL,
         )
-        self.virtualRetreat2 = Retreat.objects.create(
-            name="virtual retreat 2",
-            seats=400,
-            details="This is a description of the virtual retreat 2.",
-            price=100,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
-            min_day_refund=7,
-            min_day_exchange=7,
-            refund_rate=50,
-            is_active=True,
-            activity_language='FR',
-            videoconference_tool='Jitsi',
-            type=Retreat.TYPE_VIRTUAL,
-        )
+        self.retreat_no_seats.activate()
         self.coupon = Coupon.objects.create(
             code="ABCD1234",
             start_time=LOCAL_TIMEZONE.localize(datetime(2000, 1, 15, 8)),
@@ -1911,459 +1935,6 @@ class OrderTests(APITestCase):
         # 1 email for the order details
         # 1 email for the retreat informations
         self.assertEqual(len(mail.outbox), 2)
-
-    @responses.activate
-    @override_settings(
-        LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP='5000-01-01'
-    )
-    def test_create_virtual_retreat_with_membership(self):
-        """
-        Ensure we can create an order with a virtual retreat and a
-        membership and that the virtual retreat is free
-        """
-        self.client.force_authenticate(user=self.user)
-
-        self.user.city = "Current city"
-        self.user.phone = "123-456-7890"
-        self.user.save()
-
-        number_of_free_virtual_retreat_in_bank = \
-            self.user.number_of_free_virtual_retreat
-
-        responses.add(
-            responses.POST,
-            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
-            json=SAMPLE_PAYMENT_RESPONSE,
-            status=200
-        )
-
-        data = {
-            'payment_token': "CZgD1NlBzPuSefg",
-            'order_lines': [
-                {
-                    'content_type': 'retreat',
-                    'object_id': self.virtualRetreat.id,
-                    'quantity': 1,
-                },
-                {
-                    'content_type': 'membership',
-                    'object_id': self.membership.id,
-                    'quantity': 1,
-                }
-            ],
-        }
-
-        response = self.client.post(
-            reverse('order-list'),
-            data,
-            format='json',
-        )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_201_CREATED,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-        del response_data['url']
-        del response_data['id']
-        del response_data['order_lines'][0]['order']
-        del response_data['order_lines'][0]['object_id']
-        del response_data['order_lines'][0]['url']
-        del response_data['order_lines'][0]['id']
-        del response_data['order_lines'][1]['order']
-        del response_data['order_lines'][1]['object_id']
-        del response_data['order_lines'][1]['url']
-        del response_data['order_lines'][1]['id']
-        content = {
-            'order_lines': [
-                {
-                    'content_type': 'retreat',
-                    'quantity': 1,
-                    'coupon': None,
-                    'coupon_real_value': 0.0,
-                    'cost': 0.0,
-                    'metadata': None,
-                    'options': []
-                },
-                {
-                    'content_type': 'membership',
-                    'quantity': 1,
-                    'coupon': None,
-                    'coupon_real_value': 0.0,
-                    'cost': 50.0,
-                    'metadata': None,
-                    'options': []
-                }
-            ],
-            'user': 'http://testserver/users/' + str(self.user.id),
-            'transaction_date': response_data['transaction_date'],
-            'authorization_id': '1',
-            'settlement_id': '1',
-            'reference_number': '751',
-        }
-
-        refreshed_user = User.objects.get(id=self.user.id)
-
-        self.assertEqual(
-            number_of_free_virtual_retreat_in_bank,
-            refreshed_user.number_of_free_virtual_retreat
-        )
-
-        self.assertEqual(response_data, content)
-
-        # 1 email for the order details
-        # 1 email for the retreat informations
-        self.assertEqual(len(mail.outbox), 2)
-
-    @responses.activate
-    @override_settings(
-        LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP='5000-01-01'
-    )
-    def test_create_membership_before_end_of_limit_free_virtual_retreat(self):
-        """
-        Ensure we can create an order with a membership and get
-        a free virtual retreat in bank
-        """
-        self.client.force_authenticate(user=self.user)
-
-        self.user.city = "Current city"
-        self.user.phone = "123-456-7890"
-        self.user.save()
-
-        number_of_free_virtual_retreat_in_bank =\
-            self.user.number_of_free_virtual_retreat
-
-        responses.add(
-            responses.POST,
-            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
-            json=SAMPLE_PAYMENT_RESPONSE,
-            status=200
-        )
-
-        data = {
-            'payment_token': "CZgD1NlBzPuSefg",
-            'order_lines': [
-                {
-                    'content_type': 'membership',
-                    'object_id': self.membership.id,
-                    'quantity': 1,
-                }
-            ],
-        }
-
-        response = self.client.post(
-            reverse('order-list'),
-            data,
-            format='json',
-        )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_201_CREATED,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-        del response_data['url']
-        del response_data['id']
-        del response_data['order_lines'][0]['order']
-        del response_data['order_lines'][0]['object_id']
-        del response_data['order_lines'][0]['url']
-        del response_data['order_lines'][0]['id']
-        content = {
-            'order_lines': [
-                {
-                    'content_type': 'membership',
-                    'quantity': 1,
-                    'coupon': None,
-                    'coupon_real_value': 0.0,
-                    'cost': 50.0,
-                    'metadata': None,
-                    'options': []
-                }
-            ],
-            'user': 'http://testserver/users/' + str(self.user.id),
-            'transaction_date': response_data['transaction_date'],
-            'authorization_id': '1',
-            'settlement_id': '1',
-            'reference_number': '751',
-        }
-
-        refreshed_user = User.objects.get(id=self.user.id)
-
-        self.assertEqual(
-            number_of_free_virtual_retreat_in_bank + 1,
-            refreshed_user.number_of_free_virtual_retreat
-        )
-
-        self.assertEqual(response_data, content)
-
-        # 1 email for the order details
-        self.assertEqual(len(mail.outbox), 1)
-
-    @responses.activate
-    def test_create_virtual_retreat_with_membership_after_limit(self):
-        """
-        Ensure we can create an order with a virtual retreat and a
-        membership and that the virtual retreat is not free since the limit
-        is passed
-        """
-        self.client.force_authenticate(user=self.user)
-
-        self.user.city = "Current city"
-        self.user.phone = "123-456-7890"
-        self.user.save()
-
-        responses.add(
-            responses.POST,
-            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
-            json=SAMPLE_PAYMENT_RESPONSE,
-            status=200
-        )
-
-        data = {
-            'payment_token': "CZgD1NlBzPuSefg",
-            'order_lines': [
-                {
-                    'content_type': 'retreat',
-                    'object_id': self.virtualRetreat.id,
-                    'quantity': 1,
-                },
-                {
-                    'content_type': 'membership',
-                    'object_id': self.membership.id,
-                    'quantity': 1,
-                }
-            ],
-        }
-
-        response = self.client.post(
-            reverse('order-list'),
-            data,
-            format='json',
-        )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_201_CREATED,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-        del response_data['url']
-        del response_data['id']
-        del response_data['order_lines'][0]['order']
-        del response_data['order_lines'][0]['object_id']
-        del response_data['order_lines'][0]['url']
-        del response_data['order_lines'][0]['id']
-        del response_data['order_lines'][1]['order']
-        del response_data['order_lines'][1]['object_id']
-        del response_data['order_lines'][1]['url']
-        del response_data['order_lines'][1]['id']
-        content = {
-            'order_lines': [
-                {
-                    'content_type': 'retreat',
-                    'quantity': 1,
-                    'coupon': None,
-                    'coupon_real_value': 0.0,
-                    'cost': 200.0,
-                    'metadata': None,
-                    'options': []
-                },
-                {
-                    'content_type': 'membership',
-                    'quantity': 1,
-                    'coupon': None,
-                    'coupon_real_value': 0.0,
-                    'cost': 50.0,
-                    'metadata': None,
-                    'options': []
-                }
-            ],
-            'user': 'http://testserver/users/' + str(self.user.id),
-            'transaction_date': response_data['transaction_date'],
-            'authorization_id': '1',
-            'settlement_id': '1',
-            'reference_number': '751',
-        }
-
-        self.assertEqual(response_data, content)
-
-        # 1 email for the order details
-        # 1 email for the retreat informations
-        self.assertEqual(len(mail.outbox), 2)
-
-    @responses.activate
-    def test_create_virtual_retreat_with_free_retreat_in_profile(self):
-        """
-        Ensure we can create an order with a virtual retreat and a
-        free virtual retreat in banks and that the virtual retreat is free
-        """
-        self.client.force_authenticate(user=self.user)
-
-        self.user.city = "Current city"
-        self.user.phone = "123-456-7890"
-        self.user.number_of_free_virtual_retreat = 1
-        self.user.save()
-
-        responses.add(
-            responses.POST,
-            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
-            json=SAMPLE_PAYMENT_RESPONSE,
-            status=200
-        )
-
-        data = {
-            'payment_token': "CZgD1NlBzPuSefg",
-            'order_lines': [
-                {
-                    'content_type': 'retreat',
-                    'object_id': self.virtualRetreat.id,
-                    'quantity': 1,
-                }
-            ],
-        }
-
-        response = self.client.post(
-            reverse('order-list'),
-            data,
-            format='json',
-        )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_201_CREATED,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-        del response_data['url']
-        del response_data['id']
-        del response_data['reference_number']
-        del response_data['order_lines'][0]['order']
-        del response_data['order_lines'][0]['url']
-        del response_data['order_lines'][0]['id']
-        content = {
-            'order_lines': [
-                {
-                    'object_id': self.virtualRetreat.id,
-                    'content_type': 'retreat',
-                    'quantity': 1,
-                    'coupon': None,
-                    'coupon_real_value': 0.0,
-                    'cost': 0.0,
-                    'metadata': None,
-                    'options': []
-                }
-            ],
-            'user': 'http://testserver/users/' + str(self.user.id),
-            'transaction_date': response_data['transaction_date'],
-            'authorization_id': 0,
-            'settlement_id': 0,
-        }
-
-        self.assertEqual(response_data, content)
-
-        # 1 email for the order details
-        # 1 email for the retreat informations
-        self.assertEqual(len(mail.outbox), 2)
-
-    @responses.activate
-    def test_create_two_virtual_retreat_with_free_retreat_in_profile(self):
-        """
-        Ensure we can create an order with two virtual retreat and that the
-        first virtual retreat is free
-        """
-        self.client.force_authenticate(user=self.user)
-
-        self.user.city = "Current city"
-        self.user.phone = "123-456-7890"
-        self.user.number_of_free_virtual_retreat = 1
-        self.user.save()
-
-        responses.add(
-            responses.POST,
-            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
-            json=SAMPLE_PAYMENT_RESPONSE,
-            status=200
-        )
-
-        data = {
-            'payment_token': "CZgD1NlBzPuSefg",
-            'order_lines': [
-                {
-                    'content_type': 'retreat',
-                    'object_id': self.virtualRetreat.id,
-                    'quantity': 1,
-                },
-                {
-                    'content_type': 'retreat',
-                    'object_id': self.virtualRetreat2.id,
-                    'quantity': 1,
-                }
-            ],
-        }
-
-        response = self.client.post(
-            reverse('order-list'),
-            data,
-            format='json',
-        )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_201_CREATED,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-        del response_data['url']
-        del response_data['id']
-        del response_data['reference_number']
-        del response_data['order_lines'][0]['order']
-        del response_data['order_lines'][0]['url']
-        del response_data['order_lines'][0]['id']
-        del response_data['order_lines'][1]['order']
-        del response_data['order_lines'][1]['url']
-        del response_data['order_lines'][1]['id']
-        content = {
-            'order_lines': [
-                {
-                    'object_id': self.virtualRetreat.id,
-                    'content_type': 'retreat',
-                    'quantity': 1,
-                    'coupon': None,
-                    'coupon_real_value': 0.0,
-                    'cost': 0.0,
-                    'metadata': None,
-                    'options': []
-                },
-                {
-                    'object_id': self.virtualRetreat2.id,
-                    'content_type': 'retreat',
-                    'quantity': 1,
-                    'coupon': None,
-                    'coupon_real_value': 0.0,
-                    'cost': 100.0,
-                    'metadata': None,
-                    'options': []
-                }
-            ],
-            'user': 'http://testserver/users/' + str(self.user.id),
-            'transaction_date': response_data['transaction_date'],
-            'authorization_id': '1',
-            'settlement_id': '1',
-        }
-
-        self.assertEqual(response_data, content)
-
-        # 1 email for the order details
-        # 1 email for the free retreat informations
-        # 1 email for the payed retreat informations
-        self.assertEqual(len(mail.outbox), 3)
 
     @responses.activate
     def test_create_retreat_twice(self):

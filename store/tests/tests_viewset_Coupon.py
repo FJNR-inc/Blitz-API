@@ -1,34 +1,70 @@
 import json
 import pytz
-
-from datetime import datetime, timedelta
-
+from datetime import (
+    datetime,
+    timedelta,
+)
 from rest_framework import status
-from rest_framework.test import APIClient, APITestCase
-
+from rest_framework.test import (
+    APIClient,
+    APITestCase,
+)
 from unittest import mock
-
 from django.conf import settings
 from django.core import mail
 from django.utils import timezone
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
-
-from blitz_api.factories import UserFactory, AdminFactory
-from blitz_api.models import AcademicLevel
-from blitz_api.services import remove_translation_fields
-from workplace.models import TimeSlot, Period, Workplace
-from retirement.models import Retreat
-
-from ..models import Package, Order, OrderLine, Membership, Coupon
+from blitz_api.factories import (
+    UserFactory,
+    AdminFactory,
+)
+from blitz_api.testing_tools import CustomAPITestCase
+from workplace.models import (
+    TimeSlot,
+    Period,
+    Workplace,
+)
+from retirement.models import (
+    Retreat,
+    RetreatType,
+    RetreatDate,
+)
+from store.models import (
+    Package,
+    Membership,
+    Coupon,
+)
 
 User = get_user_model()
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
-class CouponTests(APITestCase):
+class CouponTests(CustomAPITestCase):
+
+    ATTRIBUTES = [
+        'url',
+        'id',
+        'value',
+        'percent_off',
+        'code',
+        'start_time',
+        'end_time',
+        'max_use',
+        'max_use_per_user',
+        'details',
+        'owner',
+        'applicable_product_types',
+        'applicable_memberships',
+        'applicable_packages',
+        'applicable_retreats',
+        'applicable_timeslots',
+        'users',
+        'is_applicable_to_physical_retreat',
+        'is_applicable_to_virtual_retreat',
+    ]
 
     @classmethod
     def setUpClass(cls):
@@ -75,27 +111,38 @@ class CouponTests(APITestCase):
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
+        cls.retreatType = RetreatType.objects.create(
+            name="Type 1",
+            minutes_before_display_link=10,
+            number_of_tomatoes=4,
+        )
         cls.retreat = Retreat.objects.create(
             name="mega_retreat",
-            seats=400,
             details="This is a description of the mega retreat.",
+            seats=400,
             address_line1="123 random street",
             postal_code="123 456",
             state_province="Random state",
             country="Random country",
             price=199,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=50,
-            is_active=True,
-            activity_language='FR',
             accessibility=True,
+            form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
             has_shared_rooms=True,
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
+            type=cls.retreatType,
         )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=cls.retreat,
+        )
+        cls.retreat.activate()
         cls.coupon = Coupon.objects.create(
             value=13,
             code="ABCDEFGH",
@@ -1055,159 +1102,11 @@ class CouponTests(APITestCase):
             format='json',
         )
 
-        data = json.loads(response.content)
-
-        content = {
-            'count': 1,
-            'next': None,
-            'previous': None,
-            'results': [{
-                "url": "http://testserver/coupons/" + str(self.coupon.id),
-                "id": self.coupon.id,
-                "applicable_product_types": [
-                    "package"
-                ],
-                "value": "13.00",
-                "percent_off": None,
-                "code": data['results'][0]['code'],
-                "start_time": "2019-01-06T15:11:05-05:00",
-                "end_time": "2020-01-06T15:11:06-05:00",
-                "max_use": 100,
-                "max_use_per_user": 2,
-                "details": "Any package for clients",
-                "owner": "http://testserver/users/" + str(self.user.id),
-                "applicable_memberships": [{
-                    'academic_levels': [],
-                    'available': True,
-                    'details': '1-Year student membership',
-                    'duration': '365 00:00:00',
-                    'id': self.membership.id,
-                    'name': 'basic_membership',
-                    'price': '50.00',
-                    'url': 'http://testserver/memberships/' +
-                           str(self.membership.id),
-                    'available_on_product_types': [],
-                    'available_on_products': [],
-                    'options': [],
-                }],
-                "applicable_packages": [{
-                    'available': True,
-                    'details': '100 reservations package',
-                    'exclusive_memberships': [],
-                    'id': self.package.id,
-                    'name': 'extreme_package',
-                    'price': '400.00',
-                    'reservations': 100,
-                    'url':
-                        'http://testserver/packages/' + str(self.package.id),
-                    'available_on_product_types': [],
-                    'available_on_products': [],
-                    'options': [],
-                }],
-                "applicable_retreats": [{
-                    'accessibility': True,
-                    'activity_language': 'FR',
-                    'address_line1': '123 random street',
-                    'address_line2': None,
-                    'carpool_url': None,
-                    'city': None,
-                    'country': 'Random country',
-                    'details': 'This is a description of the mega retreat.',
-                    'email_content': None,
-                    'end_time': '2130-01-17T12:00:00-05:00',
-                    'exclusive_memberships': [],
-                    'form_url': None,
-                    'id': self.retreat.id,
-                    'is_active': True,
-                    'latitude': None,
-                    'longitude': None,
-                    'min_day_exchange': 7,
-                    'min_day_refund': 7,
-                    'name': 'mega_retreat',
-                    'notification_interval': '1 00:00:00',
-                    'pictures': [],
-                    'place_name': None,
-                    'places_remaining': 400,
-                    'postal_code': '123 456',
-                    'price': '199.00',
-                    'refund_rate': 50,
-                    'reservations': [],
-                    'reservations_canceled': [],
-                    'reserved_seats': 0,
-                    'review_url': None,
-                    'seats': 400,
-                    'type': 'P',
-                    'start_time': '2130-01-15T08:00:00-05:00',
-                    'state_province': 'Random state',
-                    'timezone': None,
-                    'total_reservations': 0,
-                    'url':
-                        f'http://testserver/retreat/retreats/'
-                        f'{self.retreat.id}',
-                    'users': [],
-                    'has_shared_rooms': True,
-                    'hidden': False,
-                    'available_on_product_types': [],
-                    'available_on_products': [],
-                    'options': [],
-                    'accessibility_detail': None,
-                    'description': None,
-                    'food_allergen_free': False,
-                    'food_gluten_free': False,
-                    'food_vegan': False,
-                    'food_vege': False,
-                    'google_maps_url': None,
-                    'sub_title': None,
-                    'toilet_gendered': False,
-                    'room_type': Retreat.SINGLE_OCCUPATION,
-                    'videoconference_tool': None,
-                    'videoconference_link': None
-                }],
-                "applicable_timeslots": [{
-                    'billing_price': 1.0,
-                    'end_time': '2130-01-15T12:00:00-05:00',
-                    'id': self.period.id,
-                    'period': 'http://testserver/periods/' +
-                              str(self.period.id),
-                    'places_remaining': 40,
-                    'price': '1.00',
-                    'reservations': [],
-                    'reservations_canceled': [],
-                    'start_time': '2130-01-15T08:00:00-05:00',
-                    'url': 'http://testserver/time_slots/' +
-                           str(self.time_slot.id),
-                    'users': [],
-                    'workplace': {
-                        'address_line1': '123 random street',
-                        'address_line2': None,
-                        'city': '',
-                        'country': 'Random country',
-                        'details': 'This is a description of the workplace.',
-                        'id': self.workplace.id,
-                        'latitude': None,
-                        'longitude': None,
-                        'name': 'random_workplace',
-                        'pictures': [],
-                        'place_name': '',
-                        'postal_code': '123 456',
-                        'seats': 40,
-                        'state_province': 'Random state',
-                        'timezone': None,
-                        'url':
-                            f'http://testserver/workplaces/'
-                            f'{self.workplace.id}',
-                        'volunteers': []
-                        }
-                }],
-                "users": [],
-                "is_applicable_to_physical_retreat": False,
-                "is_applicable_to_virtual_retreat": False
-            }]
-        }
-
-        self.assertEqual(data, content)
-
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        content = json.loads(response.content)
+        for item in content['results']:
+            self.check_attributes(item)
 
         self.coupon.applicable_retreats.set([])
         self.coupon.applicable_timeslots.set([])
@@ -1307,148 +1206,11 @@ class CouponTests(APITestCase):
             ),
         )
 
-        data = json.loads(response.content)
-
-        content = {
-            "url": "http://testserver/coupons/" + str(self.coupon.id),
-            "id": self.coupon.id,
-            "value": "13.00",
-            "percent_off": None,
-            "code": data['code'],
-            "start_time": "2019-01-06T15:11:05-05:00",
-            "end_time": "2020-01-06T15:11:06-05:00",
-            "max_use": 100,
-            "max_use_per_user": 2,
-            "details": "Any package for clients",
-            "owner": "http://testserver/users/" + str(self.user.id),
-            "applicable_product_types": ['package'],
-            "applicable_memberships": [{
-                'academic_levels': [],
-                'available': True,
-                'details': '1-Year student membership',
-                'duration': '365 00:00:00',
-                'id': self.membership.id,
-                'name': 'basic_membership',
-                'price': '50.00',
-                'url': 'http://testserver/memberships/' +
-                       str(self.membership.id),
-                'available_on_product_types': [],
-                'available_on_products': [],
-                'options': [],
-            }],
-            "applicable_packages": [{
-                'available': True,
-                'details': '100 reservations package',
-                'exclusive_memberships': [],
-                'id': self.package.id,
-                'name': 'extreme_package',
-                'price': '400.00',
-                'reservations': 100,
-                'url': 'http://testserver/packages/' + str(self.package.id),
-                'available_on_product_types': [],
-                'available_on_products': [],
-                'options': [],
-            }],
-            "applicable_retreats": [{
-                'accessibility': True,
-                'activity_language': 'FR',
-                'address_line1': '123 random street',
-                'address_line2': None,
-                'carpool_url': None,
-                'city': None,
-                'country': 'Random country',
-                'details': 'This is a description of the mega retreat.',
-                'email_content': None,
-                'end_time': '2130-01-17T12:00:00-05:00',
-                'exclusive_memberships': [],
-                'form_url': None,
-                'id': self.retreat.id,
-                'is_active': True,
-                'latitude': None,
-                'longitude': None,
-                'min_day_exchange': 7,
-                'min_day_refund': 7,
-                'name': 'mega_retreat',
-                'notification_interval': '1 00:00:00',
-                'pictures': [],
-                'place_name': None,
-                'places_remaining': 400,
-                'postal_code': '123 456',
-                'price': '199.00',
-                'refund_rate': 50,
-                'reservations': [],
-                'reservations_canceled': [],
-                'reserved_seats': 0,
-                'review_url': None,
-                'seats': 400,
-                'start_time': '2130-01-15T08:00:00-05:00',
-                'state_province': 'Random state',
-                'timezone': None,
-                'total_reservations': 0,
-                'url':
-                    f'http://testserver/retreat/retreats/'
-                    f'{self.retreat.id}',
-                'users': [],
-                'has_shared_rooms': True,
-                'hidden': False,
-                'available_on_product_types': [],
-                'available_on_products': [],
-                'options': [],
-                'accessibility_detail': None,
-                'description': None,
-                'food_allergen_free': False,
-                'food_gluten_free': False,
-                'food_vegan': False,
-                'food_vege': False,
-                'google_maps_url': None,
-                'sub_title': None,
-                'toilet_gendered': False,
-                'room_type': Retreat.SINGLE_OCCUPATION,
-                'type': 'P',
-                'videoconference_tool': None,
-                'videoconference_link': None
-            }],
-            "applicable_timeslots": [{
-                'billing_price': 1.0,
-                'end_time': '2130-01-15T12:00:00-05:00',
-                'id': self.period.id,
-                'period': 'http://testserver/periods/' + str(self.period.id),
-                'places_remaining': 40,
-                'price': '1.00',
-                'reservations': [],
-                'reservations_canceled': [],
-                'start_time': '2130-01-15T08:00:00-05:00',
-                'url': 'http://testserver/time_slots/' +
-                       str(self.time_slot.id),
-                'users': [],
-                'workplace': {
-                    'address_line1': '123 random street',
-                    'address_line2': None,
-                    'city': '',
-                    'country': 'Random country',
-                    'details': 'This is a description of the workplace.',
-                    'id': self.workplace.id,
-                    'latitude': None,
-                    'longitude': None,
-                    'name': 'random_workplace',
-                    'pictures': [],
-                    'place_name': '',
-                    'postal_code': '123 456',
-                    'seats': 40,
-                    'state_province': 'Random state',
-                    'timezone': None,
-                    'volunteers': [],
-                    'url': f'http://testserver/workplaces/{self.workplace.id}'
-                }
-            }],
-            "users": [],
-            "is_applicable_to_physical_retreat": False,
-            "is_applicable_to_virtual_retreat": False
-        }
-
-        self.assertEqual(json.loads(response.content), content)
+        content = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.check_attributes(content)
 
         self.coupon.applicable_retreats.set([])
         self.coupon.applicable_timeslots.set([])

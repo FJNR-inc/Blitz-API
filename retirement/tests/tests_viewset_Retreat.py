@@ -15,15 +15,75 @@ from rest_framework.test import APIClient, APITestCase
 
 from blitz_api.factories import AdminFactory, UserFactory
 from blitz_api.services import remove_translation_fields
+from blitz_api.testing_tools import CustomAPITestCase
 
-from ..models import Retreat
+from ..models import Retreat, RetreatType, RetreatDate
 
 User = get_user_model()
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
-class RetreatTests(APITestCase):
+class RetreatTests(CustomAPITestCase):
+    ATTRIBUTES = [
+        'id',
+        'url',
+        'details',
+        'email_content',
+        'address_line1',
+        'address_line2',
+        'available_on_product_types',
+        'available_on_products',
+        'city',
+        'country',
+        'postal_code',
+        'state_province',
+        'latitude',
+        'longitude',
+        'name',
+        'notification_interval',
+        'pictures',
+        'start_time',
+        'end_time',
+        'seats',
+        'reserved_seats',
+        'activity_language',
+        'price',
+        'exclusive_memberships',
+        'timezone',
+        'is_active',
+        'places_remaining',
+        'min_day_exchange',
+        'min_day_refund',
+        'refund_rate',
+        'reservations',
+        'reservations_canceled',
+        'total_reservations',
+        'users',
+        'accessibility',
+        'form_url',
+        'carpool_url',
+        'review_url',
+        'place_name',
+        'has_shared_rooms',
+        'options',
+        'hidden',
+        'accessibility_detail',
+        'description',
+        'food_allergen_free',
+        'food_gluten_free',
+        'food_vegan',
+        'food_vege',
+        'google_maps_url',
+        'sub_title',
+        'toilet_gendered',
+        'room_type',
+        'type',
+        'videoconference_tool',
+        'videoconference_link',
+        'dates',
+        'animator'
+    ]
 
     @classmethod
     def setUpClass(cls):
@@ -34,6 +94,11 @@ class RetreatTests(APITestCase):
 
     def setUp(self):
         self.maxDiff = 10000
+        self.retreatType = RetreatType.objects.create(
+            name="Type 1",
+            minutes_before_display_link=10,
+            number_of_tomatoes=4,
+        )
         self.retreat = Retreat.objects.create(
             name="mega_retreat",
             details="This is a description of the mega retreat.",
@@ -43,12 +108,9 @@ class RetreatTests(APITestCase):
             state_province="Random state",
             country="Random country",
             price=199,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=50,
-            is_active=True,
             activity_language='FR',
             accessibility=True,
             form_url="example.com",
@@ -57,7 +119,14 @@ class RetreatTests(APITestCase):
             has_shared_rooms=True,
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
+            type=self.retreatType,
         )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=self.retreat,
+        )
+        self.retreat.activate()
 
         self.retreat2 = Retreat.objects.create(
             name="ultra_retreat",
@@ -68,12 +137,9 @@ class RetreatTests(APITestCase):
             state_province="Random state",
             country="Random country",
             price=199,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2140, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2140, 1, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=50,
-            is_active=True,
             activity_language='FR',
             accessibility=True,
             form_url="example.com",
@@ -82,7 +148,14 @@ class RetreatTests(APITestCase):
             has_shared_rooms=True,
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
+            type=self.retreatType,
         )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2140, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2140, 1, 17, 12)),
+            retreat=self.retreat2,
+        )
+        self.retreat2.activate()
 
         self.retreat_hidden = Retreat.objects.create(
             name="hidden_retreat",
@@ -93,12 +166,9 @@ class RetreatTests(APITestCase):
             state_province="Random state",
             country="Random country",
             price=199,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2140, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2140, 1, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=50,
-            is_active=True,
             activity_language='FR',
             accessibility=True,
             form_url="example.com",
@@ -108,7 +178,14 @@ class RetreatTests(APITestCase):
             hidden=True,
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
+            type=self.retreatType,
         )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2140, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2140, 1, 17, 12)),
+            retreat=self.retreat_hidden,
+        )
+        self.retreat_hidden.activate()
 
     @override_settings(
         EXTERNAL_SCHEDULER={
@@ -118,7 +195,7 @@ class RetreatTests(APITestCase):
         }
     )
     @responses.activate
-    def test_create_physical_retreat(self):
+    def test_create_retreat(self):
         """
         Ensure we can create a retreat if user has permission.
         """
@@ -141,35 +218,20 @@ class RetreatTests(APITestCase):
             'name': "random_retreat",
             'seats': 40,
             'details': "short_description",
-            'address_line1': 'random_address_1',
-            'city': 'random_city',
-            'country': 'Random_Country',
-            'postal_code': 'RAN_DOM',
-            'state_province': 'Random_State',
             'timezone': "America/Montreal",
             'price': '100.00',
-            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
-            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 16)),
             'min_day_refund': 7,
             'min_day_exchange': 7,
             'refund_rate': 50,
-            'is_active': True,
-            'accessibility': True,
-            'form_url': "example.com",
-            'carpool_url': 'example2.com',
-            'review_url': 'example3.com',
-            'has_shared_rooms': True,
             'hidden': False,
-            'accessibility_detail': None,
             'description': None,
-            'food_allergen_free': False,
-            'food_gluten_free': False,
-            'food_vegan': False,
-            'food_vege': False,
-            'google_maps_url': None,
             'sub_title': None,
-            'toilet_gendered': True,
-            'room_type': Retreat.DOUBLE_OCCUPATION,
+            'postal_code': None,
+            'place_name': None,
+            'type': reverse(
+                'retreat:retreattype-detail',
+                args=[self.retreatType.id]
+            ),
         }
 
         response = self.client.post(
@@ -181,197 +243,28 @@ class RetreatTests(APITestCase):
         self.assertEqual(
             response.status_code,
             status.HTTP_201_CREATED,
-            response.content,
+            response.content
         )
 
-        content = {
-            'details': 'short_description',
-            'email_content': None,
-            'address_line1': 'random_address_1',
-            'address_line2': None,
-            'available_on_product_types': [],
-            'available_on_products': [],
-            'city': 'random_city',
-            'country': 'Random_Country',
-            'postal_code': 'RAN_DOM',
-            'state_province': 'Random_State',
-            'latitude': None,
-            'longitude': None,
-            'name': 'random_retreat',
-            'notification_interval': '1 00:00:00',
-            'pictures': [],
-            'start_time': '2130-01-15T12:00:00-05:00',
-            'end_time': '2130-01-17T16:00:00-05:00',
-            'seats': 40,
-            'reserved_seats': 0,
-            'activity_language': None,
-            'price': '100.00',
-            'exclusive_memberships': [],
-            'timezone': "America/Montreal",
-            'is_active': True,
-            'places_remaining': 40,
-            'min_day_exchange': 7,
-            'min_day_refund': 7,
-            'refund_rate': 50,
-            'reservations': [],
-            'reservations_canceled': [],
-            'total_reservations': 0,
-            'users': [],
-            'accessibility': True,
-            'form_url': "example.com",
-            'carpool_url': 'example2.com',
-            'review_url': 'example3.com',
-            'place_name': None,
-            'has_shared_rooms': True,
-            'options': [],
-            'hidden': False,
-            'accessibility_detail': None,
-            'description': None,
-            'food_allergen_free': False,
-            'food_gluten_free': False,
-            'food_vegan': False,
-            'food_vege': False,
-            'google_maps_url': None,
-            'sub_title': None,
-            'toilet_gendered': True,
-            'room_type': Retreat.DOUBLE_OCCUPATION,
-            'type': 'P',
-            'videoconference_tool': None,
-            'videoconference_link': None
-        }
-
-        response_data = remove_translation_fields(json.loads(response.content))
-        del response_data['id']
-        del response_data['url']
-
-        self.assertEqual(
-            response_data,
-            content
-        )
-
-    @override_settings(
-        EXTERNAL_SCHEDULER={
-            'URL': "http://example.com",
-            'USER': "user",
-            'PASSWORD': "password",
-        }
-    )
-    @responses.activate
-    def test_create_virtual_retreat(self):
-        """
-        Ensure we can create a retreat if user has permission.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        responses.add(
-            responses.POST,
-            "http://example.com/authentication",
-            json={"token": "1234567890"},
-            status=200
-        )
-
-        responses.add(
-            responses.POST,
-            "http://example.com/tasks",
-            status=200
-        )
-
-        data = {
-            'name': "random_retreat",
-            'seats': 40,
-            'type': 'V',
-            'details': "short_description",
-            'timezone': "America/Montreal",
-            'price': '100.00',
-            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
-            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 16)),
-            'min_day_refund': 7,
-            'min_day_exchange': 7,
-            'refund_rate': 50,
-            'is_active': True,
-            'hidden': False,
-            'description': None,
-            'sub_title': None,
-            'postal_code': None,
-            'place_name': None
-        }
-
-        response = self.client.post(
-            reverse('retreat:retreat-list'),
-            data,
-            format='json',
-        )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_201_CREATED,
-            response.content,
-        )
-
-        content = {
-            'details': 'short_description',
-            'email_content': None,
-            'address_line1': None,
-            'address_line2': None,
-            'available_on_product_types': [],
-            'available_on_products': [],
-            'city': None,
-            'country': None,
-            'postal_code': None,
-            'state_province': None,
-            'latitude': None,
-            'longitude': None,
-            'name': 'random_retreat',
-            'notification_interval': '1 00:00:00',
-            'pictures': [],
-            'start_time': '2130-01-15T12:00:00-05:00',
-            'end_time': '2130-01-17T16:00:00-05:00',
-            'seats': 40,
-            'reserved_seats': 0,
-            'activity_language': None,
-            'price': '100.00',
-            'exclusive_memberships': [],
-            'timezone': "America/Montreal",
-            'is_active': True,
-            'places_remaining': 40,
-            'min_day_exchange': 7,
-            'min_day_refund': 7,
-            'refund_rate': 50,
-            'reservations': [],
-            'reservations_canceled': [],
-            'total_reservations': 0,
-            'users': [],
-            'accessibility': None,
-            'form_url': None,
-            'carpool_url': None,
-            'review_url': None,
-            'place_name': None,
-            'has_shared_rooms': None,
-            'options': [],
-            'hidden': False,
-            'accessibility_detail': None,
-            'description': None,
-            'food_allergen_free': False,
-            'food_gluten_free': False,
-            'food_vegan': False,
-            'food_vege': False,
-            'google_maps_url': None,
-            'sub_title': None,
-            'toilet_gendered': None,
-            'room_type': None,
-            'type': 'V',
-            'videoconference_tool': None,
-            'videoconference_link': None
-        }
-
-        response_data = remove_translation_fields(json.loads(response.content))
-        del response_data['id']
-        del response_data['url']
-
-        self.assertEqual(
-            response_data,
-            content
-        )
+        attributes = self.ATTRIBUTES + [
+            'state_province_fr',
+            'old_id',
+            'details_en',
+            'details_fr',
+            'address_line2_en',
+            'name_en',
+            'name_fr',
+            'state_province_en',
+            'country_fr',
+            'country_en',
+            'city_en',
+            'address_line2_fr',
+            'address_line1_fr',
+            'city_fr',
+            'address_line1_en',
+        ]
+        content = json.loads(response.content)
+        self.check_attributes(content, attributes)
 
     @override_settings(
         EXTERNAL_SCHEDULER={
@@ -425,6 +318,10 @@ class RetreatTests(APITestCase):
             'hidden': True,
             'toilet_gendered': True,
             'room_type': Retreat.DOUBLE_OCCUPATION,
+            'type': reverse(
+                'retreat:retreattype-detail',
+                args=[self.retreatType.id]
+            ),
         }
 
         response = self.client.post(
@@ -436,73 +333,28 @@ class RetreatTests(APITestCase):
         self.assertEqual(
             response.status_code,
             status.HTTP_201_CREATED,
-            response.content,
+            response.content
         )
 
-        content = {
-            'details': 'short_description',
-            'email_content': None,
-            'address_line1': 'random_address_1',
-            'address_line2': None,
-            'available_on_product_types': [],
-            'available_on_products': [],
-            'city': 'random_city',
-            'country': 'Random_Country',
-            'postal_code': 'RAN_DOM',
-            'state_province': 'Random_State',
-            'latitude': None,
-            'longitude': None,
-            'name': 'random_retreat',
-            'notification_interval': '1 00:00:00',
-            'options': [],
-            'pictures': [],
-            'start_time': '2130-01-15T12:00:00-05:00',
-            'end_time': '2130-01-17T16:00:00-05:00',
-            'seats': 40,
-            'reserved_seats': 0,
-            'activity_language': None,
-            'price': '100.00',
-            'exclusive_memberships': [],
-            'timezone': "America/Montreal",
-            'is_active': True,
-            'places_remaining': 40,
-            'min_day_exchange': 7,
-            'min_day_refund': 7,
-            'refund_rate': 50,
-            'reservations': [],
-            'reservations_canceled': [],
-            'total_reservations': 0,
-            'users': [],
-            'accessibility': True,
-            'form_url': "example.com",
-            'carpool_url': 'example2.com',
-            'review_url': 'example3.com',
-            'place_name': None,
-            'has_shared_rooms': True,
-            'hidden': True,
-            'accessibility_detail': None,
-            'description': None,
-            'food_allergen_free': False,
-            'food_gluten_free': False,
-            'food_vegan': False,
-            'food_vege': False,
-            'google_maps_url': None,
-            'sub_title': None,
-            'toilet_gendered': True,
-            'room_type': Retreat.DOUBLE_OCCUPATION,
-            'type': 'P',
-            'videoconference_tool': None,
-            'videoconference_link': None
-        }
-
-        response_data = remove_translation_fields(json.loads(response.content))
-        del response_data['id']
-        del response_data['url']
-
-        self.assertEqual(
-            response_data,
-            content
-        )
+        attributes = self.ATTRIBUTES + [
+            'state_province_fr',
+            'old_id',
+            'details_en',
+            'details_fr',
+            'address_line2_en',
+            'name_en',
+            'name_fr',
+            'state_province_en',
+            'country_fr',
+            'country_en',
+            'city_en',
+            'address_line2_fr',
+            'address_line1_fr',
+            'city_fr',
+            'address_line1_en',
+        ]
+        content = json.loads(response.content)
+        self.check_attributes(content, attributes)
 
     @override_settings(
         EXTERNAL_SCHEDULER={
@@ -542,18 +394,19 @@ class RetreatTests(APITestCase):
             'state_province': 'Random_State',
             'timezone': "America/Montreal",
             'price': '100.00',
-            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
-            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 16)),
             'min_day_refund': 7,
             'min_day_exchange': 7,
             'refund_rate': 50,
-            'is_active': True,
             'accessibility': True,
             'form_url': "example.com",
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
             'has_shared_rooms': True,
             'hidden': True,
+            'type': reverse(
+                'retreat:retreattype-detail',
+                args=[self.retreatType.id]
+            ),
         }
 
         response = self.client.post(
@@ -565,73 +418,28 @@ class RetreatTests(APITestCase):
         self.assertEqual(
             response.status_code,
             status.HTTP_201_CREATED,
-            response.content,
+            response.content
         )
 
-        content = {
-            'details': 'short_description',
-            'email_content': None,
-            'address_line1': 'random_address_1',
-            'address_line2': None,
-            'available_on_product_types': [],
-            'available_on_products': [],
-            'city': 'random_city',
-            'country': 'Random_Country',
-            'postal_code': 'RAN_DOM',
-            'state_province': 'Random_State',
-            'latitude': None,
-            'longitude': None,
-            'name': 'random_retreat',
-            'notification_interval': '1 00:00:00',
-            'options': [],
-            'pictures': [],
-            'start_time': '2130-01-15T12:00:00-05:00',
-            'end_time': '2130-01-17T16:00:00-05:00',
-            'seats': 40,
-            'reserved_seats': 0,
-            'activity_language': None,
-            'price': '100.00',
-            'exclusive_memberships': [],
-            'timezone': "America/Montreal",
-            'is_active': True,
-            'places_remaining': 40,
-            'min_day_exchange': 7,
-            'min_day_refund': 7,
-            'refund_rate': 50,
-            'reservations': [],
-            'reservations_canceled': [],
-            'total_reservations': 0,
-            'users': [],
-            'accessibility': True,
-            'form_url': "example.com",
-            'carpool_url': 'example2.com',
-            'review_url': 'example3.com',
-            'place_name': None,
-            'has_shared_rooms': True,
-            'hidden': True,
-            'accessibility_detail': None,
-            'description': None,
-            'food_allergen_free': False,
-            'food_gluten_free': False,
-            'food_vegan': False,
-            'food_vege': False,
-            'google_maps_url': None,
-            'sub_title': None,
-            'toilet_gendered': None,
-            'room_type': None,
-            'type': 'P',
-            'videoconference_tool': None,
-            'videoconference_link': None
-        }
-
-        response_data = remove_translation_fields(json.loads(response.content))
-        del response_data['id']
-        del response_data['url']
-
-        self.assertEqual(
-            response_data,
-            content
-        )
+        attributes = self.ATTRIBUTES + [
+            'state_province_fr',
+            'old_id',
+            'details_en',
+            'details_fr',
+            'address_line2_en',
+            'name_en',
+            'name_fr',
+            'state_province_en',
+            'country_fr',
+            'country_en',
+            'city_en',
+            'address_line2_fr',
+            'address_line1_fr',
+            'city_fr',
+            'address_line1_en',
+        ]
+        content = json.loads(response.content)
+        self.check_attributes(content, attributes)
 
     def test_create_invalid_refund_rate(self):
         """
@@ -651,18 +459,19 @@ class RetreatTests(APITestCase):
             'state_province': 'Random_State',
             'timezone': "America/Montreal",
             'price': '100.00',
-            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
-            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 16)),
             'min_day_refund': 7,
             'min_day_exchange': 7,
             'refund_rate': 500,
-            'is_active': True,
             'accessibility': True,
             'form_url': "example.com",
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
             'has_shared_rooms': True,
             'hidden': False,
+            'type': reverse(
+                'retreat:retreattype-detail',
+                args=[self.retreatType.id]
+            ),
         }
 
         response = self.client.post(
@@ -730,18 +539,19 @@ class RetreatTests(APITestCase):
             'state_province': 'Random_State',
             'timezone': "America/Montreal",
             'price': '100.00',
-            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
-            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 16)),
             'min_day_refund': 7,
             'min_day_exchange': 7,
             'refund_rate': 50,
-            'is_active': True,
             'accessibility': True,
             'form_url': "example.com",
             'carpool_url': 'example2.com',
             'review_url': 'example3.com',
             'has_shared_rooms': True,
             'hidden': False,
+            'type': reverse(
+                'retreat:retreattype-detail',
+                args=[self.retreatType.id]
+            ),
         }
 
         response = self.client.post(
@@ -771,29 +581,23 @@ class RetreatTests(APITestCase):
         )
 
         content = {
-            'details': ['This field is required.'],
-            'address_line1': ['This field is required.'],
-            'city': ['This field is required.'],
-            'country': ['This field is required.'],
-            'name': ['This field is required.'],
-            'postal_code': ['This field is required.'],
-            'seats': ['This field is required.'],
-            'state_province': ['This field is required.'],
-            'timezone': ['This field is required.'],
             "price": ["This field is required."],
-            "start_time": ["This field is required."],
-            "end_time": ["This field is required."],
-            "min_day_refund": ["This field is required."],
-            "refund_rate": ["This field is required."],
-            "min_day_exchange": ["This field is required."],
-            "is_active": ["This field is required."],
-            "accessibility": ["This field is required."],
-            "has_shared_rooms": ["This field is required."],
+            "timezone": ["This field is required."],
+            "type": ["This field is required."],
+            "name": ["This field is required."],
         }
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            json.loads(response.content),
+            content,
+            response.content
+        )
 
     def test_create_invalid_field(self):
         """
@@ -813,9 +617,6 @@ class RetreatTests(APITestCase):
             'state_province': (1,),
             'timezone': ("invalid",),
             'price': "",
-            'start_time': "",
-            'end_time': "",
-            'is_active': "",
             'min_day_exchange': (1,),
             'min_day_refund': (1,),
             'refund_rate': (1,),
@@ -847,16 +648,7 @@ class RetreatTests(APITestCase):
             'country': ['Not a valid string.'],
             'seats': ['A valid integer is required.'],
             'timezone': ['Unknown timezone'],
-            'is_active': ['Must be a valid boolean.'],
-            'end_time': [
-                'Datetime has wrong format. Use one of these formats instead: '
-                'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
-            ],
             'price': ['A valid number is required.'],
-            'start_time': [
-                'Datetime has wrong format. Use one of these formats instead: '
-                'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
-            ],
             'min_day_exchange': ['A valid integer is required.'],
             'min_day_refund': ['A valid integer is required.'],
             'refund_rate': ['A valid integer is required.'],
@@ -866,7 +658,7 @@ class RetreatTests(APITestCase):
             'review_url': ['Not a valid string.'],
             'has_shared_rooms': ['Must be a valid boolean.'],
             'place_name': ['Not a valid string.'],
-            'type': ['"[1]" is not a valid choice.'],
+            'type': ['Incorrect type. Expected URL string, received list.'],
             'videoconference_tool': ['Not a valid string.']
         }
 
@@ -891,12 +683,9 @@ class RetreatTests(APITestCase):
             'state_province': 'Random state',
             'timezone': "America/Montreal",
             'price': '199.00',
-            'start_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            'end_time': LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
             'min_day_refund': 7,
             'min_day_exchange': 7,
             'refund_rate': 50,
-            'is_active': False,
             'accessibility': True,
             'form_url': "example.com",
             'carpool_url': 'example2.com',
@@ -907,7 +696,7 @@ class RetreatTests(APITestCase):
             'room_type': Retreat.DOUBLE_OCCUPATION,
         }
 
-        response = self.client.put(
+        response = self.client.patch(
             reverse(
                 'retreat:retreat-detail',
                 kwargs={'pk': self.retreat.id},
@@ -916,71 +705,31 @@ class RetreatTests(APITestCase):
             format='json',
         )
 
-        content = {
-            'details': 'short_description',
-            'email_content': None,
-            'activity_language': 'FR',
-            'id': self.retreat.id,
-            'address_line1': 'random_address_1',
-            'address_line2': None,
-            'city': 'New city',
-            'country': 'Random country',
-            'postal_code': '123 456',
-            'state_province': 'Random state',
-            'latitude': None,
-            'longitude': None,
-            'name': 'New Name',
-            'pictures': [],
-            'start_time': '2130-01-15T08:00:00-05:00',
-            'end_time': '2130-01-17T12:00:00-05:00',
-            'seats': 40,
-            'reserved_seats': 0,
-            'notification_interval': '1 00:00:00',
-            'price': '199.00',
-            'exclusive_memberships': [],
-            'timezone': "America/Montreal",
-            'is_active': False,
-            'places_remaining': 40,
-            'min_day_exchange': 7,
-            'min_day_refund': 7,
-            'refund_rate': 50,
-            'reservations': [],
-            'reservations_canceled': [],
-            'total_reservations': 0,
-            'accessibility': True,
-            'form_url': "example.com",
-            'carpool_url': 'example2.com',
-            'review_url': 'example3.com',
-            'place_name': None,
-            'users': [],
-            'url': 'http://testserver/retreat/retreats/' +
-                   str(self.retreat.id),
-            'has_shared_rooms': True,
-            'available_on_product_types': [],
-            'available_on_products': [],
-            'options': [],
-            'hidden': False,
-            'accessibility_detail': None,
-            'description': None,
-            'food_allergen_free': False,
-            'food_gluten_free': False,
-            'food_vegan': False,
-            'food_vege': False,
-            'google_maps_url': None,
-            'sub_title': None,
-            'toilet_gendered': True,
-            'room_type': Retreat.DOUBLE_OCCUPATION,
-            'type': 'P',
-            'videoconference_tool': None,
-            'videoconference_link': None
-        }
-
         self.assertEqual(
-            remove_translation_fields(json.loads(response.content)),
-            content
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        attributes = self.ATTRIBUTES + [
+            'state_province_fr',
+            'old_id',
+            'details_en',
+            'details_fr',
+            'address_line2_en',
+            'name_en',
+            'name_fr',
+            'state_province_en',
+            'country_fr',
+            'country_en',
+            'city_en',
+            'address_line2_fr',
+            'address_line1_fr',
+            'city_fr',
+            'address_line1_en',
+        ]
+        content = json.loads(response.content)
+        self.check_attributes(content, attributes)
 
     def test_delete(self):
         """
@@ -1020,75 +769,12 @@ class RetreatTests(APITestCase):
             format='json',
         )
 
-        content = {
-            'count': 1,
-            'next': None,
-            'previous': None,
-            'results': [
-                {
-                    'activity_language': 'FR',
-                    'details': 'This is a description of the mega retreat.',
-                    'email_content': None,
-                    'id': self.retreat.id,
-                    'address_line1': '123 random street',
-                    'address_line2': None,
-                    'city': None,
-                    'country': 'Random country',
-                    'postal_code': '123 456',
-                    'state_province': 'Random state',
-                    'latitude': None,
-                    'longitude': None,
-                    'name': 'mega_retreat',
-                    'pictures': [],
-                    'start_time': '2130-01-15T08:00:00-05:00',
-                    'end_time': '2130-01-17T12:00:00-05:00',
-                    'seats': 400,
-                    'reserved_seats': 0,
-                    'notification_interval': '1 00:00:00',
-                    'price': '199.00',
-                    'exclusive_memberships': [],
-                    'timezone': None,
-                    'is_active': True,
-                    'places_remaining': 400,
-                    'min_day_exchange': 7,
-                    'min_day_refund': 7,
-                    'refund_rate': 50,
-                    'reservations': [],
-                    'reservations_canceled': [],
-                    'total_reservations': 0,
-                    'accessibility': True,
-                    'form_url': "example.com",
-                    'carpool_url': 'example2.com',
-                    'review_url': 'example3.com',
-                    'place_name': None,
-                    'users': [],
-                    'url': 'http://testserver/retreat/retreats/' +
-                           str(self.retreat.id),
-                    'has_shared_rooms': True,
-                    'available_on_product_types': [],
-                    'available_on_products': [],
-                    'options': [],
-                    'hidden': False,
-                    'accessibility_detail': None,
-                    'description': None,
-                    'food_allergen_free': False,
-                    'food_gluten_free': False,
-                    'food_vegan': False,
-                    'food_vege': False,
-                    'google_maps_url': None,
-                    'sub_title': None,
-                    'toilet_gendered': False,
-                    'room_type': Retreat.SINGLE_OCCUPATION,
-                    'type': 'P',
-                    'videoconference_tool': None,
-                    'videoconference_link': None
-                }
-            ]
-        }
-
-        self.assertEqual(json.loads(response.content), content)
+        content = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        for item in content['results']:
+            self.check_attributes(item)
 
     def test_list_as_admin(self):
         self.client.force_authenticate(user=self.admin)
@@ -1101,242 +787,29 @@ class RetreatTests(APITestCase):
             format='json',
         )
 
-        content = {'count': 3, 'next': None, 'previous': None, 'results': [
-            {
-                'places_remaining': 400, 'total_reservations': 0,
-                'reservations': [], 'reservations_canceled': [],
-                'timezone': None,
-                'name': 'hidden_retreat', 'name_fr': None,
-                'name_en': 'hidden_retreat',
-                'details': 'This is a description of the hidden retreat.',
-                'country': 'Random country', 'state_province': 'Random state',
-                'city': None, 'address_line1': '123 random street',
-                'has_shared_rooms': True, 'is_active': True,
-                'accessibility': True,
-                'pictures': [], 'place_name': None, 'country_fr': None,
-                'country_en': 'Random country', 'state_province_fr': None,
-                'state_province_en': 'Random state', 'city_fr': None,
-                'city_en': None, 'address_line1_fr': None,
-                'address_line1_en': '123 random street', 'address_line2': None,
-                'address_line2_fr': None, 'address_line2_en': None,
-                'available_on_product_types': [],
-                'available_on_products': [],
-                'postal_code': '123 456', 'latitude': None, 'longitude': None,
-                'details_fr': None,
-                'details_en': 'This is a description of the hidden retreat.',
-                'seats': 400, 'reserved_seats': 0,
-                'notification_interval': '1 00:00:00',
-                'old_id': None,
-                'options': [],
-                'activity_language': 'FR',
-                'price': '199.00', 'start_time': '2140-01-15T08:00:00-05:00',
-                'end_time': '2140-01-17T12:00:00-05:00', 'min_day_refund': 7,
-                'refund_rate': 50, 'min_day_exchange': 7,
-                'email_content': None,
-                'form_url': 'example.com', 'carpool_url': 'example2.com',
-                'review_url': 'example3.com', 'hidden': True, 'users': [],
-                'exclusive_memberships': [],
-                'accessibility_detail': None,
-                'description': None,
-                'food_allergen_free': False,
-                'food_gluten_free': False,
-                'food_vegan': False,
-                'food_vege': False,
-                'google_maps_url': None,
-                'sub_title': None,
-                'toilet_gendered': False,
-                'room_type': Retreat.SINGLE_OCCUPATION,
-                'type': 'P',
-                'videoconference_tool': None,
-                'videoconference_link': None
-            },
-            {
-                'places_remaining': 400, 'total_reservations': 0,
-                'reservations': [], 'reservations_canceled': [],
-                'timezone': None,
-                'name': 'mega_retreat', 'name_fr': None,
-                'name_en': 'mega_retreat',
-                'details': 'This is a description of the mega retreat.',
-                'country': 'Random country', 'state_province': 'Random state',
-                'city': None, 'address_line1': '123 random street',
-                'has_shared_rooms': True, 'is_active': True,
-                'accessibility': True,
-                'pictures': [], 'place_name': None, 'country_fr': None,
-                'country_en': 'Random country', 'state_province_fr': None,
-                'state_province_en': 'Random state', 'city_fr': None,
-                'city_en': None, 'address_line1_fr': None,
-                'address_line1_en': '123 random street', 'address_line2': None,
-                'address_line2_fr': None, 'address_line2_en': None,
-                'available_on_product_types': [],
-                'available_on_products': [],
-                'postal_code': '123 456', 'latitude': None, 'longitude': None,
-                'details_fr': None,
-                'details_en': 'This is a description of the mega retreat.',
-                'seats': 400, 'reserved_seats': 0,
-                'notification_interval': '1 00:00:00',
-                'old_id': None,
-                'options': [],
-                'activity_language': 'FR',
-                'price': '199.00', 'start_time': '2130-01-15T08:00:00-05:00',
-                'end_time': '2130-01-17T12:00:00-05:00', 'min_day_refund': 7,
-                'refund_rate': 50, 'min_day_exchange': 7,
-                'email_content': None,
-                'form_url': 'example.com', 'carpool_url': 'example2.com',
-                'review_url': 'example3.com', 'hidden': False, 'users': [],
-                'exclusive_memberships': [],
-                'accessibility_detail': None,
-                'description': None,
-                'food_allergen_free': False,
-                'food_gluten_free': False,
-                'food_vegan': False,
-                'food_vege': False,
-                'google_maps_url': None,
-                'sub_title': None,
-                'toilet_gendered': False,
-                'room_type': Retreat.SINGLE_OCCUPATION,
-                'type': 'P',
-                'videoconference_tool': None,
-                'videoconference_link': None
-            },
-            {
-                'places_remaining': 400, 'total_reservations': 0,
-                'reservations': [], 'reservations_canceled': [],
-                'timezone': None,
-                'name': 'ultra_retreat', 'name_fr': None,
-                'name_en': 'ultra_retreat',
-                'details': 'This is a description of the ultra retreat.',
-                'country': 'Random country', 'state_province': 'Random state',
-                'city': None, 'address_line1': '123 random street',
-                'has_shared_rooms': True, 'is_active': False,
-                'accessibility': True, 'pictures': [], 'place_name': None,
-                'country_fr': None, 'country_en': 'Random country',
-                'state_province_fr': None, 'state_province_en': 'Random state',
-                'city_fr': None, 'city_en': None, 'address_line1_fr': None,
-                'address_line1_en': '123 random street', 'address_line2': None,
-                'address_line2_fr': None, 'address_line2_en': None,
-                'available_on_product_types': [],
-                'available_on_products': [],
-                'postal_code': '123 456', 'latitude': None, 'longitude': None,
-                'details_fr': None,
-                'details_en': 'This is a description of the ultra retreat.',
-                'seats': 400, 'reserved_seats': 0,
-                'notification_interval': '1 00:00:00',
-                'old_id': None,
-                'options': [],
-                'activity_language': 'FR',
-                'price': '199.00', 'start_time': '2140-01-15T08:00:00-05:00',
-                'end_time': '2140-01-17T12:00:00-05:00', 'min_day_refund': 7,
-                'refund_rate': 50, 'min_day_exchange': 7,
-                'email_content': None,
-                'form_url': 'example.com', 'carpool_url': 'example2.com',
-                'review_url': 'example3.com', 'hidden': False, 'users': [],
-                'exclusive_memberships': [],
-                'accessibility_detail': None,
-                'description': None,
-                'food_allergen_free': False,
-                'food_gluten_free': False,
-                'food_vegan': False,
-                'food_vege': False,
-                'google_maps_url': None,
-                'sub_title': None,
-                'toilet_gendered': False,
-                'room_type': Retreat.SINGLE_OCCUPATION,
-                'type': 'P',
-                'videoconference_tool': None,
-                'videoconference_link': None
-            }]}
-
-        response_content = json.loads(response.content)
-        del response_content['results'][0]['url']
-        del response_content['results'][0]['id']
-        del response_content['results'][1]['url']
-        del response_content['results'][1]['id']
-        del response_content['results'][2]['url']
-        del response_content['results'][2]['id']
-
-        self.assertEqual(response_content, content)
+        content = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_list_filtered_by_end_time_gte(self):
-        """
-        Ensure we can list retreats filtered by end_time greater
-        than a given date.
-        """
-
-        response = self.client.get(
-            reverse('retreat:retreat-list') +
-            "?end_time__gte=2139-01-01T00:00:00",
-            format='json',
-        )
-
-        content = {
-            'count': 1,
-            'next': None,
-            'previous': None,
-            'results': [{
-                'activity_language': 'FR',
-                'details': 'This is a description of the ultra retreat.',
-                'email_content': None,
-                'id': self.retreat2.id,
-                'address_line1': '123 random street',
-                'address_line2': None,
-                'city': None,
-                'country': 'Random country',
-                'postal_code': '123 456',
-                'state_province': 'Random state',
-                'latitude': None,
-                'longitude': None,
-                'name': 'ultra_retreat',
-                'pictures': [],
-                'start_time': '2140-01-15T08:00:00-05:00',
-                'end_time': '2140-01-17T12:00:00-05:00',
-                'seats': 400,
-                'reserved_seats': 0,
-                'notification_interval': '1 00:00:00',
-                'price': '199.00',
-                'exclusive_memberships': [],
-                'timezone': None,
-                'is_active': True,
-                'places_remaining': 400,
-                'min_day_exchange': 7,
-                'min_day_refund': 7,
-                'refund_rate': 50,
-                'reservations': [],
-                'reservations_canceled': [],
-                'total_reservations': 0,
-                'accessibility': True,
-                'form_url': "example.com",
-                'carpool_url': 'example2.com',
-                'review_url': 'example3.com',
-                'place_name': None,
-                'users': [],
-                'url': 'http://testserver/retreat/retreats/' +
-                       str(self.retreat2.id),
-                'has_shared_rooms': True,
-                'available_on_product_types': [],
-                'available_on_products': [],
-                'options': [],
-                'hidden': False,
-                'accessibility_detail': None,
-                'description': None,
-                'food_allergen_free': False,
-                'food_gluten_free': False,
-                'food_vegan': False,
-                'food_vege': False,
-                'google_maps_url': None,
-                'sub_title': None,
-                'toilet_gendered': False,
-                'room_type': Retreat.SINGLE_OCCUPATION,
-                'type': 'P',
-                'videoconference_tool': None,
-                'videoconference_link': None
-            }]
-        }
-
-        self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        attributes = self.ATTRIBUTES + [
+            'state_province_fr',
+            'old_id',
+            'details_en',
+            'details_fr',
+            'address_line2_en',
+            'name_en',
+            'name_fr',
+            'state_province_en',
+            'country_fr',
+            'country_en',
+            'city_en',
+            'address_line2_fr',
+            'address_line1_fr',
+            'city_fr',
+            'address_line1_en',
+        ]
+        for item in content['results']:
+            self.check_attributes(item, attributes)
 
     def test_read(self):
         """
@@ -1350,68 +823,14 @@ class RetreatTests(APITestCase):
             ),
         )
 
-        content = {
-            'details': 'This is a description of the mega retreat.',
-            'email_content': None,
-            'activity_language': 'FR',
-            'id': self.retreat.id,
-            'address_line1': '123 random street',
-            'address_line2': None,
-            'city': None,
-            'country': 'Random country',
-            'postal_code': '123 456',
-            'state_province': 'Random state',
-            'latitude': None,
-            'longitude': None,
-            'name': 'mega_retreat',
-            'pictures': [],
-            'start_time': '2130-01-15T08:00:00-05:00',
-            'end_time': '2130-01-17T12:00:00-05:00',
-            'seats': 400,
-            'reserved_seats': 0,
-            'notification_interval': '1 00:00:00',
-            'price': '199.00',
-            'exclusive_memberships': [],
-            'timezone': None,
-            'is_active': True,
-            'places_remaining': 400,
-            'min_day_exchange': 7,
-            'min_day_refund': 7,
-            'refund_rate': 50,
-            'reservations': [],
-            'reservations_canceled': [],
-            'total_reservations': 0,
-            'accessibility': True,
-            'form_url': "example.com",
-            'carpool_url': 'example2.com',
-            'review_url': 'example3.com',
-            'place_name': None,
-            'users': [],
-            'url': 'http://testserver/retreat/retreats/' +
-                   str(self.retreat.id),
-            'has_shared_rooms': True,
-            'available_on_product_types': [],
-            'available_on_products': [],
-            'options': [],
-            'hidden': False,
-            'accessibility_detail': None,
-            'description': None,
-            'food_allergen_free': False,
-            'food_gluten_free': False,
-            'food_vegan': False,
-            'food_vege': False,
-            'google_maps_url': None,
-            'sub_title': None,
-            'toilet_gendered': False,
-            'room_type': Retreat.SINGLE_OCCUPATION,
-            'type': 'P',
-            'videoconference_tool': None,
-            'videoconference_link': None
-        }
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
 
-        self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        content = json.loads(response.content)
+        self.check_attributes(content)
 
     def test_read_as_admin(self):
         """
@@ -1426,74 +845,32 @@ class RetreatTests(APITestCase):
             ),
         )
 
-        response_data = json.loads(response.content)
+        content = json.loads(response.content)
 
-        self.assertTrue('name_fr' in response_data)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
 
-        response_data = remove_translation_fields(response_data)
-
-        content = {
-            'details': 'This is a description of the mega retreat.',
-            'activity_language': 'FR',
-            'email_content': None,
-            'id': self.retreat.id,
-            'address_line1': '123 random street',
-            'address_line2': None,
-            'city': None,
-            'country': 'Random country',
-            'postal_code': '123 456',
-            'state_province': 'Random state',
-            'latitude': None,
-            'longitude': None,
-            'name': 'mega_retreat',
-            'pictures': [],
-            'start_time': '2130-01-15T08:00:00-05:00',
-            'end_time': '2130-01-17T12:00:00-05:00',
-            'reserved_seats': 0,
-            'notification_interval': '1 00:00:00',
-            'seats': 400,
-            'price': '199.00',
-            'exclusive_memberships': [],
-            'timezone': None,
-            'is_active': True,
-            'places_remaining': 400,
-            'min_day_exchange': 7,
-            'min_day_refund': 7,
-            'refund_rate': 50,
-            'reservations': [],
-            'reservations_canceled': [],
-            'total_reservations': 0,
-            'accessibility': True,
-            'form_url': "example.com",
-            'carpool_url': 'example2.com',
-            'review_url': 'example3.com',
-            'place_name': None,
-            'users': [],
-            'url': 'http://testserver/retreat/retreats/' +
-                   str(self.retreat.id),
-            'has_shared_rooms': True,
-            'available_on_product_types': [],
-            'available_on_products': [],
-            'options': [],
-            'hidden': False,
-            'accessibility_detail': None,
-            'description': None,
-            'food_allergen_free': False,
-            'food_gluten_free': False,
-            'food_vegan': False,
-            'food_vege': False,
-            'google_maps_url': None,
-            'sub_title': None,
-            'toilet_gendered': False,
-            'room_type': Retreat.SINGLE_OCCUPATION,
-            'type': 'P',
-            'videoconference_tool': None,
-            'videoconference_link': None
-        }
-
-        self.assertEqual(response_data, content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        attributes = self.ATTRIBUTES + [
+            'state_province_fr',
+            'old_id',
+            'details_en',
+            'details_fr',
+            'address_line2_en',
+            'name_en',
+            'name_fr',
+            'state_province_en',
+            'country_fr',
+            'country_en',
+            'city_en',
+            'address_line2_fr',
+            'address_line1_fr',
+            'city_fr',
+            'address_line1_en',
+        ]
+        self.check_attributes(content, attributes)
 
     def test_read_non_existent_retreat(self):
         """

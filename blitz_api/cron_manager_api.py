@@ -33,6 +33,28 @@ class CronManager:
 
         self.create_task(data)
 
+    def create_email_task(self, retreat, email, execution_date):
+        """
+
+        :param retreat: The Retreat associate with this email
+        :param email: The AutomaticEmail we want to schedule
+        :return: None
+        """
+        target_url = self.url_to_call + reverse(
+            'retreat:retreat-detail',
+            args=[retreat.id]
+        ) + "/execute_automatic_email/?email=" + str(email.id)
+
+        description = "Automatic email '" + email.name + \
+                      "' for retreat #" + str(retreat.id)
+        data = {
+            "execution_datetime": execution_date,
+            "url": target_url,
+            "description": description
+        }
+
+        self.create_task(data)
+
     def create_remind_user(self, retreat_id, reminder_date):
         remind_users_url = self.url_to_call + reverse(
             'retreat:retreat-detail',
