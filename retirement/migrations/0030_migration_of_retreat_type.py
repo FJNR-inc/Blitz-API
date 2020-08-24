@@ -23,7 +23,7 @@ def migrate_type_of_retreat(apps, schema_editor):
     for retreat in Retreat.objects.all():
         if retreat.type == 'V':
             retreat.type_new = virtual
-        if retreat.type == 'P':
+        else:
             retreat.type_new = physical
 
         retreat.save()
