@@ -204,6 +204,7 @@ class OrderTests(APITestCase):
             name="Type 1",
             minutes_before_display_link=10,
             number_of_tomatoes=4,
+            template_id_for_welcome_message=1,
         )
         self.retreat = Retreat.objects.create(
             name="mega_retreat",
