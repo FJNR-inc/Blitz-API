@@ -91,6 +91,20 @@ class RetreatType(models.Model):
         null=True,
     )
 
+    template_id_for_welcome_message = models.CharField(
+        verbose_name=_("Template ID for welcome message"),
+        max_length=253,
+        null=True,
+        blank=True,
+    )
+
+    context_for_welcome_message = models.TextField(
+        verbose_name=_("Context for welcome message"),
+        default='{}',
+        null=True,
+        blank=True,
+    )
+
     def __str__(self):
         return self.name
 
