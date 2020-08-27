@@ -58,7 +58,7 @@ def send_email_from_template_id(users, context, template):
         )
         message.from_email = None  # required for SendinBlue templates
         # use this SendinBlue template
-        message.template_id = template
+        message.template_id = int(template)
         message.merge_global_data = context
         try:
             # return number of successfully sent emails
