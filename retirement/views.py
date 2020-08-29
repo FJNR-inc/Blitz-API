@@ -95,7 +95,9 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     filterset_fields = {
         'is_active': ['exact'],
         'hidden': ['exact'],
-        'type__id': ['exact']
+        'type__id': ['exact'],
+        'start_time': ['exact', 'gte', 'lte'],
+        'end_time': ['exact', 'gte', 'lte'],
     }
     ordering = [
         'name',
