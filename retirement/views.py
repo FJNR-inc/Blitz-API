@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 
 import pytz
 from django.core.files.base import ContentFile
+from django.db.models import F, When, Case
+from django_filters import DateTimeFilter, FilterSet
 
 from blitz_api.mixins import ExportMixin
 from django.conf import settings
@@ -96,8 +98,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         'is_active': ['exact'],
         'hidden': ['exact'],
         'type__id': ['exact'],
-        'start_time': ['exact', 'gte', 'lte'],
-        'end_time': ['exact', 'gte', 'lte'],
+        'retreat_dates__end_time': ['exact', 'gte', 'lte'],
     }
     ordering = [
         'name',

@@ -2,7 +2,7 @@ import json
 import pytz
 import responses
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 
 from rest_framework import status
@@ -23,11 +23,9 @@ from blitz_api.factories import UserFactory, AdminFactory
 from store.models import Order, OrderLine, Refund
 from store.tests.paysafe_sample_responses import (
     SAMPLE_REFUND_RESPONSE,
-    SAMPLE_NO_AMOUNT_TO_REFUND,
     SAMPLE_PAYMENT_RESPONSE,
     SAMPLE_PROFILE_RESPONSE,
     SAMPLE_CARD_RESPONSE,
-    UNKNOWN_EXCEPTION,
 )
 
 from ..models import Retreat, Reservation, RetreatType, RetreatDate
@@ -59,6 +57,7 @@ class ReservationTests(APITestCase):
             name="Type 1",
             minutes_before_display_link=10,
             number_of_tomatoes=4,
+            template_id_for_welcome_message=1,
         )
         self.retreat = Retreat.objects.create(
             name="mega_retreat",
@@ -214,6 +213,16 @@ class ReservationTests(APITestCase):
             status.HTTP_405_METHOD_NOT_ALLOWED
         )
 
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+            "FRONTEND_INTEGRATION": {
+                "POLICY_URL": "fake_url",
+                "LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT": "fake_url",
+                "PROFILE_URL": "fake_url"
+            }
+        }
+    )
     def test_update_partial(self):
         """
         Ensure we can partially update a reservation (is_present field and
@@ -630,6 +639,16 @@ class ReservationTests(APITestCase):
         self.retreat2.save()
 
     @responses.activate
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+            "FRONTEND_INTEGRATION": {
+                "POLICY_URL": "fake_url",
+                "LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT": "fake_url",
+                "PROFILE_URL": "fake_url"
+            }
+        }
+    )
     def test_update_partial_more_expensive_retreat(self):
         """
         Ensure we can change retreat if the new one is more expensive and
@@ -750,6 +769,16 @@ class ReservationTests(APITestCase):
         self.retreat2.save()
 
     @responses.activate
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+            "FRONTEND_INTEGRATION": {
+                "POLICY_URL": "fake_url",
+                "LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT": "fake_url",
+                "PROFILE_URL": "fake_url"
+            }
+        }
+    )
     def test_update_partial_more_expensive_retreat_single_use_token(self):
         """
         Ensure we can change retreat if the new one is more expensive and
@@ -881,6 +910,16 @@ class ReservationTests(APITestCase):
         self.retreat2.save()
 
     @responses.activate
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+            "FRONTEND_INTEGRATION": {
+                "POLICY_URL": "fake_url",
+                "LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT": "fake_url",
+                "PROFILE_URL": "fake_url"
+            }
+        }
+    )
     def test_update_partial_less_expensive_retreat(self):
         """
         Ensure we can change retreat if the new one is less expensive. A
