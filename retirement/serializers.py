@@ -20,7 +20,7 @@ from blitz_api.services import (
     getMessageTranslate,
 )
 from log_management.models import Log, EmailLog
-from retirement.services import refund_retreat
+from retirement.services import refund_retreat, send_retreat_confirmation_email
 from store.exceptions import PaymentAPIError
 from store.models import (
     Order,
@@ -865,43 +865,10 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 )
                 raise
 
-            merge_data = {
-                'RETREAT': new_retreat,
-                'USER': instance.user,
-            }
-
-            plain_msg = render_to_string(
-                "retreat_info.txt",
-                merge_data
+            send_retreat_confirmation_email(
+                instance.user,
+                new_retreat
             )
-            msg_html = render_to_string(
-                "retreat_info.html",
-                merge_data
-            )
-
-            try:
-                response_send_mail = send_mail(
-                    "Confirmation d'inscription à la retraite",
-                    plain_msg,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [instance.user.email],
-                    html_message=msg_html,
-                )
-                EmailLog.add(user.email, 'retreat_info', response_send_mail)
-            except Exception as err:
-                additional_data = {
-                    'title': "Confirmation d'inscription à la retraite",
-                    'default_from': settings.DEFAULT_FROM_EMAIL,
-                    'user_email': user.email,
-                    'merge_data': merge_data,
-                    'template': 'retreat_info'
-                }
-                Log.error(
-                    source='SENDING_BLUE_TEMPLATE',
-                    message=err,
-                    additional_data=json.dumps(additional_data)
-                )
-                raise
 
         return Reservation.objects.get(id=instance_pk)
 
