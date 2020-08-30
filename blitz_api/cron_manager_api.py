@@ -45,8 +45,8 @@ class CronManager:
             args=[retreat.id]
         ) + "/execute_automatic_email/?email=" + str(email.id)
 
-        description = "Automatic email '" + email.name + \
-                      "' for retreat #" + str(retreat.id)
+        description = "Automatic email #" + str(email.id) + \
+                      " for retreat #" + str(retreat.id)
         data = {
             "execution_datetime": execution_date,
             "url": target_url,
