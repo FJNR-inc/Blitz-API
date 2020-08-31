@@ -28,11 +28,26 @@ def send_mail(users, context, template):
     Uses Anymail to send templated emails.
     Returns a list of email addresses to which emails failed to be delivered.
     """
+    MAIL_SERVICE = settings.ANYMAIL
+    template = MAIL_SERVICE["TEMPLATES"].get(template)
+
+    return send_email_from_template_id(users, context, template)
+
+
+def send_email_from_template_id(users, context, template):
+    """
+    Uses Anymail to send templated emails.
+    Returns a list of email addresses to which emails failed to be delivered.
+    :param users: The list of users to notify
+    :param context: The context variables of the template
+    :param template: The template of the ESP
+    :return: A list of email addresses to which emails failed to be delivered
+    """
+
     if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is False:
         raise MailServiceError(_(
             "Email service is disabled."
         ))
-    MAIL_SERVICE = settings.ANYMAIL
 
     failed_emails = list()
     for user in users:
@@ -43,17 +58,21 @@ def send_mail(users, context, template):
         )
         message.from_email = None  # required for SendinBlue templates
         # use this SendinBlue template
-        message.template_id = MAIL_SERVICE["TEMPLATES"].get(template)
+        message.template_id = int(template)
         message.merge_global_data = context
         try:
             # return number of successfully sent emails
             response = message.send()
-            EmailLog.add(user.email, template, response)
+            EmailLog.add(
+                user.email,
+                "Template #" + str(template),
+                response
+            )
         except Exception as err:
             additional_data = {
                 'email': user.email,
                 'context': context,
-                'template': template
+                'template': "Template #" + str(template)
             }
             Log.error(
                 source='SENDING_BLUE_TEMPLATE',

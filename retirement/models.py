@@ -6,6 +6,8 @@ from datetime import timedelta
 
 import requests
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.core.mail import mail_admins, send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -29,6 +31,134 @@ User = get_user_model()
 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
+class RetreatType(models.Model):
+
+    class Meta:
+        verbose_name = _("Type of retreat")
+        verbose_name_plural = _("Types of retreat")
+        ordering = ['index_ordering']
+
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=253,
+    )
+
+    # Timedelta to show the videoconferencing link before the retreat
+    minutes_before_display_link = models.IntegerField(
+        verbose_name=_("Minute before displaying the link"),
+    )
+
+    number_of_tomatoes = models.PositiveIntegerField(
+        verbose_name=_("Number of tomatoes"),
+    )
+
+    description = models.TextField(
+        verbose_name=_("Description"),
+    )
+
+    short_description = models.TextField(
+        verbose_name=_("Short description"),
+    )
+
+    duration_description = models.TextField(
+        verbose_name=_("Description of duration")
+    )
+
+    cancellation_policies = models.TextField(
+        verbose_name=_("Cancellation policies")
+    )
+
+    icon = models.ImageField(
+        _('icon'),
+        upload_to='retreat-type-icon',
+        null=True,
+        blank=True,
+    )
+
+    is_virtual = models.BooleanField(
+        verbose_name=_("Is virtual"),
+        default=False,
+    )
+
+    index_ordering = models.PositiveIntegerField(
+        verbose_name=_('Index for display'),
+        default=1,
+    )
+
+    know_more_link = models.TextField(
+        verbose_name=_("Know more link"),
+        blank=True,
+        null=True,
+    )
+
+    template_id_for_welcome_message = models.CharField(
+        verbose_name=_("Template ID for welcome message"),
+        max_length=253,
+        null=True,
+        blank=True,
+    )
+
+    context_for_welcome_message = models.TextField(
+        verbose_name=_("Context for welcome message"),
+        default='{}',
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class AutomaticEmail(models.Model):
+    """
+    Define the automation emails that need to be automatically add to our
+    cron-task when creating new instance of retreat.
+
+    These emails will be sent to all the customer who have an active
+    reservation at the specified time and with the specified template of
+    email and context.
+    """
+
+    TIME_BASE_BEFORE_START = 'before_start'
+    TIME_BASE_AFTER_END = 'after_end'
+
+    TIME_BASE_CHOICES = (
+        (TIME_BASE_BEFORE_START, _("Before start")),
+        (TIME_BASE_AFTER_END, _("After end")),
+    )
+
+    class Meta:
+        verbose_name = _("Automatic email")
+        verbose_name_plural = _("Automatic emails")
+
+    minutes_delta = models.BigIntegerField(
+        verbose_name=_("Time delta in minutes"),
+    )
+
+    time_base = models.CharField(
+        verbose_name=_("Time base"),
+        max_length=253,
+        choices=TIME_BASE_CHOICES,
+    )
+
+    template_id = models.CharField(
+        verbose_name=_("Template ID"),
+        max_length=253,
+    )
+
+    context = models.TextField(
+        verbose_name=_("Context"),
+        max_length=253,
+        default='{}'
+    )
+
+    retreat_type = models.ForeignKey(
+        RetreatType,
+        on_delete=models.CASCADE,
+        related_name='automatic_emails',
+    )
+
+
 class Retreat(Address, SafeDeleteModel, BaseProduct):
     """Represents a retreat physical place."""
     DOUBLE_OCCUPATION = 'double_occupation'
@@ -45,14 +175,6 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         (DOUBLE_OCCUPATION, _("Double occupation")),
         (SINGLE_OCCUPATION, _("Single occupation")),
         (DOUBLE_SINGLE_OCCUPATION, _("Single and double occupation")),
-    )
-
-    TYPE_VIRTUAL = 'V'
-    TYPE_PHYSICAL = 'P'
-
-    TYPE_CHOICES = (
-        (TYPE_VIRTUAL, _("Virtual")),
-        (TYPE_PHYSICAL, _("Physical")),
     )
 
     class Meta:
@@ -78,7 +200,10 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         blank=True
     )
 
-    seats = models.PositiveIntegerField(verbose_name=_("Seats"), )
+    seats = models.PositiveIntegerField(
+        verbose_name=_("Seats"),
+        default=0,
+    )
 
     @property
     def reserved_seats(self):
@@ -105,11 +230,10 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         verbose_name=_("Activity language"),
     )
 
-    type = models.CharField(
-        max_length=100,
-        default=TYPE_PHYSICAL,
-        choices=TYPE_CHOICES,
-        verbose_name=_("Type of retreat"),
+    type = models.ForeignKey(
+        RetreatType,
+        on_delete=models.CASCADE,
+        related_name='retreats',
     )
 
     videoconference_tool = models.CharField(
@@ -133,17 +257,23 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         verbose_name=_("Room Type"),
     )
 
-    start_time = models.DateTimeField(verbose_name=_("Start time"), )
-
-    end_time = models.DateTimeField(verbose_name=_("End time"), )
-
     min_day_refund = models.PositiveIntegerField(
-        verbose_name=_("Minimum days before the event for refund"), )
+        verbose_name=_("Minimum days before the event for refund"),
+        blank=True,
+        null=True,
+    )
 
-    refund_rate = models.PositiveIntegerField(verbose_name=_("Refund rate"), )
+    refund_rate = models.PositiveIntegerField(
+        verbose_name=_("Refund rate"),
+        blank=True,
+        null=True,
+    )
 
     min_day_exchange = models.PositiveIntegerField(
-        verbose_name=_("Minimum days before the event for exchange"), )
+        verbose_name=_("Minimum days before the event for exchange"),
+        blank=True,
+        null=True,
+    )
 
     users = models.ManyToManyField(
         User,
@@ -160,7 +290,10 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         related_name='retreats',
     )
 
-    is_active = models.BooleanField(verbose_name=_("Active"), )
+    is_active = models.BooleanField(
+        verbose_name=_("Active"),
+        default=False,
+    )
 
     email_content = models.TextField(
         verbose_name=_("Email content"),
@@ -227,6 +360,13 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         blank=True,
     )
 
+    animator = models.CharField(
+        verbose_name=_("animator"),
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+
     food_vege = models.BooleanField(
         verbose_name=_("Food vege"),
         default=False
@@ -249,6 +389,22 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
     # History is registered in translation.py
     # history = HistoricalRecords()
+
+    @property
+    def start_time(self):
+        dates = self.retreat_dates.all().order_by('start_time')
+        if dates.count():
+            return dates[0].start_time
+        else:
+            return None
+
+    @property
+    def end_time(self):
+        dates = self.retreat_dates.all().order_by('-end_time')
+        if dates.count():
+            return dates[0].end_time
+        else:
+            return None
 
     @property
     def total_reservations(self):
@@ -430,6 +586,79 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         return self.start_time - timedelta(
             days=self.min_day_refund)
 
+    def activate(self):
+        if not self.start_time:
+            raise ValueError(
+                _("Retreat need to have a start time before activate it")
+            )
+
+        if not self.end_time:
+            raise ValueError(
+                _("Retreat need to have a end time before activate it")
+            )
+
+        if self.seats <= 0:
+            raise ValueError(
+                _("Retreat need to have at least one seat available")
+            )
+
+        if self.min_day_refund is None:
+            raise ValueError(
+                _("Retreat need to have a minimum day refund policy")
+            )
+
+        if self.min_day_exchange is None:
+            raise ValueError(
+                _("Retreat need to have a minimum day exchange policy")
+            )
+
+        if self.refund_rate is None:
+            raise ValueError(
+                _("Retreat need to have a refund rate policy")
+            )
+
+        cron_manager = CronManager()
+
+        for email in self.type.automatic_emails.all():
+            if email.time_base == AutomaticEmail.TIME_BASE_BEFORE_START:
+                execution_date = self.start_time
+            else:
+                execution_date = self.end_time
+
+            execution_date += timedelta(minutes=email.minutes_delta)
+
+            cron_manager.create_email_task(
+                self,
+                email,
+                execution_date
+            )
+
+        self.is_active = True
+        self.save()
+
+
+class RetreatDate(models.Model):
+
+    class Meta:
+        verbose_name = _("Retreat date")
+        verbose_name_plural = _("Retreat dates")
+        ordering = ["start_time"]
+
+    retreat = models.ForeignKey(
+        Retreat,
+        on_delete=models.CASCADE,
+        verbose_name=_("Retreat"),
+        related_name='retreat_dates',
+    )
+
+    start_time = models.DateTimeField(
+        verbose_name=_("Start time"),
+    )
+
+    end_time = models.DateTimeField(
+        verbose_name=_("End time"),
+    )
+
 
 class Picture(models.Model):
     """Represents pictures representing a retreat place"""
@@ -606,6 +835,32 @@ class Reservation(SafeDeleteModel):
             refund_id=refund_res_content['id'],
         )
         return refund
+
+
+class AutomaticEmailLog(models.Model):
+
+    reservation = models.ForeignKey(
+        Reservation,
+        on_delete=models.CASCADE,
+        related_name='automatic_email_logs',
+    )
+
+    email = models.ForeignKey(
+        AutomaticEmail,
+        on_delete=models.CASCADE,
+        related_name='automatic_email_logs',
+    )
+
+    sent_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Sent date"),
+        auto_now_add=True,
+    )
+
+    class Meta:
+        verbose_name = _("Automatic email log")
+        verbose_name_plural = _("Automatic email logs")
 
 
 class WaitQueue(models.Model):

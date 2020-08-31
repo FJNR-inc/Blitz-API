@@ -5,7 +5,8 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.core.mail import send_mail
-from blitz_api.services import send_mail as send_templated_email
+from blitz_api.services import send_mail as send_templated_email, \
+    send_email_from_template_id
 from django.template.loader import render_to_string
 from django.utils import timezone
 
@@ -76,95 +77,55 @@ def send_retreat_confirmation_email(user, retreat):
     :param retreat: The retreat that the user just bought
     :return:
     """
-    if retreat.type == retreat.TYPE_VIRTUAL:
-        return send_virtual_retreat_confirmation_email(user, retreat)
+    if retreat.type.template_id_for_welcome_message:
+        start_time = retreat.start_time
+        start_time = start_time.astimezone(pytz.timezone('US/Eastern'))
+
+        end_time = retreat.end_time
+        end_time = end_time.astimezone(pytz.timezone('US/Eastern'))
+        context = {
+            'CUSTOM': json.loads(retreat.type.context_for_welcome_message),
+            'USER_FIRST_NAME': user.first_name,
+            'USER_LAST_NAME': user.last_name,
+            'USER_EMAIL': user.email,
+            'RETREAT_NAME': retreat.name,
+            'RETREAT_START_DATE': format_date(
+                start_time,
+                format='long',
+                locale='fr'
+            ),
+            'RETREAT_START_TIME': start_time.strftime('%-Hh%M'),
+            'RETREAT_END_DATE': format_date(
+                end_time,
+                format='long',
+                locale='fr'
+            ),
+            'RETREAT_TYPE': retreat.type.name,
+            'RETREAT_END_TIME': end_time.strftime('%-Hh%M'),
+            'RETREAT_START': start_time.strftime('%Y-%m-%d %H:%M'),
+            'RETREAT_END': end_time.strftime('%Y-%m-%d %H:%M'),
+            'RETREAT_VIDEOCONFERENCE_TOOL': retreat.videoconference_tool,
+            'RETREAT_VIDEOCONFERENCE_LINK': retreat.videoconference_link,
+            'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[
+                'FRONTEND_INTEGRATION'][
+                'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT'],
+            'LINK_TO_USER_PROFILE': settings.LOCAL_SETTINGS[
+                'FRONTEND_INTEGRATION']['PROFILE_URL'],
+        }
+        if len(retreat.pictures.all()):
+            context['RETREAT_PICTURE'] = "{0}{1}".format(
+                settings.MEDIA_URL,
+                retreat.pictures.first().picture.url
+            )
+
+        response_send_mail = send_email_from_template_id(
+            [user],
+            context,
+            retreat.type.template_id_for_welcome_message
+        )
+        return response_send_mail
     else:
-        return send_physical_retreat_confirmation_email(user, retreat)
-
-
-def send_virtual_retreat_confirmation_email(user, retreat):
-    """
-    This function sends an email to notify a user that a virtual retreat in
-    which he has bought a seat is starting soon.
-    """
-
-    start_time = retreat.start_time
-    start_time = start_time.astimezone(pytz.timezone('US/Eastern'))
-
-    end_time = retreat.end_time
-    end_time = end_time.astimezone(pytz.timezone('US/Eastern'))
-    context = {
-        'USER_FIRST_NAME': user.first_name,
-        'USER_LAST_NAME': user.last_name,
-        'USER_EMAIL': user.email,
-        'RETREAT_NAME': retreat.name,
-        'RETREAT_START_DATE': format_date(
-            start_time,
-            format='long',
-            locale='fr'
-        ),
-        'RETREAT_START_TIME': start_time.strftime('%-Hh%M'),
-        'RETREAT_END_DATE': format_date(
-            end_time,
-            format='long',
-            locale='fr'
-        ),
-        'RETREAT_END_TIME': end_time.strftime('%-Hh%M'),
-        'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[
-            'FRONTEND_INTEGRATION'][
-            'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT'],
-        'LINK_TO_USER_PROFILE': settings.LOCAL_SETTINGS[
-            'FRONTEND_INTEGRATION']['PROFILE_URL'],
-    }
-    if len(retreat.pictures.all()):
-        context['RETREAT_PICTURE'] = "{0}{1}".format(
-            settings.MEDIA_URL,
-            retreat.pictures.first().picture.url
-        )
-
-    response_send_mail = send_templated_email(
-        [user],
-        context,
-        'WELCOME_VIRTUAL_RETREAT'
-    )
-    return response_send_mail
-
-
-def send_physical_retreat_confirmation_email(user, retreat):
-    """
-    This function sends an email to notify a user that a physical retreat in
-    which he has bought a seat is starting soon.
-    """
-
-    start_time = retreat.start_time
-    start_time = start_time.astimezone(pytz.timezone('US/Eastern'))
-
-    end_time = retreat.end_time
-    end_time = end_time.astimezone(pytz.timezone('US/Eastern'))
-    context = {
-        'USER_FIRST_NAME': user.first_name,
-        'USER_LAST_NAME': user.last_name,
-        'USER_EMAIL': user.email,
-        'RETREAT_NAME': retreat.name,
-        'RETREAT_START_TIME': start_time.strftime('%Y-%m-%d %H:%M'),
-        'RETREAT_END_TIME': end_time.strftime('%Y-%m-%d %H:%M'),
-        'RETREAT_VIDEOCONFERENCE_TOOL': retreat.videoconference_tool,
-        'RETREAT_VIDEOCONFERENCE_LINK': retreat.videoconference_link
-    }
-
-    if len(retreat.pictures.all()):
-        context['RETREAT_PICTURE'] = "{0}{1}".format(
-            settings.MEDIA_URL,
-            retreat.pictures.first().picture.url
-        )
-
-    response_send_mail = send_templated_email(
-        [user],
-        context,
-        'WELCOME_PHYSICAL_RETREAT'
-    )
-
-    return response_send_mail
+        return []
 
 
 def send_retreat_reminder_email(user, retreat):
@@ -175,7 +136,7 @@ def send_retreat_reminder_email(user, retreat):
     :param retreat: The retreat that will begin soon
     :return:
     """
-    if retreat.type == retreat.TYPE_VIRTUAL:
+    if retreat.type.name_fr == 'Virtuelle':
         return send_virtual_retreat_reminder_email(user, retreat)
     else:
         return send_physical_retreat_reminder_email(user, retreat)
@@ -262,7 +223,7 @@ def send_post_retreat_email(user, retreat):
     :param retreat: The ended retreat
     :return:
     """
-    if retreat.type == retreat.TYPE_VIRTUAL:
+    if retreat.type.name_fr == 'Virtuelle':
         return send_post_virtual_retreat_email(user, retreat)
     else:
         return send_post_physical_retreat_email(user, retreat)
@@ -384,3 +345,48 @@ def refund_retreat(reservation, refund_rate, refund_reason):
     )
 
     return refund_instance
+
+
+def send_automatic_email(user, retreat, email):
+    """
+    This function sends an automatic email to notify a user that has an
+    active reservation on a retreat.
+    """
+
+    start_time = retreat.start_time
+    start_time = start_time.astimezone(pytz.timezone('US/Eastern'))
+
+    end_time = retreat.end_time
+    end_time = end_time.astimezone(pytz.timezone('US/Eastern'))
+
+    context = {
+        'CUSTOM': json.load(email.context),
+        'USER_FIRST_NAME': user.first_name,
+        'USER_LAST_NAME': user.last_name,
+        'USER_EMAIL': user.email,
+        'RETREAT_NAME': retreat.name,
+        'RETREAT_START_DATE': format_date(
+            start_time,
+            format='long',
+            locale='fr'
+        ),
+        'RETREAT_START_TIME': start_time.strftime('%-Hh%M'),
+        'RETREAT_END_DATE': format_date(
+            end_time,
+            format='long',
+            locale='fr'
+        ),
+        'RETREAT_END_TIME': end_time.strftime('%-Hh%M'),
+        'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[
+            'FRONTEND_INTEGRATION'][
+            'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT'],
+        'LINK_TO_USER_PROFILE': settings.LOCAL_SETTINGS[
+            'FRONTEND_INTEGRATION']['PROFILE_URL'],
+    }
+
+    response_send_mail = send_email_from_template_id(
+        [user],
+        context,
+        email.template_id
+    )
+    return response_send_mail

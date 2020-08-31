@@ -2,11 +2,10 @@ import json
 import pytz
 import responses
 
-from datetime import datetime, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from datetime import datetime
 
 from rest_framework import status
-from rest_framework.test import APIClient, APITestCase
+from rest_framework.test import APIClient
 
 from django.urls import reverse
 from django.utils import timezone
@@ -18,19 +17,27 @@ from django.test.utils import override_settings
 
 from unittest import mock
 
-from blitz_api.factories import UserFactory, AdminFactory
-from blitz_api.services import remove_translation_fields
+from blitz_api.factories import (
+    UserFactory,
+    AdminFactory,
+)
+from blitz_api.testing_tools import CustomAPITestCase
 from log_management.models import EmailLog
 
-from store.models import Order, OrderLine, Refund
-from store.tests.paysafe_sample_responses import (SAMPLE_REFUND_RESPONSE,
-                                                  SAMPLE_NO_AMOUNT_TO_REFUND,
-                                                  SAMPLE_PAYMENT_RESPONSE,
-                                                  SAMPLE_PROFILE_RESPONSE,
-                                                  SAMPLE_CARD_RESPONSE,
-                                                  UNKNOWN_EXCEPTION, )
+from store.models import (
+    Order,
+    OrderLine,
+)
+from store.tests.paysafe_sample_responses import (
+    SAMPLE_REFUND_RESPONSE,
+    SAMPLE_NO_AMOUNT_TO_REFUND,
+    UNKNOWN_EXCEPTION,
+)
 
-from ..models import Retreat, Reservation
+from retirement.models import (
+    Retreat,
+    Reservation, RetreatType, RetreatDate,
+)
 
 User = get_user_model()
 
@@ -48,14 +55,39 @@ TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
         'CARD_URL': "cardpayments/v1/"
     }
 )
-class ReservationTests(APITestCase):
+class ReservationTests(CustomAPITestCase):
+    ATTRIBUTES = [
+        'id',
+        'url',
+        'inscription_date',
+        'is_active',
+        'is_present',
+        'user',
+        'cancelation_action',
+        'cancelation_date',
+        'cancelation_reason',
+        'refundable',
+        'exchangeable',
+        'retreat',
+        'order_line',
+        'invitation',
+        'post_event_send',
+        'pre_event_send',
+        'retreat_details',
+        'user_details',
+    ]
 
     def setUp(self):
         self.client = APIClient()
         self.user = UserFactory()
         self.user2 = UserFactory()
         self.admin = AdminFactory()
-        self.retreat_type = ContentType.objects.get_for_model(Retreat)
+        self.retreat_content_type = ContentType.objects.get_for_model(Retreat)
+        self.retreatType = RetreatType.objects.create(
+            name="Type 1",
+            minutes_before_display_link=10,
+            number_of_tomatoes=4,
+        )
         self.retreat = Retreat.objects.create(
             name="mega_retreat",
             details="This is a description of the mega retreat.",
@@ -65,12 +97,9 @@ class ReservationTests(APITestCase):
             state_province="Random state",
             country="Random country",
             price=199,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=50,
-            is_active=True,
             accessibility=True,
             form_url="example.com",
             carpool_url='example2.com',
@@ -78,7 +107,14 @@ class ReservationTests(APITestCase):
             has_shared_rooms=True,
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
+            type=self.retreatType,
         )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=self.retreat,
+        )
+        self.retreat.activate()
         self.retreat.add_wait_queue_place(self.user, generate_cron=False)
 
         self.retreat2 = Retreat.objects.create(
@@ -90,12 +126,9 @@ class ReservationTests(APITestCase):
             state_province="Random state",
             country="Random country",
             price=199,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 2, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 2, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=100,
-            is_active=False,
             accessibility=True,
             form_url="example.com",
             carpool_url='example2.com',
@@ -103,6 +136,12 @@ class ReservationTests(APITestCase):
             has_shared_rooms=True,
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
+            type=self.retreatType,
+        )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 2, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 2, 17, 12)),
+            retreat=self.retreat2,
         )
         self.retreat_overlap = Retreat.objects.create(
             name="ultra_retreat",
@@ -113,12 +152,9 @@ class ReservationTests(APITestCase):
             state_province="Random state 2",
             country="Random country 2",
             price=199,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=50,
-            is_active=True,
             accessibility=True,
             form_url="example.com",
             carpool_url='example2.com',
@@ -126,7 +162,14 @@ class ReservationTests(APITestCase):
             has_shared_rooms=True,
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
+            type=self.retreatType,
         )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=self.retreat_overlap,
+        )
+        self.retreat_overlap.activate()
         self.order = Order.objects.create(
             user=self.user,
             transaction_date=timezone.now(),
@@ -136,7 +179,7 @@ class ReservationTests(APITestCase):
         self.order_line = OrderLine.objects.create(
             order=self.order,
             quantity=1,
-            content_type=self.retreat_type,
+            content_type=self.retreat_content_type,
             object_id=self.retreat.id,
             cost=self.retreat.price
         )
@@ -220,140 +263,19 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_201_CREATED,
-            msg=response.content.decode("utf-8")
+            status.HTTP_201_CREATED
         )
 
-        response_data = json.loads(response.content)
-        response_data['retreat_details'] = remove_translation_fields(
-            response_data['retreat_details']
+        content = json.loads(response.content)
+
+        self.assertCountEqual(
+            content['retreat_details']['users'],
+            [
+                'http://testserver/users/' + str(self.admin.id),
+                'http://testserver/users/' + str(self.user.id)
+            ]
         )
-        response_data['user_details'] = remove_translation_fields(
-            response_data['user_details']
-        )
-        del response_data['user_details']["first_name"]
-        del response_data['user_details']["last_name"]
-        del response_data['user_details']["email"]
-        del response_data['user_details']['date_joined']
-        del response_data['retreat_details']['reservations']
-        del response_data['id']
-        del response_data['url']
-        del response_data['inscription_date']
-
-        content = {
-            'is_active': True,
-            'is_present': False,
-            'user': 'http://testserver/users/' + str(self.user.id),
-            'cancelation_action': None,
-            'cancelation_date': None,
-            'cancelation_reason': None,
-            'refundable': False,
-            'exchangeable': False,
-            'retreat': 'http://testserver/retreat/retreats/' +
-                       str(self.retreat2.id),
-            'order_line': None,
-            'invitation': None,
-            'post_event_send': False,
-            'pre_event_send': False,
-            'retreat_details': {
-                'accessibility_detail': None,
-                'description': None,
-                'food_allergen_free': False,
-                'food_gluten_free': False,
-                'food_vegan': False,
-                'food_vege': False,
-                'google_maps_url': None,
-                'sub_title': None,
-                'activity_language': None,
-                'end_time': '2130-02-17T12:00:00-05:00',
-                'id': self.retreat2.id,
-                'exclusive_memberships': [],
-                'places_remaining': 38,
-                'notification_interval': '1 00:00:00',
-                'price': '199.00',
-                'start_time': '2130-02-15T08:00:00-05:00',
-                'users': [
-                    'http://testserver/users/' + str(self.admin.id),
-                    'http://testserver/users/' + str(self.user.id)
-                ],
-                'address_line1': '123 random street',
-                'address_line2': None,
-                'city': None,
-                'country': 'Random country',
-                'details': 'This is a description of the retreat.',
-                'email_content': None,
-                'latitude': None,
-                'longitude': None,
-                'name': 'random_retreat',
-                'pictures': [],
-                'postal_code': '123 456',
-                'reserved_seats': 0,
-                'seats': 40,
-                'state_province': 'Random state',
-                'timezone': None,
-                'reservations_canceled': [],
-                'total_reservations': 2,
-                'refund_rate': 100,
-                'min_day_refund': 7,
-                'min_day_exchange': 7,
-                'is_active': False,
-                'accessibility': True,
-                'form_url': 'example.com',
-                'carpool_url': 'example2.com',
-                'review_url': 'example3.com',
-                'place_name': None,
-                'url': 'http://testserver/retreat/retreats/' +
-                       str(self.retreat2.id),
-                'has_shared_rooms': True,
-                'hidden': False,
-                'available_on_product_types': [],
-                'available_on_products': [],
-                'options': [],
-                'room_type': Retreat.SINGLE_OCCUPATION,
-                'toilet_gendered': False,
-                'type': 'P',
-                'videoconference_tool': None,
-                'videoconference_link': None
-            },
-            'user_details': {
-                'academic_field': None,
-                'academic_level': None,
-                'birthdate': None,
-                'gender': None,
-                'language': User.LANGUAGE_FR,
-                'groups': [],
-                'id': self.user.id,
-                'is_active': True,
-                'is_staff': False,
-                'is_superuser': False,
-                'last_login': None,
-                'membership': None,
-                'membership_end': None,
-                'other_phone': None,
-                'phone': None,
-                'tickets': 1,
-                'university': None,
-                'url': 'http://testserver/users/' + str(self.user.id),
-                'user_permissions': [],
-                'city': None,
-                'personnal_restrictions': None,
-                'academic_program_code': None,
-                'faculty': None,
-                'student_number': None,
-                'volunteer_for_workplace': [],
-                'hide_newsletter': False,
-                'is_in_newsletter': False,
-                'number_of_free_virtual_retreat': 0,
-            }
-        }
-
-        self.assertCountEqual(response_data['retreat_details']['users'],
-                              content['retreat_details']['users'])
-
-        del response_data['retreat_details']['users']
-        del content['retreat_details']['users']
-
-        self.assertEqual(response_data, content)
+        self.check_attributes(content)
 
     def test_create_without_permission(self):
         """
@@ -1307,17 +1229,19 @@ class ReservationTests(APITestCase):
             response.content
         )
 
+        MAIL_SERVICE = settings.ANYMAIL
+        template = MAIL_SERVICE["TEMPLATES"].get('REMINDER_PHYSICAL_RETREAT')
         self.assertTrue(
             EmailLog.objects.filter(
                 user_email=self.user.email,
-                type_email='REMINDER_PHYSICAL_RETREAT'
+                type_email='Template #' + str(template)
             )
         )
 
         self.assertEqual(
             EmailLog.objects.filter(
                 user_email=self.user.email,
-                type_email='REMINDER_PHYSICAL_RETREAT'
+                type_email='Template #' + str(template)
             )[0].nb_email_sent,
             1
         )

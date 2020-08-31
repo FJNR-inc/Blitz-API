@@ -11,7 +11,7 @@ from rest_framework.test import APIClient, APITestCase
 
 from blitz_api.factories import AdminFactory, UserFactory
 
-from ..models import Retreat, WaitQueue
+from ..models import Retreat, WaitQueue, RetreatType, RetreatDate
 
 User = get_user_model()
 
@@ -29,6 +29,11 @@ class WaitQueueTests(APITestCase):
         cls.admin = AdminFactory()
 
     def setUp(self):
+        self.retreatType = RetreatType.objects.create(
+            name="Type 1",
+            minutes_before_display_link=10,
+            number_of_tomatoes=4,
+        )
         self.retreat = Retreat.objects.create(
             name="mega_retreat",
             details="This is a description of the mega retreat.",
@@ -38,19 +43,23 @@ class WaitQueueTests(APITestCase):
             state_province="Random state",
             country="Random country",
             price=199,
-            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
-            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
             min_day_refund=7,
             min_day_exchange=7,
             refund_rate=50,
-            is_active=True,
             activity_language='FR',
             accessibility=True,
             form_url="example.com",
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            type=self.retreatType,
         )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=self.retreat,
+        )
+        self.retreat.activate()
         self.wait_queue_subscription = WaitQueue.objects.create(
             user=self.user2,
             retreat=self.retreat,
