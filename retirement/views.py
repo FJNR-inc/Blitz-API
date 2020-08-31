@@ -3,8 +3,9 @@ from datetime import datetime, timedelta
 
 import pytz
 from django.core.files.base import ContentFile
-from django.db.models import F, When, Case
-from django_filters import DateTimeFilter, FilterSet
+from django.db.models import F, When, Case, Max, Min
+from django_filters import DateTimeFilter, FilterSet, IsoDateTimeFilter, \
+    NumberFilter
 
 from blitz_api.mixins import ExportMixin
 from django.conf import settings
@@ -80,6 +81,23 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 TAX = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
+class RetreatFilter(FilterSet):
+    finish_after = IsoDateTimeFilter(
+        field_name='max_end_date', lookup_expr='gte'
+    )
+    start_after = IsoDateTimeFilter(
+        field_name='min_start_date', lookup_expr='gte'
+    )
+
+    type__id = NumberFilter(
+        field_name='type', lookup_expr='exact'
+    )
+
+    class Meta:
+        model = Retreat
+        fields = '__all__'
+
+
 class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
@@ -93,16 +111,15 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     serializer_class = serializers.RetreatSerializer
     queryset = Retreat.objects.all()
-    permission_classes = (permissions.IsAdminOrReadOnly,)
-    filterset_fields = {
-        'is_active': ['exact'],
-        'hidden': ['exact'],
-        'type__id': ['exact'],
-        'retreat_dates__end_time': ['exact', 'gte', 'lte'],
-    }
+    permission_classes = (
+        permissions.IsAdminOrReadOnly,
+    )
+
     ordering = [
         'name',
     ]
+
+    filter_class = RetreatFilter
 
     export_resource = RetreatResource()
 
@@ -111,10 +128,18 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         This viewset should return active retreats except if
         the currently authenticated user is an admin (is_staff).
         """
+
         if self.request.user.is_staff:
-            return Retreat.objects.all()
-        return Retreat.objects.filter(is_active=True,
-                                      hidden=False)
+            queryset = Retreat.objects.all()
+        else:
+            queryset = Retreat.objects.filter(
+                is_active=True,
+                hidden=False
+            )
+        return queryset.annotate(
+            max_end_date=Max('retreat_dates__end_time'),
+            min_start_date=Min('retreat_dates__start_time'),
+        )
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
