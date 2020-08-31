@@ -11,10 +11,9 @@ from django.core import mail
 from django.test.utils import override_settings
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APIClient, APITestCase
+from rest_framework.test import APIClient
 
 from blitz_api.factories import AdminFactory, UserFactory
-from blitz_api.services import remove_translation_fields
 from blitz_api.testing_tools import CustomAPITestCase
 
 from ..models import Retreat, RetreatType, RetreatDate
@@ -998,3 +997,226 @@ class RetreatTests(CustomAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         self.assertEqual(len(mail.outbox), 0)
+
+    def test_list_retreat_not_finished(self):
+        """
+        Ensure we can filter by end date and start date of retreats
+        """
+        self.retreat.delete()
+        self.retreat2.delete()
+        self.retreat_hidden.delete()
+
+        retreat_finished = Retreat.objects.create(
+            name="retreat_finished",
+            price=199,
+            type=self.retreatType,
+            seats=2,
+            min_day_refund=2,
+            min_day_exchange=2,
+            refund_rate=20
+        )
+        RetreatDate.objects.create(
+            start_time='2099-01-01T00:00:00Z',
+            end_time='2099-01-02T00:00:00Z',
+            retreat=retreat_finished,
+        )
+        retreat_finished.activate()
+
+        retreat_not_finished = Retreat.objects.create(
+            name="retreat_not_finished",
+            price=199,
+            type=self.retreatType,
+            seats=2,
+            min_day_refund=2,
+            min_day_exchange=2,
+            refund_rate=20
+        )
+        RetreatDate.objects.create(
+            start_time='2101-01-01T00:00:00Z',
+            end_time='2101-01-02T00:00:00Z',
+            retreat=retreat_not_finished,
+        )
+        retreat_not_finished.activate()
+
+        response = self.client.get(
+            reverse('retreat:retreat-list'),
+            {
+                'finish_after': '2100-01-01T00:00:00Z',
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        content = response.json()
+
+        results = content.get('results')
+
+        self.assertEqual(len(results), 1)
+
+        self.assertEqual(
+            results[0].get('id'),
+            retreat_not_finished.id
+        )
+
+    def test_list_retreat_not_started(self):
+        """
+        Ensure we can filter by end date and start date of retreats
+        """
+        self.retreat.delete()
+        self.retreat2.delete()
+        self.retreat_hidden.delete()
+
+        retreat_started = Retreat.objects.create(
+            name="retreat_started",
+            price=199,
+            type=self.retreatType,
+            seats=2,
+            min_day_refund=2,
+            min_day_exchange=2,
+            refund_rate=20
+        )
+        RetreatDate.objects.create(
+            start_time='2099-01-01T00:00:00Z',
+            end_time='2099-01-02T00:00:00Z',
+            retreat=retreat_started,
+        )
+        retreat_started.activate()
+
+        retreat_not_started = Retreat.objects.create(
+            name="retreat_not_started",
+            price=199,
+            type=self.retreatType,
+            seats=2,
+            min_day_refund=2,
+            min_day_exchange=2,
+            refund_rate=20
+        )
+        RetreatDate.objects.create(
+            start_time='2101-01-01T00:00:00Z',
+            end_time='2101-01-02T00:00:00Z',
+            retreat=retreat_not_started,
+        )
+        retreat_not_started.activate()
+
+        response = self.client.get(
+            reverse('retreat:retreat-list'),
+            {
+                'start_after': '2100-01-01T00:00:00Z',
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        content = response.json()
+
+        results = content.get('results')
+
+        self.assertEqual(len(results), 1)
+
+        self.assertEqual(
+            results[0].get('id'),
+            retreat_not_started.id
+        )
+
+    def test_list_by_type(self):
+        """
+        Ensure we can filter by end date and start date of retreats
+        """
+        Retreat.objects.all().delete()
+
+        retreat_type_2 = RetreatType.objects.create(
+            name="Type 2",
+            minutes_before_display_link=10,
+            number_of_tomatoes=4,
+        )
+
+        retreat_2 = Retreat.objects.create(
+            name="retreat_type_2",
+            price=199,
+            type=retreat_type_2,
+            seats=2,
+            min_day_refund=2,
+            min_day_exchange=2,
+            refund_rate=20
+        )
+        RetreatDate.objects.create(
+            start_time='2099-01-01T00:00:00Z',
+            end_time='2099-01-02T00:00:00Z',
+            retreat=retreat_2,
+        )
+        retreat_2.activate()
+
+        retreat_1 = Retreat.objects.create(
+            name="retreat_not_started",
+            price=199,
+            type=self.retreatType,
+            seats=2,
+            min_day_refund=2,
+            min_day_exchange=2,
+            refund_rate=20
+        )
+        RetreatDate.objects.create(
+            start_time='2101-01-01T00:00:00Z',
+            end_time='2101-01-02T00:00:00Z',
+            retreat=retreat_1,
+        )
+        retreat_1.activate()
+
+        response = self.client.get(
+            reverse('retreat:retreat-list'),
+            {
+                'type': retreat_type_2.id,
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        content = response.json()
+
+        results = content.get('results')
+
+        self.assertEqual(len(results), 1)
+
+        self.assertEqual(
+            results[0].get('id'),
+            retreat_2.id
+        )
+        response = self.client.get(
+            reverse('retreat:retreat-list'),
+            {
+                'type__id': retreat_type_2.id,
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        content = response.json()
+
+        results = content.get('results')
+
+        self.assertEqual(len(results), 1)
+
+        self.assertEqual(
+            results[0].get('id'),
+            retreat_2.id
+        )
