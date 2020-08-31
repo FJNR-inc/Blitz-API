@@ -153,7 +153,9 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         """
         retreat = self.get_object()
         try:
-            email = AutomaticEmail.objects.get(request.GET.get('email'))
+            email = AutomaticEmail.objects.get(
+                id=int(request.GET.get('email'))
+            )
         except Exception:
             response_data = {
                 'detail': "AutomaticEmail not found"
