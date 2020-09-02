@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import factory
+from factory.django import DjangoModelFactory
 import factory.fuzzy
 from dateutil.tz import tz
 from django.contrib.auth import get_user_model
@@ -15,7 +16,7 @@ User = get_user_model()
 fake = Faker()
 
 
-class UserFactory(factory.DjangoModelFactory):
+class UserFactory(DjangoModelFactory):
     class Meta:
         model = User
         django_get_or_create = ('username',)
@@ -29,7 +30,7 @@ class UserFactory(factory.DjangoModelFactory):
     tickets = 1
 
 
-class AdminFactory(factory.DjangoModelFactory):
+class AdminFactory(DjangoModelFactory):
     class Meta:
         model = User
 
@@ -42,28 +43,28 @@ class AdminFactory(factory.DjangoModelFactory):
     tickets = 1
 
 
-class OrganizationFactory(factory.DjangoModelFactory):
+class OrganizationFactory(DjangoModelFactory):
     class Meta:
         model = Organization
 
     name = factory.Sequence(lambda n: f'Organization {n}')
 
 
-class AcademicLevelFactory(factory.DjangoModelFactory):
+class AcademicLevelFactory(DjangoModelFactory):
     class Meta:
         model = AcademicLevel
 
     name = factory.Sequence(lambda n: f'AcademicLevel {n}')
 
 
-class AcademicFieldFactory(factory.DjangoModelFactory):
+class AcademicFieldFactory(DjangoModelFactory):
     class Meta:
         model = AcademicField
 
     name = factory.Sequence(lambda n: f'AcademicField {n}')
 
 
-class RetreatFactory(factory.DjangoModelFactory):
+class RetreatFactory(DjangoModelFactory):
     class Meta:
         model = Retreat
         django_get_or_create = ('name',)
