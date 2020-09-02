@@ -73,7 +73,7 @@ class OptionProductTests(APITestCase):
         self.options_1.available_on_products.add(self.package)
         self.options_1.save()
 
-        self.retreat_option = RetreatFactory()
+        self.retreat_option = self.retreat
         self.retreat_option.is_active = True
         self.retreat_option.available_on_products.add(self.package)
         self.retreat_option.save()
