@@ -385,7 +385,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         active_reservations = active_reservations.all()
 
         for reservation in active_reservations:
-            for date in reservation.retreat.retreat_dates:
+            for date in reservation.retreat.retreat_dates.all():
                 latest_start = max(
                     date.start_time,
                     start,
@@ -592,7 +592,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 ).exclude(pk=instance.pk)
 
                 for reservation in active_reservations:
-                    for date in reservation.retreat.retreat_dates:
+                    for date in reservation.retreat.retreat_dates.all():
                         latest_start = max(
                             date.start_time,
                             start,
