@@ -360,7 +360,7 @@ def send_automatic_email(user, retreat, email):
     end_time = end_time.astimezone(pytz.timezone('US/Eastern'))
 
     context = {
-        'CUSTOM': json.load(email.context),
+        'CUSTOM': json.loads(email.context),
         'USER_FIRST_NAME': user.first_name,
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
