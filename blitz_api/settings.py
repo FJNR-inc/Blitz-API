@@ -56,7 +56,6 @@ INSTALLED_APPS = [
     'storages',
     'anymail',
     'simple_history',
-    'rest_framework_filters',
     'safedelete',
     'import_export',
     'django_filters',
@@ -387,7 +386,7 @@ LOCAL_SETTINGS = {
         ),
         'POLICY_URL': config(
             'POLICY_URL',
-            default='http://thesez-vous.org/policy',
+            default='https://www.thesez-vous.com/politiquesannulation.html',
         ),
         'ACTIVATION_URL': config(
             'ACTIVATION_URL',

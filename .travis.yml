@@ -15,6 +15,7 @@ before_install:
   - python3 -c 'import os,sys; os.set_blocking(sys.stdout.fileno(), True)'
 install:
   - docker-compose build
+  - pip install --upgrade pip
   - pip install -r requirements-dev.txt
 before_script:
   # We will run a postgres service into docker, so wee need to stop the postgres service

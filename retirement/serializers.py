@@ -385,15 +385,22 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         active_reservations = active_reservations.all()
 
         for reservation in active_reservations:
-            latest_start = max(reservation.retreat.start_time, start)
-            shortest_end = min(reservation.retreat.end_time, end)
-            if latest_start < shortest_end:
-                raise serializers.ValidationError({
-                    'non_field_errors': [_(
-                        "This reservation overlaps with another active "
-                        "reservations for this user."
-                    )]
-                })
+            for date in reservation.retreat.retreat_dates.all():
+                latest_start = max(
+                    date.start_time,
+                    start,
+                )
+                shortest_end = min(
+                    date.end_time,
+                    end,
+                )
+                if latest_start < shortest_end:
+                    raise serializers.ValidationError({
+                        'non_field_errors': [_(
+                            "This reservation overlaps with another active "
+                            "reservations for this user."
+                        )]
+                    })
         return attrs
 
     def create(self, validated_data):
@@ -585,15 +592,22 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 ).exclude(pk=instance.pk)
 
                 for reservation in active_reservations:
-                    latest_start = max(reservation.retreat.start_time, start)
-                    shortest_end = min(reservation.retreat.end_time, end)
-                    if latest_start < shortest_end:
-                        raise serializers.ValidationError({
-                            'non_field_errors': [_(
-                                "This reservation overlaps with another "
-                                "active reservations for this user."
-                            )]
-                        })
+                    for date in reservation.retreat.retreat_dates.all():
+                        latest_start = max(
+                            date.start_time,
+                            start,
+                        )
+                        shortest_end = min(
+                            date.end_time,
+                            end,
+                        )
+                        if latest_start < shortest_end:
+                            raise serializers.ValidationError({
+                                'non_field_errors': [_(
+                                    "This reservation overlaps with another "
+                                    "active reservations for this user."
+                                )]
+                            })
                 if need_transaction:
                     order = Order.objects.create(
                         user=user,
