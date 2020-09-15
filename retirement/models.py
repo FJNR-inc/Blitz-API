@@ -858,6 +858,18 @@ class AutomaticEmailLog(models.Model):
         auto_now_add=True,
     )
 
+    @property
+    def template_id(self):
+        return self.email.template_id
+
+    @property
+    def retreat(self):
+        return self.reservation.retreat
+
+    @property
+    def user(self):
+        return self.reservation.user
+
     class Meta:
         verbose_name = _("Automatic email log")
         verbose_name_plural = _("Automatic email logs")

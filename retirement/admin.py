@@ -1,5 +1,6 @@
 from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.utils.translation import ugettext_lazy as _
 from import_export.admin import ExportActionModelAdmin
 from modeltranslation.admin import TranslationAdmin
@@ -30,6 +31,8 @@ from .resources import (
     WaitQueueResource
 )
 
+User = get_user_model()
+
 
 class RetreatFilter(AutocompleteFilter):
     title = 'Retreat'
@@ -50,6 +53,34 @@ class PictureAdminInline(admin.TabularInline):
     model = Picture
     show_change_link = True
     readonly_fields = ('picture_tag', )
+
+
+class ReservationUserFilter(AutocompleteFilter):
+    title = 'User'
+    field_name = 'user'
+    rel_model = Reservation
+
+    @property
+    def parameter_name(self):
+        return "reservation__user"
+
+    @parameter_name.setter
+    def parameter_name(self, value):
+        pass
+
+
+class ReservationRetreatFilter(AutocompleteFilter):
+    title = 'Retreat'
+    field_name = 'retreat'
+    rel_model = Reservation
+
+    @property
+    def parameter_name(self):
+        return "reservation__retreat"
+
+    @parameter_name.setter
+    def parameter_name(self, value):
+        pass
 
 
 def make_reservation_refundable(self, request, queryset):
@@ -268,13 +299,55 @@ class RetreatDateAdmin(admin.ModelAdmin):
         'start_time',
         'end_time',
     )
+    list_filter = (
+        RetreatFilter,
+    )
+
+
+class AutomaticEmailLogAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'user',
+        'retreat',
+        'template_id',
+        'sent_at',
+    )
+    list_filter = (
+        ReservationUserFilter,
+        ReservationRetreatFilter,
+        'sent_at'
+    )
+    search_fields = ['reservation__user__email', 'email__template_id',
+                     'reservation__user__first_name',
+                     'reservation__user__last_name']
+
+    def lookup_allowed(self, lookup, value):
+        if lookup == "reservation__user":
+            return True
+        if lookup == "reservation__retreat":
+            return True
+        return super().lookup_allowed(lookup, value)
+
+
+class AutomaticEmailAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'retreat_type',
+        'time_base',
+        'minutes_delta',
+        'template_id',
+    )
+    list_filter = (
+        'retreat_type',
+        'template_id',
+    )
 
 
 admin.site.register(Retreat, RetreatAdmin)
 admin.site.register(RetreatType)
 admin.site.register(RetreatDate, RetreatDateAdmin)
-admin.site.register(AutomaticEmail)
-admin.site.register(AutomaticEmailLog)
+admin.site.register(AutomaticEmail, AutomaticEmailAdmin)
+admin.site.register(AutomaticEmailLog, AutomaticEmailLogAdmin)
 admin.site.register(Picture, PictureAdmin)
 admin.site.register(Reservation, ReservationAdmin)
 admin.site.register(WaitQueue, WaitQueueAdmin)
