@@ -549,13 +549,13 @@ def validate_coupon_for_order(coupon, order):
     list_physical_retreat_id_applicable = Retreat.objects.none()
     if coupon.is_applicable_to_physical_retreat:
         list_physical_retreat_id_applicable = Retreat.objects.filter(
-            type=Retreat.TYPE_PHYSICAL
+            type__is_virtual=False,
         )
 
     list_virtual_retreat_id_applicable = Retreat.objects.none()
     if coupon.is_applicable_to_virtual_retreat:
         list_virtual_retreat_id_applicable = Retreat.objects.filter(
-            type=Retreat.TYPE_VIRTUAL
+            type__is_virtual=True,
         )
 
     applicable_orderlines = order.order_lines.filter(
