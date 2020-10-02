@@ -239,7 +239,9 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
         return value
 
     def validate_other_phone(self, value):
-        return phone_number_validator(value)
+        if value is not None:
+            return phone_number_validator(value)
+        return value
 
     def validate(self, attrs):
         """Validate university and email match"""
