@@ -136,8 +136,9 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
-        user = User.objects.get(email=request.data["email"])
         if response.status_code == status.HTTP_201_CREATED:
+            user = User.objects.get(email=request.data["email"])
+
             if settings.LOCAL_SETTINGS['AUTO_ACTIVATE_USER'] is True:
                 user.is_active = True
                 user.save()
