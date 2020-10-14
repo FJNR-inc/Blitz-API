@@ -287,8 +287,8 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     billing_price = serializers.ReadOnlyField()
     places_remaining = serializers.SerializerMethodField()
-    reservations = serializers.SerializerMethodField()
-    reservations_canceled = serializers.SerializerMethodField()
+    nb_reservations_active = serializers.SerializerMethodField()
+    nb_reservations_canceled = serializers.SerializerMethodField()
     workplace = WorkplaceSerializer(
         read_only=True,
         source='period.workplace',
@@ -309,31 +309,17 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         max_length=1000,
     )
 
-    def get_reservations(self, obj):
-        reservation_ids = Reservation.objects.filter(
+    def get_nb_reservations_active(self, obj):
+        return Reservation.objects.filter(
             is_active=True,
             timeslot=obj,
-        ).values_list('id', flat=True)
-        return [
-            reverse(
-                'reservation-detail',
-                args=[id],
-                request=self.context['request']
-            ) for id in reservation_ids
-        ]
+        ).count()
 
-    def get_reservations_canceled(self, obj):
-        reservation_ids = Reservation.objects.filter(
+    def get_nb_reservations_canceled(self, obj):
+        return Reservation.objects.filter(
             is_active=False,
             timeslot=obj,
-        ).values_list('id', flat=True)
-        return [
-            reverse(
-                'reservation-detail',
-                args=[id],
-                request=self.context['request']
-            ) for id in reservation_ids
-        ]
+        ).count()
 
     def get_places_remaining(self, obj):
         if not obj.period.workplace:
