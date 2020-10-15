@@ -125,8 +125,8 @@ class TimeSlotTests(APITestCase):
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
             'places_remaining': 0,
-            'reservations': [],
-            'reservations_canceled': [],
+            'nb_reservations_active': 0,
+            'nb_reservations_canceled': 0,
             'start_time': data['start_time'].isoformat(),
             'period': f'http://testserver/periods/'
             f'{self.period_no_workplace.id}',
@@ -175,8 +175,8 @@ class TimeSlotTests(APITestCase):
             'end_time': data['end_time'].isoformat(),
             'price': '3.00',
             'places_remaining': 40,
-            'reservations': [],
-            'reservations_canceled': [],
+            'nb_reservations_active': 0,
+            'nb_reservations_canceled': 0,
             'start_time': data['start_time'].isoformat(),
             'period': f'http://testserver/periods/{self.period.id}',
             'users': [],
@@ -498,8 +498,8 @@ class TimeSlotTests(APITestCase):
             'price': '10.00',
             'billing_price': 10,
             'places_remaining': 40,
-            'reservations': [],
-            'reservations_canceled': [],
+            'nb_reservations_active': 0,
+            'nb_reservations_canceled': 0,
             'start_time': data['start_time'].isoformat(),
             'url': f'http://testserver/time_slots/{self.time_slot_active.id}',
             'period': f'http://testserver/periods/{self.period.id}',
@@ -576,21 +576,15 @@ class TimeSlotTests(APITestCase):
             'price': '10.00',
             'billing_price': 10.00,
             'places_remaining': 40,
-            'reservations': [],
-            'reservations_canceled': [
-                f'http://testserver/reservations/{self.reservation_admin.id}',
-                f'http://testserver/reservations/{self.reservation.id}'
-            ],
+            'nb_reservations_active': 0,
+            'nb_reservations_canceled': 2,
             'start_time': data['start_time'].isoformat(),
             'url': f'http://testserver/time_slots/{self.time_slot.id}',
             'period': f'http://testserver/periods/{self.period.id}',
         }
 
-        self.assertCountEqual(response_data['reservations_canceled'],
-                              content['reservations_canceled'])
-
-        del response_data['reservations_canceled']
-        del content['reservations_canceled']
+        self.assertEqual(response_data['nb_reservations_canceled'],
+                         content['nb_reservations_canceled'])
 
         self.assertEqual(response_data, content)
 
@@ -650,11 +644,8 @@ class TimeSlotTests(APITestCase):
             'price': '1000.00',
             'billing_price': 1000,
             'places_remaining': 38,
-            'reservations': [
-                f'http://testserver/reservations/{self.reservation_admin.id}',
-                f'http://testserver/reservations/{self.reservation.id}'
-            ],
-            'reservations_canceled': [],
+            'nb_reservations_active': 2,
+            'nb_reservations_canceled': 0,
             'start_time': response_data['start_time'],
             'url': f'http://testserver/time_slots/{self.time_slot.id}',
             'period': f'http://testserver/periods/{self.period.id}',
@@ -679,11 +670,9 @@ class TimeSlotTests(APITestCase):
             }
         }
 
-        self.assertCountEqual(response_data['reservations'],
-                              content['reservations'])
+        self.assertEqual(response_data['nb_reservations_active'],
+                         content['nb_reservations_active'])
 
-        del response_data['reservations']
-        del content['reservations']
         self.assertEqual(response_data, content)
 
         self.reservation.refresh_from_db()
@@ -820,11 +809,8 @@ class TimeSlotTests(APITestCase):
             'price': '1000.00',
             'billing_price': 1000,
             'places_remaining': 40,
-            'reservations': [],
-            'reservations_canceled': [
-                f'http://testserver/reservations/{self.reservation_admin.id}',
-                f'http://testserver/reservations/{self.reservation.id}'
-            ],
+            'nb_reservations_active': 0,
+            'nb_reservations_canceled': 2,
             'start_time': data['start_time'].isoformat(),
             'url': f'http://testserver/time_slots/{self.time_slot.id}',
             'period': f'http://testserver/periods/{self.period.id}',
@@ -849,11 +835,8 @@ class TimeSlotTests(APITestCase):
             }
         }
 
-        self.assertCountEqual(response_data['reservations_canceled'],
-                              content['reservations_canceled'])
-
-        del response_data['reservations_canceled']
-        del content['reservations_canceled']
+        self.assertEqual(response_data['nb_reservations_canceled'],
+                         content['nb_reservations_canceled'])
 
         self.assertEqual(response_data, content)
 
@@ -918,11 +901,8 @@ class TimeSlotTests(APITestCase):
             'price': '1000.00',
             'billing_price': 1000,
             'places_remaining': 40,
-            'reservations': [],
-            'reservations_canceled': [
-                f'http://testserver/reservations/{self.reservation_admin.id}',
-                f'http://testserver/reservations/{self.reservation.id}'
-            ],
+            'nb_reservations_active': 0,
+            'nb_reservations_canceled': 2,
             'start_time': data['start_time'].isoformat(),
             'url': f'http://testserver/time_slots/{self.time_slot.id}',
             'period': f'http://testserver/periods/{self.period.id}',
@@ -947,11 +927,8 @@ class TimeSlotTests(APITestCase):
             }
         }
 
-        self.assertCountEqual(response_data['reservations_canceled'],
-                              content['reservations_canceled'])
-
-        del response_data['reservations_canceled']
-        del content['reservations_canceled']
+        self.assertEqual(response_data['nb_reservations_canceled'],
+                         content['nb_reservations_canceled'])
 
         self.assertEqual(response_data, content)
 
@@ -1125,8 +1102,8 @@ class TimeSlotTests(APITestCase):
                 'price': None,
                 'billing_price': 3,
                 'places_remaining': 40,
-                'reservations': [],
-                'reservations_canceled': [],
+                'nb_reservations_active': 0,
+                'nb_reservations_canceled': 0,
                 'start_time': data['results'][0]['start_time'],
                 'url': f'http://testserver/time_slots/'
                 f'{self.time_slot_active.id}',
@@ -1187,12 +1164,8 @@ class TimeSlotTests(APITestCase):
                 'price': '3.00',
                 'billing_price': 3.0,
                 'places_remaining': 38,
-                'reservations': [
-                    f'http://testserver/reservations/'
-                    f'{self.reservation_admin.id}',
-                    f'http://testserver/reservations/{self.reservation.id}'
-                ],
-                'reservations_canceled': [],
+                'nb_reservations_active': 2,
+                'nb_reservations_canceled': 0,
                 'start_time': data['results'][0]['start_time'],
                 'url': f'http://testserver/time_slots/{self.time_slot.id}',
                 "workplace": {
@@ -1220,8 +1193,8 @@ class TimeSlotTests(APITestCase):
                 'price': None,
                 'billing_price': 3.0,
                 'places_remaining': 40,
-                'reservations': [],
-                'reservations_canceled': [],
+                'nb_reservations_active': 0,
+                'nb_reservations_canceled': 0,
                 'start_time': data['results'][1]['start_time'],
                 'url': f'http://testserver/time_slots/'
                 f'{self.time_slot_active.id}',
@@ -1248,17 +1221,11 @@ class TimeSlotTests(APITestCase):
             }]
         }
 
-        self.assertCountEqual(data['results'][0]['reservations'],
-                              content['results'][0]['reservations'])
+        self.assertEqual(data['results'][0]['nb_reservations_active'],
+                         content['results'][0]['nb_reservations_active'])
 
-        del data['results'][0]['reservations']
-        del content['results'][0]['reservations']
-
-        self.assertCountEqual(data['results'][1]['reservations'],
-                              content['results'][1]['reservations'])
-
-        del data['results'][1]['reservations']
-        del content['results'][1]['reservations']
+        self.assertEqual(data['results'][1]['nb_reservations_active'],
+                         content['results'][1]['nb_reservations_active'])
 
         self.assertEqual(data, content)
 
@@ -1295,12 +1262,8 @@ class TimeSlotTests(APITestCase):
                 'end_time': self.time_slot.end_time.isoformat(),
                 'period': f'http://testserver/periods/{self.period.id}',
                 'places_remaining': 38,
-                'reservations': [
-                    f'http://testserver/reservations/'
-                    f'{self.reservation_admin.id}',
-                    f'http://testserver/reservations/{self.reservation.id}'
-                ],
-                'reservations_canceled': [],
+                'nb_reservations_active': 2,
+                'nb_reservations_canceled': 0,
                 'price': '3.00',
                 "billing_price": 3,
                 'start_time': self.time_slot.start_time.isoformat(),
@@ -1329,11 +1292,8 @@ class TimeSlotTests(APITestCase):
 
         self.assertEqual(data['count'], 1, json.dumps(data, indent=2))
 
-        self.assertCountEqual(data['results'][0]['reservations'],
-                              content['results'][0]['reservations'])
-
-        del data['results'][0]['reservations']
-        del content['results'][0]['reservations']
+        self.assertEqual(data['results'][0]['nb_reservations_active'],
+                         content['results'][0]['nb_reservations_active'])
 
         self.assertEqual(data, content)
 
@@ -1385,8 +1345,8 @@ class TimeSlotTests(APITestCase):
             'price': None,
             'billing_price': 3,
             'places_remaining': 40,
-            'reservations': [],
-            'reservations_canceled': [],
+            'nb_reservations_active': 0,
+            'nb_reservations_canceled': 0,
             'start_time': self.time_slot_active.start_time.isoformat(),
             'url': f'http://testserver/time_slots/{self.time_slot_active.id}',
             'period': f'http://testserver/periods/{self.period_active.id}',
@@ -1460,11 +1420,8 @@ class TimeSlotTests(APITestCase):
             'price': '3.00',
             'billing_price': 3,
             'places_remaining': 38,
-            'reservations': [
-                f'http://testserver/reservations/{self.reservation_admin.id}',
-                f'http://testserver/reservations/{self.reservation.id}'
-            ],
-            'reservations_canceled': [],
+            'nb_reservations_active': 2,
+            'nb_reservations_canceled': 0,
             'start_time': data['start_time'],
             'url': f'http://testserver/time_slots/{self.time_slot.id}',
             "workplace": {
@@ -1488,11 +1445,8 @@ class TimeSlotTests(APITestCase):
             }
         }
 
-        self.assertCountEqual(data['reservations'],
-                              content['reservations'])
-
-        del data['reservations']
-        del content['reservations']
+        self.assertEqual(data['nb_reservations_active'],
+                         content['nb_reservations_active'])
 
         self.assertEqual(data, content)
 
