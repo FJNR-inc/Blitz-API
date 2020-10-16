@@ -22,13 +22,12 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 class TimeSlotTests(APITestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(TimeSlotTests, cls).setUpClass()
-        cls.client = APIClient()
-        cls.user = UserFactory()
-        cls.admin = AdminFactory()
-        cls.workplace = Workplace.objects.create(
+    def setUp(self) -> None:
+
+        self.client = APIClient()
+        self.user = UserFactory()
+        self.admin = AdminFactory()
+        self.workplace = Workplace.objects.create(
             name="Blitz",
             seats=40,
             details="short_description",
@@ -37,7 +36,7 @@ class TimeSlotTests(APITestCase):
             state_province="Random state",
             country="Random country",
         )
-        cls.workplace2 = Workplace.objects.create(
+        self.workplace2 = Workplace.objects.create(
             name="Blitz2",
             seats=40,
             details="short_description",
@@ -46,56 +45,53 @@ class TimeSlotTests(APITestCase):
             state_province="Random state",
             country="Random country",
         )
-        cls.period = Period.objects.create(
+        self.period = Period.objects.create(
             name="random_period",
-            workplace=cls.workplace,
+            workplace=self.workplace,
             start_date=LOCAL_TIMEZONE.localize(datetime(2130, 1, 1, 1)),
             end_date=LOCAL_TIMEZONE.localize(datetime(2130, 12, 12, 12)),
             price=3,
             is_active=False,
         )
-        cls.period_active = Period.objects.create(
+        self.period_active = Period.objects.create(
             name="random_period_active",
-            workplace=cls.workplace2,
+            workplace=self.workplace2,
             start_date=LOCAL_TIMEZONE.localize(datetime(2130, 1, 1, 1)),
             end_date=LOCAL_TIMEZONE.localize(datetime(2130, 12, 12, 12)),
             price=3,
             is_active=True,
         )
-        cls.period_no_workplace = Period.objects.create(
+        self.period_no_workplace = Period.objects.create(
             name="random_period_active",
             start_date=LOCAL_TIMEZONE.localize(datetime(2130, 1, 1, 1)),
             end_date=LOCAL_TIMEZONE.localize(datetime(2130, 12, 12, 12)),
             price=3,
             is_active=True,
         )
-        cls.time_slot = TimeSlot.objects.create(
+        self.time_slot = TimeSlot.objects.create(
             name="morning_time_slot",
-            period=cls.period,
+            period=self.period,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
-        cls.reservation = Reservation.objects.create(
-            user=cls.user,
-            timeslot=cls.time_slot,
+        self.reservation = Reservation.objects.create(
+            user=self.user,
+            timeslot=self.time_slot,
             is_active=True,
         )
-        cls.reservation_admin = Reservation.objects.create(
-            user=cls.admin,
-            timeslot=cls.time_slot,
+        self.reservation_admin = Reservation.objects.create(
+            user=self.admin,
+            timeslot=self.time_slot,
             is_active=True,
         )
-        cls.time_slot_active = TimeSlot.objects.create(
+        self.time_slot_active = TimeSlot.objects.create(
             name="evening_time_slot_active",
-            period=cls.period_active,
+            period=self.period_active,
             price=None,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 18)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 22)),
         )
-
-    def setUp(self) -> None:
-        self.maxDiff = None
 
     def test_create(self):
         """
@@ -130,7 +126,7 @@ class TimeSlotTests(APITestCase):
             'start_time': data['start_time'].isoformat(),
             'period': f'http://testserver/periods/'
             f'{self.period_no_workplace.id}',
-            'users': [],
+            'is_reserved': False,
             'workplace': None
         }
 
@@ -173,13 +169,13 @@ class TimeSlotTests(APITestCase):
         content = {
             'billing_price': 3,
             'end_time': data['end_time'].isoformat(),
+            'is_reserved': False,
             'price': '3.00',
             'places_remaining': 40,
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 0,
             'start_time': data['start_time'].isoformat(),
             'period': f'http://testserver/periods/{self.period.id}',
-            'users': [],
         }
 
         self.assertEqual(response_data, content)
@@ -497,13 +493,13 @@ class TimeSlotTests(APITestCase):
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
             'billing_price': 10,
+            'is_reserved': False,
             'places_remaining': 40,
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 0,
             'start_time': data['start_time'].isoformat(),
             'url': f'http://testserver/time_slots/{self.time_slot_active.id}',
             'period': f'http://testserver/periods/{self.period.id}',
-            'users': [],
             "workplace": {
                 "address_line1": "123 random street",
                 "address_line2": None,
@@ -568,13 +564,13 @@ class TimeSlotTests(APITestCase):
         )
 
         del response_data['workplace']
-        del response_data['users']
 
         content = {
             'id': self.time_slot.id,
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
             'billing_price': 10.00,
+            'is_reserved': True,
             'places_remaining': 40,
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 2,
@@ -637,12 +633,12 @@ class TimeSlotTests(APITestCase):
             response_data['workplace']
         )
 
-        del response_data['users']
         content = {
             'id': self.time_slot.id,
             'end_time': response_data['end_time'],
             'price': '1000.00',
             'billing_price': 1000,
+            'is_reserved': True,
             'places_remaining': 38,
             'nb_reservations_active': 2,
             'nb_reservations_canceled': 0,
@@ -801,13 +797,12 @@ class TimeSlotTests(APITestCase):
             response_data['workplace']
         )
 
-        del response_data['users']
-
         content = {
             'id': self.time_slot.id,
             'end_time': response_data['end_time'],
             'price': '1000.00',
             'billing_price': 1000,
+            'is_reserved': True,
             'places_remaining': 40,
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 2,
@@ -893,13 +888,13 @@ class TimeSlotTests(APITestCase):
         response_data['workplace'] = remove_translation_fields(
             response_data['workplace']
         )
-        del response_data['users']
 
         content = {
             'id': self.time_slot.id,
             'end_time': response_data['end_time'],
             'price': '1000.00',
             'billing_price': 1000,
+            'is_reserved': True,
             'places_remaining': 40,
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 2,
@@ -1102,13 +1097,13 @@ class TimeSlotTests(APITestCase):
                 'price': None,
                 'billing_price': 3,
                 'places_remaining': 40,
+                'is_reserved': False,
                 'nb_reservations_active': 0,
                 'nb_reservations_canceled': 0,
                 'start_time': data['results'][0]['start_time'],
                 'url': f'http://testserver/time_slots/'
                 f'{self.time_slot_active.id}',
                 'period': f'http://testserver/periods/{self.period_active.id}',
-                'users': [],
                 "workplace": {
                     "address_line1": "123 random street",
                     "address_line2": None,
@@ -1151,7 +1146,6 @@ class TimeSlotTests(APITestCase):
             data['results'][idx]['workplace'] = remove_translation_fields(
                 obj['workplace']
             )
-            del data['results'][idx]['users']
 
         content = {
             'count': 2,
@@ -1163,6 +1157,7 @@ class TimeSlotTests(APITestCase):
                 'period': f'http://testserver/periods/{self.period.id}',
                 'price': '3.00',
                 'billing_price': 3.0,
+                'is_reserved': True,
                 'places_remaining': 38,
                 'nb_reservations_active': 2,
                 'nb_reservations_canceled': 0,
@@ -1192,6 +1187,7 @@ class TimeSlotTests(APITestCase):
                 'end_time': data['results'][1]['end_time'],
                 'price': None,
                 'billing_price': 3.0,
+                'is_reserved': False,
                 'places_remaining': 40,
                 'nb_reservations_active': 0,
                 'nb_reservations_canceled': 0,
@@ -1251,7 +1247,6 @@ class TimeSlotTests(APITestCase):
             data['results'][idx]['workplace'] = remove_translation_fields(
                 obj['workplace']
             )
-            del data['results'][idx]['users']
 
         content = {
             'count': 1,
@@ -1266,6 +1261,7 @@ class TimeSlotTests(APITestCase):
                 'nb_reservations_canceled': 0,
                 'price': '3.00',
                 "billing_price": 3,
+                'is_reserved': True,
                 'start_time': self.time_slot.start_time.isoformat(),
                 'url': f'http://testserver/time_slots/{self.time_slot.id}',
                 "workplace": {
@@ -1344,13 +1340,69 @@ class TimeSlotTests(APITestCase):
             'end_time': self.time_slot_active.end_time.isoformat(),
             'price': None,
             'billing_price': 3,
+            'is_reserved': False,
             'places_remaining': 40,
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 0,
             'start_time': self.time_slot_active.start_time.isoformat(),
             'url': f'http://testserver/time_slots/{self.time_slot_active.id}',
             'period': f'http://testserver/periods/{self.period_active.id}',
-            'users': [],
+            "workplace": {
+                "address_line1": "123 random street",
+                "address_line2": None,
+                "city": "",
+                "country": "Random country",
+                "details": "short_description",
+                "id": self.workplace2.id,
+                "latitude": None,
+                "longitude": None,
+                "name": "Blitz2",
+                "pictures": [],
+                "postal_code": "123 456",
+                "seats": 40,
+                "state_province": "Random state",
+                "timezone": None,
+                "place_name": '',
+                "volunteers": [],
+                "url": f"http://testserver/workplaces/{self.workplace2.id}"
+            }
+        }
+
+        self.assertEqual(data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_read_reserved(self):
+
+        Reservation.objects.create(
+            user=self.user,
+            timeslot=self.time_slot_active,
+            is_active=True,
+        )
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.get(
+            reverse(
+                'timeslot-detail',
+                args=[self.time_slot_active.id],
+            ),
+        )
+
+        data = json.loads(response.content)
+
+        content = {
+            'id': self.time_slot_active.id,
+            'end_time': self.time_slot_active.end_time.isoformat(),
+            'price': None,
+            'billing_price': 3,
+            'places_remaining': 39,
+            'is_reserved': True,
+            'nb_reservations_active': 1,
+            'nb_reservations_canceled': 0,
+            'start_time': self.time_slot_active.start_time.isoformat(),
+            'url': f'http://testserver/time_slots/{self.time_slot_active.id}',
+            'period': f'http://testserver/periods/{self.period_active.id}',
             "workplace": {
                 "address_line1": "123 random street",
                 "address_line2": None,
@@ -1411,7 +1463,6 @@ class TimeSlotTests(APITestCase):
         data['workplace'] = remove_translation_fields(
             data['workplace']
         )
-        del data['users']
 
         content = {
             'id': self.time_slot.id,
@@ -1419,6 +1470,7 @@ class TimeSlotTests(APITestCase):
             'period': f'http://testserver/periods/{self.period.id}',
             'price': '3.00',
             'billing_price': 3,
+            'is_reserved': True,
             'places_remaining': 38,
             'nb_reservations_active': 2,
             'nb_reservations_canceled': 0,
