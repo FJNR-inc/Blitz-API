@@ -289,6 +289,7 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
     places_remaining = serializers.SerializerMethodField()
     nb_reservations_active = serializers.SerializerMethodField()
     nb_reservations_canceled = serializers.SerializerMethodField()
+    is_reserved = serializers.SerializerMethodField()
     workplace = WorkplaceSerializer(
         read_only=True,
         source='period.workplace',
@@ -308,6 +309,11 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         write_only=True,
         max_length=1000,
     )
+
+    def get_is_reserved(self, timeslot: TimeSlot):
+        user = self.context['request'].user
+
+        return timeslot.users.filter(pk=user.pk).exists()
 
     def get_nb_reservations_active(self, obj):
         return Reservation.objects.filter(
@@ -499,15 +505,12 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
         return super().create(validated_data)
 
     def to_representation(self, instance):
-        is_staff = self.context['request'].user.is_staff
-        if self.context['view'].action == 'retrieve' and is_staff:
-            self.fields['users'] = UserSerializer(many=True)
         data = super(TimeSlotSerializer, self).to_representation(instance)
         return remove_translation_fields(data)
 
     class Meta:
         model = TimeSlot
-        exclude = ('name', 'deleted',)
+        exclude = ('name', 'deleted', 'users')
         extra_kwargs = {
             'period': {
                 'required': True,
