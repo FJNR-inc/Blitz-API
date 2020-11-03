@@ -1,6 +1,7 @@
 from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse
 from django.utils.translation import ugettext_lazy as _
 from import_export.admin import ExportActionModelAdmin
 from modeltranslation.admin import TranslationAdmin
@@ -30,6 +31,8 @@ from .resources import (
     RetreatResource,
     WaitQueueResource
 )
+
+from .exports import generate_retreat_sales
 
 User = get_user_model()
 
@@ -105,6 +108,19 @@ make_reservation_not_refundable.\
     short_description = 'Make reservation not refundable'
 
 
+def export_retreat_sales(self, request, queryset):
+    new_export = generate_retreat_sales(queryset)
+
+    with new_export.file.open('r') as f:
+        response = HttpResponse(f.read(), content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=%s' % \
+                                          f.name.split('/')[-1:][0]
+    return response
+
+
+export_retreat_sales.short_description = 'export_retreat_sales'
+
+
 class RetreatAdmin(SimpleHistoryAdmin,
                    ExportActionModelAdmin,
                    SafeDeleteAdmin,
@@ -135,7 +151,8 @@ class RetreatAdmin(SimpleHistoryAdmin,
         'undelete_selected',
         'export_admin_action',
         make_reservation_not_refundable,
-        make_reservation_refundable
+        make_reservation_refundable,
+        export_retreat_sales
     ]
 
 
