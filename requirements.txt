@@ -28,4 +28,4 @@ tqdm==4.48.2
 colorama==0.4.3
 django-admin-autocomplete-filter==0.6.1
 mailchimp3==3.0.14
-babel==2.8.0
+babel==2.8.1
