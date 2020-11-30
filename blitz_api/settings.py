@@ -331,6 +331,11 @@ ANYMAIL = {
             'TEMPLATE_EMAIL_WELCOME_VIRTUAL_RETREAT',
             default='12',
             cast=int
+        ),
+        'RENEW_MEMBERSHIP': config(
+            'RENEW_MEMBERSHIP',
+            default='31',
+            cast=int
         )
     },
 }

@@ -1,6 +1,8 @@
 import binascii
 import datetime
 import os
+
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -16,7 +18,12 @@ from simple_history.models import HistoricalRecords
 from django.utils.translation import ugettext_lazy as _
 
 from . import mailchimp
+from blitz_api import services
 from .managers import ActionTokenManager
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class User(AbstractUser):
@@ -118,6 +125,12 @@ class User(AbstractUser):
         max_length=100,
         verbose_name=_("Membership end date"),
     )
+    membership_end_notification = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Membership end notification date"),
+    )
+
     tickets = models.PositiveSmallIntegerField(
         blank=True,
         null=True,
@@ -231,6 +244,39 @@ class User(AbstractUser):
                     today + self.membership.duration
             )
         self.save()
+
+    def has_membership_active(self):
+        today = timezone.now().date()
+        return \
+            self.membership and \
+            self.membership_end and \
+            self.membership_end >= today
+
+    def has_to_receive_notification(self):
+        if self.has_membership_active():
+            today = timezone.now().date()
+            date_to_notify = self.membership_end - relativedelta(days=28)
+            # check if last notification between today and last week
+            if self.membership_end_notification:
+                already_notify = \
+                    today >= \
+                    self.membership_end_notification.date() >= \
+                    today - relativedelta(weeks=1)
+            else:
+                already_notify = False
+            # To prevent spam, we need to haven't send a
+            # notification in the last week and be at 28 days from the end
+            return date_to_notify == today and not already_notify
+
+    def check_and_notify_renew_membership(self):
+
+        if self.has_to_receive_notification():
+            services.notify_user_of_renew_membership(
+                user=self,
+                membership_end=self.membership_end.strftime('%Y-%m-%d')
+            )
+            return True
+        return False
 
 
 class TemporaryToken(Token):

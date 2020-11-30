@@ -1,3 +1,5 @@
+import datetime
+
 import requests
 from django.db import models
 from django.utils import timezone
@@ -48,10 +50,11 @@ class Task(models.Model):
     def next_execution_datetime(self):
         if self.last_execution:
             if self.execution_interval:
-                next_execution_datetime = False
-            else:
                 next_execution_datetime = \
-                    self.last_execution.executed_at + self.execution_interval
+                    self.last_execution.executed_at + \
+                    datetime.timedelta(milliseconds=self.execution_interval)
+            else:
+                next_execution_datetime = False
         else:
             next_execution_datetime = self.execution_datetime
         return next_execution_datetime
@@ -61,6 +64,7 @@ class Task(models.Model):
 
         if self.active:
             next_execution_datetime = self.next_execution_datetime()
+
             if next_execution_datetime:
                 return timezone.now() >= self.next_execution_datetime()
             else:

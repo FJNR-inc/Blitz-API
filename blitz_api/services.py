@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from django.utils import timezone
 
 import pytz
 import re
@@ -244,6 +244,24 @@ def notify_user_of_change_email(email, activation_url, first_name):
                 additional_data=json.dumps(additional_data)
             )
             raise
+
+
+def notify_user_of_renew_membership(user, membership_end, log=True):
+    if settings.LOCAL_SETTINGS['EMAIL_SERVICE']:
+        merge_data = {
+            "MEMBERSHIP_END": membership_end,
+            "USER_FIRST_NAME": user.first_name,
+        }
+
+        if log:
+            user.membership_end_notification = timezone.now()
+            user.save()
+
+        return send_mail(
+            [user],
+            merge_data,
+            "RENEW_MEMBERSHIP",
+        )
 
 
 class ExportPagination(PageNumberPagination):
