@@ -1,11 +1,14 @@
 import json
+from datetime import timedelta
 
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from django.core import mail
 from django.urls import reverse
 
+from store.models import Membership
 from .. import models
 from ..factories import UserFactory, AdminFactory
 from django.test.utils import override_settings
@@ -69,6 +72,14 @@ class UsersIdTests(APITestCase):
         self.admin = AdminFactory()
         self.admin.set_password('Test123!')
         self.admin.save()
+
+        self.membership = Membership.objects.create(
+            name="basic_membership",
+            details="1-Year student membership",
+            available=True,
+            price=50,
+            duration=timedelta(days=365),
+        )
 
     def test_retrieve_user_id_not_exist(self):
         """
@@ -214,6 +225,72 @@ class UsersIdTests(APITestCase):
 
         # Check if update was successful
         self.assertEqual(content['phone'], data['phone'])
+
+        # Check id of the user
+        self.assertEqual(content['id'], self.user.id)
+
+        # Check the system doesn't return attributes not expected
+        attributes = self.user_attrs.copy()
+        for key in content.keys():
+            self.assertTrue(
+                key in attributes,
+                'Attribute "{0}" is not expected but is '
+                'returned by the system.'.format(key)
+            )
+            attributes.remove(key)
+
+        # Ensure the system returns all expected attributes
+        self.assertTrue(
+            len(attributes) == 0,
+            'The system failed to return some '
+            'attributes : {0}'.format(attributes)
+        )
+
+    def test_partial_update_membership(self):
+        """
+        Ensure we can update a specific user if caller has permission.
+        """
+
+        if self.user.membership_end:
+            before_membership_end = self.user.membership_end.isoformat()
+        else:
+            before_membership_end = 'None'
+
+        data = {
+            "membership_end": timezone.now().date().isoformat(),
+            "membership": reverse(
+                'membership-detail',
+                args=[self.membership.id]
+            ),
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse(
+                'user-detail',
+                kwargs={'pk': self.user.id},
+            ),
+            data,
+            format='json',
+        )
+
+        # Check the status code
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content,
+        )
+
+        content = json.loads(response.content)
+
+        # Check if membership didn't not change
+        self.assertNotEqual(content['membership_end'], data['membership_end'])
+        self.assertNotEqual(content['membership_end'], before_membership_end)
+
+        # Check if membership didn't change
+        self.assertNotEqual(content['membership'], data['membership'])
+        self.assertIsNone(self.user.membership)
 
         # Check id of the user
         self.assertEqual(content['id'], self.user.id)
