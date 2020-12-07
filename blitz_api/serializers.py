@@ -372,6 +372,7 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
             'groups',
             'user_permissions',
             'reservations',
+            'membership_end'
         )
 
 
