@@ -142,10 +142,14 @@ class Order(models.Model):
             coupon_user.uses = coupon_user.uses + 1
             coupon_user.save()
 
-            order_line: OrderLine = coupon_info['orderline']
-            order_line.applying_coupon_value(coupon_info['value'])
-            order_line.coupon = coupon
-            order_line.save()
+            order_lines = coupon_info['orderlines']
+            for order_line_data in order_lines:
+                order_line = order_line_data.get('order_line')
+                order_line.applying_coupon_value(
+                    order_line_data.get('discount')
+                )
+                order_line.coupon = coupon
+                order_line.save()
 
         return \
             coupon_info['valid_use'], \

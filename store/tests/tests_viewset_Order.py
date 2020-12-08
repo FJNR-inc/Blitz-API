@@ -3386,15 +3386,28 @@ class OrderTests(APITestCase):
 
         self.assertEqual(response_data, content)
 
-    def test_validate_coupon_full_discount(self):
+    def test_validate_coupon_multi_line(self):
         """
-        Ensure that we can validate a coupon with 100% discount.
+        Ensure that we can validate a coupon before creating an order.
         """
         self.client.force_authenticate(user=self.admin)
 
-        self.coupon.value = 0
-        self.coupon.percent_off = 100
-        self.coupon.save()
+        coupon = Coupon.objects.create(
+            code="TEST_MULTI",
+            start_time=LOCAL_TIMEZONE.localize(datetime(2000, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            value=1000,
+            max_use_per_user=0,
+            max_use=0,
+            owner=self.admin,
+        )
+
+        coupon.applicable_product_types.set(
+            [
+                self.package_type,
+                self.retreat_content_type
+            ]
+        )
 
         data = {
             'payment_token': "CZgD1NlBzPuSefg",
@@ -3414,12 +3427,8 @@ class OrderTests(APITestCase):
                 'content_type': 'retreat',
                 'object_id': self.retreat.id,
                 'quantity': 1,
-            }, {
-                'content_type': 'package',
-                'object_id': self.package2.id,
-                'quantity': 1,
             }],
-            'coupon': "ABCD1234",
+            'coupon': coupon.code,
         }
 
         response = self.client.post(
@@ -3439,18 +3448,16 @@ class OrderTests(APITestCase):
         content = {
             'orderline': {
                 'content_type': 'package',
-                'object_id': self.package2.id,
-                'quantity': 1,
+                'object_id': self.package.id,
+                'quantity': 2,
                 'metadata': None,
                 'options': []
             },
-            'value': 4000.0
+            'value': 239.0
         }
 
-        self.assertEqual(response_data, content)
-
-        self.coupon.value = 10.0
-        self.coupon.save()
+        price_retreat_package = self.retreat.price + self.package.price
+        self.assertEqual(response_data.get('value'), price_retreat_package)
 
     def test_validate_coupon_invalid(self):
         """

@@ -397,7 +397,9 @@ class ServicesTests(APITestCase):
 
         self.assertIsNone(error)
 
-        coupon_info_order_line = coupon_info.get('orderline')
+        coupon_info_order_line = coupon_info.get('orderlines')[0].get(
+            'order_line'
+        )
         self.assertIsNotNone(coupon_info_order_line)
         self.assertEqual(coupon_info_order_line.id,
                          order_line_most_exp_product.id)
