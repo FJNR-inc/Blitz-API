@@ -321,10 +321,7 @@ class OrderViewSet(ExportMixin, viewsets.ModelViewSet):
                     orderline_list[idx].save()
 
             response = validate_coupon_for_order(coupon, order)
-            response['orderline'] = serializers.OrderLineSerializerNoOrder(
-                response['orderline'],
-                context={'request': request}
-            ).data
+            del response['orderlines']
 
         except Exception as err:
             raise err
@@ -333,12 +330,6 @@ class OrderViewSet(ExportMixin, viewsets.ModelViewSet):
             transaction.savepoint_rollback(sid)
 
         if response.get('valid_use', False):
-            response['orderline'].pop('url', None)
-            response['orderline'].pop('id', None)
-            response['orderline'].pop('order', None)
-            response['orderline'].pop('coupon', None)
-            response['orderline'].pop('coupon_real_value', None)
-            response['orderline'].pop('cost', None)
             response.pop('valid_use', None)
             response.pop('error', None)
             return Response(response)

@@ -494,7 +494,7 @@ def validate_coupon_for_order(coupon, order):
         'valid_use': False,
         'error': None,
         'value': None,
-        'orderline': None,
+        'orderlines': [],
     }
 
     # Check if the coupon is active
@@ -591,23 +591,27 @@ def validate_coupon_for_order(coupon, order):
     # The coupon is valid and can be used.
     # We find the product to which it applies.
     # We calculate the official amount to be discounted.
+    list_applicable_order_lines = list(applicable_orderlines)
+    list_applicable_order_lines.sort(
+        key=lambda order_line_sort: order_line_sort.content_object.price,
+        reverse=True
+    )
     coupon_info['valid_use'] = True
-    most_exp_product = applicable_orderlines[0].content_object
-    coupon_info['orderline'] = applicable_orderlines[0]
-    for orderline in applicable_orderlines:
-        product = orderline.content_object
-        if product.price > most_exp_product.price:
-            most_exp_product = product
-            coupon_info['orderline'] = orderline
-    if not coupon.value:
-        percent_off = Decimal(coupon.percent_off) / 100
-        discount_amount = most_exp_product.price * percent_off
-    else:
-        discount_amount = min(
-            coupon.value,
-            most_exp_product.price
-        )
-    coupon_info['value'] = discount_amount
+    use_coupon_value = 0
+    for applicable_order_line in list_applicable_order_lines:
+        product = applicable_order_line.content_object
+        if use_coupon_value < coupon.value:
+
+            discount_amount = min(
+                coupon.value - use_coupon_value,
+                product.price
+            )
+            coupon_info['orderlines'].append({
+                'order_line': applicable_order_line,
+                'discount': discount_amount
+            })
+            use_coupon_value += discount_amount
+    coupon_info['value'] = use_coupon_value
 
     return coupon_info
 
