@@ -19,6 +19,11 @@ class ExecutionInline(admin.StackedInline):
     readonly_fields = ('created_at',)
     max_num = 10
 
+    def get_queryset(self, request):
+        LIMIT_SEARCH = 25
+        queryset = super(ExecutionInline, self).get_queryset(request)
+        return queryset.order_by('-id')[:LIMIT_SEARCH]
+
 
 class TaskAdmin(admin.ModelAdmin):
     inlines = (ExecutionInline,)
