@@ -116,6 +116,9 @@ class OrderLineResource(resources.ModelResource):
             'item_id',
             'quantity',
             'order',
+            'coupon'
+            'coupon_real_value',
+            'cost',
         )
         export_order = (
             'id',
@@ -125,6 +128,9 @@ class OrderLineResource(resources.ModelResource):
             'item_id',
             'quantity',
             'order',
+            'coupon'
+            'coupon_real_value',
+            'cost',
         )
 
 
