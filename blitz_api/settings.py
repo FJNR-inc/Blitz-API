@@ -59,7 +59,8 @@ INSTALLED_APPS = [
     'safedelete',
     'import_export',
     'django_filters',
-    'admin_auto_filters'
+    'admin_auto_filters',
+    'django_admin_inline_paginator',
 ]
 
 MIDDLEWARE = [
