@@ -3,6 +3,7 @@ from django.contrib import admin
 
 from . import models
 from django.utils.translation import ugettext_lazy as _
+from django_admin_inline_paginator.admin import TabularInlinePaginated
 
 
 class TaskFilter(AutocompleteFilter):
@@ -10,7 +11,7 @@ class TaskFilter(AutocompleteFilter):
     field_name = 'task'
 
 
-class ExecutionInline(admin.StackedInline):
+class ExecutionInline(TabularInlinePaginated):
     model = models.Execution
     can_delete = True
     show_change_link = True
@@ -18,6 +19,7 @@ class ExecutionInline(admin.StackedInline):
     fk_name = 'task'
     readonly_fields = ('created_at',)
     max_num = 10
+    per_page = 5
 
 
 class TaskAdmin(admin.ModelAdmin):
