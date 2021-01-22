@@ -3374,13 +3374,6 @@ class OrderTests(APITestCase):
         )
 
         content = {
-            'orderline': {
-                'content_type': 'package',
-                'object_id': self.package.id,
-                'quantity': 2,
-                'metadata': None,
-                'options': []
-            },
             'value': 10.0
         }
 
