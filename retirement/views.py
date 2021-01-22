@@ -129,7 +129,8 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         the currently authenticated user is an admin (is_staff).
         """
 
-        if self.request.user.is_staff:
+        if self.request.user.is_staff or \
+                self.action == 'execute_automatic_email':
             queryset = Retreat.objects.all()
         else:
             queryset = Retreat.objects.filter(
