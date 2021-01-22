@@ -116,7 +116,7 @@ class OrderLineResource(resources.ModelResource):
             'item_id',
             'quantity',
             'order',
-            'coupon'
+            'coupon',
             'coupon_real_value',
             'cost',
         )
@@ -128,7 +128,7 @@ class OrderLineResource(resources.ModelResource):
             'item_id',
             'quantity',
             'order',
-            'coupon'
+            'coupon',
             'coupon_real_value',
             'cost',
         )
