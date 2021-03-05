@@ -18,9 +18,10 @@ from rest_framework.routers import DefaultRouter
 from django.contrib import admin
 from django.urls import path
 from django.conf import settings
-from django.conf.urls import include
+from django.conf.urls import include, url
 from django.conf.urls.static import static
 
+from cron_manager.views import CronViewFunction
 from workplace.urls import router as workplace_router
 from store.urls import router as store_router
 from retirement.urls import router as retirement_router
@@ -116,5 +117,9 @@ urlpatterns = [
     path(
         'retreat/',
         include((retirement_router.urls, 'retreat'), namespace='retreat')
+    ),
+    url(
+        'cron-function/',
+        CronViewFunction
     ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

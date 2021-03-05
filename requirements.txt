@@ -31,3 +31,7 @@ mailchimp3==3.0.14
 babel==2.9.0
 
 django-admin-inline-paginator==0.1.1
+
+# Google Cloud Plateform
+google-cloud-datastore==1.8.0
+google-cloud-storage==1.17.0

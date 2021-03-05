@@ -1,23 +1,25 @@
+"""
+  GoogleCloudStorage extensions suitable for handing Django's
+  Static and Media files.
+
+  Requires following settings:
+  MEDIA_URL, GS_MEDIA_BUCKET_NAME
+  STATIC_URL, GS_STATIC_BUCKET_NAME
+
+  In addition to
+  https://django-storages.readthedocs.io/en/latest/backends/gcloud.html
+  """
+
 from django.conf import settings
-from storages.backends.s3boto3 import S3Boto3Storage
+from storages.backends.gcloud import GoogleCloudStorage
+from storages.utils import setting
 
 
-class S3MediaStorage(S3Boto3Storage):
-    """
-    This class is needed to specify the folder in which media assets will be
-    stored in the S3 bucket.
-    """
-    location = settings.AWS_S3_MEDIA_DIR
-    bucket_name = settings.AWS_STORAGE_MEDIA_BUCKET_NAME
-    custom_domain = settings.AWS_S3_MEDIA_CUSTOM_DOMAIN
-    file_overwrite = False
+class GoogleCloudMediaStorage(GoogleCloudStorage):
+    """GoogleCloudStorage suitable for Django's Media files."""
 
-
-class S3StaticStorage(S3Boto3Storage):
-    """
-    This class is needed to specify the folder in which static assets will be
-    stored in the S3 bucket.
-    """
-    location = settings.AWS_S3_STATIC_DIR
-    bucket_name = settings.AWS_STORAGE_STATIC_BUCKET_NAME
-    custom_domain = settings.AWS_S3_STATIC_CUSTOM_DOMAIN
+    def __init__(self, **kwargs):
+        if not settings.MEDIA_URL:
+            raise Exception('MEDIA_URL has not been configured')
+        kwargs['bucket_name'] = setting('GS_MEDIA_BUCKET_NAME')
+        super(GoogleCloudMediaStorage, self).__init__(**kwargs)

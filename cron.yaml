@@ -1,0 +1,4 @@
+cron:
+- description: "Cron function trigger"
+  url: /cron-function/
+  schedule: every 10 minutes

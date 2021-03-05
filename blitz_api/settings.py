@@ -9,15 +9,43 @@ https://docs.djangoproject.com/en/2.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
-
+import json
 from ast import literal_eval
 import logging
 from pathlib import Path
 import sys
 
-from decouple import config, Csv
+import os
+from google.oauth2 import service_account
+from decouple import config as decouple_config, Csv
 from django.utils.translation import ugettext_lazy as _
 from dj_database_url import parse as db_url
+
+IS_GAE_ENV = os.getenv('GAE_INSTANCE', False)
+
+
+def config(search_path, *args, **kwargs):
+    if IS_GAE_ENV:
+
+        from google.cloud import datastore
+        client = datastore.Client()
+        query = client.query(kind='environments variables')
+        query.add_filter('KEY', '=', search_path)
+        results = list(query.fetch())
+
+        if len(results) != 1:
+            if 'default' not in kwargs:
+                raise Exception(
+                    f'Setting {search_path} not found in the database. '
+                    f'Nb results({results})')
+        else:
+            kwargs['default'] = results[0]['VALUE']
+            # We use decouple to manage cast value by passing wanted value in
+            # default and a fake env_name
+        return decouple_config('GAE_ENV_VAR', *args, **kwargs)
+    else:
+        return decouple_config(search_path, *args, **kwargs)
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).absolute().parent.parent
@@ -140,14 +168,24 @@ WSGI_APPLICATION = 'blitz_api.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
-
-DATABASES = {
-    'default': config(
-        'DATABASE_URL',
-        default='sqlite:///' + str(BASE_DIR.joinpath('db.sqlite3')),
-        cast=db_url
-    )
-}
+if IS_GAE_ENV:
+    DATABASES = {
+        'default': {
+            'ENGINE': config('DATABASE_ENGINE'),
+            'HOST': '/cloudsql/' + config('DATABASE_HOST'),
+            'USER': config('DATABASE_USER', default='postgres'),
+            'PASSWORD': config('DATABASE_PASSWORD'),
+            'NAME': config('DATABASE_NAME', default='thesezvousdev'),
+        }
+    }
+else:
+    DATABASES = {
+        'default': config(
+            'DATABASE_URL',
+            default='sqlite:///' + str(BASE_DIR.joinpath('db.sqlite3')),
+            cast=db_url
+        )
+    }
 
 # Custom user model
 
@@ -200,37 +238,56 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = config('FILE_UPLOAD_MAX_MEMORY_SIZE',
                                      default=2621440, cast=int)
 
 # AWS Deployment configuration (with Zappa)
-AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='ca-central-1')
-AWS_STORAGE_STATIC_BUCKET_NAME = config('AWS_STORAGE_STATIC_BUCKET_NAME',
-                                        default='example_static')
-AWS_STORAGE_MEDIA_BUCKET_NAME = config('AWS_STORAGE_MEDIA_BUCKET_NAME',
-                                       default='example_media')
-AWS_S3_STATIC_CUSTOM_DOMAIN = config('AWS_S3_STATIC_CUSTOM_DOMAIN',
-                                     default='example_static.s3.region.amazonaws.com')
-AWS_S3_MEDIA_CUSTOM_DOMAIN = config('AWS_S3_MEDIA_CUSTOM_DOMAIN',
-                                    default='example_media.s3.region.amazonaws.com')
-AWS_S3_STATIC_DIR = config('AWS_S3_STATIC_DIR', default='static')
-AWS_S3_MEDIA_DIR = config('AWS_S3_MEDIA_DIR', default='media')
+# AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='ca-central-1')
+# AWS_STORAGE_STATIC_BUCKET_NAME = config('AWS_STORAGE_STATIC_BUCKET_NAME',
+#                                         default='example_static')
+# AWS_STORAGE_MEDIA_BUCKET_NAME = config('AWS_STORAGE_MEDIA_BUCKET_NAME',
+#                                        default='example_media')
+# AWS_S3_STATIC_CUSTOM_DOMAIN = config('AWS_S3_STATIC_CUSTOM_DOMAIN',
+#                                      default='example_static.s3.region
+#                                      .amazonaws.com')
+# AWS_S3_MEDIA_CUSTOM_DOMAIN = config('AWS_S3_MEDIA_CUSTOM_DOMAIN',
+#                                     default='example_media.s3.region
+#                                     .amazonaws.com')
+# AWS_S3_STATIC_DIR = config('AWS_S3_STATIC_DIR', default='static')
+# AWS_S3_MEDIA_DIR = config('AWS_S3_MEDIA_DIR', default='media')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 # Force local storage for unittests. Temporary.
 if len(sys.argv) > 1 and sys.argv[1] == 'test':
     STATIC_URL = '/static/'
-    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.' \
+                          'StaticFilesStorage'
 else:
     STATIC_URL = config('STATIC_URL', default='/static/')
     STATICFILES_STORAGE = config('STATICFILES_STORAGE',
-                                 default='django.contrib.staticfiles.storage.StaticFilesStorage')
-if STATICFILES_STORAGE == 'django.contrib.staticfiles.storage.StaticFilesStorage':
+                                 default='django.contrib.staticfiles.storage.'
+                                         'StaticFilesStorage')
+if STATICFILES_STORAGE == 'django.contrib.staticfiles.storage.' \
+                          'StaticFilesStorage':
     STATIC_ROOT = 'static/'
 
 # User uploaded files (MEDIA)
-MEDIA_URL = config('MEDIA_URL', default='/media/')
-MEDIA_ROOT = config('MEDIA_ROOT', default='media/')
-DEFAULT_FILE_STORAGE = config(
-    'DEFAULT_FILE_STORAGE',
-    default='django.core.files.storage.FileSystemStorage')
+if IS_GAE_ENV:
+    service_account_info = json.loads(config('GS_CREDENTIALS'))
+    GS_CREDENTIALS = service_account.Credentials. \
+        from_service_account_info(service_account_info)
+    DEFAULT_FILE_STORAGE = 'blitz_api.storage_backends.' \
+                           'GoogleCloudMediaStorage'
+    GS_PROJECT_ID = config('GS_MEDIA_BUCKET_NAME',
+                           default='thesez-vous-qa')
+    GS_MEDIA_BUCKET_NAME = config('GS_MEDIA_BUCKET_NAME')
+    MEDIA_URL = f'https://storage.googleapis.com/{GS_MEDIA_BUCKET_NAME}/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    GS_DEFAULT_ACL = 'private'  # makes the files to private
+    GS_FILE_OVERWRITE = False
+else:
+    MEDIA_URL = config('MEDIA_URL', default='/media/')
+    MEDIA_ROOT = config('MEDIA_ROOT', default='media/')
+    DEFAULT_FILE_STORAGE = config(
+        'DEFAULT_FILE_STORAGE',
+        default='django.core.files.storage.FileSystemStorage')
 
 # Django Rest Framework
 
