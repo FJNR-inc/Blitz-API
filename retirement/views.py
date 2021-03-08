@@ -176,7 +176,14 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         notify a users who will attend the retreat with an existing
         automated email pre-configured (AutomaticEmail).
         """
-        retreat = self.get_object()
+        try:
+            retreat = Retreat.objects.get(pk=pk)
+        except:
+            response_data = {
+                'detail': "Retreat not found"
+            }
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             email = AutomaticEmail.objects.get(
                 id=int(request.GET.get('email'))
