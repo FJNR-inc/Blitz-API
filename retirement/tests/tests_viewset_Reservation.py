@@ -143,7 +143,7 @@ class ReservationTests(CustomAPITestCase):
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 2, 17, 12)),
             retreat=self.retreat2,
         )
-        self.retreat_overlap = Retreat.objects.create(
+        self.retreat_overlap_conflict = Retreat.objects.create(
             name="ultra_retreat",
             details="This is a description of the ultra retreat.",
             seats=400,
@@ -167,9 +167,43 @@ class ReservationTests(CustomAPITestCase):
         RetreatDate.objects.create(
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=self.retreat_overlap_conflict,
+        )
+        self.retreat_overlap_conflict.activate()
+
+        self.retreat_overlap = Retreat.objects.create(
+            name="ultra_retreat",
+            details="This is a description of the ultra retreat.",
+            seats=400,
+            address_line1="1234 random street",
+            postal_code="654 321",
+            state_province="Random state 2",
+            country="Random country 2",
+            price=199,
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            accessibility=True,
+            form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            type=self.retreatType,
+        )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 13, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 14, 12)),
+            retreat=self.retreat_overlap,
+        )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 18, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 19, 12)),
             retreat=self.retreat_overlap,
         )
         self.retreat_overlap.activate()
+
         self.order = Order.objects.create(
             user=self.user,
             transaction_date=timezone.now(),
@@ -307,10 +341,10 @@ class ReservationTests(CustomAPITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_create_overlapping(self):
+    def test_create_overlapping_without_conflict(self):
         """
-        Ensure we can't create reservations with overlapping retreat for the
-        same user.
+        Ensure we can create reservations with overlapping retreat for the
+        same user if the overlapping does not contain a conflict of date.
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -318,6 +352,45 @@ class ReservationTests(CustomAPITestCase):
             'retreat': reverse(
                 'retreat:retreat-detail',
                 args=[self.retreat_overlap.id]
+            ),
+            'user': reverse('user-detail', args=[self.user.id]),
+            'order_line': reverse(
+                'orderline-detail', args=[self.order_line.id]),
+            'is_active': True,
+        }
+
+        response = self.client.post(
+            reverse('retreat:reservation-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED
+        )
+
+        content = json.loads(response.content)
+
+        self.assertCountEqual(
+            content['retreat_details']['users'],
+            [
+                'http://testserver/users/' + str(self.user.id)
+            ]
+        )
+        self.check_attributes(content)
+
+    def test_create_overlapping_with_conflict(self):
+        """
+        Ensure we can't create reservations with overlapping retreat for the
+        same user if the overlapping contain a conflict of date.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                args=[self.retreat_overlap_conflict.id]
             ),
             'user': reverse('user-detail', args=[self.user.id]),
             'order_line': reverse(

@@ -178,7 +178,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         """
         try:
             retreat = Retreat.objects.get(pk=pk)
-        except:
+        except Exception:
             response_data = {
                 'detail': "Retreat not found"
             }
