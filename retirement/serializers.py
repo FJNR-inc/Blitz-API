@@ -373,34 +373,37 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 })
             return attrs
 
-        # Generate a list of tuples containing start/end time of
-        # existing reservations.
-        start = validated_data['retreat'].start_time
-        end = validated_data['retreat'].end_time
         active_reservations = Reservation.objects.filter(
             user=validated_data['user'],
             is_active=True,
         )
 
-        active_reservations = active_reservations.all()
+        # We check for every new date we want to reserve if there
+        # is already an other date overlapping.
+        # This complexity is required since retreats can contain
+        # multiple date with a lot of free space between them.
+        for new_date in validated_data['retreat'].retreat_dates.all():
+            start = new_date.start_time
+            end = new_date.end_time
 
-        for reservation in active_reservations:
-            for date in reservation.retreat.retreat_dates.all():
-                latest_start = max(
-                    date.start_time,
-                    start,
-                )
-                shortest_end = min(
-                    date.end_time,
-                    end,
-                )
-                if latest_start < shortest_end:
-                    raise serializers.ValidationError({
-                        'non_field_errors': [_(
-                            "This reservation overlaps with another active "
-                            "reservations for this user."
-                        )]
-                    })
+            for reservation in active_reservations:
+                for date in reservation.retreat.retreat_dates.all():
+                    latest_start = max(
+                        date.start_time,
+                        start,
+                    )
+                    shortest_end = min(
+                        date.end_time,
+                        end,
+                    )
+                    if latest_start < shortest_end:
+                        raise serializers.ValidationError({
+                            'non_field_errors': [_(
+                                "This reservation overlaps with "
+                                "another active reservations for "
+                                "this user."
+                            )]
+                        })
         return attrs
 
     def create(self, validated_data):
