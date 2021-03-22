@@ -372,12 +372,6 @@ class ServicesTests(APITestCase):
         )
 
     def test_validate_coupon_for_order_with_most_exp_product(self):
-
-        self.user.faculty = "Random faculty"
-        self.user.student_number = "Random code"
-        self.user.academic_program_code = "Random code"
-        self.user.save()
-
         order_line_most_exp_product = OrderLine.objects.create(
             order=self.order,
             quantity=1,
