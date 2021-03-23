@@ -510,18 +510,6 @@ def validate_coupon_for_order(coupon, order):
         }
         return coupon_info
 
-    # Check if the user's profile is complete
-    if not (user.academic_program_code and
-            user.faculty and user.student_number):
-        coupon_info['error'] = {
-            'non_field_errors': [_(
-                "Incomplete user profile. 'academic_program_code',"
-                " 'faculty' and 'student_number' fields must be "
-                "filled in the user profile to use a coupon."
-            )]
-        }
-        return coupon_info
-
     # Check if the maximum number of use for this coupon is exceeded
     coupon_user, created = CouponUser.objects.get_or_create(
         coupon=coupon,
