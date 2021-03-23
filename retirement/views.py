@@ -3,9 +3,22 @@ from datetime import datetime, timedelta
 
 import pytz
 from django.core.files.base import ContentFile
-from django.db.models import F, When, Case, Max, Min
-from django_filters import DateTimeFilter, FilterSet, IsoDateTimeFilter, \
-    NumberFilter
+from django.db.models import (
+    F,
+    When,
+    Case,
+    Max,
+    Min,
+)
+from django_filters import (
+    DateTimeFilter,
+    FilterSet,
+    IsoDateTimeFilter,
+    NumberFilter,
+    CharFilter,
+)
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
 
 from blitz_api.mixins import ExportMixin
 from django.conf import settings
@@ -83,14 +96,16 @@ TAX = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 class RetreatFilter(FilterSet):
     finish_after = IsoDateTimeFilter(
-        field_name='max_end_date', lookup_expr='gte'
+        field_name='max_end_date',
+        lookup_expr='gte',
     )
     start_after = IsoDateTimeFilter(
-        field_name='min_start_date', lookup_expr='gte'
+        field_name='min_start_date',
+        lookup_expr='gte',
     )
-
     type__id = NumberFilter(
-        field_name='type', lookup_expr='exact'
+        field_name='type',
+        lookup_expr='exact',
     )
 
     class Meta:
@@ -120,7 +135,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     ]
 
     filter_class = RetreatFilter
-
+    search_fields = ('name',)
     export_resource = RetreatResource()
 
     def get_queryset(self):
