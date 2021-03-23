@@ -291,6 +291,42 @@ class RetreatSerializer(BaseProductSerializer):
         }
 
 
+class BatchRetreatSerializer(RetreatSerializer):
+    bulk_start_time = serializers.DateTimeField()
+    bulk_end_time = serializers.DateTimeField()
+    weekdays = serializers.ListField(
+        child=serializers.IntegerField(
+            max_value=6,
+            min_value=0
+        )
+    )
+
+    def validate_weekdays(self, weekdays):
+        """
+        Check that no weekday is duplicated.
+        """
+        if len(weekdays) != len(set(weekdays)):
+            raise serializers.ValidationError(_(
+                "Duplicated weekdays are not authorized."
+            ))
+        return weekdays
+
+    def validate(self, attrs):
+        if attrs.get('bulk_start_time') and \
+                attrs.get('bulk_end_time') and \
+                attrs.get('bulk_start_time') >= attrs.get('bulk_end_time'):
+            raise serializers.ValidationError({
+                'bulk_end_time': [
+                    _("End time must be later than start time.")
+                ],
+                'bulk_start_time': [
+                    _("Start time must be earlier than end time.")
+                ],
+            })
+
+        return attrs
+
+
 class PictureSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
 

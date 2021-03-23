@@ -98,9 +98,6 @@ class OrderTests(APITestCase):
         self.admin = AdminFactory()
         self.admin.city = "Current city"
         self.admin.phone = "123-456-7890"
-        self.admin.faculty = "Random faculty"
-        self.admin.student_number = "Random code"
-        self.admin.academic_program_code = "Random code"
         self.admin.save()
         self.user_for_no_place_retreat: User = UserFactory()
         self.membership = Membership.objects.create(
@@ -1243,63 +1240,6 @@ class OrderTests(APITestCase):
         admin.refresh_from_db()
 
         self.coupon.max_use_per_user = 0
-        self.coupon.save()
-
-        old_uses = self.coupon_user.uses
-
-        self.coupon_user.refresh_from_db()
-
-        self.assertEqual(self.coupon_user.uses, old_uses)
-        self.assertEqual(admin.tickets, 1)
-        self.assertEqual(admin.membership, None)
-
-    def test_create_coupon_incomplete_user_profile(self):
-        """
-        Ensure we can't create an order with a coupon when the user doesn't
-        have a complete profile.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        self.admin.faculty = None
-        self.admin.save()
-
-        data = {
-            'payment_token': "CZgD1NlBzPuSefg",
-            'order_lines': [{
-                'content_type': 'membership',
-                'object_id': self.membership.id,
-                'quantity': 1,
-            }],
-            'coupon': "ABCD1234",
-        }
-
-        response = self.client.post(
-            reverse('order-list'),
-            data,
-            format='json',
-        )
-
-        response_data = json.loads(response.content)
-
-        content = {
-            'non_field_errors': [
-                "Incomplete user profile. 'academic_program_code',"
-                " 'faculty' and 'student_number' fields must be "
-                "filled in the user profile to use a coupon."
-            ]
-        }
-
-        self.assertEqual(response_data, content)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        self.admin.faculty = "Random faculty"
-        self.admin.save()
-
-        admin = self.admin
-        admin.refresh_from_db()
-
-        self.coupon.max_use = 0
         self.coupon.save()
 
         old_uses = self.coupon_user.uses
@@ -3596,49 +3536,6 @@ class OrderTests(APITestCase):
 
         self.coupon.max_use_per_user = 0
         self.coupon.save()
-
-    def test_validate_coupon_incomplete_user_profile(self):
-        """
-        Ensure we can't validate a coupon with a coupon when the user doesn't
-        have a complete profile.
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        self.admin.faculty = None
-        self.admin.save()
-
-        data = {
-            'payment_token': "CZgD1NlBzPuSefg",
-            'order_lines': [{
-                'content_type': 'membership',
-                'object_id': self.membership.id,
-                'quantity': 1,
-            }],
-            'coupon': "ABCD1234",
-        }
-
-        response = self.client.post(
-            reverse('order-validate-coupon'),
-            data,
-            format='json',
-        )
-
-        response_data = json.loads(response.content)
-
-        content = {
-            'non_field_errors': [
-                "Incomplete user profile. 'academic_program_code',"
-                " 'faculty' and 'student_number' fields must be "
-                "filled in the user profile to use a coupon."
-            ]
-        }
-
-        self.admin.faculty = "Random faculty"
-        self.admin.save()
-
-        self.assertEqual(response_data, content)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_validate_coupon_not_active(self):
         """

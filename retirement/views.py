@@ -1,11 +1,26 @@
 import json
 from datetime import datetime, timedelta
-
+import time
+import locale
 import pytz
+from dateutil.rrule import rrule, DAILY
 from django.core.files.base import ContentFile
-from django.db.models import F, When, Case, Max, Min
-from django_filters import DateTimeFilter, FilterSet, IsoDateTimeFilter, \
-    NumberFilter
+from django.db.models import (
+    F,
+    When,
+    Case,
+    Max,
+    Min,
+)
+from django_filters import (
+    DateTimeFilter,
+    FilterSet,
+    IsoDateTimeFilter,
+    NumberFilter,
+    CharFilter,
+)
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
 
 from blitz_api.mixins import ExportMixin
 from django.conf import settings
@@ -66,7 +81,7 @@ from .resources import (
 from .serializers import (
     RetreatTypeSerializer,
     AutomaticEmailSerializer,
-    RetreatDateSerializer,
+    RetreatDateSerializer, BatchRetreatSerializer,
 )
 from .services import (
     send_retreat_reminder_email,
@@ -83,14 +98,16 @@ TAX = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 class RetreatFilter(FilterSet):
     finish_after = IsoDateTimeFilter(
-        field_name='max_end_date', lookup_expr='gte'
+        field_name='max_end_date',
+        lookup_expr='gte',
     )
     start_after = IsoDateTimeFilter(
-        field_name='min_start_date', lookup_expr='gte'
+        field_name='min_start_date',
+        lookup_expr='gte',
     )
-
     type__id = NumberFilter(
-        field_name='type', lookup_expr='exact'
+        field_name='type',
+        lookup_expr='exact',
     )
 
     class Meta:
@@ -120,7 +137,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     ]
 
     filter_class = RetreatFilter
-
+    search_fields = ('name',)
     export_resource = RetreatResource()
 
     def get_queryset(self):
@@ -147,6 +164,80 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             instance.is_active = False
             instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @transaction.atomic()
+    @action(methods=['post'], detail=False, permission_classes=[IsAdminUser])
+    def batch_create(self, request):
+        """
+        This custom action allows an admin to batch create timeslots.
+        :param request:
+        :return:
+        """
+        serializer = BatchRetreatSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        # Create a list of start times for timeslots
+        # Naive datetimes are used to avoid problems with DST (not handled by
+        # rrule)
+        retreat_start_dates = list(
+            rrule(
+                freq=DAILY,
+                dtstart=validated_data.get(
+                    'bulk_start_time'
+                ).replace(tzinfo=None),
+                until=validated_data.get('bulk_end_time').replace(tzinfo=None),
+                byweekday=validated_data['weekdays'],
+            )
+        )
+
+        # Create a list of end times for timeslots
+        # Naive datetimes are used to avoid problems with DST (not handled by
+        # rrule)
+        retreat_end_dates = list(
+            rrule(
+                freq=DAILY,
+                dtstart=validated_data.get('bulk_start_time').replace(
+                    hour=validated_data.get('bulk_end_time').hour,
+                    minute=validated_data.get('bulk_end_time').minute,
+                    second=validated_data.get('bulk_end_time').second,
+                    tzinfo=None,
+                ),
+                until=validated_data.get('bulk_end_time').replace(tzinfo=None),
+                byweekday=validated_data['weekdays'],
+            )
+        )
+
+        retreat_data_list = list()
+        tz = pytz.timezone('America/Montreal')
+        locale.setlocale(locale.LC_TIME, "fr_CA")
+        validated_data.pop('bulk_start_time')
+        validated_data.pop('bulk_end_time')
+        validated_data.pop('weekdays')
+
+        for start, end in zip(retreat_start_dates, retreat_end_dates):
+            if tz.localize(start).hour < 12:
+                suffix = 'AM'
+            else:
+                suffix = 'PM'
+            validated_data['name'] = tz.localize(start).strftime(
+                "Bloc %d %b"
+            ) + ' ' + suffix
+            new_retreat = Retreat.objects.create(**validated_data)
+            RetreatDate.objects.create(
+                retreat=new_retreat,
+                start_time=tz.localize(start),
+                end_time=tz.localize(end),
+            )
+            new_retreat.activate()
+            retreat_data_list.append(new_retreat)
+
+        response = self.get_serializer(retreat_data_list, many=True).data
+
+        return Response(
+            status=status.HTTP_200_OK,
+            data=response
+        )
 
     @action(detail=True, permission_classes=[IsAdminUser], methods=['post'])
     def activate(self, request, pk=None):

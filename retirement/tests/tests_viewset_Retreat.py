@@ -99,7 +99,7 @@ class RetreatTests(CustomAPITestCase):
             number_of_tomatoes=4,
         )
         self.retreat = Retreat.objects.create(
-            name="mega_retreat",
+            name="mega retreat",
             details="This is a description of the mega retreat.",
             seats=400,
             address_line1="123 random street",
@@ -128,7 +128,7 @@ class RetreatTests(CustomAPITestCase):
         self.retreat.activate()
 
         self.retreat2 = Retreat.objects.create(
-            name="ultra_retreat",
+            name="ultra retreat",
             details="This is a description of the ultra retreat.",
             seats=400,
             address_line1="123 random street",
@@ -363,6 +363,159 @@ class RetreatTests(CustomAPITestCase):
         }
     )
     @responses.activate
+    def test_create_batch_retreat_with_missing_field(self):
+        """
+        Ensure we can't create a batch retreat without bulk date.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/authentication",
+            json={"token": "1234567890"},
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/tasks",
+            status=200
+        )
+
+        data = {
+            'name': "random_retreat",
+            'seats': 40,
+            'details': "short_description",
+            'timezone': "America/Montreal",
+            'price': '100.00',
+            'min_day_refund': 7,
+            'min_day_exchange': 7,
+            'refund_rate': 50,
+            'hidden': False,
+            'description': None,
+            'sub_title': None,
+            'postal_code': None,
+            'place_name': None,
+            'type': reverse(
+                'retreat:retreattype-detail',
+                args=[self.retreatType.id]
+            ),
+        }
+
+        response = self.client.post(
+            reverse('retreat:retreat-batch-create'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(
+            content,
+            {
+                "bulk_start_time": ["This field is required."],
+                "bulk_end_time": ["This field is required."],
+                "weekdays": ["This field is required."]
+            }
+        )
+
+    @responses.activate
+    def test_create_batch_retreat(self):
+        """
+        Ensure we can create a batch of retreat if everything is perfect.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/authentication",
+            json={"token": "1234567890"},
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/tasks",
+            status=200
+        )
+
+        data = {
+            'seats': 40,
+            'details': "short_description",
+            'timezone': "America/Montreal",
+            'price': '100.00',
+            'min_day_refund': 7,
+            'min_day_exchange': 7,
+            'refund_rate': 50,
+            'hidden': False,
+            'description': None,
+            'sub_title': None,
+            'postal_code': None,
+            'place_name': None,
+            'type': reverse(
+                'retreat:retreattype-detail',
+                args=[self.retreatType.id]
+            ),
+            'bulk_start_time': '2021-03-01T08:00:00Z',
+            'bulk_end_time': '2021-03-30T12:00:00Z',
+            'weekdays': [0, 1, 2]
+        }
+
+        response = self.client.post(
+            reverse('retreat:retreat-batch-create'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(
+            len(content),
+            14,
+        )
+
+        attributes = self.ATTRIBUTES + [
+            'state_province_fr',
+            'old_id',
+            'details_en',
+            'details_fr',
+            'address_line2_en',
+            'name_en',
+            'name_fr',
+            'state_province_en',
+            'country_fr',
+            'country_en',
+            'city_en',
+            'address_line2_fr',
+            'address_line1_fr',
+            'city_fr',
+            'address_line1_en',
+        ]
+
+        for item in content:
+            self.assertEqual(item['name'][-2:], 'AM', item)
+            self.check_attributes(item, attributes)
+
+    @override_settings(
+        EXTERNAL_SCHEDULER={
+            'URL': "http://example.com",
+            'USER': "user",
+            'PASSWORD': "password",
+        }
+    )
+    @responses.activate
     def test_create_without_toilet_gendered_and_room_type(self):
         """
         Ensure we can create a retreat if user has permission.
@@ -528,7 +681,7 @@ class RetreatTests(CustomAPITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': "mega_retreat",
+            'name': self.retreat.name,
             'seats': 40,
             'details': "short_description",
             'address_line1': 'random_address_1',
@@ -774,6 +927,49 @@ class RetreatTests(CustomAPITestCase):
 
         for item in content['results']:
             self.check_attributes(item)
+
+    def test_list_with_search(self):
+        """
+        Ensure we can list retreats with a search by name
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        self.retreat2.is_active = False
+        self.retreat2.save()
+
+        response = self.client.get(
+            reverse('retreat:retreat-list'),
+            {
+                'search': 'mega'
+            },
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(len(content['results']), 1)
+
+        attributes = self.ATTRIBUTES + [
+            'state_province_fr',
+            'old_id',
+            'details_en',
+            'details_fr',
+            'address_line2_en',
+            'name_en',
+            'name_fr',
+            'state_province_en',
+            'country_fr',
+            'country_en',
+            'city_en',
+            'address_line2_fr',
+            'address_line1_fr',
+            'city_fr',
+            'address_line1_en',
+        ]
+        for item in content['results']:
+            self.check_attributes(item, attributes)
 
     def test_list_as_admin(self):
         self.client.force_authenticate(user=self.admin)
