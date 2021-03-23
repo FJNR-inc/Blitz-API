@@ -99,7 +99,7 @@ class RetreatTests(CustomAPITestCase):
             number_of_tomatoes=4,
         )
         self.retreat = Retreat.objects.create(
-            name="mega_retreat",
+            name="mega retreat",
             details="This is a description of the mega retreat.",
             seats=400,
             address_line1="123 random street",
@@ -128,7 +128,7 @@ class RetreatTests(CustomAPITestCase):
         self.retreat.activate()
 
         self.retreat2 = Retreat.objects.create(
-            name="ultra_retreat",
+            name="ultra retreat",
             details="This is a description of the ultra retreat.",
             seats=400,
             address_line1="123 random street",
@@ -528,7 +528,7 @@ class RetreatTests(CustomAPITestCase):
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'name': "mega_retreat",
+            'name': self.retreat.name,
             'seats': 40,
             'details': "short_description",
             'address_line1': 'random_address_1',
@@ -774,6 +774,49 @@ class RetreatTests(CustomAPITestCase):
 
         for item in content['results']:
             self.check_attributes(item)
+
+    def test_list_with_search(self):
+        """
+        Ensure we can list retreats with a search by name
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        self.retreat2.is_active = False
+        self.retreat2.save()
+
+        response = self.client.get(
+            reverse('retreat:retreat-list'),
+            {
+                'search': 'mega'
+            },
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(len(content['results']), 1)
+
+        attributes = self.ATTRIBUTES + [
+            'state_province_fr',
+            'old_id',
+            'details_en',
+            'details_fr',
+            'address_line2_en',
+            'name_en',
+            'name_fr',
+            'state_province_en',
+            'country_fr',
+            'country_en',
+            'city_en',
+            'address_line2_fr',
+            'address_line1_fr',
+            'city_fr',
+            'address_line1_en',
+        ]
+        for item in content['results']:
+            self.check_attributes(item, attributes)
 
     def test_list_as_admin(self):
         self.client.force_authenticate(user=self.admin)
