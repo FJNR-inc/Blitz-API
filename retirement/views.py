@@ -183,7 +183,9 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         retreat_start_dates = list(
             rrule(
                 freq=DAILY,
-                dtstart=validated_data.get('bulk_start_time').replace(tzinfo=None),
+                dtstart=validated_data.get(
+                    'bulk_start_time'
+                ).replace(tzinfo=None),
                 until=validated_data.get('bulk_end_time').replace(tzinfo=None),
                 byweekday=validated_data['weekdays'],
             )
@@ -218,7 +220,9 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
                 suffix = 'AM'
             else:
                 suffix = 'PM'
-            validated_data['name'] = tz.localize(start).strftime("Bloc %d %b") + ' ' + suffix
+            validated_data['name'] = tz.localize(start).strftime(
+                "Bloc %d %b"
+            ) + ' ' + suffix
             new_retreat = Retreat.objects.create(**validated_data)
             RetreatDate.objects.create(
                 retreat=new_retreat,

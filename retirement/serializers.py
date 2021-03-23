@@ -316,8 +316,12 @@ class BatchRetreatSerializer(RetreatSerializer):
                 attrs.get('bulk_end_time') and \
                 attrs.get('bulk_start_time') >= attrs.get('bulk_end_time'):
             raise serializers.ValidationError({
-                'bulk_end_time': [_("End time must be later than start time.")],
-                'bulk_start_time': [_("Start time must be earlier than end time.")],
+                'bulk_end_time': [
+                    _("End time must be later than start time.")
+                ],
+                'bulk_start_time': [
+                    _("Start time must be earlier than end time.")
+                ],
             })
 
         return attrs
