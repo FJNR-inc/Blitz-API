@@ -1,5 +1,8 @@
 import json
-from datetime import datetime, timedelta
+from datetime import (
+    datetime,
+    timedelta,
+)
 
 import pytz
 import responses
@@ -13,10 +16,19 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from blitz_api.factories import AdminFactory, UserFactory
+from blitz_api.factories import (
+    AdminFactory,
+    UserFactory,
+)
+from blitz_api.models import AcademicLevel
 from blitz_api.testing_tools import CustomAPITestCase
+from store.models import Membership
 
-from ..models import Retreat, RetreatType, RetreatDate
+from retirement.models import (
+    Retreat,
+    RetreatType,
+    RetreatDate,
+)
 
 User = get_user_model()
 
@@ -185,6 +197,17 @@ class RetreatTests(CustomAPITestCase):
             retreat=self.retreat_hidden,
         )
         self.retreat_hidden.activate()
+
+        self.academic_level = AcademicLevel.objects.create(
+            name="University"
+        )
+        self.membership = Membership.objects.create(
+            name="basic_membership",
+            details="1-Year student membership",
+            price=50,
+            available=True,
+            duration=timedelta(days=365),
+        )
 
     @override_settings(
         EXTERNAL_SCHEDULER={
@@ -462,6 +485,12 @@ class RetreatTests(CustomAPITestCase):
                 'retreat:retreattype-detail',
                 args=[self.retreatType.id]
             ),
+            'exclusive_memberships': [
+                reverse(
+                    'membership-detail',
+                    args=[self.membership.id]
+                )
+            ],
             'bulk_start_time': '2021-03-01T08:00:00Z',
             'bulk_end_time': '2021-03-30T12:00:00Z',
             'weekdays': [0, 1, 2]
@@ -506,6 +535,15 @@ class RetreatTests(CustomAPITestCase):
 
         for item in content:
             self.assertEqual(item['name'][-2:], 'AM', item)
+            self.assertEqual(
+                item['exclusive_memberships'],
+                [
+                    'http://testserver' + reverse(
+                        'membership-detail',
+                        args=[self.membership.id]
+                    )
+                ],
+            )
             self.check_attributes(item, attributes)
 
     @override_settings(

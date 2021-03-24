@@ -214,6 +214,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         validated_data.pop('bulk_start_time')
         validated_data.pop('bulk_end_time')
         validated_data.pop('weekdays')
+        memberships = validated_data.pop('exclusive_memberships')
 
         for start, end in zip(retreat_start_dates, retreat_end_dates):
             if tz.localize(start).hour < 12:
@@ -224,6 +225,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
                 "Bloc %d %b"
             ) + ' ' + suffix
             new_retreat = Retreat.objects.create(**validated_data)
+            new_retreat.exclusive_memberships.set(memberships)
             RetreatDate.objects.create(
                 retreat=new_retreat,
                 start_time=tz.localize(start),
