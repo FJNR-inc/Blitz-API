@@ -552,6 +552,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         profile = PaymentProfile.objects.filter(owner=user).first()
 
         retreat_reservations = list()
+        new_membership = None
 
         if single_use_token and not profile:
             # Create external profile
@@ -631,6 +632,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                             today + user.membership.duration
                     )
                 user.save()
+
+                new_membership = user.membership
 
                 membership_coupons = MembershipCoupon.objects.filter(
                     membership__pk=membership_orderlines[0].content_object.pk,
@@ -926,6 +929,10 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         # Send retreat informations emails
         for retreat_reservation in retreat_reservations:
             send_retreat_confirmation_email(user, retreat_reservation.retreat)
+
+        # Send welcome email membership
+        if new_membership:
+            new_membership.send_welcome_email(user)
 
         return order
 
