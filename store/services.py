@@ -115,7 +115,7 @@ def manage_paysafe_error(err, additional_data):
                 detail=content_dict
             )
     except json.decoder.JSONDecodeError as err:
-        print(err.response)
+        pass
 
     Log.error(
         source='PAYSAFE',

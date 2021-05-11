@@ -837,6 +837,24 @@ class Reservation(SafeDeleteModel):
         return refund
 
 
+class RetreatUsageLog(models.Model):
+    """
+    Log usage of the videoconference link for virtual activities
+    """
+
+    reservation = models.ForeignKey(
+        Reservation,
+        on_delete=models.CASCADE,
+        verbose_name=_("Reservation"),
+        related_name='usage_logs',
+    )
+
+    datetime = models.DateTimeField(
+        verbose_name=_("Datetime"),
+        auto_now_add=True,
+    )
+
+
 class AutomaticEmailLog(models.Model):
 
     reservation = models.ForeignKey(

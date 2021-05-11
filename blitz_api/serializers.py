@@ -611,9 +611,7 @@ class MailChimpSerializer(serializers.Serializer):
                 first_name=validated_data['first_name'],
                 last_name=validated_data['last_name']
             )
-            print(response)
         except MailChimpError as e:
-            print(e.args[0])
             if e.args[0]['title'] == 'Member Exists':
                 raise serializers.ValidationError({
                     'email': [
