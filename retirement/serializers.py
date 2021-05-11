@@ -53,11 +53,38 @@ from .models import (
     RetreatType,
     AutomaticEmail,
     RetreatDate,
+    RetreatUsageLog,
 )
 
 User = get_user_model()
 
 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
+
+
+class RetreatUsageLogSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = RetreatUsageLog
+        fields = '__all__'
+        extra_kwargs = {
+            'url': {
+                'view_name': 'retreat:retreatusagelog-detail',
+            },
+            'reservation': {
+                'view_name': 'retreat:reservation-detail',
+            }
+        }
+
+    def validate_reservation(self, value):
+        user = self.context['request'].user
+
+        if value.user.id != user.id:
+            raise serializers.ValidationError(_(
+                "You need to own the reservation to log a usage."
+            ))
+
+        return value
 
 
 class RetreatDateSerializer(serializers.HyperlinkedModelSerializer):

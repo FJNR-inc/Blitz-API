@@ -70,6 +70,7 @@ from .models import (
     AutomaticEmail,
     AutomaticEmailLog,
     RetreatDate,
+    RetreatUsageLog,
 )
 from .resources import (
     ReservationResource,
@@ -81,7 +82,9 @@ from .resources import (
 from .serializers import (
     RetreatTypeSerializer,
     AutomaticEmailSerializer,
-    RetreatDateSerializer, BatchRetreatSerializer,
+    RetreatDateSerializer,
+    BatchRetreatSerializer,
+    RetreatUsageLogSerializer,
 )
 from .services import (
     send_retreat_reminder_email,
@@ -826,4 +829,11 @@ class AutomaticEmailViewSet(viewsets.ModelViewSet):
     serializer_class = AutomaticEmailSerializer
     queryset = AutomaticEmail.objects.all()
     permission_classes = [permissions.IsAdminOrReadOnly]
+    filter_fields = '__all__'
+
+
+class RetreatUsageLogViewSet(viewsets.ModelViewSet):
+    serializer_class = RetreatUsageLogSerializer
+    queryset = RetreatUsageLog.objects.all()
+    permission_classes = [IsAuthenticated]
     filter_fields = '__all__'

@@ -43,6 +43,11 @@ router.register('wait_queue_places_reserved',
 router.register('retreat_types', views.RetreatTypeViewSet)
 router.register('retreat_dates', views.RetreatDateViewSet)
 router.register('automatic_emails', views.AutomaticEmailViewSet)
+router.register(
+    'retreat_usage_log',
+    views.RetreatUsageLogViewSet,
+    basename='retreatusagelog'
+)
 
 urlpatterns = [
     path('', include(router.urls)),  # includes router generated URL
