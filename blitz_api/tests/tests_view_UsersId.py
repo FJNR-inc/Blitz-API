@@ -59,7 +59,9 @@ class UsersIdTests(APITestCase):
             'hide_newsletter',
             'is_in_newsletter',
             'number_of_free_virtual_retreat',
-            'membership_end_notification'
+            'membership_end_notification',
+            'get_number_of_past_tomatoes',
+            'get_number_of_future_tomatoes',
         ]
 
     def setUp(self):
