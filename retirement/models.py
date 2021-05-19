@@ -396,6 +396,11 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         blank=True,
     )
 
+    hide_from_client_admin_panel = models.BooleanField(
+        verbose_name=_("Hide from client admin panel"),
+        default=False,
+    )
+
     # History is registered in translation.py
     # history = HistoricalRecords()
 
