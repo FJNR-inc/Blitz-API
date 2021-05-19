@@ -387,6 +387,15 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         default=False
     )
 
+    # Sometime we want the retreat to be shown on a specific month
+    # ---
+    # Ex: If retreat begin on January 29th and finish on February
+    # 29th we maybe want to show it in February
+    display_start_time = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
     # History is registered in translation.py
     # history = HistoricalRecords()
 
