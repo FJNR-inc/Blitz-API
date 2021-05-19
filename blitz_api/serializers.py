@@ -181,6 +181,8 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
         required=True,
     )
     is_in_newsletter = serializers.ReadOnlyField()
+    get_number_of_past_tomatoes = serializers.ReadOnlyField()
+    get_number_of_future_tomatoes = serializers.ReadOnlyField()
 
     def validate_email(self, value):
         """
@@ -398,6 +400,8 @@ class UserSerializer(UserUpdateSerializer):
         source='workplaces',
     )
     is_in_newsletter = serializers.ReadOnlyField()
+    get_number_of_past_tomatoes = serializers.ReadOnlyField()
+    get_number_of_future_tomatoes = serializers.ReadOnlyField()
 
     def validate_email(self, value):
         """
