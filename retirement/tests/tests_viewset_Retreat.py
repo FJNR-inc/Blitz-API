@@ -93,7 +93,8 @@ class RetreatTests(CustomAPITestCase):
         'videoconference_tool',
         'videoconference_link',
         'dates',
-        'animator'
+        'animator',
+        'display_start_time',
     ]
 
     @classmethod
