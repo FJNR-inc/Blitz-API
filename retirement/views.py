@@ -1,26 +1,19 @@
 import json
 from datetime import datetime, timedelta
-import time
 import locale
 import pytz
 from dateutil.rrule import rrule, DAILY
 from django.core.files.base import ContentFile
 from django.db.models import (
-    F,
-    When,
-    Case,
     Max,
     Min,
 )
 from django_filters import (
-    DateTimeFilter,
     FilterSet,
     IsoDateTimeFilter,
     NumberFilter,
-    CharFilter,
+    BooleanFilter,
 )
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter
 
 from blitz_api.mixins import ExportMixin
 from django.conf import settings
@@ -115,6 +108,35 @@ class RetreatFilter(FilterSet):
 
     class Meta:
         model = Retreat
+        fields = '__all__'
+
+
+class RetreatReservationFilter(FilterSet):
+    finish_after = IsoDateTimeFilter(
+        field_name='max_end_date',
+        lookup_expr='gte',
+    )
+    start_after = IsoDateTimeFilter(
+        field_name='min_start_date',
+        lookup_expr='gte',
+    )
+    user = NumberFilter(
+        field_name='user__id',
+        lookup_expr='exact',
+    )
+    retreat = NumberFilter(
+        field_name='retreat__id',
+        lookup_expr='exact',
+    )
+    is_active = BooleanFilter(
+        field_name='user__id'
+    )
+    retreat__type__is_virtual = BooleanFilter(
+        field_name='retreat__type__is_virtual'
+    )
+
+    class Meta:
+        model = Reservation
         fields = '__all__'
 
 
@@ -481,12 +503,9 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     serializer_class = serializers.ReservationSerializer
     queryset = Reservation.objects.all()
-    filterset_fields = [
-        'user',
-        'retreat',
-        'is_active',
-        'retreat__type__is_virtual'
-    ]
+
+    filter_class = RetreatReservationFilter
+
     ordering_fields = (
         'is_active',
         'is_present',
@@ -503,8 +522,14 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         the currently authenticated user is an admin (is_staff).
         """
         if self.request.user.is_staff:
-            return Reservation.objects.all()
-        return Reservation.objects.filter(user=self.request.user)
+            queryset = Reservation.objects.all()
+        else:
+            queryset = Reservation.objects.filter(user=self.request.user)
+
+        return queryset.annotate(
+            max_end_date=Max('retreat__retreat_dates__end_time'),
+            min_start_date=Min('retreat__retreat_dates__start_time'),
+        )
 
     def get_permissions(self):
         """

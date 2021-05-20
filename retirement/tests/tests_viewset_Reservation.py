@@ -275,7 +275,6 @@ class ReservationTests(CustomAPITestCase):
         )
 
     def test_create(self):
-        self.maxDiff = None
         """
         Ensure we can create a reservation if user has permission.
         It is possible to create reservations for INACTIVE retreats.
@@ -603,57 +602,21 @@ class ReservationTests(CustomAPITestCase):
         Ensure we can list reservations as an admin.
         """
         self.client.force_authenticate(user=self.admin)
-        self.maxDiff = None
         response = self.client.get(
             reverse('retreat:reservation-list'),
             format='json',
         )
 
-        data = json.loads(response.content)
+        content = json.loads(response.content)
 
-        del data['results'][0]['user_details']
-        del data['results'][0]['retreat_details']
-        del data['results'][1]['user_details']
-        del data['results'][1]['retreat_details']
-        del data['results'][2]['user_details']
-        del data['results'][2]['retreat_details']
-        del data['results'][0]['inscription_date']
-        del data['results'][1]['inscription_date']
-        del data['results'][2]['inscription_date']
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
 
-        content = {
-            'count': 3,
-            'next': None,
-            'previous': None,
-            'results': [
-                self.reservation_expected_payload,
-                self.reservation2_expected_payload,
-                {
-                    'id': self.reservation_admin.id,
-                    'is_active': True,
-                    'is_present': False,
-                    'retreat': 'http://testserver/retreat/retreats/' +
-                               str(self.retreat2.id),
-                    'url': 'http://testserver/retreat/reservations/' +
-                           str(self.reservation_admin.id),
-                    'user': 'http://testserver/users/' + str(self.admin.id),
-                    'order_line': 'http://testserver/order_lines/' +
-                                  str(self.order_line.id),
-                    'cancelation_date': None,
-                    'cancelation_action': None,
-                    'cancelation_reason': None,
-                    'refundable': True,
-                    'exchangeable': True,
-                    'invitation': None,
-                    'post_event_send': False,
-                    'pre_event_send': False,
-                }
-            ]
-        }
+        self.assertEqual(content['count'], 3)
 
-        self.assertEqual(data, content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.check_attributes(content['results'][0])
 
     def test_list_as_non_admin(self):
         """
@@ -684,6 +647,204 @@ class ReservationTests(CustomAPITestCase):
         self.assertEqual(data, content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_filter_by_start_date(self):
+        """
+        Ensure that a user can filter its reservations by start_date
+        """
+        self.client.force_authenticate(user=self.user)
+
+        # First call without filter
+        response = self.client.get(
+            reverse('retreat:reservation-list'),
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(content['count'], 1)
+
+        # Second call with a filter to comparate
+        response = self.client.get(
+            reverse('retreat:reservation-list'),
+            {
+                'start_after': '2200-01-01T00:00:00Z'
+            },
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(content['count'], 0)
+
+    def test_filter_by_end_date(self):
+        """
+        Ensure that a user can filter its reservations by end_date
+        """
+        self.client.force_authenticate(user=self.user)
+
+        # First call without filter
+        response = self.client.get(
+            reverse('retreat:reservation-list'),
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(content['count'], 1)
+
+        # Second call with a filter to comparate
+        response = self.client.get(
+            reverse('retreat:reservation-list'),
+            {
+                'finish_after': '2200-01-01T00:00:00Z'
+            },
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(content['count'], 0)
+
+    def test_filter_by_is_active(self):
+        """
+        Ensure that a user can filter its reservations by is_active
+        """
+        self.client.force_authenticate(user=self.user)
+
+        # First call without filter
+        response = self.client.get(
+            reverse('retreat:reservation-list'),
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(content['count'], 1)
+
+        # Second call with a filter to comparate
+        response = self.client.get(
+            reverse('retreat:reservation-list'),
+            {
+                'is_active': 'false'
+            },
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(content['count'], 0)
+
+    def test_filter_by_user(self):
+        """
+        Ensure that an admin can filter reservations by is_virtual
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        # First call without filter
+        response = self.client.get(
+            reverse('retreat:reservation-list'),
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(content['count'], 3)
+
+        # Second call with a filter to comparate
+        response = self.client.get(
+            reverse('retreat:reservation-list'),
+            {
+                'user': self.user.id
+            },
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(content['count'], 1)
+
+    def test_filter_by_retreat(self):
+        """
+        Ensure that an admin can filter reservations by retreat
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        # First call without filter
+        response = self.client.get(
+            reverse('retreat:reservation-list'),
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(content['count'], 3)
+
+        # Second call with a filter to comparate
+        response = self.client.get(
+            reverse('retreat:reservation-list'),
+            {
+                'retreat': self.retreat2.id
+            },
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(content['count'], 1)
+
+    def test_filter_by_is_virtual(self):
+        """
+        Ensure that a user can filter its reservations by is_virtual
+        """
+        self.client.force_authenticate(user=self.user)
+
+        # First call without filter
+        response = self.client.get(
+            reverse('retreat:reservation-list'),
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(content['count'], 1)
+
+        # Second call with a filter to comparate
+        response = self.client.get(
+            reverse('retreat:reservation-list'),
+            {
+                'retreat__type__is_virtual': 'true'
+            },
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(content['count'], 0)
 
     def test_read(self):
         """
