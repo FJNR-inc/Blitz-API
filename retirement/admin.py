@@ -25,6 +25,7 @@ from .models import (
     AutomaticEmail,
     AutomaticEmailLog,
     RetreatDate,
+    RetreatUsageLog,
 )
 from .resources import (
     ReservationResource,
@@ -362,6 +363,7 @@ class AutomaticEmailAdmin(admin.ModelAdmin):
 
 admin.site.register(Retreat, RetreatAdmin)
 admin.site.register(RetreatType)
+admin.site.register(RetreatUsageLog)
 admin.site.register(RetreatDate, RetreatDateAdmin)
 admin.site.register(AutomaticEmail, AutomaticEmailAdmin)
 admin.site.register(AutomaticEmailLog, AutomaticEmailLogAdmin)
