@@ -129,7 +129,7 @@ class RetreatReservationFilter(FilterSet):
         lookup_expr='exact',
     )
     is_active = BooleanFilter(
-        field_name='user__id'
+        field_name='is_active'
     )
     retreat__type__is_virtual = BooleanFilter(
         field_name='retreat__type__is_virtual'
