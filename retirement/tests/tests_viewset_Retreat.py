@@ -93,6 +93,7 @@ class RetreatTests(CustomAPITestCase):
         'videoconference_tool',
         'videoconference_link',
         'dates',
+        'number_of_tomatoes',
         'animator',
         'display_start_time',
         'hide_from_client_admin_panel',

@@ -217,9 +217,9 @@ class User(AbstractUser):
 
         for reservation in reservations:
             if reservation.retreat.end_time < timezone.now():
-                past_count += reservation.retreat.type.number_of_tomatoes
+                past_count += reservation.retreat.get_number_of_tomatoes()
             else:
-                future_count += reservation.retreat.type.number_of_tomatoes
+                future_count += reservation.retreat.get_number_of_tomatoes()
 
         return {
             'past': past_count,
@@ -240,9 +240,9 @@ class User(AbstractUser):
 
         for reservation in reservations:
             if reservation.retreat.end_time < timezone.now():
-                past_count += reservation.retreat.type.number_of_tomatoes
+                past_count += reservation.retreat.get_number_of_tomatoes()
             else:
-                future_count += reservation.retreat.type.number_of_tomatoes
+                future_count += reservation.retreat.get_number_of_tomatoes()
 
         return {
             'past': past_count,
