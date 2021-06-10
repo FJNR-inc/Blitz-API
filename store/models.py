@@ -438,9 +438,13 @@ class Membership(BaseProduct):
             start_time = datetime.now().astimezone(
                 pytz.timezone('US/Eastern')
             )
-            end_time = user.membership_end.astimezone(
-                pytz.timezone('US/Eastern')
-            )
+
+            # We add a time to transform the date to a datetime
+            my_time = datetime.min.time()
+            end_time = datetime.combine(
+                user.membership_end,
+                my_time
+            ).astimezone(pytz.timezone('US/Eastern'))
 
             context = {
                 'USER_FIRST_NAME': user.first_name,
