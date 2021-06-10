@@ -361,9 +361,38 @@ class AutomaticEmailAdmin(admin.ModelAdmin):
     )
 
 
+class RetreatUsageLogAdmin(SimpleHistoryAdmin, SafeDeleteAdmin):
+    list_display = (
+        'user',
+        'retreat',
+        'datetime',
+    )
+    list_filter = (
+        ReservationUserFilter,
+        ReservationRetreatFilter,
+    )
+
+    # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
+    class Media:
+        pass
+
+    def user(self, obj):
+        return obj.reservation.user
+
+    def retreat(self, obj):
+        return obj.reservation.retreat
+
+    def lookup_allowed(self, lookup, value):
+        if lookup == "reservation__user":
+            return True
+        if lookup == "reservation__retreat":
+            return True
+        return super().lookup_allowed(lookup, value)
+
+
 admin.site.register(Retreat, RetreatAdmin)
 admin.site.register(RetreatType)
-admin.site.register(RetreatUsageLog)
+admin.site.register(RetreatUsageLog, RetreatUsageLogAdmin)
 admin.site.register(RetreatDate, RetreatDateAdmin)
 admin.site.register(AutomaticEmail, AutomaticEmailAdmin)
 admin.site.register(AutomaticEmailLog, AutomaticEmailLogAdmin)
