@@ -401,8 +401,22 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         default=False,
     )
 
+    # Overwrite the number of tomatoes of the retreat
+    # type for this value if not null
+    number_of_tomatoes = models.PositiveIntegerField(
+        verbose_name=_("Number of tomatoes"),
+        null=True,
+        blank=True,
+    )
+
     # History is registered in translation.py
     # history = HistoricalRecords()
+
+    def get_number_of_tomatoes(self):
+        if self.number_of_tomatoes:
+            return self.number_of_tomatoes
+        else:
+            return self.type.number_of_tomatoes
 
     @property
     def start_time(self):
