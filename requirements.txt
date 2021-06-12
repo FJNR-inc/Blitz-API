@@ -24,7 +24,7 @@ django-safedelete==0.5.2
 django-import-export==2.3.0
 jsonfield==3.1.0
 django-model-utils==4.1.1
-tqdm==4.54.1
+tqdm==4.61.1
 colorama==0.4.4
 django-admin-autocomplete-filter==0.6.1
 mailchimp3==3.0.14
