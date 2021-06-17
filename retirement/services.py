@@ -170,6 +170,7 @@ def send_virtual_retreat_reminder_email(user, retreat):
             locale='fr'
         ),
         'RETREAT_END_TIME': end_time.strftime('%-Hh%M'),
+        'RETREAT_NUMBER_OF_TOMATOES': retreat.get_number_of_tomatoes(),
         'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[
             'FRONTEND_INTEGRATION'][
             'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT'],
@@ -202,6 +203,7 @@ def send_physical_retreat_reminder_email(user, retreat):
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
         'RETREAT_PLACE': retreat.place_name,
+        'RETREAT_NUMBER_OF_TOMATOES': retreat.get_number_of_tomatoes(),
         'RETREAT_START_TIME': start_time.strftime('%Y-%m-%d %H:%M'),
         'RETREAT_END_TIME': end_time.strftime('%Y-%m-%d %H:%M'),
     }
@@ -246,6 +248,7 @@ def send_post_physical_retreat_email(user, retreat):
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
         'RETREAT_PLACE': retreat.place_name,
+        'RETREAT_NUMBER_OF_TOMATOES': retreat.get_number_of_tomatoes(),
         'RETREAT_START_TIME': start_time.strftime('%Y-%m-%d %H:%M'),
         'RETREAT_END_TIME': end_time.strftime('%Y-%m-%d %H:%M'),
     }
@@ -275,6 +278,7 @@ def send_post_virtual_retreat_email(user, retreat):
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
         'RETREAT_NAME': retreat.name,
+        'RETREAT_NUMBER_OF_TOMATOES': retreat.get_number_of_tomatoes(),
         'RETREAT_START_DATE': format_date(
             start_time,
             format='long',
@@ -377,6 +381,7 @@ def send_automatic_email(user, retreat, email):
             locale='fr'
         ),
         'RETREAT_END_TIME': end_time.strftime('%-Hh%M'),
+        'RETREAT_NUMBER_OF_TOMATOES': retreat.get_number_of_tomatoes(),
         'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[
             'FRONTEND_INTEGRATION'][
             'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT'],
