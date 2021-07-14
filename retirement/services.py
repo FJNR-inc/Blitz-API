@@ -106,6 +106,7 @@ def send_retreat_confirmation_email(user, retreat):
             'RETREAT_END': end_time.strftime('%Y-%m-%d %H:%M'),
             'RETREAT_VIDEOCONFERENCE_TOOL': retreat.videoconference_tool,
             'RETREAT_VIDEOCONFERENCE_LINK': retreat.videoconference_link,
+            'RETREAT_NUMBER_OF_TOMATOES': retreat.get_number_of_tomatoes(),
             'LINK_TO_BE_PREPARED': settings.LOCAL_SETTINGS[
                 'FRONTEND_INTEGRATION'][
                 'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT'],
