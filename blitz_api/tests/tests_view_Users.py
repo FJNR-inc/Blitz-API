@@ -129,18 +129,8 @@ class UsersTests(APITestCase):
         Ensure we can't create a student user without academic_* fields.
         """
         data = {
-            'username': 'John',
             'email': 'John@mailinator.com',
             'password': 'test123!',
-            'phone': '1234567890',
-            'first_name': 'Chuck',
-            'last_name': 'Norris',
-            'university': {
-                'name': "random_university"
-            },
-            'academic_field': {'name': "random_field"},
-            'gender': "M",
-            'birthdate': "1999-11-11",
         }
 
         response = self.client.post(
@@ -149,30 +139,16 @@ class UsersTests(APITestCase):
             format='json',
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        content = {
-            'academic_level': ['This field is required.']
-        }
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_create_new_user_blank_fields(self):
         """
         Ensure we can't create a new user with blank fields
         """
+        self.maxDiff = None
         data = {
             'email': '',
             'password': '',
-            'phone': '',
-            'first_name': '',
-            'last_name': '',
-            'university': {
-                'name': ""
-            },
-            'academic_field': {'name': ""},
-            'academic_level': {'name': ""},
-            'gender': "",
-            'birthdate': "",
         }
 
         response = self.client.post(
@@ -184,19 +160,8 @@ class UsersTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         content = {
-            'academic_field': {'name': ['This field may not be blank.']},
-            'academic_level': {'name': ['This field may not be blank.']},
-            'birthdate': [
-                'Date has wrong format. Use one of these formats instead: '
-                'YYYY-MM-DD.'
-            ],
-            'first_name': ['This field may not be blank.'],
-            'gender': ['"" is not a valid choice.'],
-            'last_name': ['This field may not be blank.'],
             'email': ['This field may not be blank.'],
             'password': ['This field may not be blank.'],
-            'phone': ['Invalid format.'],
-            'university': {'name': ['This field may not be blank.']}
         }
         self.assertEqual(json.loads(response.content), content)
 
@@ -215,11 +180,7 @@ class UsersTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         content = {
-            'birthdate': ['This field is required.'],
             'email': ['This field is required.'],
-            'first_name': ['This field is required.'],
-            'gender': ['This field is required.'],
-            'last_name': ['This field is required.'],
             'password': ['This field is required.']
         }
         self.assertEqual(json.loads(response.content), content)
