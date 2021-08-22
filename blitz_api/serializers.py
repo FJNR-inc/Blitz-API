@@ -387,12 +387,10 @@ class UserSerializer(UserUpdateSerializer):
         max_length=254,
         required=True,
     )
-    university = OrganizationSerializer(required=False)
-    academic_level = AcademicLevelSerializer(required=False)
-    academic_field = AcademicFieldSerializer(required=False)
-    membership = MembershipSerializer(
-        read_only=True,
-    )
+    university = OrganizationSerializer(read_only=True)
+    academic_level = AcademicLevelSerializer(read_only=True)
+    academic_field = AcademicFieldSerializer(read_only=True)
+    membership = MembershipSerializer(read_only=True)
     volunteer_for_workplace = serializers.HyperlinkedRelatedField(
         many=True,
         read_only=True,
@@ -414,30 +412,6 @@ class UserSerializer(UserUpdateSerializer):
             ))
         return value
 
-    def validate_university(self, value):
-        """
-        Check that the university exists.
-        """
-        if 'name' in value:
-            org = Organization.objects.filter(name=value['name'])
-
-            if org:
-                return org[0]
-        raise serializers.ValidationError(_("This university does not exist."))
-
-    def validate_academic_level(self, value):
-        """
-        Check that the academic level exists.
-        """
-        if 'name' in value:
-            lvl = AcademicLevel.objects.filter(name=value['name'])
-
-            if lvl:
-                return lvl[0]
-        raise serializers.ValidationError(
-            _("This academic level does not exist.")
-        )
-
     def validate_password(self, value):
         try:
             password_validation.validate_password(password=value)
@@ -449,10 +423,6 @@ class UserSerializer(UserUpdateSerializer):
         content = {}
         if 'email' in attrs:
             attrs['username'] = attrs['email']
-        if 'university' in attrs:
-            for key in ['academic_level', 'academic_field']:
-                if key not in attrs:
-                    content[key] = [_('This field is required.')]
 
         if content:
             raise serializers.ValidationError(content)
@@ -463,17 +433,6 @@ class UserSerializer(UserUpdateSerializer):
         """
         Check that the email domain correspond to the university.
         """
-        if 'university' in validated_data:
-            domains = Organization.objects.get(
-                name=validated_data['university'].name
-            ).domains.all()
-
-            email_d = validated_data['email'].split("@", 1)[1]
-            if not any(d.name.lower() == email_d.lower() for d in domains):
-                raise serializers.ValidationError({
-                    'email': [_("Invalid domain name.")]
-                })
-
         user = User(**validated_data)
 
         # Hash the user's password
@@ -501,21 +460,6 @@ class UserSerializer(UserUpdateSerializer):
         extra_kwargs = {
             'password': {'write_only': True},
             'new_password': {'write_only': True},
-            'gender': {
-                'required': True,
-                'allow_blank': False,
-            },
-            'first_name': {
-                'required': True,
-                'allow_blank': False,
-            },
-            'last_name': {
-                'required': True,
-                'allow_blank': False,
-            },
-            'birthdate': {
-                'required': True,
-            },
         }
         read_only_fields = (
             'id',
