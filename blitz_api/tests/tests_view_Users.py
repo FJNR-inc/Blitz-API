@@ -477,6 +477,7 @@ class UsersTests(APITestCase):
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
+            'picture': None,
             'price': '50.00',
             'details': '1-Year student membership',
             'duration': '365 00:00:00',

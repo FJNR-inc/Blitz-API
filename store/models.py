@@ -402,6 +402,7 @@ class Membership(BaseProduct):
     class Meta:
         verbose_name = _("Membership")
         verbose_name_plural = _("Memberships")
+        ordering = ('price',)
 
     old_id = models.IntegerField(
         verbose_name=_("Id before migrate to base product"),
@@ -416,6 +417,13 @@ class Membership(BaseProduct):
         blank=True,
         verbose_name=_("Academic levels"),
         related_name='memberships',
+    )
+
+    picture = models.ImageField(
+        _('picture'),
+        upload_to='memberships',
+        blank=True,
+        null=True,
     )
 
     welcome_email_template_id = models.PositiveIntegerField(
