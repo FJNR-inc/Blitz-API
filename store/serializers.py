@@ -107,7 +107,7 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
     price = serializers.DecimalField(
         max_digits=6,
         decimal_places=2,
-        min_value=0.1,
+        min_value=0,
     )
 
     name = serializers.CharField(

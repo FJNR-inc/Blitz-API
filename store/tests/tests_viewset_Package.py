@@ -259,7 +259,7 @@ class PackageTests(APITestCase):
 
         content = {
             'price': [
-                'Ensure this value is greater than or equal to 0.1.'
+                'Ensure this value is greater than or equal to 0.'
             ],
             'reservations': [
                 'Ensure this value is greater than or equal to 1.'
