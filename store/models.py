@@ -489,6 +489,7 @@ class Package(BaseProduct):
     class Meta:
         verbose_name = _("Package")
         verbose_name_plural = _("Packages")
+        ordering = ('price',)
 
     old_id = models.IntegerField(
         verbose_name=_("Id before migrate to base product"),
@@ -505,6 +506,13 @@ class Package(BaseProduct):
         blank=True,
         verbose_name=_("Memberships"),
         related_name='packages',
+    )
+
+    picture = models.ImageField(
+        _('picture'),
+        upload_to='packages',
+        blank=True,
+        null=True,
     )
 
     # History is registered in translation.py
