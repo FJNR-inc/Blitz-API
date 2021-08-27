@@ -26,11 +26,11 @@
             "ORGANIZATION": "Blitz Paradisio",
             "EMAIL_SERVICE": "True",
             "AUTO_ACTIVATE_USER": "False",
-            "ACTIVATION_URL": "https://dev.thesez-vous.org/membership/confirmation/{{token}}",
+            "ACTIVATION_URL": "https://thesez-vous-5e376.web.app/membership/confirmation/{{token}}",
             "ACTIVATION_TOKENS_MINUTES": "1440",
             "TEMPORARY_TOKEN_MINUTES": "30",
             "TEMPORARY_TOKEN_RENEW_ON_SUCCESS": "True",
-            "FORGOT_PASSWORD_URL": "https://dev.thesez-vous.org/reset-password/{{token}}",
+            "FORGOT_PASSWORD_URL": "https://thesez-vous-5e376.web.app/reset-password/{{token}}",
             "AWS_S3_REGION_NAME": "ca-central-1",
             "AWS_STORAGE_STATIC_BUCKET_NAME": "thesezvous-api-static",
             "AWS_STORAGE_MEDIA_BUCKET_NAME": "thesezvous-api-media-dev",
@@ -41,8 +41,11 @@
             "MEDIA_URL": "https://thesezvous-api-media-dev.s3.ca-central-1.amazonaws.com/",
             "MEDIA_ROOT": "https://thesezvous-api-media-dev.s3.ca-central-1.amazonaws.com/",
             "DEFAULT_FILE_STORAGE": "blitz_api.storage_backends.S3MediaStorage",
-            "CONFIRM_SIGN_UP": "6",
-            "FORGOT_PASSWORD": "7",
+            "CONFIRM_SIGN_UP": "36",
+            "FORGOT_PASSWORD": "40",
+            "TEMPLATE_EMAIL_THROWBACK_VIRTUAL_RETREAT": "43",
+            "TEMPLATE_EMAIL_REMINDER_VIRTUAL_RETREAT": "41",
+            "TEMPLATE_EMAIL_WELCOME_VIRTUAL_RETREAT": "42",
             "EMAIL_BACKEND": "anymail.backends.sendinblue.EmailBackend",
             "DEFAULT_FROM_EMAIL": "Thèsez-Vous <noreply@thesezvous.org>",
             "PAYSAFE_BASE_URL": "https://api.test.paysafe.com/",
@@ -58,11 +61,12 @@
             "EXTERNAL_SCHEDULER_URL": "https://cron-manager.fjnr.ca",
             "EXTERNAL_SCHEDULER_USER": "",
             "EXTERNAL_SCHEDULER_PASSWORD": "",
-            "URL_TO_CALL":  "https://api-dev.thesez-vous.org"
-        },
-        "vpc_config" : {
-            "SubnetIds": [ "subnet-0bd158ff494029446","subnet-087e1408264ff9358" ],
+            "URL_TO_CALL":  "https://api-dev.thesez-vous.org",
+            "POLICY_URL":  "https://www.thesez-vous.com/politiquesannulation.html"
+          },
+          "vpc_config" : {
+            "SubnetIds": [ "subnet-0bd158ff494029446", "subnet-087e1408264ff9358" ],
             "SecurityGroupIds": [ "sg-0527af17c3fcdbe73" ]
         }
-    }
+     }
 }
