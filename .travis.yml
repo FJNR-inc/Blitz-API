@@ -34,9 +34,9 @@ env:
   - ORGANIZATION=Blitz Paradisio
   - EMAIL_SERVICE=True
   - AUTO_ACTIVATE_USER=False
-  - ACTIVATION_URL=https://thesez-vous-5e376.web.app/membership/confirmation/{{token}}
-  - FORGOT_PASSWORD_URL=https://thesez-vous-5e376.web.app/reset-password/{{token}}
-  - RETREAT_UNSUBSCRIBE_URL=https://thesez-vous-5e376.web.app/wait_queue/{{wait_queue_id}}/unsubscribe
+  - ACTIVATION_URL=https://dev.thesez-vous.org/membership/confirmation/{{token}}
+  - FORGOT_PASSWORD_URL=https://dev.thesez-vous.org/reset-password/{{token}}
+  - RETREAT_UNSUBSCRIBE_URL=https://dev.thesez-vous.org/wait_queue/{{wait_queue_id}}/unsubscribe
   - AWS_S3_REGION_NAME=ca-central-1
   - AWS_STORAGE_STATIC_BUCKET_NAME=thesezvous-api-static
   - AWS_STORAGE_MEDIA_BUCKET_NAME=thesezvous-api-media-dev
