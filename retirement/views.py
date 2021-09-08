@@ -537,7 +537,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         return queryset.annotate(
             max_end_date=Max('retreat__retreat_dates__end_time'),
             min_start_date=Min('retreat__retreat_dates__start_time'),
-        ).order_by('-min_start_date')
+        ).order_by('min_start_date')
 
     def get_permissions(self):
         """
