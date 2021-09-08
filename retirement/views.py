@@ -120,6 +120,14 @@ class RetreatReservationFilter(FilterSet):
         field_name='min_start_date',
         lookup_expr='gte',
     )
+    finish_before = IsoDateTimeFilter(
+        field_name='max_end_date',
+        lookup_expr='lte',
+    )
+    start_before = IsoDateTimeFilter(
+        field_name='min_start_date',
+        lookup_expr='lte',
+    )
     user = NumberFilter(
         field_name='user__id',
         lookup_expr='exact',
