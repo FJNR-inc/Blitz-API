@@ -13,8 +13,7 @@ from django.utils import timezone
 from log_management.models import Log, EmailLog
 from retirement.models import WaitQueue
 from store.models import Refund
-from store.services import (PAYSAFE_EXCEPTION,
-                            refund_amount, )
+from store.services import refund_amount
 
 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
@@ -88,7 +87,7 @@ def send_retreat_confirmation_email(user, retreat):
             'USER_FIRST_NAME': user.first_name,
             'USER_LAST_NAME': user.last_name,
             'USER_EMAIL': user.email,
-            'RETREAT_NAME': retreat.name,
+            'RETREAT_NAME': retreat.name_fr,
             'RETREAT_START_DATE': format_date(
                 start_time,
                 format='long',
@@ -100,7 +99,7 @@ def send_retreat_confirmation_email(user, retreat):
                 format='long',
                 locale='fr'
             ),
-            'RETREAT_TYPE': retreat.type.name,
+            'RETREAT_TYPE': retreat.type.name_fr,
             'RETREAT_END_TIME': end_time.strftime('%-Hh%M'),
             'RETREAT_START': start_time.strftime('%Y-%m-%d %H:%M'),
             'RETREAT_END': end_time.strftime('%Y-%m-%d %H:%M'),
@@ -158,7 +157,7 @@ def send_virtual_retreat_reminder_email(user, retreat):
         'USER_FIRST_NAME': user.first_name,
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
-        'RETREAT_NAME': retreat.name,
+        'RETREAT_NAME': retreat.name_fr,
         'RETREAT_START_DATE': format_date(
             start_time,
             format='long',
@@ -202,7 +201,7 @@ def send_physical_retreat_reminder_email(user, retreat):
         'USER_FIRST_NAME': user.first_name,
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
-        'RETREAT_NAME': retreat.name,
+        'RETREAT_NAME': retreat.name_fr,
         'RETREAT_PLACE': retreat.place_name,
         'RETREAT_NUMBER_OF_TOMATOES': retreat.get_number_of_tomatoes(),
         'RETREAT_START_TIME': start_time.strftime('%Y-%m-%d %H:%M'),
@@ -247,7 +246,7 @@ def send_post_physical_retreat_email(user, retreat):
         'USER_FIRST_NAME': user.first_name,
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
-        'RETREAT_NAME': retreat.name,
+        'RETREAT_NAME': retreat.name_fr,
         'RETREAT_PLACE': retreat.place_name,
         'RETREAT_NUMBER_OF_TOMATOES': retreat.get_number_of_tomatoes(),
         'RETREAT_START_TIME': start_time.strftime('%Y-%m-%d %H:%M'),
@@ -278,7 +277,7 @@ def send_post_virtual_retreat_email(user, retreat):
         'USER_FIRST_NAME': user.first_name,
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
-        'RETREAT_NAME': retreat.name,
+        'RETREAT_NAME': retreat.name_fr,
         'RETREAT_NUMBER_OF_TOMATOES': retreat.get_number_of_tomatoes(),
         'RETREAT_START_DATE': format_date(
             start_time,
@@ -369,7 +368,7 @@ def send_automatic_email(user, retreat, email):
         'USER_FIRST_NAME': user.first_name,
         'USER_LAST_NAME': user.last_name,
         'USER_EMAIL': user.email,
-        'RETREAT_NAME': retreat.name,
+        'RETREAT_NAME': retreat.name_fr,
         'RETREAT_START_DATE': format_date(
             start_time,
             format='long',
