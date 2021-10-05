@@ -960,6 +960,71 @@ class ReservationTests(CustomAPITestCase):
         self.assertEqual(len(mail.outbox), 1)
 
     @responses.activate
+    def test_delete_free(self):
+        """
+        Ensure that a user can cancel one of his retreat reservations
+        that was free.
+        The user will not have any refund since it was free, even
+        by canceling 'min_day_refund' days or more before the
+        event.
+        The user won't receive any email.
+        """
+        order_line = OrderLine.objects.create(
+            order=self.order,
+            quantity=1,
+            content_type=self.retreat_content_type,
+            object_id=self.retreat.id,
+            cost=0.0
+        )
+
+        free_reservation = Reservation.objects.create(
+            user=self.user,
+            retreat=self.retreat,
+            order_line=order_line,
+            is_active=True,
+        )
+
+        self.client.force_authenticate(user=self.user)
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/"
+            "settlements/1/refunds",
+            json=SAMPLE_REFUND_RESPONSE,
+            status=200
+        )
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'retreat:reservation-detail',
+                    kwargs={'pk': free_reservation.id},
+                ),
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content
+        )
+
+        free_reservation.refresh_from_db()
+
+        self.assertFalse(free_reservation.is_active)
+        self.assertEqual(free_reservation.cancelation_reason, 'U')
+        self.assertEqual(free_reservation.cancelation_action, 'N')
+        self.assertEqual(free_reservation.cancelation_date, FIXED_TIME)
+
+        free_reservation.is_active = True
+        free_reservation.cancelation_date = None
+        free_reservation.cancelation_reason = None
+
+        self.assertEqual(len(mail.outbox), 0)
+
+    @responses.activate
     def test_delete_late(self):
         """
         Ensure that a user can cancel one of his retreat reservations.

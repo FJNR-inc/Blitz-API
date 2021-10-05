@@ -610,9 +610,14 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         #
         #  2 - An admin want to force a refund and the user paid for
         #  his reservation
+        #
+        # In all case, only paid reservation (amount > 0) can be refunded
 
-        process_refund = (respects_minimum_days and refundable) or\
-                         (force_refund and order_line)
+        if instance.get_refund_value() > 0:
+            process_refund = (respects_minimum_days and refundable) or \
+                             force_refund
+        else:
+            process_refund = False
 
         with transaction.atomic():
             # No need to check for previous refunds because a refunded

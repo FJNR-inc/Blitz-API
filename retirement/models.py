@@ -825,6 +825,9 @@ class Reservation(SafeDeleteModel):
         return str(self.user)
 
     def get_refund_value(self, total_refund=False):
+        if self.order_line is None:
+            return 0
+
         # First get net pay: total cost
         refund_value = float(self.order_line.cost)
         # Add the tax rate, so we have the real value pay by the user
