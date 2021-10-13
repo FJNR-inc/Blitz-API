@@ -30,4 +30,4 @@ django-admin-autocomplete-filter==0.6.1
 mailchimp3==3.0.14
 babel==2.9.0
 
-django-admin-inline-paginator==0.1.1
+django-admin-inline-paginator==0.2.1
