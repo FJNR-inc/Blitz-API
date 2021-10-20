@@ -20,6 +20,7 @@ router_extra = OptionalSlashSimpleRouter()
 # Create a router and register our viewsets with it.
 router = OptionalSlashSimpleRouter()
 router.register('messages', views.MessageViewSet)
+router.register('attendances', views.AttendanceViewSet)
 
 router.registry.extend(router_extra.registry)
 

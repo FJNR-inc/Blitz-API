@@ -25,3 +25,21 @@ class Message(models.Model):
         verbose_name=_("Posted at"),
         auto_now_add=True,
     )
+
+
+class Attendance(models.Model):
+    """Attendances to the tomato app"""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_("User"),
+        related_name='attendances',
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        verbose_name=_("Created at"),
+        auto_now_add=True,
+    )
