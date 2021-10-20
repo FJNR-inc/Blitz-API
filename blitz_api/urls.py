@@ -26,6 +26,7 @@ from store.urls import router as store_router
 from retirement.urls import router as retirement_router
 from cron_manager.urls import router as cron_manager_router
 from ckeditor_api.urls import router as ckeditor_api_router
+from tomato.urls import router as tomato_router
 
 from . import views
 
@@ -48,7 +49,7 @@ router.registry.extend(workplace_router.registry)
 router.registry.extend(store_router.registry)
 router.registry.extend(cron_manager_router.registry)
 router.registry.extend(ckeditor_api_router.registry)
-# router.registry.extend(retirement_router.registry)
+router.registry.extend(tomato_router.registry)
 
 router.register('users', views.UserViewSet)
 router.register('domains', views.DomainViewSet)

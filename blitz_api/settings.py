@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'django_filters',
     'admin_auto_filters',
     'django_admin_inline_paginator',
+    'tomato',
 ]
 
 MIDDLEWARE = [
