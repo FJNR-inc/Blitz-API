@@ -150,6 +150,8 @@ DATABASES = {
     )
 }
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 # Custom user model
 
 AUTH_USER_MODEL = 'blitz_api.User'
