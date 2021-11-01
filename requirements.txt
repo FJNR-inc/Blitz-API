@@ -32,3 +32,6 @@ babel==2.9.1
 troposphere==2.7.1
 
 django-admin-inline-paginator==0.2.1
+
+# Google cloud platform
+google-cloud-storage==1.42.3
