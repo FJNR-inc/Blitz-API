@@ -19,6 +19,8 @@ from decouple import config, Csv
 from django.utils.translation import ugettext_lazy as _
 from dj_database_url import parse as db_url
 
+IS_GAE_ENV = config('GAE_INSTANCE', False)
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).absolute().parent.parent
 
