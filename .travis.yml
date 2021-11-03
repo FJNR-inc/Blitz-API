@@ -21,7 +21,6 @@ before_script:
   # We will run a postgres service into docker, so wee need to stop the postgres service
   - sudo service postgresql stop
 script:
-  - docker-compose run api coverage run manage.py test
   - docker-compose run api pycodestyle --config=.pycodestylerc .
 after_success:
   - docker-compose run -e TRAVIS_JOB_ID -e TRAVIS_BRANCH -e TRAVIS api coveralls
