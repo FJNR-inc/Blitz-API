@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
+import json
+import os
 from ast import literal_eval
 import logging
 from pathlib import Path
@@ -223,9 +225,9 @@ if STATICFILES_STORAGE == 'django.contrib.staticfiles.storage.StaticFilesStorage
 
 # User uploaded files (MEDIA)
 if IS_GAE_ENV:
-    service_account_info = json.loads(config('GS_CREDENTIALS'))
-    GS_CREDENTIALS = service_account.Credentials. \
-        from_service_account_info(service_account_info)
+    # service_account_info = json.loads(config('GS_CREDENTIALS'))
+    # GS_CREDENTIALS = service_account.Credentials. \
+    #     from_service_account_info(service_account_info)
     DEFAULT_FILE_STORAGE = 'blitz_api.storage_backends.' \
                            'GoogleCloudMediaStorage'
     GS_PROJECT_ID = config('GS_MEDIA_BUCKET_NAME',
