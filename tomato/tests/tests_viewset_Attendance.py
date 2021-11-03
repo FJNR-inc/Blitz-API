@@ -158,5 +158,3 @@ class AttendanceTests(CustomAPITestCase):
             response.json()['number_of_attendance'],
             10,
         )
-
-

@@ -50,7 +50,11 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[])
     def current_number(self, request):
-        beginning_of_period = timezone.now().replace(minute=0, second=0, microsecond=0)
+        beginning_of_period = timezone.now().replace(
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
 
         list_of_attendance = Attendance.objects.filter(
             created_at__gte=beginning_of_period

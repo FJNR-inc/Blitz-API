@@ -38,6 +38,7 @@ class MessageSerializer(serializers.HyperlinkedModelSerializer):
 
         return super(MessageSerializer, self).create(validated_data)
 
+
 class AttendanceSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     user = serializers.HyperlinkedRelatedField(
