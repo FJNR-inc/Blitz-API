@@ -1,3 +1,8 @@
 from django.contrib import admin
+from tomato.models import (
+    Message,
+    Attendance,
+)
 
-# Register your models here.
+admin.site.register(Message)
+admin.site.register(Attendance)

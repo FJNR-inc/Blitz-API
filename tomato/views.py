@@ -18,6 +18,50 @@ from rest_framework.permissions import (
     IsAuthenticated,
     IsAdminUser,
 )
+from django.views.generic.base import TemplateView
+from asgiref.sync import sync_to_async
+import time
+import json
+from datetime import datetime, timedelta
+
+
+class IndexView(TemplateView):
+    template_name = "index.html"
+
+
+async def last_messages(socket, *args, **kwargs):
+    await socket.accept()
+    last_update = None
+    last_time_sent = timezone.now()
+    while True:
+        time.sleep(2)
+        if last_update:
+            queryset = await sync_to_async(list)(Message.objects.filter(posted_at__gte=last_update).prefetch_related('user').order_by('-posted_at'))
+        else:
+            queryset = await sync_to_async(list)(Message.objects.all().prefetch_related('user').order_by('-posted_at')[:50])
+
+        last_update = timezone.now()
+        data = []
+        for item in queryset:
+            data.append(
+                {
+                    'id': item.id,
+                    'message': item.message,
+                    'author': {
+                        'id': item.user.id,
+                        'first_name': item.user.first_name,
+                        'last_name': item.user.last_name,
+                    },
+                    'posted_at': datetime.timestamp(item.posted_at),
+                }
+            )
+
+        if len(data):
+            last_time_sent = timezone.now()
+            await socket.send_text(json.dumps(data))
+        elif last_time_sent < timezone.now() - timedelta(minutes=1):
+            last_time_sent = timezone.now()
+            await socket.send_text('')
 
 
 class MessageViewSet(viewsets.ModelViewSet):
