@@ -115,14 +115,14 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     queryset = Attendance.objects.all()
 
     def get_permissions(self):
-        if self.action in ['create', 'delete_key']:
+        if self.action in ['create', 'delete_key', 'update_key']:
             permission_classes = []
         else:
             permission_classes = [IsAdminUser]
 
         return [permission() for permission in permission_classes]
 
-    @action(detail=False, permission_classes=[])
+    @action(detail=False, permission_classes=[], methods=['post'])
     def delete_key(self, request):
         serializer = AttendanceDeleteKeySerializer(
             data=self.request.data,
@@ -136,7 +136,32 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             attendance = Attendance.objects.get(key=serializer.validated_data.get('key'))
             attendance.delete()
 
-            return Response(response, status=status.HTTP_204_NO_CONTENT)
+            return Response('', status=status.HTTP_204_NO_CONTENT)
+        except Attendance.DoesNotExist:
+            return Response(
+                {
+                    'key': [_(
+                        'This key does not exist'
+                    )]
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=False, permission_classes=[], methods=['post'])
+    def update_key(self, request):
+        serializer = AttendanceDeleteKeySerializer(
+            data=self.request.data,
+            context={
+                'request': request,
+            },
+        )
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            attendance = Attendance.objects.get(key=serializer.validated_data.get('key'))
+            attendance.save()
+
+            return Response('', status=status.HTTP_200_OK)
         except Attendance.DoesNotExist:
             return Response(
                 {

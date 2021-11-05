@@ -22,6 +22,7 @@ class AttendanceTests(CustomAPITestCase):
         'key',
         'longitude',
         'latitude',
+        'updated_at',
         'created_at',
     ]
 
@@ -139,4 +140,66 @@ class AttendanceTests(CustomAPITestCase):
         self.assertEqual(
             response.status_code,
             status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_delete_key(self):
+        """
+        Ensure we can delete an Attendance based on its key as a simple user.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        attendance = AttendanceFactory()
+
+        for i in range(9):
+            AttendanceFactory()
+
+        response = self.client.post(
+            reverse('attendance-delete-key'),
+            {
+                'key': attendance.key
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+        )
+
+        self.assertEqual(
+            Attendance.objects.filter(key=attendance.key).count(),
+            0
+        )
+
+    def test_update_key(self):
+        """
+        Ensure we can update an Attendance based on its key as a simple user.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        attendance = AttendanceFactory()
+
+        for i in range(9):
+            AttendanceFactory()
+
+        response = self.client.post(
+            reverse('attendance-update-key'),
+            {
+                'key': attendance.key
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(
+            Attendance.objects.filter(key=attendance.key).count(),
+            1
+        )
+
+        self.assertTrue(
+            Attendance.objects.get(key=attendance.key).updated_at > attendance.updated_at
         )
