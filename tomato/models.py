@@ -30,11 +30,24 @@ class Message(models.Model):
 class Attendance(models.Model):
     """Attendances to the tomato app"""
 
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name=_("User"),
-        related_name='attendances',
+    key = models.CharField(
+        verbose_name=_("Random key"),
+        max_length=300,
+        unique=True,
+    )
+
+    longitude = models.DecimalField(
+        max_digits=18,
+        decimal_places=15,
+        verbose_name=_("Longitude"),
+        null=True,
+        blank=True,
+    )
+
+    latitude = models.DecimalField(
+        max_digits=18,
+        decimal_places=15,
+        verbose_name=_("Latitude"),
         null=True,
         blank=True,
     )

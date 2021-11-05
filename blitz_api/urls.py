@@ -68,7 +68,8 @@ router.register(
 router.register('export_media', views.ExportMediaViewSet)
 
 urlpatterns = [
-    websocket("ws/", tomato_views.last_messages),
+    websocket("ws/last_messages", tomato_views.last_messages),
+    websocket("ws/current_attendances", tomato_views.current_attendances),
     path("test", tomato_views.IndexView.as_view()),
     path(
         'authentication',

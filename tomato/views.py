@@ -13,6 +13,7 @@ from rest_framework.decorators import action
 from tomato.serializers import (
     MessageSerializer,
     AttendanceSerializer,
+    AttendanceDeleteKeySerializer,
 )
 from rest_framework.permissions import (
     IsAuthenticated,
@@ -64,6 +65,35 @@ async def last_messages(socket, *args, **kwargs):
             await socket.send_text('')
 
 
+async def current_attendances(socket, *args, **kwargs):
+    await socket.accept()
+    last_time_sent = timezone.now()
+    last_count = 0
+    while True:
+        time.sleep(2)
+        now = timezone.now()
+        date_limit = now - timedelta(minutes=10)
+        queryset = await sync_to_async(list)(Attendance.objects.filter(created_at__gte=date_limit))
+        count = len(queryset)
+
+        localisations = []
+        for item in queryset:
+            localisations.append(
+                {
+                    'longitude': item.longitude,
+                    'latitude': item.latitude,
+                }
+            )
+
+        if count != last_count:
+            last_count = count
+            last_time_sent = timezone.now()
+            await socket.send_text(json.dumps(localisations))
+        elif last_time_sent < timezone.now() - timedelta(minutes=1):
+            last_time_sent = timezone.now()
+            await socket.send_text('')
+
+
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     queryset = Message.objects.all()
@@ -85,7 +115,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     queryset = Attendance.objects.all()
 
     def get_permissions(self):
-        if self.action in ['create', 'current_number']:
+        if self.action in ['create', 'delete_key']:
             permission_classes = []
         else:
             permission_classes = [IsAdminUser]
@@ -93,31 +123,26 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     @action(detail=False, permission_classes=[])
-    def current_number(self, request):
-        beginning_of_period = timezone.now().replace(
-            minute=0,
-            second=0,
-            microsecond=0,
-        )
-
-        list_of_attendance = Attendance.objects.filter(
-            created_at__gte=beginning_of_period
-        )
-
-        number_of_attendance = 0
-        list_of_user = []
-
-        for attendance in list_of_attendance:
-            if attendance.user:
-                if attendance.user not in list_of_user:
-                    number_of_attendance += 1
-                    list_of_user.append(attendance.user)
-            else:
-                number_of_attendance += 1
-
-        return Response(
-            status=status.HTTP_200_OK,
-            data={
-                'number_of_attendance': number_of_attendance,
+    def delete_key(self, request):
+        serializer = AttendanceDeleteKeySerializer(
+            data=self.request.data,
+            context={
+                'request': request,
             },
         )
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            attendance = Attendance.objects.get(key=serializer.validated_data.get('key'))
+            attendance.delete()
+
+            return Response(response, status=status.HTTP_204_NO_CONTENT)
+        except Attendance.DoesNotExist:
+            return Response(
+                {
+                    'key': [_(
+                        'This key does not exist'
+                    )]
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )

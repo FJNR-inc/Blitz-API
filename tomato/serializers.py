@@ -41,27 +41,11 @@ class MessageSerializer(serializers.HyperlinkedModelSerializer):
 
 class AttendanceSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
-    user = serializers.HyperlinkedRelatedField(
-        'user-detail',
-        queryset=User.objects.all(),
-        required=False,
-    )
 
     class Meta:
         model = Attendance
         fields = '__all__'
 
-    def create(self, validated_data):
-        # Check that only admin can specify a owner
-        if validated_data.get('user', None):
-            if not self.context['request'].user.is_staff:
-                raise serializers.ValidationError({
-                    'owner': [
-                        'Only staffs can specify an '
-                        'other user than themselves'
-                    ]
-                })
-        elif not self.context['request'].user.is_anonymous:
-            validated_data['user'] = self.context['request'].user
 
-        return super(AttendanceSerializer, self).create(validated_data)
+class AttendanceDeleteKeySerializer(serializers.Serializer):
+    key = serializers.CharField()

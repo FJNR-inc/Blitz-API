@@ -19,7 +19,9 @@ class AttendanceTests(CustomAPITestCase):
     ATTRIBUTES = [
         'id',
         'url',
-        'user',
+        'key',
+        'longitude',
+        'latitude',
         'created_at',
     ]
 
@@ -33,9 +35,7 @@ class AttendanceTests(CustomAPITestCase):
 
         cls.admin = AdminFactory()
 
-        cls.attendance = Attendance.objects.create(
-            user=cls.user,
-        )
+        cls.attendance = AttendanceFactory()
 
     def test_create_as_user(self):
         """
@@ -43,7 +43,9 @@ class AttendanceTests(CustomAPITestCase):
         """
         self.client.force_authenticate(user=self.user)
 
-        data = {}
+        data = {
+            'key': 'random-key',
+        }
 
         response = self.client.post(
             reverse('attendance-list'),
@@ -64,7 +66,9 @@ class AttendanceTests(CustomAPITestCase):
         """
         self.client.force_authenticate(user=self.admin)
 
-        data = {}
+        data = {
+            'key': 'random-key',
+        }
 
         response = self.client.post(
             reverse('attendance-list'),
@@ -84,7 +88,9 @@ class AttendanceTests(CustomAPITestCase):
         Ensure we can't create an attendance without being sign in.
         """
 
-        data = {}
+        data = {
+            'key': 'random-key',
+        }
 
         response = self.client.post(
             reverse('attendance-list'),
@@ -100,8 +106,8 @@ class AttendanceTests(CustomAPITestCase):
         self.check_attributes(response.json())
 
         self.assertEqual(
-            response.json()['user'],
-            None,
+            response.json()['key'],
+            'random-key',
         )
 
     def test_list_as_unauthenticated(self):
@@ -133,28 +139,4 @@ class AttendanceTests(CustomAPITestCase):
         self.assertEqual(
             response.status_code,
             status.HTTP_403_FORBIDDEN,
-        )
-
-    def test_get_current_number(self):
-        """
-        Ensure we can get current number of attendances as a simple user.
-        """
-        self.client.force_authenticate(user=self.user)
-
-        for i in range(9):
-            AttendanceFactory()
-
-        response = self.client.get(
-            reverse('attendance-current-number'),
-            format='json',
-        )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_200_OK,
-        )
-
-        self.assertEqual(
-            response.json()['number_of_attendance'],
-            10,
         )
