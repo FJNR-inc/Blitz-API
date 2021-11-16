@@ -105,8 +105,8 @@ async def current_attendances(socket, *args, **kwargs):
         for item in queryset:
             localisations.append(
                 {
-                    'longitude': item.longitude,
-                    'latitude': item.latitude,
+                    'longitude': str(item.longitude),
+                    'latitude': str(item.latitude),
                 }
             )
 
