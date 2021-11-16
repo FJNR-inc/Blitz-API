@@ -6,6 +6,7 @@ from rest_framework import serializers
 from tomato.models import (
     Message,
     Attendance,
+    Report,
 )
 
 User = get_user_model()
@@ -13,6 +14,7 @@ User = get_user_model()
 
 class MessageSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
+    reported = serializers.SerializerMethodField()
     user = serializers.HyperlinkedRelatedField(
         'user-detail',
         queryset=User.objects.all(),
@@ -22,6 +24,9 @@ class MessageSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Message
         fields = '__all__'
+
+    def get_reported(self, obj):
+        return obj.reports.all().count() > 0
 
     def create(self, validated_data):
         # Check that only admin can specify a owner
@@ -45,6 +50,28 @@ class AttendanceSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Attendance
         fields = '__all__'
+
+
+class ReportSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+    user = serializers.HyperlinkedRelatedField(
+        'user-detail',
+        queryset=User.objects.all(),
+        required=False,
+    )
+    message = serializers.HyperlinkedRelatedField(
+        'message-detail',
+        queryset=Message.objects.all(),
+    )
+
+    class Meta:
+        model = Report
+        fields = '__all__'
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+
+        return super(ReportSerializer, self).create(validated_data)
 
 
 class AttendanceDeleteKeySerializer(serializers.Serializer):

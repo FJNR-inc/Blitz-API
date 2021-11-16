@@ -1,32 +1,41 @@
 import json
 
 from rest_framework import status
-from rest_framework.test import APIClient, APITestCase
+from rest_framework.test import (
+    APIClient,
+    APITestCase,
+)
 
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 
 from blitz_api.testing_tools import CustomAPITestCase
-from blitz_api.factories import UserFactory, AdminFactory
-from tomato.models import Message
+from blitz_api.factories import (
+    UserFactory,
+    AdminFactory,
+)
+from tomato.models import (
+    Message,
+    Report,
+)
 
 User = get_user_model()
 
 
-class MessageTests(CustomAPITestCase):
+class ReportTests(CustomAPITestCase):
 
     ATTRIBUTES = [
         'id',
         'url',
         'user',
         'message',
-        'reported',
-        'posted_at',
+        'reason',
+        'created_at',
     ]
 
     @classmethod
     def setUpClass(cls):
-        super(MessageTests, cls).setUpClass()
+        super(ReportTests, cls).setUpClass()
 
         cls.client = APIClient()
 
@@ -39,63 +48,80 @@ class MessageTests(CustomAPITestCase):
             user=cls.user,
         )
 
+        cls.report = Report.objects.create(
+            message=cls.message,
+            user=cls.user,
+            reason='random reason',
+        )
+
     def test_create_as_user(self):
         """
-        Ensure we can create a message as a simple user.
+        Ensure we can create a report as a simple user.
         """
         self.client.force_authenticate(user=self.user)
 
         data = {
-            'message': "fake message",
+            'message': reverse(
+                'message-detail', args=[self.message.id]
+            ),
+            'reason': "aggressive content",
         }
 
         response = self.client.post(
-            reverse('message-list'),
+            reverse('report-list'),
             data,
             format='json',
         )
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_201_CREATED
+            status.HTTP_201_CREATED,
+            response.json(),
         )
 
         self.check_attributes(response.json())
 
     def test_create_as_admin(self):
         """
-        Ensure we can create a message as an admin.
+        Ensure we can create a report as an admin.
         """
         self.client.force_authenticate(user=self.admin)
 
         data = {
-            'message': "fake message",
+            'message': reverse(
+                'message-detail', args=[self.message.id]
+            ),
+            'reason': "aggressive content",
         }
 
         response = self.client.post(
-            reverse('message-list'),
+            reverse('report-list'),
             data,
             format='json',
         )
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_201_CREATED
+            status.HTTP_201_CREATED,
+            response.json(),
         )
 
         self.check_attributes(response.json())
 
     def test_create_as_unauthenticated(self):
         """
-        Ensure we can't create a message without being sign in.
+        Ensure we can't create a report without being sign in.
         """
 
         data = {
-            'message': "fake message",
+            'message': reverse(
+                'message-detail', args=[self.message.id]
+            ),
+            'message': "aggressive content",
         }
 
         response = self.client.post(
-            reverse('message-list'),
+            reverse('report-list'),
             data,
             format='json',
         )
@@ -112,27 +138,16 @@ class MessageTests(CustomAPITestCase):
             }
         )
 
-    def test_list_as_unauthenticated(self):
+    def test_list_as_user(self):
         """
-        Ensure we can list messages as an unauthenticated user.
+        Ensure we can list reports as a simple user.
         """
+        self.client.force_authenticate(user=self.user)
 
         response = self.client.get(
-            reverse('message-list'),
+            reverse('report-list'),
             format='json',
         )
-
-        content = {
-            'count': 1,
-            'next': None,
-            'previous': None,
-            'results': [{
-                'id': self.message.id,
-                'message': 'random message',
-                'user': 'http://testserver/users/' + str(self.user.id),
-                'url': 'http://testserver/messages/' + str(self.message.id)
-            }]
-        }
 
         result = response.json()
 
@@ -145,3 +160,20 @@ class MessageTests(CustomAPITestCase):
 
         for item in result['results']:
             self.check_attributes(item)
+
+    def test_list_as_unauthenticated(self):
+        """
+        Ensure we can't list reports as an unauthenticated user.
+        """
+
+        response = self.client.get(
+            reverse('report-list'),
+            format='json',
+        )
+
+        result = response.json()
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_401_UNAUTHORIZED,
+        )

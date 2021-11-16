@@ -27,6 +27,34 @@ class Message(models.Model):
     )
 
 
+class Report(models.Model):
+    """Report on the tomato app chat"""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_("User"),
+        related_name='reports',
+    )
+
+    message = models.ForeignKey(
+        Message,
+        on_delete=models.CASCADE,
+        verbose_name=_("Message"),
+        related_name='reports',
+    )
+
+    created_at = models.DateTimeField(
+        verbose_name=_("Created at"),
+        auto_now_add=True,
+    )
+
+    reason = models.CharField(
+        verbose_name=_("Reason"),
+        max_length=300,
+    )
+
+
 class Attendance(models.Model):
     """Attendances to the tomato app"""
 

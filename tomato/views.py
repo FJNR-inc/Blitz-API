@@ -2,6 +2,7 @@ from django.shortcuts import render
 from tomato.models import (
     Message,
     Attendance,
+    Report,
 )
 from django.utils import timezone
 from rest_framework.response import Response
@@ -13,6 +14,7 @@ from rest_framework.decorators import action
 from tomato.serializers import (
     MessageSerializer,
     AttendanceSerializer,
+    ReportSerializer,
     AttendanceDeleteKeySerializer,
 )
 from rest_framework.permissions import (
@@ -24,6 +26,7 @@ from asgiref.sync import sync_to_async
 import time
 import json
 from datetime import datetime, timedelta
+from django.db.models import Count
 
 
 class IndexView(TemplateView):
@@ -37,9 +40,31 @@ async def last_messages(socket, *args, **kwargs):
     while True:
         time.sleep(2)
         if last_update:
-            queryset = await sync_to_async(list)(Message.objects.filter(posted_at__gte=last_update).prefetch_related('user').order_by('-posted_at'))
+            queryset = await sync_to_async(list)(
+                Message.objects.filter(
+                    posted_at__gte=last_update,
+                ).prefetch_related(
+                    'user',
+                ).annotate(
+                    report_count=Count('reports'),
+                ).filter(
+                    report_count=0,
+                ).order_by(
+                    '-posted_at',
+                )
+            )
         else:
-            queryset = await sync_to_async(list)(Message.objects.all().prefetch_related('user').order_by('-posted_at')[:50])
+            queryset = await sync_to_async(list)(
+                Message.objects.all().prefetch_related(
+                    'user',
+                ).annotate(
+                    report_count=Count('reports'),
+                ).filter(
+                    report_count=0,
+                ).order_by(
+                    '-posted_at',
+                )[:50]
+            )
 
         last_update = timezone.now()
         data = []
@@ -171,3 +196,27 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+class ReportViewSet(viewsets.ModelViewSet):
+    serializer_class = ReportSerializer
+    queryset = Report.objects.all()
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            queryset = Report.objects.all()
+        else:
+            queryset = Report.objects.filter(user=self.request.user)
+
+        return queryset
+
+    def get_permissions(self):
+        if self.action in ['create', 'list', 'retrieve']:
+            permission_classes = [
+                IsAuthenticated,
+            ]
+        else:
+            permission_classes = [
+                IsAdminUser,
+            ]
+        return [permission() for permission in permission_classes]
