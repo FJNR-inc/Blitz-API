@@ -98,7 +98,7 @@ async def current_attendances(socket, *args, **kwargs):
         time.sleep(2)
         now = timezone.now()
         date_limit = now - timedelta(minutes=10)
-        queryset = await sync_to_async(list)(Attendance.objects.filter(created_at__gte=date_limit))
+        queryset = await sync_to_async(list)(Attendance.objects.filter(updated_at__gte=date_limit))
         count = len(queryset)
 
         localisations = []
