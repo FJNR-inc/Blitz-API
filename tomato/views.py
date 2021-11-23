@@ -1,3 +1,4 @@
+import asyncio
 from django.shortcuts import render
 from tomato.models import (
     Message,
@@ -38,7 +39,7 @@ async def last_messages(socket, *args, **kwargs):
     last_update = None
     last_time_sent = timezone.now()
     while True:
-        time.sleep(2)
+        await asyncio.sleep(2)
         if last_update:
             queryset = await sync_to_async(list)(
                 Message.objects.filter(
@@ -95,7 +96,7 @@ async def current_attendances(socket, *args, **kwargs):
     last_time_sent = timezone.now()
     last_count = 0
     while True:
-        time.sleep(2)
+        await asyncio.sleep(2)
         now = timezone.now()
         date_limit = now - timedelta(minutes=10)
         queryset = await sync_to_async(list)(Attendance.objects.filter(updated_at__gte=date_limit))
