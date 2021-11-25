@@ -38,7 +38,7 @@ router.register('reservations', views.ReservationViewSet)
 router.register('wait_queues', views.WaitQueueViewSet)
 router.register('retreat_invitation', views.RetreatInvitationViewSet)
 router.register('wait_queue_places', views.WaitQueuePlaceViewSet)
-router.register('wait_queue_places_reserved',
+router.register('wait_queue_place_reserved',
                 views.WaitQueuePlaceReservedViewSet)
 router.register('retreat_types', views.RetreatTypeViewSet)
 router.register('retreat_dates', views.RetreatDateViewSet)
