@@ -843,10 +843,21 @@ class WaitQueuePlaceReservedViewSet(mixins.ListModelMixin,
     filterset_fields = '__all__'
 
     def get_queryset(self):
-
         if self.request.user.is_staff:
-            return WaitQueuePlaceReserved.objects.all()
-        return WaitQueuePlaceReserved.objects.filter(user=self.request.user)
+            queryset = WaitQueuePlaceReserved.objects.all()
+        else:
+            queryset = WaitQueuePlaceReserved.objects.filter(
+                user=self.request.user,
+            )
+
+        # Filter by retreat
+        retreat = self.request.query_params.get('retreat', None)
+        if retreat:
+            queryset = queryset.filter(
+                wait_queue_place__retreat__id=retreat
+            )
+
+        return queryset
 
 
 class RetreatDateViewSet(viewsets.ModelViewSet):

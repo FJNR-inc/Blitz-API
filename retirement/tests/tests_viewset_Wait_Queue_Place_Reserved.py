@@ -115,3 +115,48 @@ class WaitQueuePlaceReservedTests(APITestCase):
             response.json()['count'],
             1,
         )
+
+    def test_filter_wait_queue_place_reserved_by_retreat_as_user(self):
+        self.client.force_authenticate(user=self.user1)
+
+        response = self.client.get(
+            reverse(
+                'retreat:waitqueueplacereserved-list',
+            ),
+            {
+                'retreat': str(self.wait_queue_place.retreat.id),
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(
+            response.json()['count'],
+            1,
+        )
+
+        response = self.client.get(
+            reverse(
+                'retreat:waitqueueplacereserved-list',
+            ),
+            {
+                'retreat': '999',
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(
+            response.json()['count'],
+            0,
+        )
