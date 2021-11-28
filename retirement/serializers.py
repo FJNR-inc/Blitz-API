@@ -1042,3 +1042,11 @@ class WaitQueuePlaceReservedSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = WaitQueuePlaceReserved
         fields = '__all__'
+        extra_kwargs = {
+            'wait_queue_place': {
+                'view_name': 'retreat:waitqueueplace-detail',
+            },
+            'url': {
+                'view_name': 'retreat:waitqueueplacereserved-detail',
+            },
+        }
