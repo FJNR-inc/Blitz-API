@@ -5,6 +5,7 @@ from tomato.models import (
     Attendance,
     Report,
 )
+from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework import (
