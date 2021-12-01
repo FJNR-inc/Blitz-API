@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils.translation import ugettext_lazy as _
 
+from blitz_api.services import send_mail
 
 User = get_user_model()
 
@@ -53,6 +54,30 @@ class Report(models.Model):
         verbose_name=_("Reason"),
         max_length=300,
     )
+
+    def send_report_notification(self):
+        """
+        This function sends an automatic email to notify a user that his
+        message has been reported in some specific categories
+        """
+
+        if 'Suicide ou automutilation' in self.reason:
+            context = {
+                'MESSAGE': self.message.message,
+                'POSTED_AT': self.message.posted_at,
+                'AUTHOR_FIRST_NAME': self.message.user.first_name,
+                'AUTHOR_LAST_NAME': self.message.user.last_name,
+                'AUTHOR_EMAIL': self.message.user.email,
+            }
+
+            response_send_mail = send_mail(
+                [self.message.user.email],
+                context,
+                'REPORT_SUICIDE'
+            )
+            return response_send_mail
+
+        return []
 
 
 class Attendance(models.Model):

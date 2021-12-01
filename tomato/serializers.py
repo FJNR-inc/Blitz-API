@@ -70,8 +70,10 @@ class ReportSerializer(serializers.HyperlinkedModelSerializer):
 
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user
+        report = Report.objects.create(**validated_data)
+        report.send_report_notification()
 
-        return super(ReportSerializer, self).create(validated_data)
+        return report
 
 
 class AttendanceDeleteKeySerializer(serializers.Serializer):
