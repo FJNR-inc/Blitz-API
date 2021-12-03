@@ -27,7 +27,7 @@ django-model-utils==4.1.1
 tqdm==4.54.1
 colorama==0.4.4
 django-admin-autocomplete-filter==0.6.1
-mailchimp3==3.0.14
+mailchimp3==3.0.16
 babel==2.9.0
 
 django-admin-inline-paginator==0.1.1
