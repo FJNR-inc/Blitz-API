@@ -2,15 +2,12 @@ import json
 import pytz
 from babel.dates import format_date
 from decimal import Decimal
-
 from django.conf import settings
-from django.core.mail import send_mail
-from blitz_api.services import send_mail as send_templated_email, \
-    send_email_from_template_id
-from django.template.loader import render_to_string
+from blitz_api.services import (
+    send_mail as send_templated_email,
+    send_email_from_template_id,
+)
 from django.utils import timezone
-
-from log_management.models import Log, EmailLog
 from retirement.models import WaitQueue
 from store.models import Refund
 from store.services import refund_amount
@@ -35,37 +32,19 @@ def notify_reserved_retreat_seat(user, retreat):
         str(wait_queue.id)
     )
 
-    merge_data = {'RETREAT_NAME': retreat.name,
-                  'WAIT_QUEUE_URL': wait_queue_url}
+    context = {
+        'USER_FIRST_NAME': user.first_name,
+        'USER_LAST_NAME': user.last_name,
+        'USER_EMAIL': user.email,
+        'RETREAT_NAME': retreat.name,
+        'WAIT_QUEUE_URL': wait_queue_url,
+    }
 
-    plain_msg = render_to_string("reserved_place.txt", merge_data)
-    msg_html = render_to_string("reserved_place.html", merge_data)
-
-    try:
-        response_send_mail = send_mail(
-            "Place exclusive pour 24h",
-            plain_msg,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            html_message=msg_html,
-        )
-        EmailLog.add(user.email, 'reserved_place', response_send_mail)
-        return response_send_mail
-
-    except Exception as err:
-        additional_data = {
-            'title': "Place exclusive pour 24h",
-            'default_from': settings.DEFAULT_FROM_EMAIL,
-            'user_email': user.email,
-            'merge_data': merge_data,
-            'template': 'reserved_place'
-        }
-        Log.error(
-            source='SENDING_BLUE_TEMPLATE',
-            message=err,
-            additional_data=json.dumps(additional_data)
-        )
-        raise
+    send_templated_email(
+        [user.email],
+        context,
+        'WAIT_QUEUE_RESERVED_SEAT_CREATED'
+    )
 
 
 def send_retreat_confirmation_email(user, retreat):

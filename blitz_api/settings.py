@@ -338,6 +338,11 @@ ANYMAIL = {
             'RENEW_MEMBERSHIP',
             default='31',
             cast=int
+        ),
+        'WAIT_QUEUE_RESERVED_SEAT_CREATED': config(
+            'WAIT_QUEUE_RESERVED_SEAT_CREATED',
+            default='0',
+            cast=int
         )
     },
 }
