@@ -451,7 +451,6 @@ class TimeSlotTests(APITestCase):
                 'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
             ],
             'period': ['Invalid hyperlink - No URL match.'],
-            'price': ['A valid number is required.'],
             'start_time': [
                 'Datetime has wrong format. Use one of these formats instead: '
                 'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'

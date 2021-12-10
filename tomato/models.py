@@ -90,16 +90,16 @@ class Attendance(models.Model):
     )
 
     longitude = models.DecimalField(
-        max_digits=18,
-        decimal_places=15,
+        max_digits=6,
+        decimal_places=3,
         verbose_name=_("Longitude"),
         null=True,
         blank=True,
     )
 
     latitude = models.DecimalField(
-        max_digits=18,
-        decimal_places=15,
+        max_digits=6,
+        decimal_places=3,
         verbose_name=_("Latitude"),
         null=True,
         blank=True,

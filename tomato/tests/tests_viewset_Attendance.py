@@ -61,6 +61,33 @@ class AttendanceTests(CustomAPITestCase):
 
         self.check_attributes(response.json())
 
+    def test_create_with_gps_as_user(self):
+        """
+        Ensure we can create an attendance as a simple user.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            'key': 'random-key',
+            'longitude': 45.487,
+            'latitude': -73.571,
+        }
+
+        response = self.client.post(
+            reverse('attendance-list'),
+            data,
+            format='json',
+        )
+
+        content = response.json()
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED
+        )
+
+        self.check_attributes(content)
+
     def test_create_as_admin(self):
         """
         Ensure we can create an attendance as an admin.

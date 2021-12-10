@@ -687,7 +687,7 @@ class OrderLineTests(APITestCase):
         content = [
             {
                 'name': 'Package',
-                'id': 35,
+                'id': 36,
                 'detail': True
             }
         ]
