@@ -49,6 +49,18 @@ class MessageSerializer(serializers.HyperlinkedModelSerializer):
 class AttendanceSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
 
+    longitude = serializers.DecimalField(
+        max_digits=18,
+        decimal_places=15,
+        required=False,
+    )
+
+    latitude = serializers.DecimalField(
+        max_digits=18,
+        decimal_places=15,
+        required=False,
+    )
+
     class Meta:
         model = Attendance
         fields = '__all__'

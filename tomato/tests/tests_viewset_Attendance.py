@@ -69,8 +69,8 @@ class AttendanceTests(CustomAPITestCase):
 
         data = {
             'key': 'random-key',
-            'longitude': 45.487,
-            'latitude': -73.571,
+            'longitude': 45.5199613,
+            'latitude': -73.5940354,
         }
 
         response = self.client.post(
@@ -83,7 +83,8 @@ class AttendanceTests(CustomAPITestCase):
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_201_CREATED
+            status.HTTP_201_CREATED,
+            content,
         )
 
         self.check_attributes(content)
