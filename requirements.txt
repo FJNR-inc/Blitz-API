@@ -18,7 +18,7 @@ django-storages==1.10.1
 dj_database_url==0.5.0
 zappa==0.52.0
 psycopg2-binary==2.8.6
-django-safedelete==0.5.2
+django-safedelete==1.1.2
 -e git+https://github.com/Rhumbix/django-request-logging.git@9342ee6064e678fd162418b142d781550d23101c#egg=django_request_logging
 -e git+https://github.com/deschler/django-modeltranslation.git@c8bda494a8cd36b393811552aeee71faf86d7438#egg=django-modeltranslation
 django-import-export==2.3.0
