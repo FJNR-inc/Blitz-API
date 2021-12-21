@@ -68,6 +68,8 @@ INSTALLED_APPS = [
     'admin_auto_filters',
     'django_admin_inline_paginator',
     'tomato',
+    'django_celery_results',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -476,3 +478,26 @@ MAILCHIMP_ENABLED = config(
 
 NUMBER_OF_TOMATOES_TIMESLOT = config('NUMBER_OF_TOMATOES_TIMESLOT', default=4)
 NUMBER_OF_TOMATOES_RETREAT = config('NUMBER_OF_TOMATOES_RETREAT', default=4)
+
+
+# Celery settings
+
+CELERY_BROKER_URL = config(
+    'CELERY_BROKER_URL',
+    default="amqp://guest:guest@rabbitmq:5672",
+)
+
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_RESULT_BACKEND_DB = ''.join(
+    [
+        'postgresql+psycopg2://',
+        config("DB_USER", default='myprojectuser'),
+        ":",
+        config("DB_PASSWORD", default='password'),
+        "@",
+        config('DB_HOST', default="127.0.0.1"),
+        "/",
+        config("DB_NAME",  default='myproject')
+    ]
+)
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
