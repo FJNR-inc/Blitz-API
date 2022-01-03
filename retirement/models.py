@@ -553,7 +553,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         }
 
         send_templated_email(
-            [user.email],
+            [user],
             context,
             'WAIT_QUEUE_RESERVED_SEAT_CREATED'
         )
