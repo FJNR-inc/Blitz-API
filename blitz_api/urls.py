@@ -21,6 +21,9 @@ from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls.static import static
 
+from websocket.urls import websocket
+from tomato import views as tomato_views
+
 from workplace.urls import router as workplace_router
 from store.urls import router as store_router
 from retirement.urls import router as retirement_router
@@ -65,6 +68,9 @@ router.register(
 router.register('export_media', views.ExportMediaViewSet)
 
 urlpatterns = [
+    websocket("ws/last_messages", tomato_views.last_messages),
+    websocket("ws/current_attendances", tomato_views.current_attendances),
+    path("test", tomato_views.IndexView.as_view()),
     path(
         'authentication',
         views.ObtainTemporaryAuthToken.as_view(),

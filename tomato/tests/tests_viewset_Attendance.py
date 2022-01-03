@@ -19,7 +19,10 @@ class AttendanceTests(CustomAPITestCase):
     ATTRIBUTES = [
         'id',
         'url',
-        'user',
+        'key',
+        'longitude',
+        'latitude',
+        'updated_at',
         'created_at',
     ]
 
@@ -33,9 +36,7 @@ class AttendanceTests(CustomAPITestCase):
 
         cls.admin = AdminFactory()
 
-        cls.attendance = Attendance.objects.create(
-            user=cls.user,
-        )
+        cls.attendance = AttendanceFactory()
 
     def test_create_as_user(self):
         """
@@ -43,7 +44,9 @@ class AttendanceTests(CustomAPITestCase):
         """
         self.client.force_authenticate(user=self.user)
 
-        data = {}
+        data = {
+            'key': 'random-key',
+        }
 
         response = self.client.post(
             reverse('attendance-list'),
@@ -58,13 +61,43 @@ class AttendanceTests(CustomAPITestCase):
 
         self.check_attributes(response.json())
 
+    def test_create_with_gps_as_user(self):
+        """
+        Ensure we can create an attendance as a simple user.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            'key': 'random-key',
+            'longitude': 45.5199613,
+            'latitude': -73.5940354,
+        }
+
+        response = self.client.post(
+            reverse('attendance-list'),
+            data,
+            format='json',
+        )
+
+        content = response.json()
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            content,
+        )
+
+        self.check_attributes(content)
+
     def test_create_as_admin(self):
         """
         Ensure we can create an attendance as an admin.
         """
         self.client.force_authenticate(user=self.admin)
 
-        data = {}
+        data = {
+            'key': 'random-key',
+        }
 
         response = self.client.post(
             reverse('attendance-list'),
@@ -84,7 +117,9 @@ class AttendanceTests(CustomAPITestCase):
         Ensure we can't create an attendance without being sign in.
         """
 
-        data = {}
+        data = {
+            'key': 'random-key',
+        }
 
         response = self.client.post(
             reverse('attendance-list'),
@@ -100,8 +135,8 @@ class AttendanceTests(CustomAPITestCase):
         self.check_attributes(response.json())
 
         self.assertEqual(
-            response.json()['user'],
-            None,
+            response.json()['key'],
+            'random-key',
         )
 
     def test_list_as_unauthenticated(self):
@@ -135,17 +170,51 @@ class AttendanceTests(CustomAPITestCase):
             status.HTTP_403_FORBIDDEN,
         )
 
-    def test_get_current_number(self):
+    def test_delete_key(self):
         """
-        Ensure we can get current number of attendances as a simple user.
+        Ensure we can delete an Attendance based on its key as a simple user.
         """
         self.client.force_authenticate(user=self.user)
+
+        attendance = AttendanceFactory()
 
         for i in range(9):
             AttendanceFactory()
 
-        response = self.client.get(
-            reverse('attendance-current-number'),
+        response = self.client.post(
+            reverse('attendance-delete-key'),
+            {
+                'key': attendance.key
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+        )
+
+        self.assertEqual(
+            Attendance.objects.filter(key=attendance.key).count(),
+            0
+        )
+
+    def test_update_key(self):
+        """
+        Ensure we can update an Attendance based on its key as a simple user.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        attendance = AttendanceFactory()
+
+        for i in range(9):
+            AttendanceFactory()
+
+        response = self.client.post(
+            reverse('attendance-update-key'),
+            {
+                'key': attendance.key
+            },
             format='json',
         )
 
@@ -155,6 +224,10 @@ class AttendanceTests(CustomAPITestCase):
         )
 
         self.assertEqual(
-            response.json()['number_of_attendance'],
-            10,
+            Attendance.objects.filter(key=attendance.key).count(),
+            1
+        )
+
+        self.assertTrue(
+            Attendance.objects.get(key=attendance.key).updated_at > attendance.updated_at
         )

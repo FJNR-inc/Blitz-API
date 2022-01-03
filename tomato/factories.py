@@ -17,3 +17,5 @@ fake = Faker()
 class AttendanceFactory(DjangoModelFactory):
     class Meta:
         model = Attendance
+
+    key = factory.Sequence(lambda n: f'Key-{n}')

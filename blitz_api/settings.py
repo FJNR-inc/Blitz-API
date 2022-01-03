@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
+import json
+import os
 from ast import literal_eval
 import logging
 from pathlib import Path
@@ -18,6 +20,8 @@ import sys
 from decouple import config, Csv
 from django.utils.translation import ugettext_lazy as _
 from dj_database_url import parse as db_url
+
+IS_GAE_ENV = config('GAE_INSTANCE', False)
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).absolute().parent.parent
@@ -32,6 +36,8 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost', cast=Csv())
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 
@@ -62,6 +68,8 @@ INSTALLED_APPS = [
     'admin_auto_filters',
     'django_admin_inline_paginator',
     'tomato',
+    'django_celery_results',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -143,12 +151,17 @@ WSGI_APPLICATION = 'blitz_api.wsgi.application'
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 DATABASES = {
-    'default': config(
-        'DATABASE_URL',
-        default='sqlite:///' + str(BASE_DIR.joinpath('db.sqlite3')),
-        cast=db_url
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'HOST': config('DB_HOST', default="postgres"),
+        'USER': config('DB_USER', default='my_db_user'),
+        'PASSWORD': config('DB_PASSWORD', default='my_db_password'),
+        'NAME': config('DB_NAME', default='my_db_name'),
+        'PORT': config('DB_PORT', default='5432')
+    }
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Custom user model
 
@@ -200,18 +213,6 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = config('DATA_UPLOAD_MAX_MEMORY_SIZE',
 FILE_UPLOAD_MAX_MEMORY_SIZE = config('FILE_UPLOAD_MAX_MEMORY_SIZE',
                                      default=2621440, cast=int)
 
-# AWS Deployment configuration (with Zappa)
-AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='ca-central-1')
-AWS_STORAGE_STATIC_BUCKET_NAME = config('AWS_STORAGE_STATIC_BUCKET_NAME',
-                                        default='example_static')
-AWS_STORAGE_MEDIA_BUCKET_NAME = config('AWS_STORAGE_MEDIA_BUCKET_NAME',
-                                       default='example_media')
-AWS_S3_STATIC_CUSTOM_DOMAIN = config('AWS_S3_STATIC_CUSTOM_DOMAIN',
-                                     default='example_static.s3.region.amazonaws.com')
-AWS_S3_MEDIA_CUSTOM_DOMAIN = config('AWS_S3_MEDIA_CUSTOM_DOMAIN',
-                                    default='example_media.s3.region.amazonaws.com')
-AWS_S3_STATIC_DIR = config('AWS_S3_STATIC_DIR', default='static')
-AWS_S3_MEDIA_DIR = config('AWS_S3_MEDIA_DIR', default='media')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
@@ -227,11 +228,23 @@ if STATICFILES_STORAGE == 'django.contrib.staticfiles.storage.StaticFilesStorage
     STATIC_ROOT = 'static/'
 
 # User uploaded files (MEDIA)
-MEDIA_URL = config('MEDIA_URL', default='/media/')
-MEDIA_ROOT = config('MEDIA_ROOT', default='media/')
-DEFAULT_FILE_STORAGE = config(
-    'DEFAULT_FILE_STORAGE',
-    default='django.core.files.storage.FileSystemStorage')
+if IS_GAE_ENV:
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials.json"
+    DEFAULT_FILE_STORAGE = 'blitz_api.storage_backends.' \
+                           'GoogleCloudMediaStorage'
+    GS_PROJECT_ID = config('GS_MEDIA_BUCKET_NAME',
+                           default='thesez-vous-qa')
+    GS_MEDIA_BUCKET_NAME = config('GS_MEDIA_BUCKET_NAME')
+    MEDIA_URL = f'https://storage.googleapis.com/{GS_MEDIA_BUCKET_NAME}/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    GS_DEFAULT_ACL = 'private'  # makes the files to private
+    GS_FILE_OVERWRITE = False
+else:
+    MEDIA_URL = config('MEDIA_URL', default='/media/')
+    MEDIA_ROOT = config('MEDIA_ROOT', default='media/')
+    DEFAULT_FILE_STORAGE = config(
+        'DEFAULT_FILE_STORAGE',
+        default='django.core.files.storage.FileSystemStorage')
 
 # Django Rest Framework
 
@@ -337,6 +350,11 @@ ANYMAIL = {
         'RENEW_MEMBERSHIP': config(
             'RENEW_MEMBERSHIP',
             default='31',
+            cast=int
+        ),
+        'REPORT_SUICIDE': config(
+            'REPORT_SUICIDE',
+            default='0',
             cast=int
         ),
         'WAIT_QUEUE_RESERVED_SEAT_CREATED': config(
@@ -460,3 +478,26 @@ MAILCHIMP_ENABLED = config(
 
 NUMBER_OF_TOMATOES_TIMESLOT = config('NUMBER_OF_TOMATOES_TIMESLOT', default=4)
 NUMBER_OF_TOMATOES_RETREAT = config('NUMBER_OF_TOMATOES_RETREAT', default=4)
+
+
+# Celery settings
+
+CELERY_BROKER_URL = config(
+    'CELERY_BROKER_URL',
+    default="amqp://guest:guest@rabbitmq:5672",
+)
+
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_RESULT_BACKEND_DB = ''.join(
+    [
+        'postgresql+psycopg2://',
+        config("DB_USER", default='myprojectuser'),
+        ":",
+        config("DB_PASSWORD", default='password'),
+        "@",
+        config('DB_HOST', default="127.0.0.1"),
+        "/",
+        config("DB_NAME",  default='myproject')
+    ]
+)
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
