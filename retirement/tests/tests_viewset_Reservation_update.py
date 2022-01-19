@@ -732,7 +732,6 @@ class ReservationTests(APITestCase):
 
         response_data = json.loads(response.content)
 
-        del response_data['user_details']
         del response_data['retreat_details']
         del response_data['inscription_date']
 
@@ -876,7 +875,6 @@ class ReservationTests(APITestCase):
 
         response_data = json.loads(response.content)
 
-        del response_data['user_details']
         del response_data['retreat_details']
 
         content = self.reservation_expected_payload.copy()
@@ -975,7 +973,6 @@ class ReservationTests(APITestCase):
 
         response_data = json.loads(response.content)
 
-        del response_data['user_details']
         del response_data['retreat_details']
         del response_data['inscription_date']
 

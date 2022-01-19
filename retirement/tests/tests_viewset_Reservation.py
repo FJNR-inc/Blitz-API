@@ -645,7 +645,6 @@ class ReservationTests(CustomAPITestCase):
 
         data = json.loads(response.content)
 
-        del data['results'][0]['user_details']
         del data['results'][0]['retreat_details']
         del data['results'][0]['inscription_date']
 
@@ -873,7 +872,6 @@ class ReservationTests(CustomAPITestCase):
 
         response_data = json.loads(response.content)
 
-        del response_data['user_details']
         del response_data['retreat_details']
         del response_data['inscription_date']
 
