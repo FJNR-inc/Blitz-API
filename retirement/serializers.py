@@ -321,6 +321,7 @@ class RetreatSerializer(BaseProductSerializer):
 class BatchRetreatSerializer(RetreatSerializer):
     bulk_start_time = serializers.DateTimeField()
     bulk_end_time = serializers.DateTimeField()
+    display_start_time = serializers.DateTimeField(required=False)
     weekdays = serializers.ListField(
         child=serializers.IntegerField(
             max_value=6,

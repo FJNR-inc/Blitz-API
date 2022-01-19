@@ -72,6 +72,7 @@ class PictureTests(APITestCase):
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            display_start_time=datetime.now(),
             type=self.retreatType,
         )
         self.picture = Picture.objects.create(

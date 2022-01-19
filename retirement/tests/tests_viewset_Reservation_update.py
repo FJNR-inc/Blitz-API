@@ -76,6 +76,9 @@ class ReservationTests(APITestCase):
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
             type=self.retreatType,
         )
         RetreatDate.objects.create(
@@ -103,6 +106,9 @@ class ReservationTests(APITestCase):
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 2, 15, 8)
+            ),
             type=self.retreatType,
         )
         RetreatDate.objects.create(
@@ -128,6 +134,9 @@ class ReservationTests(APITestCase):
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
             type=self.retreatType,
         )
         RetreatDate.objects.create(

@@ -186,10 +186,33 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
                 is_active=True,
                 hidden=False
             )
-        return queryset.annotate(
+
+        queryset = queryset.annotate(
             max_end_date=Max('retreat_dates__end_time'),
             min_start_date=Min('retreat_dates__start_time'),
         )
+
+        # Filter by display_start_time lower than
+        display_start_time_lte = self.request.query_params.get(
+            'display_start_time_lte',
+            None,
+        )
+        if display_start_time_lte:
+            queryset = queryset.filter(
+                display_start_time__lte=display_start_time_lte
+            )
+
+        # Filter by display_start_time greater than
+        display_start_time_gte = self.request.query_params.get(
+            'display_start_time_gte',
+            None,
+        )
+        if display_start_time_gte:
+            queryset = queryset.filter(
+                display_start_time__gte=display_start_time_gte
+            )
+
+        return queryset
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -257,6 +280,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             validated_data['name'] = tz.localize(start).strftime(
                 "Bloc %d %b"
             ) + ' ' + suffix
+            validated_data['display_start_time'] = tz.localize(start)
             new_retreat = Retreat.objects.create(**validated_data)
             new_retreat.exclusive_memberships.set(memberships)
             RetreatDate.objects.create(

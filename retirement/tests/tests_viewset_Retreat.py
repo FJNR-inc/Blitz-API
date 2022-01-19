@@ -133,6 +133,9 @@ class RetreatTests(CustomAPITestCase):
             has_shared_rooms=True,
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
             type=self.retreatType,
         )
         RetreatDate.objects.create(
@@ -162,6 +165,9 @@ class RetreatTests(CustomAPITestCase):
             has_shared_rooms=True,
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2140, 1, 15, 8)
+            ),
             type=self.retreatType,
         )
         RetreatDate.objects.create(
@@ -192,6 +198,9 @@ class RetreatTests(CustomAPITestCase):
             hidden=True,
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2140, 1, 15, 8)
+            ),
             type=self.retreatType,
         )
         RetreatDate.objects.create(
@@ -253,6 +262,9 @@ class RetreatTests(CustomAPITestCase):
             'sub_title': None,
             'postal_code': None,
             'place_name': None,
+            "display_start_time": LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 12),
+            ),
             'type': reverse(
                 'retreat:retreattype-detail',
                 args=[self.retreatType.id]
@@ -343,6 +355,9 @@ class RetreatTests(CustomAPITestCase):
             'hidden': True,
             'toilet_gendered': True,
             'room_type': Retreat.DOUBLE_OCCUPATION,
+            'display_start_time': LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 12),
+            ),
             'type': reverse(
                 'retreat:retreattype-detail',
                 args=[self.retreatType.id]
@@ -596,6 +611,9 @@ class RetreatTests(CustomAPITestCase):
             'review_url': 'example3.com',
             'has_shared_rooms': True,
             'hidden': True,
+            "display_start_time": LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 12),
+            ),
             'type': reverse(
                 'retreat:retreattype-detail',
                 args=[self.retreatType.id]
@@ -661,6 +679,9 @@ class RetreatTests(CustomAPITestCase):
             'review_url': 'example3.com',
             'has_shared_rooms': True,
             'hidden': False,
+            'display_start_time': LOCAL_TIMEZONE.localize(
+                datetime(2140, 1, 15, 8)
+            ),
             'type': reverse(
                 'retreat:retreattype-detail',
                 args=[self.retreatType.id]
@@ -741,6 +762,9 @@ class RetreatTests(CustomAPITestCase):
             'review_url': 'example3.com',
             'has_shared_rooms': True,
             'hidden': False,
+            'display_start_time': LOCAL_TIMEZONE.localize(
+                datetime(2140, 1, 15, 8)
+            ),
             'type': reverse(
                 'retreat:retreattype-detail',
                 args=[self.retreatType.id]
@@ -776,6 +800,7 @@ class RetreatTests(CustomAPITestCase):
         content = {
             "price": ["This field is required."],
             "timezone": ["This field is required."],
+            "display_start_time": ["This field is required."],
             "type": ["This field is required."],
             "name": ["This field is required."],
         }
@@ -821,6 +846,7 @@ class RetreatTests(CustomAPITestCase):
             'has_shared_rooms': (1, ),
             'hidden': False,
             'type': (1,),
+            'display_start_time': (1,),
             'videoconference_tool': (1, )
         }
 
@@ -852,6 +878,10 @@ class RetreatTests(CustomAPITestCase):
             'has_shared_rooms': ['Must be a valid boolean.'],
             'place_name': ['Not a valid string.'],
             'type': ['Incorrect type. Expected URL string, received list.'],
+            'display_start_time': [
+                'Datetime has wrong format. Use one of these formats '
+                'instead: YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
+            ],
             'videoconference_tool': ['Not a valid string.']
         }
 
@@ -1294,7 +1324,10 @@ class RetreatTests(CustomAPITestCase):
             seats=2,
             min_day_refund=2,
             min_day_exchange=2,
-            refund_rate=20
+            refund_rate=20,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2099, 1, 1),
+            ),
         )
         RetreatDate.objects.create(
             start_time='2099-01-01T00:00:00Z',
@@ -1310,7 +1343,10 @@ class RetreatTests(CustomAPITestCase):
             seats=2,
             min_day_refund=2,
             min_day_exchange=2,
-            refund_rate=20
+            refund_rate=20,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2101, 1, 1),
+            ),
         )
         RetreatDate.objects.create(
             start_time='2101-01-01T00:00:00Z',
@@ -1359,7 +1395,10 @@ class RetreatTests(CustomAPITestCase):
             seats=2,
             min_day_refund=2,
             min_day_exchange=2,
-            refund_rate=20
+            refund_rate=20,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2099, 1, 1),
+            ),
         )
         RetreatDate.objects.create(
             start_time='2099-01-01T00:00:00Z',
@@ -1375,7 +1414,10 @@ class RetreatTests(CustomAPITestCase):
             seats=2,
             min_day_refund=2,
             min_day_exchange=2,
-            refund_rate=20
+            refund_rate=20,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2101, 1, 1),
+            ),
         )
         RetreatDate.objects.create(
             start_time='2101-01-01T00:00:00Z',
@@ -1428,7 +1470,10 @@ class RetreatTests(CustomAPITestCase):
             seats=2,
             min_day_refund=2,
             min_day_exchange=2,
-            refund_rate=20
+            refund_rate=20,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2099, 1, 1),
+            ),
         )
         RetreatDate.objects.create(
             start_time='2099-01-01T00:00:00Z',
@@ -1444,7 +1489,10 @@ class RetreatTests(CustomAPITestCase):
             seats=2,
             min_day_refund=2,
             min_day_exchange=2,
-            refund_rate=20
+            refund_rate=20,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2101, 1, 1),
+            ),
         )
         RetreatDate.objects.create(
             start_time='2101-01-01T00:00:00Z',

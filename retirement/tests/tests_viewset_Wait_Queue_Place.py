@@ -62,6 +62,9 @@ class WaitQueuePlaceTests(APITestCase):
             has_shared_rooms=True,
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
             type=self.retreatType,
         )
         RetreatDate.objects.create(
