@@ -497,7 +497,6 @@ class ReservationTests(APITestCase):
 
         response_data = json.loads(response.content)
 
-        del response_data['user_details']
         del response_data['timeslot_details']
 
         content = {
@@ -548,7 +547,6 @@ class ReservationTests(APITestCase):
 
         response_data = json.loads(response.content)
 
-        del response_data['user_details']
         del response_data['timeslot_details']
 
         content = {
@@ -807,9 +805,7 @@ class ReservationTests(APITestCase):
 
         data = json.loads(response.content)
 
-        del data['results'][0]['user_details']
         del data['results'][0]['timeslot_details']
-        del data['results'][1]['user_details']
         del data['results'][1]['timeslot_details']
 
         content = {
@@ -859,7 +855,6 @@ class ReservationTests(APITestCase):
 
         response_data = json.loads(response.content)
 
-        del response_data['user_details']
         del response_data['timeslot_details']
 
         content = {
