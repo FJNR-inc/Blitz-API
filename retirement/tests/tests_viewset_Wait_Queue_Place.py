@@ -5,6 +5,7 @@ from unittest import mock
 import pytz
 from django.conf import settings
 from django.urls import reverse
+from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -15,6 +16,14 @@ from ..models import WaitQueuePlace, WaitQueue, WaitQueuePlaceReserved, \
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
+@override_settings(
+    LOCAL_SETTINGS={
+        "EMAIL_SERVICE": True,
+        "FRONTEND_INTEGRATION": {
+            "RETREAT_UNSUBSCRIBE_URL": "fake_url",
+        }
+    }
+)
 class WaitQueuePlaceTests(APITestCase):
 
     def setUp(self) -> None:

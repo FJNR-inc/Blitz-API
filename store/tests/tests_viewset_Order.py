@@ -82,7 +82,8 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
         "FRONTEND_INTEGRATION": {
             "POLICY_URL": "fake_url",
             "LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT": "fake_url",
-            "PROFILE_URL": "fake_url"
+            "PROFILE_URL": "fake_url",
+            "RETREAT_UNSUBSCRIBE_URL": "fake_url",
         }
     }
 )
