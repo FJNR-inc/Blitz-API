@@ -392,10 +392,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
     # ---
     # Ex: If retreat begin on January 29th and finish on February
     # 29th we maybe want to show it in February
-    display_start_time = models.DateTimeField(
-        null=True,
-        blank=True,
-    )
+    display_start_time = models.DateTimeField()
 
     hide_from_client_admin_panel = models.BooleanField(
         verbose_name=_("Hide from client admin panel"),
