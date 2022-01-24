@@ -1,27 +1,24 @@
 import binascii
 import datetime
 import os
+import logging
 
-from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import models
+from django.db.models import Sum
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
-
-from jsonfield import JSONField
-
-from rest_framework.authtoken.models import Token
-
-from simple_history import register
-from simple_history.models import HistoricalRecords
-
 from django.utils.translation import ugettext_lazy as _
 
+from dateutil.relativedelta import relativedelta
+from jsonfield import JSONField
+from rest_framework.authtoken.models import Token
+from simple_history.models import HistoricalRecords
 from . import mailchimp
-from blitz_api import services
-from .managers import ActionTokenManager
 
-import logging
+from tomato.models import Tomato
+from blitz_api import services
+from blitz_api.managers import ActionTokenManager
 
 logger = logging.getLogger(__name__)
 
@@ -165,8 +162,17 @@ class User(AbstractUser):
         physical_retreats = self.get_nb_tomatoes_physical_retreat()
 
         past_count = timeslots['past'] + \
-            virtual_retreats['past'] + \
-            physical_retreats['past']
+                     virtual_retreats['past'] + \
+                     physical_retreats['past']
+
+        custom_tomatoes = Tomato.objects.filter(
+            user=self,
+        ).aggregate(
+            Sum('number_of_tomato'),
+        )
+
+        if custom_tomatoes['number_of_tomato__sum'] is not None:
+            past_count += custom_tomatoes['number_of_tomato__sum']
 
         return past_count
 

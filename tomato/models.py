@@ -1,18 +1,15 @@
 from django.conf import settings
 from django.db import models
-from django.contrib.auth import get_user_model
 from django.utils.translation import ugettext_lazy as _
 
 from blitz_api.services import send_mail
-
-User = get_user_model()
 
 
 class Message(models.Model):
     """Messages of the tomato app chat"""
 
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name=_("User"),
         related_name='messages',
@@ -33,7 +30,7 @@ class Report(models.Model):
     """Report on the tomato app chat"""
 
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name=_("User"),
         related_name='reports',
