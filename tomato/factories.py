@@ -1,14 +1,14 @@
-from datetime import timedelta
-
-import factory
-from factory.django import DjangoModelFactory
+from faker import Faker
 import factory.fuzzy
-from dateutil.tz import tz
+from factory.django import DjangoModelFactory
+
 from django.contrib.auth import get_user_model
 
-from tomato.models import Attendance
-
-from faker import Faker
+from blitz_api.factories import UserFactory
+from tomato.models import (
+    Attendance,
+    Tomato,
+)
 
 User = get_user_model()
 fake = Faker()
@@ -19,3 +19,11 @@ class AttendanceFactory(DjangoModelFactory):
         model = Attendance
 
     key = factory.Sequence(lambda n: f'Key-{n}')
+
+
+class TomatoFactory(DjangoModelFactory):
+    class Meta:
+        model = Tomato
+
+    user = factory.SubFactory(UserFactory)
+    number_of_tomato = 2

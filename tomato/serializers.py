@@ -8,7 +8,7 @@ from rest_framework import serializers
 from tomato.models import (
     Message,
     Attendance,
-    Report,
+    Report, Tomato,
 )
 
 User = get_user_model()
@@ -118,6 +118,23 @@ class ReportSerializer(serializers.HyperlinkedModelSerializer):
         report.send_report_notification()
 
         return report
+
+
+class TomatoSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+    user = serializers.HyperlinkedRelatedField(
+        'user-detail',
+        read_only=True,
+    )
+
+    class Meta:
+        model = Tomato
+        fields = '__all__'
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+
+        return super(TomatoSerializer, self).create(validated_data)
 
 
 class AttendanceDeleteKeySerializer(serializers.Serializer):

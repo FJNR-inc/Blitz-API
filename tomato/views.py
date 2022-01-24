@@ -3,7 +3,7 @@ from django.shortcuts import render
 from tomato.models import (
     Message,
     Attendance,
-    Report,
+    Report, Tomato,
 )
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
@@ -17,7 +17,7 @@ from tomato.serializers import (
     MessageSerializer,
     AttendanceSerializer,
     ReportSerializer,
-    AttendanceDeleteKeySerializer,
+    AttendanceDeleteKeySerializer, TomatoSerializer,
 )
 from rest_framework.permissions import (
     IsAuthenticated,
@@ -209,6 +209,30 @@ class ReportViewSet(viewsets.ModelViewSet):
             queryset = Report.objects.all()
         else:
             queryset = Report.objects.filter(user=self.request.user)
+
+        return queryset
+
+    def get_permissions(self):
+        if self.action in ['create', 'list', 'retrieve']:
+            permission_classes = [
+                IsAuthenticated,
+            ]
+        else:
+            permission_classes = [
+                IsAdminUser,
+            ]
+        return [permission() for permission in permission_classes]
+
+
+class TomatoViewSet(viewsets.ModelViewSet):
+    serializer_class = TomatoSerializer
+    queryset = Tomato.objects.all()
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            queryset = Tomato.objects.all()
+        else:
+            queryset = Tomato.objects.filter(user=self.request.user)
 
         return queryset
 

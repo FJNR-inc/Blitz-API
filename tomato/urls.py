@@ -1,5 +1,5 @@
 """Store URL Configuration"""
-from rest_framework.routers import SimpleRouter, Route
+from rest_framework.routers import SimpleRouter
 from django.urls import path
 from django.conf.urls import include
 
@@ -22,6 +22,7 @@ router = OptionalSlashSimpleRouter()
 router.register('messages', views.MessageViewSet)
 router.register('reports', views.ReportViewSet)
 router.register('attendances', views.AttendanceViewSet)
+router.register('tomatoes', views.TomatoViewSet)
 
 router.registry.extend(router_extra.registry)
 

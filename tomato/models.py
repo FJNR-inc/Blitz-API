@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils.translation import ugettext_lazy as _
@@ -103,6 +104,31 @@ class Attendance(models.Model):
         verbose_name=_("Latitude"),
         null=True,
         blank=True,
+    )
+
+    updated_at = models.DateTimeField(
+        verbose_name=_("Updated at"),
+        auto_now=True,
+    )
+
+    created_at = models.DateTimeField(
+        verbose_name=_("Created at"),
+        auto_now_add=True,
+    )
+
+
+class Tomato(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name=_("User"),
+        related_name='tomatoes',
+    )
+
+    number_of_tomato = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_("Number of tomato"),
     )
 
     updated_at = models.DateTimeField(
