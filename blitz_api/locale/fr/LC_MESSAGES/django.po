@@ -3,20 +3,22 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-01-26 17:15-0500\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2022-01-26 22:59+0000\n"
+"Last-Translator: Noel Rignon <noel.rignon@fjnr.ca>\n"
+"Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
+"blitz_api/fr/>\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: Weblate 4.9.1\n"
+
 #: blitz_api/admin.py:80
 msgid "Extra fields"
 msgstr ""
@@ -255,7 +257,7 @@ msgstr ""
 
 #: blitz_api/serializers.py:277
 msgid "Invalid domain name."
-msgstr ""
+msgstr "Nom de domaine invalide."
 
 #: blitz_api/serializers.py:345
 msgid "Bad password"
