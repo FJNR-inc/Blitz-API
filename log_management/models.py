@@ -125,7 +125,6 @@ class ActionLog(models.Model):
     session_key = models.CharField(
         verbose_name=_("Session key"),
         max_length=300,
-        unique=True,
     )
 
     source = models.CharField(
