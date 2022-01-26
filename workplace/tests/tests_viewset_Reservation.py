@@ -498,6 +498,7 @@ class ReservationTests(APITestCase):
         response_data = json.loads(response.content)
 
         del response_data['timeslot_details']
+        del response_data['user_details']
 
         content = {
             'id': self.reservation_volunteer.id,
@@ -548,6 +549,7 @@ class ReservationTests(APITestCase):
         response_data = json.loads(response.content)
 
         del response_data['timeslot_details']
+        del response_data['user_details']
 
         content = {
             'id': reservation_admin.id,
@@ -807,6 +809,7 @@ class ReservationTests(APITestCase):
 
         del data['results'][0]['timeslot_details']
         del data['results'][1]['timeslot_details']
+        del data['results'][1]['user_details']
 
         content = {
             'count': 2,

@@ -736,8 +736,13 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         return attrs
 
     def to_representation(self, instance):
-        is_staff = self.context['request'].user.is_staff
-        if is_staff:
+        user = self.context['request'].user
+        volunteers = instance.timeslot.period.workplace.volunteers.all()
+
+        is_staff = user.is_staff
+        is_volunteer = user in volunteers
+
+        if is_staff or is_volunteer:
             from blitz_api.serializers import UserSerializer
             self.fields['user_details'] = UserSerializer(
                 source='user'
