@@ -1,0 +1,438 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-01-26 17:15-0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: store/admin.py:55
+msgid "Orderlines"
+msgstr ""
+
+#: store/admin.py:184 store/models.py:41 store/models.py:538
+#: store/models.py:606 store/models.py:728 store/models.py:780
+msgid "User"
+msgstr ""
+
+#: store/admin.py:190
+msgid "Date"
+msgstr ""
+
+#: store/admin.py:228
+msgid "Coupon users"
+msgstr ""
+
+#: store/models.py:35 store/models.py:210
+msgid "Order"
+msgstr ""
+
+#: store/models.py:36
+msgid "Orders"
+msgstr ""
+
+#: store/models.py:46 store/models.py:561
+msgid "Transaction date"
+msgstr ""
+
+#: store/models.py:50 store/models.py:565
+msgid "Authorization ID"
+msgstr ""
+
+#: store/models.py:55 store/models.py:570
+msgid "Settlement ID"
+msgstr ""
+
+#: store/models.py:60 store/models.py:575
+msgid "Reference number"
+msgstr ""
+
+#: store/models.py:192
+msgid "Order line"
+msgstr ""
+
+#: store/models.py:193
+msgid "Order lines"
+msgstr ""
+
+#: store/models.py:215 store/models.py:283
+msgid "Quantity"
+msgstr ""
+
+#: store/models.py:221
+msgid "Applied coupon"
+msgstr ""
+
+#: store/models.py:230
+msgid "Coupon real value"
+msgstr ""
+
+#: store/models.py:237
+msgid "Orderline cost"
+msgstr ""
+
+#: store/models.py:243
+msgid "Options"
+msgstr ""
+
+#: store/models.py:249
+msgid "Metada"
+msgstr ""
+
+#: store/models.py:297
+msgid "Refund"
+msgstr ""
+
+#: store/models.py:298
+msgid "Refunds"
+msgstr ""
+
+#: store/models.py:303
+msgid "Orderline"
+msgstr ""
+
+#: store/models.py:310
+msgid "Amount"
+msgstr ""
+
+#: store/models.py:314 store/models.py:357 store/models.py:554
+#: store/models.py:652
+msgid "Details"
+msgstr ""
+
+#: store/models.py:321
+msgid "Refund date"
+msgstr ""
+
+#: store/models.py:325
+msgid "Refund ID"
+msgstr ""
+
+#: store/models.py:341 store/models.py:543 store/models.py:599
+msgid "Name"
+msgstr ""
+
+#: store/models.py:346
+msgid "Available"
+msgstr ""
+
+#: store/models.py:353 store/models.py:550
+msgid "Price"
+msgstr ""
+
+#: store/models.py:367
+msgid "Applicable products"
+msgstr ""
+
+#: store/models.py:375
+msgid "Applicable product types"
+msgstr ""
+
+#: store/models.py:403
+msgid "Membership"
+msgstr ""
+
+#: store/models.py:404 store/models.py:507
+msgid "Memberships"
+msgstr ""
+
+#: store/models.py:408 store/models.py:495
+msgid "Id before migrate to base product"
+msgstr ""
+
+#: store/models.py:418
+msgid "Academic levels"
+msgstr ""
+
+#: store/models.py:423 store/models.py:512
+msgid "picture"
+msgstr ""
+
+#: store/models.py:430
+msgid "Welcome email template ID"
+msgstr ""
+
+#: store/models.py:490
+msgid "Package"
+msgstr ""
+
+#: store/models.py:491
+msgid "Packages"
+msgstr ""
+
+#: store/models.py:501
+msgid "Reservations"
+msgstr ""
+
+#: store/models.py:524
+msgid "Max Quantity"
+msgstr ""
+
+#: store/models.py:582
+msgid "Custom payment"
+msgstr ""
+
+#: store/models.py:583
+msgid "Custom payments"
+msgstr ""
+
+#: store/models.py:595
+msgid "Payment profile"
+msgstr ""
+
+#: store/models.py:596
+msgid "Payment profiles"
+msgstr ""
+
+#: store/models.py:611
+msgid "External profile ID"
+msgstr ""
+
+#: store/models.py:616
+msgid "External profile url"
+msgstr ""
+
+#: store/models.py:635
+msgid "Value"
+msgstr ""
+
+#: store/models.py:642
+msgid "Percentage off"
+msgstr ""
+
+#: store/models.py:661
+msgid "Applicable retreats"
+msgstr ""
+
+#: store/models.py:668
+msgid "Applicable timeslots"
+msgstr ""
+
+#: store/models.py:675
+msgid "Applicable packages"
+msgstr ""
+
+#: store/models.py:682
+msgid "Applicable memberships"
+msgstr ""
+
+#: store/models.py:696
+msgid "Applicable to virtual retreat"
+msgstr ""
+
+#: store/models.py:701
+msgid "Applicable to physical retreat"
+msgstr ""
+
+#: store/models.py:714
+msgid "Start time"
+msgstr ""
+
+#: store/models.py:716
+msgid "End time"
+msgstr ""
+
+#: store/models.py:719
+msgid "Code"
+msgstr ""
+
+#: store/models.py:735
+msgid "Users"
+msgstr ""
+
+#: store/models.py:763
+msgid "Limit date"
+msgstr ""
+
+#: store/models.py:786
+msgid "Coupon"
+msgstr ""
+
+#: store/serializers.py:217
+msgid "Name of the membership."
+msgstr ""
+
+#: store/serializers.py:241
+msgid "Name of the package."
+msgstr ""
+
+#: store/serializers.py:337
+msgid "Name of the product."
+msgstr ""
+
+#: store/serializers.py:362
+msgid "Name of the payment profile."
+msgstr ""
+
+#: store/serializers.py:413
+msgid "The referenced object does not exist."
+msgstr ""
+
+#: store/serializers.py:424
+msgid "User does not have the required academic_level to "
+msgstr ""
+
+#: store/serializers.py:529
+msgid "You don't have the permission to create "
+msgstr ""
+
+#: store/serializers.py:539
+msgid "You don't have the permission to bypass the payment"
+msgstr ""
+
+#: store/serializers.py:619
+msgid "You already have an active membership."
+msgstr ""
+
+#: store/serializers.py:684 store/serializers.py:758
+msgid "User does not have the required "
+msgstr ""
+
+#: store/serializers.py:705
+msgid "You don't have enough tickets to make this "
+msgstr ""
+
+#: store/serializers.py:712
+msgid "You already are registered to this timeslot: "
+msgstr ""
+
+#: store/serializers.py:733 store/serializers.py:803
+msgid "There are no places left in the requested "
+msgstr ""
+
+#: store/serializers.py:742
+msgid "Incomplete user profile. 'phone' and 'city' "
+msgstr ""
+
+#: store/serializers.py:771
+msgid "You already are registered to this "
+msgstr ""
+
+#: store/serializers.py:848
+msgid "A payment_token or single_use_token is required to "
+msgstr ""
+
+#: store/serializers.py:1003 store/serializers.py:1060
+msgid "You can't set a discount value (value) and a discount "
+msgstr ""
+
+#: store/serializers.py:1013
+msgid "You need to set a value discount (value) or a "
+msgstr ""
+
+#: store/serializers.py:1037
+msgid "Can't generate new unique codes. Delete old coupons."
+msgstr ""
+
+#: store/serializers.py:1067
+msgid "You need to set a value discount (value) or a discount "
+msgstr ""
+
+#: store/services.py:26 store/services.py:76 store/services.py:80
+msgid "An error occured while adding the card: "
+msgstr ""
+
+#: store/services.py:27
+msgid "the zip/postal code must be provided for an AVS check request."
+msgstr ""
+
+#: store/services.py:30 store/services.py:34 store/services.py:38
+#: store/services.py:42 store/services.py:46 store/services.py:59
+#: store/services.py:63 store/services.py:68 store/services.py:72
+msgid "An error occured while processing the payment: "
+msgstr ""
+
+#: store/services.py:31
+msgid "You submitted an expired credit card number with your request."
+msgstr ""
+
+#: store/services.py:35
+msgid "card type not supported."
+msgstr ""
+
+#: store/services.py:39
+msgid "the request has been declined by the issuing bank."
+msgstr ""
+
+#: store/services.py:43
+msgid "the card has been declined due to insufficient funds."
+msgstr ""
+
+#: store/services.py:47
+msgid "The external processing gateway has rejected the transaction."
+msgstr ""
+
+#: store/services.py:50 store/services.py:54
+msgid "An error occured while processing the refund: "
+msgstr ""
+
+#: store/services.py:51
+msgid "The settlement has already been fully refunded."
+msgstr ""
+
+#: store/services.py:55
+msgid "The settlement you are attempting to refund has not been batched "
+msgstr ""
+
+#: store/services.py:60
+msgid "the transaction has already been processed."
+msgstr ""
+
+#: store/services.py:64
+msgid "invalid payment or single-use token."
+msgstr ""
+
+#: store/services.py:66
+msgid "Not found."
+msgstr ""
+
+#: store/services.py:69
+msgid "permission denied."
+msgstr ""
+
+#: store/services.py:73
+msgid "invalid payment token or payment profile/card inactive."
+msgstr ""
+
+#: store/services.py:77
+msgid "a card with that number already exists."
+msgstr ""
+
+#: store/services.py:81
+msgid "the payment profile for this user already exists."
+msgstr ""
+
+#: store/services.py:83
+msgid "The request could not be processed."
+msgstr ""
+
+#: store/services.py:504
+msgid "This coupon is only valid between {0} and {1}."
+msgstr ""
+
+#: store/services.py:530
+msgid "Maximum number of uses exceeded for this coupon."
+msgstr ""
+
+#: store/services.py:574
+msgid "This coupon does not apply to any product."
+msgstr ""
+
+#: store/views.py:287 store/views.py:489
+msgid "This field is required."
+msgstr ""
+
+#: store/views.py:481
+msgid "Email address"
+msgstr ""
