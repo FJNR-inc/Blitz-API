@@ -313,7 +313,11 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
     def get_is_reserved(self, timeslot: TimeSlot):
         user = self.context['request'].user
 
-        return timeslot.users.filter(pk=user.pk).exists()
+        return Reservation.objects.filter(
+            is_active=True,
+            user=user.pk,
+            timeslot=timeslot,
+        ).exists()
 
     def get_nb_reservations_active(self, obj):
         return Reservation.objects.filter(
