@@ -249,6 +249,26 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
         }
         return Response(response_data, status=status.HTTP_200_OK)
 
+    @action(detail=True)
+    def accept_terms(self, request, pk):
+        user = self.get_object()
+
+        is_owner = user.id == self.request.user.id
+        is_admin = self.request.user.is_superuser
+
+        if is_owner or is_admin:
+            user.last_acceptation_terms_and_conditions = timezone.now()
+            user.save()
+        else:
+            content = {
+                'non_field_errors': _(
+                    "You can't accept the terms for others peoples."
+                ),
+            }
+            return Response(content, status=status.HTTP_403_FORBIDDEN)
+
+        return Response(status=status.HTTP_200_OK)
+
 
 class UsersActivation(APIView):
     """

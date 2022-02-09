@@ -1,5 +1,6 @@
 import re
 
+from django.utils import timezone
 from mailchimp3.mailchimpclient import MailChimpError
 from rest_framework import serializers
 from rest_framework.authtoken.serializers import AuthTokenSerializer
@@ -441,6 +442,9 @@ class UserSerializer(UserUpdateSerializer):
         # Put user inactive by default
         user.is_active = False
 
+        # Auto accept terms and condition
+        user.last_acceptation_terms_and_conditions = timezone.now()
+
         # Free ticket for new users
         user.tickets = 1
 
@@ -472,7 +476,10 @@ class UserSerializer(UserUpdateSerializer):
             'groups',
             'user_permissions',
             'reservations',
-            'workplaces'
+            'workplaces',
+            'membership_end',
+            'membership_end_notification',
+            'last_acceptation_terms_and_conditions',
         )
 
 

@@ -527,6 +527,7 @@ class UsersTests(APITestCase):
             'membership_end_notification',
             'get_number_of_past_tomatoes',
             'get_number_of_future_tomatoes',
+            'last_acceptation_terms_and_conditions',
         ]
         for key in first_user.keys():
             self.assertTrue(
@@ -595,6 +596,7 @@ class UsersTests(APITestCase):
             'membership_end_notification',
             'get_number_of_past_tomatoes',
             'get_number_of_future_tomatoes',
+            'last_acceptation_terms_and_conditions',
         ]
         for key in first_user.keys():
             self.assertTrue(

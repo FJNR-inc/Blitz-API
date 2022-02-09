@@ -154,6 +154,12 @@ class User(AbstractUser):
         verbose_name=_("Hide newsletter"),
     )
 
+    last_acceptation_terms_and_conditions = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Last acceptation of the terms and conditions"),
+    )
+
     history = HistoricalRecords()
 
     def get_number_of_past_tomatoes(self):
