@@ -377,14 +377,8 @@ class UsersTests(APITestCase):
             format='json',
         )
 
-        content = {
-            'detail': "The account was created but no email was "
-                      "sent. If your account is not activated, "
-                      "contact the administration.",
-        }
-
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(json.loads(response.content)['phone'], '1234567890')
 
         user = User.objects.get(email="John@mailinator.com")
         activation_token = ActionToken.objects.filter(
@@ -434,14 +428,8 @@ class UsersTests(APITestCase):
             format='json',
         )
 
-        content = {
-            'detail': "The account was created but no email was "
-                      "sent. If your account is not activated, "
-                      "contact the administration.",
-        }
-
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(json.loads(response.content)['phone'], '1234567890')
 
         user = User.objects.get(email="John@mailinator.com")
         activation_token = ActionToken.objects.filter(

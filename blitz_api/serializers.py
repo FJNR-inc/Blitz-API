@@ -450,12 +450,6 @@ class UserSerializer(UserUpdateSerializer):
 
         user.save()
 
-        # Create an ActivationToken to activate user in the future
-        ActionToken.objects.create(
-            user=user,
-            type='account_activation',
-        )
-
         return user
 
     class Meta:
@@ -540,6 +534,11 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     token = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
+
+class ResendEmailActivationSerializer(serializers.Serializer):
+
+    email = serializers.CharField(required=True)
 
 
 class ExportMediaSerializer(serializers.HyperlinkedModelSerializer):

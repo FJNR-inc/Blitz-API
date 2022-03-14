@@ -146,86 +146,14 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
                 user.is_active = True
                 user.save()
 
-            if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is True:
-                MAIL_SERVICE = settings.ANYMAIL
-                FRONTEND_SETTINGS = settings.LOCAL_SETTINGS[
-                    'FRONTEND_INTEGRATION'
-                ]
-
-                # Get the token of the saved user and send it with an email
-                activate_token = ActionToken.objects.get(
-                    user=user,
-                    type='account_activation',
-                ).key
-
-                # Setup the url for the activation button in the email
-                activation_url = FRONTEND_SETTINGS['ACTIVATION_URL'].replace(
-                    "{{token}}",
-                    activate_token
-                )
-
-                response_send_mail = services.send_mail(
-                    [user],
-                    {
-                        "activation_url": activation_url,
-                        "first_name": user.first_name,
-                        "last_name": user.last_name,
-                    },
-                    "CONFIRM_SIGN_UP",
-                )
-
-                if response_send_mail:
-                    content = {
-                        'detail': _("The account was created but no email was "
-                                    "sent. If your account is not "
-                                    "activated, contact the administration."),
-                    }
-                    return Response(content, status=status.HTTP_201_CREATED)
+            user.send_new_activation_email()
 
         return response
 
     @action(detail=True, permission_classes=[IsAdminUser])
     def send_email_confirm(self, request, pk):
         user = self.get_object()
-
-        if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is True:
-            FRONTEND_SETTINGS = settings.LOCAL_SETTINGS[
-                'FRONTEND_INTEGRATION'
-            ]
-
-            # Get the token of the saved user and send it with an email
-            activate_token = ActionToken.objects.get(
-                user=user,
-                type='account_activation',
-            )
-
-            activate_token.expires = timezone.now() + timezone.timedelta(
-                minutes=settings.ACTIVATION_TOKENS['MINUTES']
-            )
-
-            # Setup the url for the activation button in the email
-            activation_url = FRONTEND_SETTINGS['ACTIVATION_URL'].replace(
-                "{{token}}",
-                activate_token.key
-            )
-
-            response_send_mail = services.send_mail(
-                [user],
-                {
-                    "activation_url": activation_url,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                },
-                "CONFIRM_SIGN_UP",
-            )
-
-            if response_send_mail:
-                content = {
-                    'detail': _("The account was created but no email was "
-                                "sent. If your account is not "
-                                "activated, contact the administration."),
-                }
-                return Response(content, status=status.HTTP_200_OK)
+        user.send_new_activation_email()
 
         return Response(status=status.HTTP_200_OK)
 
@@ -248,6 +176,35 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
             'email_send_count': len(emails)
         }
         return Response(response_data, status=status.HTTP_200_OK)
+
+    @action(detail=False, permission_classes=[])
+    def resend_email_activation(self, request):
+        """
+        That custom action allows an user to trigger a new email of activation
+        in case the first email was not received or was received too long ago
+        """
+
+        serializer = serializers.ResendEmailActivationSerializer(
+            data=self.request.data,
+            context={
+                'request': request,
+            }
+        )
+
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            user = User.objects.get(email=serializer.validated_data['email'])
+            user.send_new_activation_email()
+        except User.DoesNotExist:
+            return Response(
+                {
+                    'email': _('This email is not linked to any account'),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(status=status.HTTP_200_OK)
 
     @action(detail=True)
     def accept_terms(self, request, pk):

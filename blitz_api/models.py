@@ -162,6 +162,37 @@ class User(AbstractUser):
 
     history = HistoricalRecords()
 
+    def send_new_activation_email(self):
+        if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is True:
+            FRONTEND_SETTINGS = settings.LOCAL_SETTINGS[
+                'FRONTEND_INTEGRATION'
+            ]
+
+            # Create an ActivationToken to activate user in the future
+            activation_token = ActionToken.objects.create(
+                user=self,
+                type='account_activation',
+                expires=timezone.now() + timezone.timedelta(
+                    minutes=settings.ACTIVATION_TOKENS['MINUTES']
+                )
+            )
+
+            # Setup the url for the activation button in the email
+            activation_url = FRONTEND_SETTINGS['ACTIVATION_URL'].replace(
+                "{{token}}",
+                activation_token.key
+            )
+
+            services.send_mail(
+                [self],
+                {
+                    "activation_url": activation_url,
+                    "first_name": self.first_name,
+                    "last_name": self.last_name,
+                },
+                "CONFIRM_SIGN_UP",
+            )
+
     def get_number_of_past_tomatoes(self):
         timeslots = self.get_nb_tomatoes_timeslot()
         virtual_retreats = self.get_nb_tomatoes_virtual_retreat()
