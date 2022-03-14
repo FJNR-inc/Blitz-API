@@ -44,14 +44,17 @@ from log_management.models import (
     EmailLog,
 )
 from store.exceptions import PaymentAPIError
-from store.models import OrderLineBaseProduct
+from store.models import (
+    OrderLineBaseProduct,
+    CouponUser,
+)
 from store.services import PAYSAFE_EXCEPTION
 
-from . import (
+from retirement import (
     permissions,
     serializers,
 )
-from .models import (
+from retirement.models import (
     Picture,
     Reservation,
     Retreat,
@@ -65,21 +68,21 @@ from .models import (
     RetreatDate,
     RetreatUsageLog,
 )
-from .resources import (
+from retirement.resources import (
     ReservationResource,
     RetreatResource,
     WaitQueueResource,
     RetreatReservationResource,
     OptionProductResource,
 )
-from .serializers import (
+from retirement.serializers import (
     RetreatTypeSerializer,
     AutomaticEmailSerializer,
     RetreatDateSerializer,
     BatchRetreatSerializer,
     RetreatUsageLogSerializer,
 )
-from .services import (
+from retirement.services import (
     send_retreat_reminder_email,
     send_post_retreat_email,
     send_automatic_email,
@@ -645,7 +648,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
 
         with transaction.atomic():
             # No need to check for previous refunds because a refunded
-            # reservation == canceled reservation, thus not active.
+            # reservation is automatically canceled, thus not active.
             if reservation_active:
                 if order_line and order_line.quantity > 1:
                     raise rest_framework_serializers.ValidationError({
@@ -694,6 +697,16 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                 free_seats = retreat.places_remaining
                 if retreat.reserved_seats or free_seats == 1:
                     retreat.add_wait_queue_place(user)
+
+                # Rollback the coupon number of use if the reservation
+                # was done with a coupon
+                if order_line and order_line.coupon:
+                    coupon_user = CouponUser.objects.get(
+                        user=user,
+                        coupon=order_line.coupon,
+                    )
+                    coupon_user.uses = coupon_user.uses - 1
+                    coupon_user.save()
 
                 retreat.save()
 
