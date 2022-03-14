@@ -126,18 +126,25 @@ class ObtainTemporaryAuthTokenTests(APITestCase):
             'password': 'Test123!'
         }
 
-        User.objects.filter(id=self.user.id).update(is_active=False)
+        self.user.is_active = False
+        self.user.save()
 
         response = self.client.post(self.url, data, format='json')
 
         content = {
             "non_field_errors": [
-                "Unable to log in with provided credentials."
-                ]
-            }
+                "Your account is not activated.",
+            ]
+        }
 
-        self.assertEqual(json.loads(response.content), content)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            json.loads(response.content),
+            content
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
 
         tokens = TemporaryToken.objects.filter(
             user__username=self.user.username

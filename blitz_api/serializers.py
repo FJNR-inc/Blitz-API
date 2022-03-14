@@ -1,5 +1,6 @@
 import re
 
+from django.db.models import Q
 from django.utils import timezone
 from mailchimp3.mailchimpclient import MailChimpError
 from rest_framework import serializers
@@ -493,14 +494,29 @@ class CustomAuthTokenSerializer(AuthTokenSerializer):
         username = attrs.get('username')
         password = attrs.get('password')
 
+        # Return custom error if account is not activated
+        try:
+            user = User.objects.get(
+                Q(email__iexact=username) | Q(username=username),
+            )
+            if user.is_active is False:
+                msg = _('Your account is not activated.')
+                raise serializers.ValidationError(msg, code='authorization')
+        except User.DoesNotExist:
+            pass
+
+        # Manage email OR username login
         try:
             user_obj = User.objects.get(email__iexact=username)
             username = user_obj.username
         except User.DoesNotExist:
             pass
 
-        user = authenticate(request=self.context.get('request'),
-                            username=username, password=password)
+        user = authenticate(
+            request=self.context.get('request'),
+            username=username,
+            password=password,
+        )
 
         if not user:
             msg = _('Unable to log in with provided credentials.')
