@@ -701,3 +701,40 @@ class UsersTests(APITestCase):
 
         # no new mail
         self.assertEqual(len(mail.outbox), 1)
+
+
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+            "FRONTEND_INTEGRATION": {
+                'ACTIVATION_URL': 'https://example.com/activate/{{token}}'
+            }
+        }
+    )
+    def test_resend_activation_email(self):
+        """
+        Ensure we can resend an activation email on demand
+        """
+
+        data = {
+            'email': self.user.email,
+        }
+
+        response = self.client.post(
+            reverse('user-resend-activation-email'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(
+            response.content,
+            b'',
+        )
+
+        self.assertEqual(len(mail.outbox), 1)

@@ -98,6 +98,7 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
         """
         if self.action in [
             'create',
+            'resend_activation_email',
             'execute_automatic_email_membership_end'
         ]:
             permission_classes = []
@@ -177,8 +178,8 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
         }
         return Response(response_data, status=status.HTTP_200_OK)
 
-    @action(detail=False, permission_classes=[])
-    def resend_email_activation(self, request):
+    @action(detail=False, methods=['POST'], permission_classes=[])
+    def resend_activation_email(self, request):
         """
         That custom action allows an user to trigger a new email of activation
         in case the first email was not received or was received too long ago
