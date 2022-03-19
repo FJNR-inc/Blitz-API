@@ -908,7 +908,18 @@ class RetreatTypeViewSet(viewsets.ModelViewSet):
     serializer_class = RetreatTypeSerializer
     queryset = RetreatType.objects.all()
     permission_classes = [permissions.IsAdminOrReadOnly]
-    filter_fields = ['is_virtual']
+    filter_fields = [
+        'is_virtual',
+        'is_visible',
+    ]
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            queryset = RetreatType.objects.all()
+        else:
+            queryset = RetreatType.objects.filter(
+                is_visible=True,
+            )
 
 
 class AutomaticEmailViewSet(viewsets.ModelViewSet):

@@ -106,6 +106,11 @@ class RetreatType(models.Model):
         blank=True,
     )
 
+    is_visible = models.BooleanField(
+        verbose_name=_('Is visible'),
+        default=True,
+    )
+
     def __str__(self):
         return self.name
 
