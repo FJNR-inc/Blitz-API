@@ -15,6 +15,22 @@ Feel free to create an account there to begin contributing!
 
 ---
 
+# Command to work
+
+## Generation of POT file
+
+Translation are done with Weblate on our [own instance](https://weblate.fjnr.ca).
+
+We do not create or update `*.po` file inside the repository but ONLY via weblate interface.
+
+To refresh the list of translation string (`*.pot`) please just execute this command below, it will prepare the `*.pot` file, that is a template used for every languages in Weblate. (locale `fr` is specified because we are obliged to set one, but it will do all the languages)
+
+```bash
+docker-compose run --rm api python manage.py makemessages --locale fr --keep-pot
+```
+
+---
+
 # Quickstart
 
 We're going to install and configure the latest develop build of this API.
