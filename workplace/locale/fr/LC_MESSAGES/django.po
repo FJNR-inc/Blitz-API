@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-26 17:15-0500\n"
+"POT-Creation-Date: 2022-03-23 13:06-0400\n"
 "PO-Revision-Date: 2022-03-23 21:16+0000\n"
 "Last-Translator: Noel Rignon <noel.rignon@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
@@ -169,11 +169,11 @@ msgstr ""
 msgid "The period contains timeslots with user reservations."
 msgstr ""
 
-#: workplace/serializers.py:220 workplace/serializers.py:604
+#: workplace/serializers.py:220 workplace/serializers.py:608
 msgid "End date must be later than start_date."
 msgstr ""
 
-#: workplace/serializers.py:221 workplace/serializers.py:605
+#: workplace/serializers.py:221 workplace/serializers.py:609
 msgid "Start date must be earlier than end_date."
 msgstr ""
 
@@ -193,67 +193,67 @@ msgstr ""
 msgid "Whether users can see this period or not."
 msgstr ""
 
-#: workplace/serializers.py:363
+#: workplace/serializers.py:367
 msgid "Trying to push an update that affects users "
 msgstr ""
 
-#: workplace/serializers.py:374
+#: workplace/serializers.py:378
 msgid "Start time must be set within the period's start_date "
 msgstr ""
 
-#: workplace/serializers.py:381
+#: workplace/serializers.py:385
 msgid "End time must be set within the period's start_date "
 msgstr ""
 
-#: workplace/serializers.py:390
+#: workplace/serializers.py:394
 msgid "End time must be the same day as start_time."
 msgstr ""
 
-#: workplace/serializers.py:393
+#: workplace/serializers.py:397
 msgid "Start time must be the same day as end_time."
 msgstr ""
 
-#: workplace/serializers.py:399
+#: workplace/serializers.py:403
 msgid "End time must be later than start_time."
 msgstr ""
 
-#: workplace/serializers.py:400
+#: workplace/serializers.py:404
 msgid "Start time must be earlier than end_time."
 msgstr ""
 
-#: workplace/serializers.py:416 workplace/serializers.py:664
+#: workplace/serializers.py:420 workplace/serializers.py:668
 msgid "An existing timeslot overlaps with the provided "
 msgstr ""
 
-#: workplace/serializers.py:517
+#: workplace/serializers.py:521
 msgid "Period to which this time slot applies."
 msgstr ""
 
-#: workplace/serializers.py:521
+#: workplace/serializers.py:525
 msgid "Name of the time slot."
 msgstr ""
 
-#: workplace/serializers.py:525
+#: workplace/serializers.py:529
 msgid "Hourly rate applied to this time slot. Overrides period "
 msgstr ""
 
-#: workplace/serializers.py:560
+#: workplace/serializers.py:564
 msgid "Duplicated weekdays are not authorized."
 msgstr ""
 
-#: workplace/serializers.py:589
+#: workplace/serializers.py:593
 msgid "Start date must be set within the period's start_date "
 msgstr ""
 
-#: workplace/serializers.py:596
+#: workplace/serializers.py:600
 msgid "End date must be set within the period's start_date "
 msgstr ""
 
-#: workplace/serializers.py:704
+#: workplace/serializers.py:708
 msgid "Only is_present can be updated. To change other "
 msgstr ""
 
-#: workplace/serializers.py:762
+#: workplace/serializers.py:766
 msgid "Whether the reservation is active or not."
 msgstr ""
 
