@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-03-23 13:06-0400\n"
-"PO-Revision-Date: 2022-01-26 22:59+0000\n"
+"PO-Revision-Date: 2022-03-23 17:10+0000\n"
 "Last-Translator: Noel Rignon <noel.rignon@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
 "blitz_api/fr/>\n"
@@ -277,37 +277,37 @@ msgstr ""
 
 #: blitz_api/serializers.py:503
 msgid "Your account is not activated."
-msgstr ""
+msgstr "Votre compte n'est pas activé."
 
 #: blitz_api/serializers.py:522
 msgid "Unable to log in with provided credentials."
-msgstr ""
+msgstr "Impossible de se connecter avec les identifiants fournis."
 
 #: blitz_api/serializers.py:542
 msgid "No account associated to this email address."
-msgstr ""
+msgstr "Aucun compte associé à cette adresse e-mail."
 
 #: blitz_api/serializers.py:589
 msgid "Email already register to this newsletter"
-msgstr ""
+msgstr "Cet e-mail est déjà inscrit à cette newsletter"
 
 #: blitz_api/services.py:49 blitz_api/services.py:159 blitz_api/services.py:205
 msgid "Email service is disabled."
-msgstr ""
+msgstr "Le service de messagerie est désactivé."
 
 #: blitz_api/services.py:129
 #, python-format
 msgid "One of the two fields %(field)s must be completed."
-msgstr ""
+msgstr "Un des deux champs %(field)s doit être renseigné."
 
 #: blitz_api/views.py:203
 msgid "This email is not linked to any account"
-msgstr ""
+msgstr "Cet e-mail n'est lié à aucun compte"
 
 #: blitz_api/views.py:223
 msgid "You can't accept the terms for others peoples."
-msgstr ""
+msgstr "Vous ne pouvez pas accepter les conditions pour quelqu'un d'autre."
 
 #: blitz_api/views.py:411
 msgid "Your token has been created but no email "
-msgstr ""
+msgstr "Votre token a été créé mais aucun e-mail n'a pu être envoyé "
