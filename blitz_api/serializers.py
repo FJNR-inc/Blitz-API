@@ -500,7 +500,7 @@ class CustomAuthTokenSerializer(AuthTokenSerializer):
                 Q(email__iexact=username) | Q(username=username),
             )
             if user.is_active is False:
-                msg = _('Your account is not activated.')
+                msg = _('Your account is not activated. [code: not-activated]')
                 raise serializers.ValidationError(msg, code='authorization')
         except User.DoesNotExist:
             pass
