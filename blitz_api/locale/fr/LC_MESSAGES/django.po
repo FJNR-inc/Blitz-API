@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-03-24 11:20-0400\n"
-"PO-Revision-Date: 2022-03-23 17:26+0000\n"
+"PO-Revision-Date: 2022-03-24 15:22+0000\n"
 "Last-Translator: Noel Rignon <noel.rignon@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
 "blitz_api/fr/>\n"
@@ -276,10 +276,8 @@ msgid "Password"
 msgstr "Mot de passe"
 
 #: blitz_api/serializers.py:503
-#, fuzzy
-#| msgid "Your account is not activated."
 msgid "Your account is not activated. [code: not-activated]"
-msgstr "Votre compte n'est pas activé."
+msgstr "Votre compte n'est pas activé. [code: not-activated]"
 
 #: blitz_api/serializers.py:522
 msgid "Unable to log in with provided credentials."
