@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-24 11:20-0400\n"
+"POT-Creation-Date: 2022-03-24 17:04-0400\n"
 "PO-Revision-Date: 2022-03-24 15:22+0000\n"
 "Last-Translator: Noel Rignon <noel.rignon@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
@@ -244,7 +244,7 @@ msgid "Email address"
 msgstr "Adresse e-mail"
 
 #: blitz_api/serializers.py:196 blitz_api/serializers.py:412
-msgid "An account for the specified email "
+msgid "An account for the specified email address already exists."
 msgstr ""
 
 #: blitz_api/serializers.py:211
@@ -309,5 +309,7 @@ msgid "You can't accept the terms for others peoples."
 msgstr "Vous ne pouvez pas accepter les conditions pour quelqu'un d'autre."
 
 #: blitz_api/views.py:411
-msgid "Your token has been created but no email "
+msgid ""
+"Your token has been created but no email has been sent. Please contact the "
+"administration."
 msgstr ""
