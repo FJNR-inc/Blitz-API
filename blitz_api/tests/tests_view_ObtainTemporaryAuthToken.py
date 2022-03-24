@@ -133,7 +133,7 @@ class ObtainTemporaryAuthTokenTests(APITestCase):
 
         content = {
             "non_field_errors": [
-                "Your account is not activated.",
+                "Your account is not activated. [code: not-activated]",
             ]
         }
 

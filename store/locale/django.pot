@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-24 11:20-0400\n"
+"POT-Creation-Date: 2022-03-24 17:04-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -280,11 +280,12 @@ msgid "The referenced object does not exist."
 msgstr ""
 
 #: store/serializers.py:424
-msgid "User does not have the required academic_level to "
+msgid ""
+"User does not have the required academic_level to order this membership."
 msgstr ""
 
 #: store/serializers.py:529
-msgid "You don't have the permission to create "
+msgid "You don't have the permission to create an order for another user."
 msgstr ""
 
 #: store/serializers.py:539
@@ -295,48 +296,58 @@ msgstr ""
 msgid "You already have an active membership."
 msgstr ""
 
-#: store/serializers.py:684 store/serializers.py:758
-msgid "User does not have the required "
+#: store/serializers.py:684
+msgid "User does not have the required membership to order this package."
 msgstr ""
 
 #: store/serializers.py:705
-msgid "You don't have enough tickets to make this "
+msgid "You don't have enough tickets to make this reservation."
 msgstr ""
 
 #: store/serializers.py:712
-msgid "You already are registered to this timeslot: "
+msgid "You already are registered to this timeslot: {0}."
 msgstr ""
 
-#: store/serializers.py:733 store/serializers.py:803
-msgid "There are no places left in the requested "
+#: store/serializers.py:733
+msgid "There are no places left in the requested timeslot."
 msgstr ""
 
 #: store/serializers.py:742
-msgid "Incomplete user profile. 'phone' and 'city' "
+msgid ""
+"Incomplete user profile. 'phone' and 'city' field must be filled in the user "
+"profile to book a retreat."
+msgstr ""
+
+#: store/serializers.py:758
+msgid "User does not have the required membership to order this retreat."
 msgstr ""
 
 #: store/serializers.py:771
-msgid "You already are registered to this "
+msgid "You already are registered to this retreat: {0}."
+msgstr ""
+
+#: store/serializers.py:803
+msgid "There are no places left in the requested retreat."
 msgstr ""
 
 #: store/serializers.py:848
-msgid "A payment_token or single_use_token is required to "
+msgid "A payment_token or single_use_token is required to create an order."
 msgstr ""
 
 #: store/serializers.py:1003 store/serializers.py:1060
-msgid "You can't set a discount value (value) and a discount "
+msgid ""
+"You can't set a discount value (value) and a discount percentage "
+"(percent_off) at the same time."
 msgstr ""
 
-#: store/serializers.py:1013
-msgid "You need to set a value discount (value) or a "
+#: store/serializers.py:1013 store/serializers.py:1067
+msgid ""
+"You need to set a value discount (value) or a discount percentage "
+"(percent_off) for this coupon."
 msgstr ""
 
 #: store/serializers.py:1037
 msgid "Can't generate new unique codes. Delete old coupons."
-msgstr ""
-
-#: store/serializers.py:1067
-msgid "You need to set a value discount (value) or a discount "
 msgstr ""
 
 #: store/services.py:26 store/services.py:76 store/services.py:80
@@ -382,7 +393,9 @@ msgid "The settlement has already been fully refunded."
 msgstr ""
 
 #: store/services.py:55
-msgid "The settlement you are attempting to refund has not been batched "
+msgid ""
+"The settlement you are attempting to refund has not been batched yet. There "
+"are no settled funds available to refund."
 msgstr ""
 
 #: store/services.py:60

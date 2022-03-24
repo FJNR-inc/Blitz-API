@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-24 11:20-0400\n"
+"POT-Creation-Date: 2022-03-24 17:04-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -242,7 +242,7 @@ msgid "Email address"
 msgstr ""
 
 #: blitz_api/serializers.py:196 blitz_api/serializers.py:412
-msgid "An account for the specified email "
+msgid "An account for the specified email address already exists."
 msgstr ""
 
 #: blitz_api/serializers.py:211
@@ -308,5 +308,7 @@ msgid "You can't accept the terms for others peoples."
 msgstr ""
 
 #: blitz_api/views.py:411
-msgid "Your token has been created but no email "
+msgid ""
+"Your token has been created but no email has been sent. Please contact the "
+"administration."
 msgstr ""
