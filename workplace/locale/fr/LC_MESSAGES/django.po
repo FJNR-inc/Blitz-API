@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-03-24 17:04-0400\n"
-"PO-Revision-Date: 2022-03-24 21:05+0000\n"
+"PO-Revision-Date: 2022-03-25 23:32+0000\n"
 "Last-Translator: Mélanie Guérin <melanie.guerin@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
 "workplace/fr/>\n"
@@ -25,11 +25,11 @@ msgstr "Fuseau horaire inconnu"
 
 #: workplace/models.py:19 workplace/models.py:67 workplace/models.py:110
 msgid "Workplace"
-msgstr ""
+msgstr "Espace"
 
 #: workplace/models.py:20
 msgid "Workplaces"
-msgstr ""
+msgstr "Espaces"
 
 #: workplace/models.py:23 workplace/models.py:58 workplace/models.py:101
 #: workplace/models.py:158
@@ -38,23 +38,23 @@ msgstr "Nom"
 
 #: workplace/models.py:28
 msgid "Details"
-msgstr ""
+msgstr "Détails"
 
 #: workplace/models.py:33
 msgid "Seats"
-msgstr ""
+msgstr "Places"
 
 #: workplace/models.py:39
 msgid "Volunteer"
-msgstr ""
+msgstr "Volontaires"
 
 #: workplace/models.py:54
 msgid "Picture"
-msgstr ""
+msgstr "Image"
 
 #: workplace/models.py:55
 msgid "Pictures"
-msgstr ""
+msgstr "Images"
 
 #: workplace/models.py:72
 msgid "picture"
@@ -62,39 +62,39 @@ msgstr "Image"
 
 #: workplace/models.py:97 workplace/models.py:167
 msgid "Period"
-msgstr ""
+msgstr "Périodes"
 
 #: workplace/models.py:98
 msgid "Periods"
-msgstr ""
+msgstr "Préiodes"
 
 #: workplace/models.py:117 workplace/models.py:182
 msgid "Price"
-msgstr ""
+msgstr "Prix"
 
 #: workplace/models.py:121
 msgid "Start Date"
-msgstr ""
+msgstr "Date de début"
 
 #: workplace/models.py:126
 msgid "End Date"
-msgstr ""
+msgstr "Date de fin"
 
 #: workplace/models.py:131
 msgid "Activation"
-msgstr ""
+msgstr "Activation"
 
 #: workplace/models.py:154 workplace/models.py:227
 msgid "Time slot"
-msgstr ""
+msgstr "Bloc à l'espace"
 
 #: workplace/models.py:155
 msgid "Time slots"
-msgstr ""
+msgstr "Blocs à l'espace"
 
 #: workplace/models.py:175 workplace/models.py:221
 msgid "User"
-msgstr ""
+msgstr "Utilisateur"
 
 #: workplace/models.py:188
 msgid "Start time"
@@ -106,35 +106,35 @@ msgstr "Date de fin"
 
 #: workplace/models.py:213
 msgid "User canceled"
-msgstr ""
+msgstr "Annulation par l'utilisateur"
 
 #: workplace/models.py:214
 msgid "Timeslot deleted"
-msgstr ""
+msgstr "Bloc à l'espace supprimé"
 
 #: workplace/models.py:215
 msgid "Timeslot modified"
-msgstr ""
+msgstr "Bloc à l'espace modifié"
 
 #: workplace/models.py:231
 msgid "Active"
-msgstr ""
+msgstr "Actif"
 
 #: workplace/models.py:238
 msgid "Cancelation reason"
-msgstr ""
+msgstr "Raison de l'annulation"
 
 #: workplace/models.py:243
 msgid "Cancelation date"
-msgstr ""
+msgstr "Date de l'annulation"
 
 #: workplace/models.py:246
 msgid "Present"
-msgstr ""
+msgstr "Présent"
 
 #: workplace/serializers.py:40
 msgid "Timezone of the workplace."
-msgstr ""
+msgstr "Fuseau horaire de l'espace Thèsez-vous"
 
 #: workplace/serializers.py:102 workplace/serializers.py:104
 #: workplace/serializers.py:106 workplace/serializers.py:191
@@ -143,135 +143,155 @@ msgstr "Ce champ est requis."
 
 #: workplace/serializers.py:121
 msgid "Description of the workplace."
-msgstr ""
+msgstr "Description de l'espace"
 
 #: workplace/serializers.py:123
 msgid "Name of the workplace."
-msgstr ""
+msgstr "Nom de l'espace"
 
 #: workplace/serializers.py:130
 msgid "Number of available seats."
-msgstr ""
+msgstr "Nombre de places disponibles"
 
 #: workplace/serializers.py:152
 msgid "Workplace represented by the picture."
-msgstr ""
+msgstr "L'espace représenté par l'image"
 
 #: workplace/serializers.py:155
 msgid "Name of the picture."
-msgstr ""
+msgstr "Nom de l'image"
 
 #: workplace/serializers.py:158
 msgid "File to upload."
-msgstr ""
+msgstr "Fichier à télécharger"
 
 #: workplace/serializers.py:201
 msgid "The period contains timeslots with user reservations."
-msgstr ""
+msgstr "La période contient des blocs à l'espace avec des réservations."
 
 #: workplace/serializers.py:220 workplace/serializers.py:608
 msgid "End date must be later than start_date."
-msgstr ""
+msgstr "La date de fin doit être après la date de début."
 
 #: workplace/serializers.py:221 workplace/serializers.py:609
 msgid "Start date must be earlier than end_date."
-msgstr ""
+msgstr "La date de début doit être avant la date de fin."
 
 #: workplace/serializers.py:247
 msgid ""
 "An active period associated to the same workplace overlaps with the provided "
 "start_date and end_date."
 msgstr ""
+"Une période active associée au même espace chevauche les dates de début et "
+"de fin fournies."
 
 #: workplace/serializers.py:267
 msgid "Workplaces to which this period applies."
-msgstr ""
+msgstr "Espaces auxquels s'applique cette période"
 
 #: workplace/serializers.py:271
 msgid "Hourly rate applied to this period."
-msgstr ""
+msgstr "Taux horaire appliqué à cette période"
 
 #: workplace/serializers.py:275
 msgid "Whether users can see this period or not."
-msgstr ""
+msgstr "Si les utilisateurs peuvent voir cette période ou non"
 
 #: workplace/serializers.py:367
 msgid ""
 "Trying to push an update that affects users without providing `force_update` "
 "field."
 msgstr ""
+"Essayer de pousser une mise à jour qui affecte les utilisateurs sans fournir "
+"le champ `force_update`."
 
 #: workplace/serializers.py:378
 msgid "Start time must be set within the period's start_date and end_date."
 msgstr ""
+"L'heure de début doit être définie entre la date de début et la date de fin "
+"de la période."
 
 #: workplace/serializers.py:385
 msgid "End time must be set within the period's start_date and end_date."
 msgstr ""
+"L'heure de fin doit être définie entre la date de début et la date de fin de "
+"la période."
 
 #: workplace/serializers.py:394
 msgid "End time must be the same day as start_time."
-msgstr ""
+msgstr "L'heure de fin doit être le même jour que l'heure de début."
 
 #: workplace/serializers.py:397
 msgid "Start time must be the same day as end_time."
-msgstr ""
+msgstr "L'heure de début doit être le même jour que l'heure de fin."
 
 #: workplace/serializers.py:403
 msgid "End time must be later than start_time."
-msgstr ""
+msgstr "L'heure de fin doit être après l'heure de début."
 
 #: workplace/serializers.py:404
 msgid "Start time must be earlier than end_time."
-msgstr ""
+msgstr "L'heure de début doit être avant l'heure de fin."
 
 #: workplace/serializers.py:420 workplace/serializers.py:668
 msgid ""
 "An existing timeslot overlaps with the provided start_time and end_time."
 msgstr ""
+"Un bloc à l'espace existant chevauche les heures de début et de fin fournies."
 
 #: workplace/serializers.py:521
 msgid "Period to which this time slot applies."
-msgstr ""
+msgstr "Période à laquelle s'applique ce créneau horaire"
 
 #: workplace/serializers.py:525
 msgid "Name of the time slot."
-msgstr ""
+msgstr "Nom du bloc à l'espace"
 
 #: workplace/serializers.py:529
 msgid "Hourly rate applied to this time slot. Overrides period price."
 msgstr ""
+"Tarif horaire appliqué à ce bloc à l'espace. Remplace le prix de la période."
 
 #: workplace/serializers.py:564
 msgid "Duplicated weekdays are not authorized."
-msgstr ""
+msgstr "Les jours de semaine dupliqués ne sont pas autorisés."
 
 #: workplace/serializers.py:593
 msgid "Start date must be set within the period's start_date and end_date."
 msgstr ""
+"La date de début doit être comprise entre la date de début et la date de fin "
+"de la période."
 
 #: workplace/serializers.py:600
 msgid "End date must be set within the period's start_date and end_date."
 msgstr ""
+"La date de fin doit être comprise entre la date de début et la date de fin "
+"de la période."
 
 #: workplace/serializers.py:708
 msgid ""
 "Only is_present can be updated. To change other fields, delete this "
 "reservation and create a new one."
 msgstr ""
+"Seul la présence peut être mis à jour. Pour modifier d'autres champs, "
+"supprimez cette réservation et créez-en une nouvelle."
 
 #: workplace/serializers.py:766
 msgid "Whether the reservation is active or not."
-msgstr ""
+msgstr "Si la réservation est active ou non."
 
 #: workplace/views.py:138
 msgid ""
 "Trying to do a Period deletion that affects users without providing "
 "`force_delete` field set to True."
 msgstr ""
+"Essayer de faire une suppression de période qui affecte les utilisateurs "
+"sans fournir le champ ''force_delete'' défini sur ''True''."
 
 #: workplace/views.py:349
 msgid ""
 "Trying to do a TimeSlot deletion that affects users without providing "
 "`force_delete` field set to True."
 msgstr ""
+"Essayer de faire une suppression d'un bloc à l'espace qui affecte les "
+"utilisateurs sans fournir le champ ''force_delete'' défini sur ''True''."
