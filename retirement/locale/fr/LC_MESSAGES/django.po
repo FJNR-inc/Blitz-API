@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-03-24 11:20-0400\n"
-"PO-Revision-Date: 2022-03-23 21:16+0000\n"
-"Last-Translator: Noel Rignon <noel.rignon@fjnr.ca>\n"
+"PO-Revision-Date: 2022-03-24 21:05+0000\n"
+"Last-Translator: Mélanie Guérin <melanie.guerin@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
 "retirement/fr/>\n"
 "Language: fr\n"
@@ -25,15 +25,15 @@ msgstr ""
 
 #: retirement/fields.py:14
 msgid "Unknown timezone"
-msgstr ""
+msgstr "Fuseau horaire inconnu"
 
 #: retirement/models.py:38
 msgid "Type of retreat"
-msgstr ""
+msgstr "Type de retraite"
 
 #: retirement/models.py:39
 msgid "Types of retreat"
-msgstr ""
+msgstr "Types de retraite"
 
 #: retirement/models.py:43 retirement/models.py:701 retirement/models.py:977
 msgid "Name"
@@ -41,39 +41,39 @@ msgstr "Nom"
 
 #: retirement/models.py:49
 msgid "Minute before displaying the link"
-msgstr ""
+msgstr "Nombre de minute avant l'affichage du lien"
 
 #: retirement/models.py:53 retirement/models.py:413
 msgid "Number of tomatoes"
-msgstr ""
+msgstr "Nombre de tomates"
 
 #: retirement/models.py:57 retirement/models.py:364
 msgid "Description"
-msgstr ""
+msgstr "Description"
 
 #: retirement/models.py:61
 msgid "Short description"
-msgstr ""
+msgstr "Description courte"
 
 #: retirement/models.py:65
 msgid "Description of duration"
-msgstr ""
+msgstr "Description de la durée"
 
 #: retirement/models.py:69
 msgid "Cancellation policies"
-msgstr ""
+msgstr "Conditions d'annulation"
 
 #: retirement/models.py:73
 msgid "icon"
-msgstr ""
+msgstr "Icône"
 
 #: retirement/models.py:80
 msgid "Is virtual"
-msgstr ""
+msgstr "Est virtuel"
 
 #: retirement/models.py:85
 msgid "Index for display"
-msgstr ""
+msgstr "Ordre pour l'affichage"
 
 #: retirement/models.py:90
 msgid "Know more link"
@@ -81,7 +81,7 @@ msgstr ""
 
 #: retirement/models.py:96
 msgid "Template ID for welcome message"
-msgstr ""
+msgstr "ID du template pour le message de bienvenue"
 
 #: retirement/models.py:103
 msgid "Context for welcome message"
@@ -209,7 +209,7 @@ msgstr ""
 
 #: retirement/models.py:295
 msgid "Memberships"
-msgstr ""
+msgstr "Memberships"
 
 #: retirement/models.py:300 retirement/models.py:759
 msgid "Active"
@@ -309,11 +309,11 @@ msgstr ""
 
 #: retirement/models.py:685
 msgid "Start time"
-msgstr ""
+msgstr "Date de début"
 
 #: retirement/models.py:689
 msgid "End time"
-msgstr ""
+msgstr "Date de fin"
 
 #: retirement/models.py:697
 msgid "Picture"
@@ -325,7 +325,7 @@ msgstr ""
 
 #: retirement/models.py:714
 msgid "picture"
-msgstr ""
+msgstr "Image"
 
 #: retirement/models.py:735
 msgid "User canceled"
@@ -437,7 +437,7 @@ msgstr ""
 
 #: retirement/models.py:997
 msgid "Coupon"
-msgstr ""
+msgstr "Coupon"
 
 #: retirement/models.py:1004
 msgid "Should reserve seat"
