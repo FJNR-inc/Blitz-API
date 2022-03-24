@@ -921,6 +921,8 @@ class RetreatTypeViewSet(viewsets.ModelViewSet):
                 is_visible=True,
             )
 
+        return queryset
+
 
 class AutomaticEmailViewSet(viewsets.ModelViewSet):
     serializer_class = AutomaticEmailSerializer
