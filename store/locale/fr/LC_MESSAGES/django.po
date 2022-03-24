@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-03-24 11:20-0400\n"
-"PO-Revision-Date: 2022-03-24 20:09+0000\n"
+"PO-Revision-Date: 2022-03-24 21:05+0000\n"
 "Last-Translator: Mélanie Guérin <melanie.guerin@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/store/"
 "fr/>\n"
@@ -147,7 +147,7 @@ msgstr "Membership"
 
 #: store/models.py:404 store/models.py:507
 msgid "Memberships"
-msgstr ""
+msgstr "Memberships"
 
 #: store/models.py:408 store/models.py:495
 msgid "Id before migrate to base product"
@@ -159,7 +159,7 @@ msgstr "Niveaux académiques"
 
 #: store/models.py:423 store/models.py:512
 msgid "picture"
-msgstr ""
+msgstr "Image"
 
 #: store/models.py:430
 msgid "Welcome email template ID"
@@ -175,27 +175,27 @@ msgstr ""
 
 #: store/models.py:501
 msgid "Reservations"
-msgstr ""
+msgstr "Réservations"
 
 #: store/models.py:524
 msgid "Max Quantity"
-msgstr ""
+msgstr "Quantité maximum"
 
 #: store/models.py:582
 msgid "Custom payment"
-msgstr ""
+msgstr "Paiement personnalisé"
 
 #: store/models.py:583
 msgid "Custom payments"
-msgstr ""
+msgstr "Paiements personnalisés"
 
 #: store/models.py:595
 msgid "Payment profile"
-msgstr ""
+msgstr "Profil de paiement"
 
 #: store/models.py:596
 msgid "Payment profiles"
-msgstr ""
+msgstr "Profils de paiement"
 
 #: store/models.py:611
 msgid "External profile ID"
@@ -207,79 +207,79 @@ msgstr ""
 
 #: store/models.py:635
 msgid "Value"
-msgstr ""
+msgstr "Valeur"
 
 #: store/models.py:642
 msgid "Percentage off"
-msgstr ""
+msgstr "Pourcentage de réduction"
 
 #: store/models.py:661
 msgid "Applicable retreats"
-msgstr ""
+msgstr "Retraites applicables"
 
 #: store/models.py:668
 msgid "Applicable timeslots"
-msgstr ""
+msgstr "Bloc à l'espace applicables"
 
 #: store/models.py:675
 msgid "Applicable packages"
-msgstr ""
+msgstr "Lots applicables"
 
 #: store/models.py:682
 msgid "Applicable memberships"
-msgstr ""
+msgstr "Memberships applicables"
 
 #: store/models.py:696
 msgid "Applicable to virtual retreat"
-msgstr ""
+msgstr "Retraites virutels applicables"
 
 #: store/models.py:701
 msgid "Applicable to physical retreat"
-msgstr ""
+msgstr "Retaites physiques applicables"
 
 #: store/models.py:714
 msgid "Start time"
-msgstr ""
+msgstr "Date de début"
 
 #: store/models.py:716
 msgid "End time"
-msgstr ""
+msgstr "Date de fin"
 
 #: store/models.py:719
 msgid "Code"
-msgstr ""
+msgstr "Code"
 
 #: store/models.py:735
 msgid "Users"
-msgstr ""
+msgstr "Utilisateurs"
 
 #: store/models.py:763
 msgid "Limit date"
-msgstr ""
+msgstr "Date limite"
 
 #: store/models.py:786
 msgid "Coupon"
-msgstr ""
+msgstr "Coupon"
 
 #: store/serializers.py:217
 msgid "Name of the membership."
-msgstr ""
+msgstr "Nom du membership"
 
 #: store/serializers.py:241
 msgid "Name of the package."
-msgstr ""
+msgstr "Nom du lot"
 
 #: store/serializers.py:337
 msgid "Name of the product."
-msgstr ""
+msgstr "Nom du produit"
 
 #: store/serializers.py:362
 msgid "Name of the payment profile."
-msgstr ""
+msgstr "Nom du profil de paiement"
 
 #: store/serializers.py:413
 msgid "The referenced object does not exist."
-msgstr ""
+msgstr "L'objet référencé n'existe pas."
 
 #: store/serializers.py:424
 msgid "User does not have the required academic_level to "
@@ -291,11 +291,11 @@ msgstr ""
 
 #: store/serializers.py:539
 msgid "You don't have the permission to bypass the payment"
-msgstr ""
+msgstr "Vous n'êtes pas autorisé à contourner le paiement."
 
 #: store/serializers.py:619
 msgid "You already have an active membership."
-msgstr ""
+msgstr "Vous avez déjà un membership actif."
 
 #: store/serializers.py:684 store/serializers.py:758
 msgid "User does not have the required "
@@ -336,6 +336,8 @@ msgstr ""
 #: store/serializers.py:1037
 msgid "Can't generate new unique codes. Delete old coupons."
 msgstr ""
+"Impossible de générer de nouveaux codes uniques. Supprimer les anciens "
+"coupons."
 
 #: store/serializers.py:1067
 msgid "You need to set a value discount (value) or a discount "
@@ -358,22 +360,23 @@ msgstr ""
 #: store/services.py:31
 msgid "You submitted an expired credit card number with your request."
 msgstr ""
+"Vous avez soumis un numéro de carte de crédit expiré avec votre demande."
 
 #: store/services.py:35
 msgid "card type not supported."
-msgstr ""
+msgstr "Ce type de carte n'est pas pris en charge."
 
 #: store/services.py:39
 msgid "the request has been declined by the issuing bank."
-msgstr ""
+msgstr "La demande a été refusée par la banque émettrice."
 
 #: store/services.py:43
 msgid "the card has been declined due to insufficient funds."
-msgstr ""
+msgstr "La carte a été refusée en raison de fonds insuffisants."
 
 #: store/services.py:47
 msgid "The external processing gateway has rejected the transaction."
-msgstr ""
+msgstr "La passerelle de traitement externe a rejeté la transaction."
 
 #: store/services.py:50 store/services.py:54
 msgid "An error occured while processing the refund: "
@@ -381,7 +384,7 @@ msgstr ""
 
 #: store/services.py:51
 msgid "The settlement has already been fully refunded."
-msgstr ""
+msgstr "Le règlement a déjà été entièrement remboursé."
 
 #: store/services.py:55
 msgid "The settlement you are attempting to refund has not been batched "
@@ -389,31 +392,31 @@ msgstr ""
 
 #: store/services.py:60
 msgid "the transaction has already been processed."
-msgstr ""
+msgstr "La transaction a déjà été traitée."
 
 #: store/services.py:64
 msgid "invalid payment or single-use token."
-msgstr ""
+msgstr "Paiement invalide ou token d'utilisation unique."
 
 #: store/services.py:66
 msgid "Not found."
-msgstr ""
+msgstr "Pas trouvé."
 
 #: store/services.py:69
 msgid "permission denied."
-msgstr ""
+msgstr "Permission refusée."
 
 #: store/services.py:73
 msgid "invalid payment token or payment profile/card inactive."
-msgstr ""
+msgstr "Token de paiement invalide ou profil de paiement/carte inactif."
 
 #: store/services.py:77
 msgid "a card with that number already exists."
-msgstr ""
+msgstr "Une carte avec ce numéro existe déjà."
 
 #: store/services.py:81
 msgid "the payment profile for this user already exists."
-msgstr ""
+msgstr "Le profil de paiement de cet utilisateur existe déjà."
 
 #: store/services.py:83
 msgid "The request could not be processed."
@@ -421,15 +424,15 @@ msgstr "La demande n'a pas pu être traitée."
 
 #: store/services.py:504
 msgid "This coupon is only valid between {0} and {1}."
-msgstr ""
+msgstr "Ce coupon n'est valable qu'entre le {0} et le {1}."
 
 #: store/services.py:530
 msgid "Maximum number of uses exceeded for this coupon."
-msgstr "Nombre maximum d'utilisations dépassé pour ce coupon."
+msgstr "Nombre maximum d'utilisations est dépassé pour ce coupon."
 
 #: store/services.py:574
 msgid "This coupon does not apply to any product."
-msgstr ""
+msgstr "Ce coupon ne s'applique à aucun produit."
 
 #: store/views.py:287 store/views.py:489
 msgid "This field is required."
