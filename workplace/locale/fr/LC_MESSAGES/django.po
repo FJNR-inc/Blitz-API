@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-03-24 11:20-0400\n"
-"PO-Revision-Date: 2022-03-23 21:16+0000\n"
-"Last-Translator: Noel Rignon <noel.rignon@fjnr.ca>\n"
+"PO-Revision-Date: 2022-03-24 21:05+0000\n"
+"Last-Translator: Mélanie Guérin <melanie.guerin@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
 "workplace/fr/>\n"
 "Language: fr\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: workplace/fields.py:14
 msgid "Unknown timezone"
-msgstr ""
+msgstr "Fuseau horaire inconnu"
 
 #: workplace/models.py:19 workplace/models.py:67 workplace/models.py:110
 msgid "Workplace"
@@ -58,7 +58,7 @@ msgstr ""
 
 #: workplace/models.py:72
 msgid "picture"
-msgstr ""
+msgstr "Image"
 
 #: workplace/models.py:97 workplace/models.py:167
 msgid "Period"
@@ -98,11 +98,11 @@ msgstr ""
 
 #: workplace/models.py:188
 msgid "Start time"
-msgstr ""
+msgstr "Date de début"
 
 #: workplace/models.py:192
 msgid "End time"
-msgstr ""
+msgstr "Date de fin"
 
 #: workplace/models.py:213
 msgid "User canceled"
