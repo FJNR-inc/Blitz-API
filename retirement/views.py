@@ -44,17 +44,14 @@ from log_management.models import (
     EmailLog,
 )
 from store.exceptions import PaymentAPIError
-from store.models import (
-    OrderLineBaseProduct,
-    CouponUser,
-)
+from store.models import OrderLineBaseProduct
 from store.services import PAYSAFE_EXCEPTION
 
-from retirement import (
+from . import (
     permissions,
     serializers,
 )
-from retirement.models import (
+from .models import (
     Picture,
     Reservation,
     Retreat,
@@ -68,21 +65,21 @@ from retirement.models import (
     RetreatDate,
     RetreatUsageLog,
 )
-from retirement.resources import (
+from .resources import (
     ReservationResource,
     RetreatResource,
     WaitQueueResource,
     RetreatReservationResource,
     OptionProductResource,
 )
-from retirement.serializers import (
+from .serializers import (
     RetreatTypeSerializer,
     AutomaticEmailSerializer,
     RetreatDateSerializer,
     BatchRetreatSerializer,
     RetreatUsageLogSerializer,
 )
-from retirement.services import (
+from .services import (
     send_retreat_reminder_email,
     send_post_retreat_email,
     send_automatic_email,
@@ -697,16 +694,6 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
                 free_seats = retreat.places_remaining
                 if retreat.reserved_seats or free_seats == 1:
                     retreat.add_wait_queue_place(user)
-
-                # Rollback the coupon number of use if the reservation
-                # was done with a coupon
-                if order_line and order_line.coupon:
-                    coupon_user = CouponUser.objects.get(
-                        user=user,
-                        coupon=order_line.coupon,
-                    )
-                    coupon_user.uses = coupon_user.uses - 1
-                    coupon_user.save()
 
                 retreat.save()
 
