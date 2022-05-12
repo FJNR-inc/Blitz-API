@@ -317,8 +317,18 @@ class UsersActivation(APIView):
                     {'detail': error},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+
+            if User.objects.filter(username=new_email).exists():
+                error = 'An account with the same email already exist.'
+
+                return Response(
+                    {'detail': error},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             # Update user info
             user.email = new_email
+            user.username = new_email
             if new_university_id:
                 user.university = Organization.objects.get(
                     pk=new_university_id
