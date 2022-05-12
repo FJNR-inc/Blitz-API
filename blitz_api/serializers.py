@@ -280,6 +280,14 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
                 })
 
         if new_email and new_email != old_email:
+            # Email is already taken by another user
+            if User.objects.filter(username=new_email).exists():
+                raise serializers.ValidationError({
+                    'email': [
+                        _("An account with the same email already exist.")
+                    ]
+                })
+
             email_activation_needed = True
             # Create a ChangeEmail token containing the new email
             # Send an activation email containing the token key
