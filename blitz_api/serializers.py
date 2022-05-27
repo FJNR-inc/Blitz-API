@@ -1,5 +1,7 @@
 import re
 
+from django.db.models import Q
+from django.utils import timezone
 from mailchimp3.mailchimpclient import MailChimpError
 from rest_framework import serializers
 from rest_framework.authtoken.serializers import AuthTokenSerializer
@@ -181,6 +183,8 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
         required=True,
     )
     is_in_newsletter = serializers.ReadOnlyField()
+    get_number_of_past_tomatoes = serializers.ReadOnlyField()
+    get_number_of_future_tomatoes = serializers.ReadOnlyField()
 
     def validate_email(self, value):
         """
@@ -276,6 +280,14 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
                 })
 
         if new_email and new_email != old_email:
+            # Email is already taken by another user
+            if User.objects.filter(username=new_email).exists():
+                raise serializers.ValidationError({
+                    'email': [
+                        _("An account with the same email already exist.")
+                    ]
+                })
+
             email_activation_needed = True
             # Create a ChangeEmail token containing the new email
             # Send an activation email containing the token key
@@ -385,12 +397,10 @@ class UserSerializer(UserUpdateSerializer):
         max_length=254,
         required=True,
     )
-    university = OrganizationSerializer(required=False)
-    academic_level = AcademicLevelSerializer(required=False)
-    academic_field = AcademicFieldSerializer(required=False)
-    membership = MembershipSerializer(
-        read_only=True,
-    )
+    university = OrganizationSerializer(read_only=True)
+    academic_level = AcademicLevelSerializer(read_only=True)
+    academic_field = AcademicFieldSerializer(read_only=True)
+    membership = MembershipSerializer(read_only=True)
     volunteer_for_workplace = serializers.HyperlinkedRelatedField(
         many=True,
         read_only=True,
@@ -398,6 +408,8 @@ class UserSerializer(UserUpdateSerializer):
         source='workplaces',
     )
     is_in_newsletter = serializers.ReadOnlyField()
+    get_number_of_past_tomatoes = serializers.ReadOnlyField()
+    get_number_of_future_tomatoes = serializers.ReadOnlyField()
 
     def validate_email(self, value):
         """
@@ -410,30 +422,6 @@ class UserSerializer(UserUpdateSerializer):
             ))
         return value
 
-    def validate_university(self, value):
-        """
-        Check that the university exists.
-        """
-        if 'name' in value:
-            org = Organization.objects.filter(name=value['name'])
-
-            if org:
-                return org[0]
-        raise serializers.ValidationError(_("This university does not exist."))
-
-    def validate_academic_level(self, value):
-        """
-        Check that the academic level exists.
-        """
-        if 'name' in value:
-            lvl = AcademicLevel.objects.filter(name=value['name'])
-
-            if lvl:
-                return lvl[0]
-        raise serializers.ValidationError(
-            _("This academic level does not exist.")
-        )
-
     def validate_password(self, value):
         try:
             password_validation.validate_password(password=value)
@@ -445,10 +433,6 @@ class UserSerializer(UserUpdateSerializer):
         content = {}
         if 'email' in attrs:
             attrs['username'] = attrs['email']
-        if 'university' in attrs:
-            for key in ['academic_level', 'academic_field']:
-                if key not in attrs:
-                    content[key] = [_('This field is required.')]
 
         if content:
             raise serializers.ValidationError(content)
@@ -459,17 +443,6 @@ class UserSerializer(UserUpdateSerializer):
         """
         Check that the email domain correspond to the university.
         """
-        if 'university' in validated_data:
-            domains = Organization.objects.get(
-                name=validated_data['university'].name
-            ).domains.all()
-
-            email_d = validated_data['email'].split("@", 1)[1]
-            if not any(d.name.lower() == email_d.lower() for d in domains):
-                raise serializers.ValidationError({
-                    'email': [_("Invalid domain name.")]
-                })
-
         user = User(**validated_data)
 
         # Hash the user's password
@@ -478,16 +451,13 @@ class UserSerializer(UserUpdateSerializer):
         # Put user inactive by default
         user.is_active = False
 
+        # Auto accept terms and condition
+        user.last_acceptation_terms_and_conditions = timezone.now()
+
         # Free ticket for new users
         user.tickets = 1
 
         user.save()
-
-        # Create an ActivationToken to activate user in the future
-        ActionToken.objects.create(
-            user=user,
-            type='account_activation',
-        )
 
         return user
 
@@ -497,21 +467,6 @@ class UserSerializer(UserUpdateSerializer):
         extra_kwargs = {
             'password': {'write_only': True},
             'new_password': {'write_only': True},
-            'gender': {
-                'required': True,
-                'allow_blank': False,
-            },
-            'first_name': {
-                'required': True,
-                'allow_blank': False,
-            },
-            'last_name': {
-                'required': True,
-                'allow_blank': False,
-            },
-            'birthdate': {
-                'required': True,
-            },
         }
         read_only_fields = (
             'id',
@@ -524,7 +479,10 @@ class UserSerializer(UserUpdateSerializer):
             'groups',
             'user_permissions',
             'reservations',
-            'workplaces'
+            'workplaces',
+            'membership_end',
+            'membership_end_notification',
+            'last_acceptation_terms_and_conditions',
         )
 
 
@@ -544,14 +502,29 @@ class CustomAuthTokenSerializer(AuthTokenSerializer):
         username = attrs.get('username')
         password = attrs.get('password')
 
+        # Return custom error if account is not activated
+        try:
+            user = User.objects.get(
+                Q(email__iexact=username) | Q(username=username),
+            )
+            if user.is_active is False:
+                msg = _('Your account is not activated. [code: not-activated]')
+                raise serializers.ValidationError(msg, code='authorization')
+        except User.DoesNotExist:
+            pass
+
+        # Manage email OR username login
         try:
             user_obj = User.objects.get(email__iexact=username)
             username = user_obj.username
         except User.DoesNotExist:
             pass
 
-        user = authenticate(request=self.context.get('request'),
-                            username=username, password=password)
+        user = authenticate(
+            request=self.context.get('request'),
+            username=username,
+            password=password,
+        )
 
         if not user:
             msg = _('Unable to log in with provided credentials.')
@@ -587,6 +560,11 @@ class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True)
 
 
+class ResendEmailActivationSerializer(serializers.Serializer):
+
+    email = serializers.CharField(required=True)
+
+
 class ExportMediaSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
@@ -611,9 +589,7 @@ class MailChimpSerializer(serializers.Serializer):
                 first_name=validated_data['first_name'],
                 last_name=validated_data['last_name']
             )
-            print(response)
         except MailChimpError as e:
-            print(e.args[0])
             if e.args[0]['title'] == 'Member Exists':
                 raise serializers.ValidationError({
                     'email': [

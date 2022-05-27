@@ -1,0 +1,314 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-03-24 17:04-0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: blitz_api/admin.py:80
+msgid "Extra fields"
+msgstr ""
+
+#: blitz_api/admin.py:95 blitz_api/models.py:551
+msgid "Domains"
+msgstr ""
+
+#: blitz_api/authentication.py:24
+msgid "Invalid token"
+msgstr ""
+
+#: blitz_api/authentication.py:28
+msgid "User inactive or deleted"
+msgstr ""
+
+#: blitz_api/authentication.py:32
+msgid "Token has expired"
+msgstr ""
+
+#: blitz_api/models.py:32
+msgid "Male"
+msgstr ""
+
+#: blitz_api/models.py:33
+msgid "Female"
+msgstr ""
+
+#: blitz_api/models.py:34
+msgid "Trans"
+msgstr ""
+
+#: blitz_api/models.py:35
+msgid "Do not wish to identify myself"
+msgstr ""
+
+#: blitz_api/models.py:38 blitz_api/settings.py:207
+msgid "English"
+msgstr ""
+
+#: blitz_api/models.py:39 blitz_api/settings.py:206
+msgid "French"
+msgstr ""
+
+#: blitz_api/models.py:43 blitz_api/serializers.py:155
+msgid "Phone number"
+msgstr ""
+
+#: blitz_api/models.py:49 blitz_api/serializers.py:162
+msgid "Other number"
+msgstr ""
+
+#: blitz_api/models.py:65 blitz_api/models.py:584
+msgid "Academic level"
+msgstr ""
+
+#: blitz_api/models.py:72 blitz_api/models.py:603
+msgid "Academic field"
+msgstr ""
+
+#: blitz_api/models.py:75
+msgid "Academic program code"
+msgstr ""
+
+#: blitz_api/models.py:81
+msgid "Faculty"
+msgstr ""
+
+#: blitz_api/models.py:87
+msgid "Student number"
+msgstr ""
+
+#: blitz_api/models.py:96
+msgid "Birthdate"
+msgstr ""
+
+#: blitz_api/models.py:103
+msgid "Gender"
+msgstr ""
+
+#: blitz_api/models.py:108
+msgid "Language"
+msgstr ""
+
+#: blitz_api/models.py:117
+msgid "Membership"
+msgstr ""
+
+#: blitz_api/models.py:123
+msgid "Membership end date"
+msgstr ""
+
+#: blitz_api/models.py:128
+msgid "Membership end notification date"
+msgstr ""
+
+#: blitz_api/models.py:134
+msgid "Tickets"
+msgstr ""
+
+#: blitz_api/models.py:138
+msgid "Number of free virtual retreat"
+msgstr ""
+
+#: blitz_api/models.py:141 blitz_api/models.py:640
+msgid "City"
+msgstr ""
+
+#: blitz_api/models.py:147
+msgid "Personnal restrictions"
+msgstr ""
+
+#: blitz_api/models.py:154
+msgid "Hide newsletter"
+msgstr ""
+
+#: blitz_api/models.py:160
+msgid "Last acceptation of the terms and conditions"
+msgstr ""
+
+#: blitz_api/models.py:419
+msgid "Temporary token"
+msgstr ""
+
+#: blitz_api/models.py:420
+msgid "Temporary tokens"
+msgstr ""
+
+#: blitz_api/models.py:423
+msgid "Expiration date"
+msgstr ""
+
+#: blitz_api/models.py:457
+msgid "Account activation"
+msgstr ""
+
+#: blitz_api/models.py:458
+msgid "Password change"
+msgstr ""
+
+#: blitz_api/models.py:459
+msgid "Email change"
+msgstr ""
+
+#: blitz_api/models.py:531
+msgid "Organization"
+msgstr ""
+
+#: blitz_api/models.py:532
+msgid "Organizations"
+msgstr ""
+
+#: blitz_api/models.py:535 blitz_api/models.py:557 blitz_api/models.py:588
+#: blitz_api/models.py:607
+msgid "Name"
+msgstr ""
+
+#: blitz_api/models.py:550
+msgid "Domain"
+msgstr ""
+
+#: blitz_api/models.py:562
+msgid "Email example"
+msgstr ""
+
+#: blitz_api/models.py:585
+msgid "Academic levels"
+msgstr ""
+
+#: blitz_api/models.py:604
+msgid "Academic fields"
+msgstr ""
+
+#: blitz_api/models.py:623
+msgid "Place name"
+msgstr ""
+
+#: blitz_api/models.py:629
+msgid "Country"
+msgstr ""
+
+#: blitz_api/models.py:635
+msgid "State/Province"
+msgstr ""
+
+#: blitz_api/models.py:644
+msgid "Address line 1"
+msgstr ""
+
+#: blitz_api/models.py:650
+msgid "Address line 2"
+msgstr ""
+
+#: blitz_api/models.py:654
+msgid "Postal code"
+msgstr ""
+
+#: blitz_api/models.py:659
+msgid "Latitude"
+msgstr ""
+
+#: blitz_api/models.py:664
+msgid "Longitude"
+msgstr ""
+
+#: blitz_api/models.py:670
+msgid "Timezone"
+msgstr ""
+
+#: blitz_api/serializers.py:32
+msgid "Invalid format."
+msgstr ""
+
+#: blitz_api/serializers.py:63 blitz_api/serializers.py:96
+#: blitz_api/serializers.py:129 blitz_api/serializers.py:331
+#: blitz_api/services.py:125
+msgid "This field is required."
+msgstr ""
+
+#: blitz_api/serializers.py:181 blitz_api/serializers.py:388
+#: blitz_api/serializers.py:533
+msgid "Email address"
+msgstr ""
+
+#: blitz_api/serializers.py:196 blitz_api/serializers.py:412
+msgid "An account for the specified email address already exists."
+msgstr ""
+
+#: blitz_api/serializers.py:211
+msgid "This academic field does not exist."
+msgstr ""
+
+#: blitz_api/serializers.py:224
+msgid "This academic level does not exist."
+msgstr ""
+
+#: blitz_api/serializers.py:238
+msgid "This university does not exist."
+msgstr ""
+
+#: blitz_api/serializers.py:279
+msgid "Invalid domain name."
+msgstr ""
+
+#: blitz_api/serializers.py:347
+msgid "Bad password"
+msgstr ""
+
+#: blitz_api/serializers.py:485
+msgid "Username"
+msgstr ""
+
+#: blitz_api/serializers.py:487
+msgid "Password"
+msgstr ""
+
+#: blitz_api/serializers.py:503
+msgid "Your account is not activated. [code: not-activated]"
+msgstr ""
+
+#: blitz_api/serializers.py:522
+msgid "Unable to log in with provided credentials."
+msgstr ""
+
+#: blitz_api/serializers.py:542
+msgid "No account associated to this email address."
+msgstr ""
+
+#: blitz_api/serializers.py:589
+msgid "Email already register to this newsletter"
+msgstr ""
+
+#: blitz_api/services.py:49 blitz_api/services.py:159
+#: blitz_api/services.py:205
+msgid "Email service is disabled."
+msgstr ""
+
+#: blitz_api/services.py:129
+#, python-format
+msgid "One of the two fields %(field)s must be completed."
+msgstr ""
+
+#: blitz_api/views.py:203
+msgid "This email is not linked to any account"
+msgstr ""
+
+#: blitz_api/views.py:223
+msgid "You can't accept the terms for others peoples."
+msgstr ""
+
+#: blitz_api/views.py:411
+msgid ""
+"Your token has been created but no email has been sent. Please contact the "
+"administration."
+msgstr ""

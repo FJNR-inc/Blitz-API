@@ -3,6 +3,9 @@ import random
 import string
 from datetime import datetime
 from decimal import Decimal
+from blitz_api.services import send_email_from_template_id
+from babel.dates import format_date
+import pytz
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
@@ -399,6 +402,7 @@ class Membership(BaseProduct):
     class Meta:
         verbose_name = _("Membership")
         verbose_name_plural = _("Memberships")
+        ordering = ('price',)
 
     old_id = models.IntegerField(
         verbose_name=_("Id before migrate to base product"),
@@ -415,8 +419,68 @@ class Membership(BaseProduct):
         related_name='memberships',
     )
 
+    picture = models.ImageField(
+        _('picture'),
+        upload_to='memberships',
+        blank=True,
+        null=True,
+    )
+
+    welcome_email_template_id = models.PositiveIntegerField(
+        verbose_name=_('Welcome email template ID'),
+        blank=True,
+        null=True,
+    )
+
     # History is registered in translation.py
     # history = HistoricalRecords()
+
+    def send_welcome_email(self, user):
+        """
+        This function sends an email to notify a user that his new membership
+        has been activated.
+        :param user: The user that bought the membership
+        :return:
+        """
+        if self.welcome_email_template_id:
+            start_time = datetime.now().astimezone(
+                pytz.timezone('US/Eastern')
+            )
+
+            # We add a time to transform the date to a datetime
+            my_time = datetime.min.time()
+            end_time = datetime.combine(
+                user.membership_end,
+                my_time
+            ).astimezone(pytz.timezone('US/Eastern'))
+
+            context = {
+                'USER_FIRST_NAME': user.first_name,
+                'USER_LAST_NAME': user.last_name,
+                'USER_EMAIL': user.email,
+                'MEMBERSHIP_NAME': self.name,
+                'MEMBERSHIP_START_DATE': format_date(
+                    start_time,
+                    format='long',
+                    locale='fr'
+                ),
+                'MEMBERSHIP_END_DATE': format_date(
+                    end_time,
+                    format='long',
+                    locale='fr'
+                ),
+                'MEMBERSHIP_START_TIME': start_time.strftime('%-Hh%M'),
+                'MEMBERSHIP_END_TIME': end_time.strftime('%-Hh%M'),
+            }
+
+            response_send_mail = send_email_from_template_id(
+                [user],
+                context,
+                self.welcome_email_template_id
+            )
+            return response_send_mail
+        else:
+            return []
 
 
 class Package(BaseProduct):
@@ -425,6 +489,7 @@ class Package(BaseProduct):
     class Meta:
         verbose_name = _("Package")
         verbose_name_plural = _("Packages")
+        ordering = ('price',)
 
     old_id = models.IntegerField(
         verbose_name=_("Id before migrate to base product"),
@@ -441,6 +506,13 @@ class Package(BaseProduct):
         blank=True,
         verbose_name=_("Memberships"),
         related_name='packages',
+    )
+
+    picture = models.ImageField(
+        _('picture'),
+        upload_to='packages',
+        blank=True,
+        null=True,
     )
 
     # History is registered in translation.py

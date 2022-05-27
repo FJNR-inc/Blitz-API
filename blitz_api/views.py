@@ -98,6 +98,7 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
         """
         if self.action in [
             'create',
+            'resend_activation_email',
             'execute_automatic_email_membership_end'
         ]:
             permission_classes = []
@@ -140,92 +141,20 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
         if response.status_code == status.HTTP_201_CREATED:
-            user = User.objects.get(email=request.data["email"])
+            user = User.objects.get(email=request.data["email"].strip())
 
             if settings.LOCAL_SETTINGS['AUTO_ACTIVATE_USER'] is True:
                 user.is_active = True
                 user.save()
 
-            if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is True:
-                MAIL_SERVICE = settings.ANYMAIL
-                FRONTEND_SETTINGS = settings.LOCAL_SETTINGS[
-                    'FRONTEND_INTEGRATION'
-                ]
-
-                # Get the token of the saved user and send it with an email
-                activate_token = ActionToken.objects.get(
-                    user=user,
-                    type='account_activation',
-                ).key
-
-                # Setup the url for the activation button in the email
-                activation_url = FRONTEND_SETTINGS['ACTIVATION_URL'].replace(
-                    "{{token}}",
-                    activate_token
-                )
-
-                response_send_mail = services.send_mail(
-                    [user],
-                    {
-                        "activation_url": activation_url,
-                        "first_name": user.first_name,
-                        "last_name": user.last_name,
-                    },
-                    "CONFIRM_SIGN_UP",
-                )
-
-                if response_send_mail:
-                    content = {
-                        'detail': _("The account was created but no email was "
-                                    "sent. If your account is not "
-                                    "activated, contact the administration."),
-                    }
-                    return Response(content, status=status.HTTP_201_CREATED)
+            user.send_new_activation_email()
 
         return response
 
     @action(detail=True, permission_classes=[IsAdminUser])
     def send_email_confirm(self, request, pk):
         user = self.get_object()
-
-        if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is True:
-            FRONTEND_SETTINGS = settings.LOCAL_SETTINGS[
-                'FRONTEND_INTEGRATION'
-            ]
-
-            # Get the token of the saved user and send it with an email
-            activate_token = ActionToken.objects.get(
-                user=user,
-                type='account_activation',
-            )
-
-            activate_token.expires = timezone.now() + timezone.timedelta(
-                minutes=settings.ACTIVATION_TOKENS['MINUTES']
-            )
-
-            # Setup the url for the activation button in the email
-            activation_url = FRONTEND_SETTINGS['ACTIVATION_URL'].replace(
-                "{{token}}",
-                activate_token.key
-            )
-
-            response_send_mail = services.send_mail(
-                [user],
-                {
-                    "activation_url": activation_url,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                },
-                "CONFIRM_SIGN_UP",
-            )
-
-            if response_send_mail:
-                content = {
-                    'detail': _("The account was created but no email was "
-                                "sent. If your account is not "
-                                "activated, contact the administration."),
-                }
-                return Response(content, status=status.HTTP_200_OK)
+        user.send_new_activation_email()
 
         return Response(status=status.HTTP_200_OK)
 
@@ -248,6 +177,55 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
             'email_send_count': len(emails)
         }
         return Response(response_data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['POST'], permission_classes=[])
+    def resend_activation_email(self, request):
+        """
+        That custom action allows an user to trigger a new email of activation
+        in case the first email was not received or was received too long ago
+        """
+
+        serializer = serializers.ResendEmailActivationSerializer(
+            data=self.request.data,
+            context={
+                'request': request,
+            }
+        )
+
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            user = User.objects.get(email=serializer.validated_data['email'])
+            user.send_new_activation_email()
+        except User.DoesNotExist:
+            return Response(
+                {
+                    'email': _('This email is not linked to any account'),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(status=status.HTTP_200_OK)
+
+    @action(detail=True)
+    def accept_terms(self, request, pk):
+        user = self.get_object()
+
+        is_owner = user.id == self.request.user.id
+        is_admin = self.request.user.is_superuser
+
+        if is_owner or is_admin:
+            user.last_acceptation_terms_and_conditions = timezone.now()
+            user.save()
+        else:
+            content = {
+                'non_field_errors': _(
+                    "You can't accept the terms for others peoples."
+                ),
+            }
+            return Response(content, status=status.HTTP_403_FORBIDDEN)
+
+        return Response(status=status.HTTP_200_OK)
 
 
 class UsersActivation(APIView):
@@ -339,8 +317,18 @@ class UsersActivation(APIView):
                     {'detail': error},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+
+            if User.objects.filter(username=new_email).exists():
+                error = 'An account with the same email already exist.'
+
+                return Response(
+                    {'detail': error},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             # Update user info
             user.email = new_email
+            user.username = new_email
             if new_university_id:
                 user.university = Organization.objects.get(
                     pk=new_university_id

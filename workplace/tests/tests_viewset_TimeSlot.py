@@ -451,7 +451,6 @@ class TimeSlotTests(APITestCase):
                 'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
             ],
             'period': ['Invalid hyperlink - No URL match.'],
-            'price': ['A valid number is required.'],
             'start_time': [
                 'Datetime has wrong format. Use one of these formats instead: '
                 'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
@@ -570,7 +569,7 @@ class TimeSlotTests(APITestCase):
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
             'billing_price': 10.00,
-            'is_reserved': True,
+            'is_reserved': False,
             'places_remaining': 40,
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 2,
@@ -802,7 +801,7 @@ class TimeSlotTests(APITestCase):
             'end_time': response_data['end_time'],
             'price': '1000.00',
             'billing_price': 1000,
-            'is_reserved': True,
+            'is_reserved': False,
             'places_remaining': 40,
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 2,
@@ -894,7 +893,7 @@ class TimeSlotTests(APITestCase):
             'end_time': response_data['end_time'],
             'price': '1000.00',
             'billing_price': 1000,
-            'is_reserved': True,
+            'is_reserved': False,
             'places_remaining': 40,
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 2,

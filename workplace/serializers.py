@@ -313,7 +313,11 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
     def get_is_reserved(self, timeslot: TimeSlot):
         user = self.context['request'].user
 
-        return timeslot.users.filter(pk=user.pk).exists()
+        return Reservation.objects.filter(
+            is_active=True,
+            user=user.pk,
+            timeslot=timeslot,
+        ).exists()
 
     def get_nb_reservations_active(self, obj):
         return Reservation.objects.filter(
@@ -688,10 +692,6 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         read_only=True,
         source='timeslot',
     )
-    user_details = UserSerializer(
-        read_only=True,
-        source='user',
-    )
 
     def validate(self, attrs):
         """Prevents overlapping and no-workplace reservations."""
@@ -738,6 +738,24 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         'reservations for this user.'
                     )
         return attrs
+
+    def to_representation(self, instance):
+        user = self.context['request'].user
+        volunteers = instance.timeslot.period.workplace.volunteers.all()
+
+        is_staff = user.is_staff
+        is_volunteer = user in volunteers
+
+        if is_staff or is_volunteer:
+            from blitz_api.serializers import UserSerializer
+            self.fields['user_details'] = UserSerializer(
+                source='user'
+            )
+        data = super(ReservationSerializer, self).to_representation(instance)
+
+        if is_staff:
+            return data
+        return remove_translation_fields(data)
 
     class Meta:
         model = Reservation

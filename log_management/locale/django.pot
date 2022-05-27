@@ -1,0 +1,90 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-03-24 17:04-0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: log_management/models.py:16 log_management/models.py:132
+msgid "Source"
+msgstr ""
+
+#: log_management/models.py:21
+msgid "Level"
+msgstr ""
+
+#: log_management/models.py:25
+msgid "Message"
+msgstr ""
+
+#: log_management/models.py:32
+msgid "Error Code"
+msgstr ""
+
+#: log_management/models.py:38 log_management/models.py:141
+msgid "Additional data"
+msgstr ""
+
+#: log_management/models.py:44
+msgid "TraceBack"
+msgstr ""
+
+#: log_management/models.py:54
+msgid "Log"
+msgstr ""
+
+#: log_management/models.py:55
+msgid "Logs"
+msgstr ""
+
+#: log_management/models.py:81
+msgid "User email"
+msgstr ""
+
+#: log_management/models.py:86
+msgid "Type email"
+msgstr ""
+
+#: log_management/models.py:90
+msgid "Number email sent"
+msgstr ""
+
+#: log_management/models.py:99
+msgid "Email Log"
+msgstr ""
+
+#: log_management/models.py:100
+msgid "Email Logs"
+msgstr ""
+
+#: log_management/models.py:119
+msgid "User"
+msgstr ""
+
+#: log_management/models.py:126
+msgid "Session key"
+msgstr ""
+
+#: log_management/models.py:137
+msgid "Action"
+msgstr ""
+
+#: log_management/models.py:152
+msgid "Action Log"
+msgstr ""
+
+#: log_management/models.py:153
+msgid "Action Logs"
+msgstr ""

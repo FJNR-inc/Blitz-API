@@ -96,7 +96,7 @@ class MembershipViewSet(ExportMixin, viewsets.ModelViewSet):
         'name': ['exact'],
         'price': ['exact', 'gte', 'lte'],
     }
-    ordering = ('name',)
+    ordering = ('name', 'price')
 
     export_resource = MembershipResource()
 
@@ -141,7 +141,7 @@ class PackageViewSet(ExportMixin, viewsets.ModelViewSet):
         'name': ['exact'],
         'price': ['exact', 'gte', 'lte'],
     }
-    ordering = ('name',)
+    ordering = ('name', 'price')
 
     export_resource = PackageResource()
 

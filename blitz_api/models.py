@@ -1,27 +1,24 @@
 import binascii
 import datetime
 import os
+import logging
 
-from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import models
+from django.db.models import Sum
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
-
-from jsonfield import JSONField
-
-from rest_framework.authtoken.models import Token
-
-from simple_history import register
-from simple_history.models import HistoricalRecords
-
 from django.utils.translation import ugettext_lazy as _
 
+from dateutil.relativedelta import relativedelta
+from jsonfield import JSONField
+from rest_framework.authtoken.models import Token
+from simple_history.models import HistoricalRecords
 from . import mailchimp
-from blitz_api import services
-from .managers import ActionTokenManager
 
-import logging
+from tomato.models import Tomato
+from blitz_api import services
+from blitz_api.managers import ActionTokenManager
 
 logger = logging.getLogger(__name__)
 
@@ -157,7 +154,143 @@ class User(AbstractUser):
         verbose_name=_("Hide newsletter"),
     )
 
+    last_acceptation_terms_and_conditions = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Last acceptation of the terms and conditions"),
+    )
+
     history = HistoricalRecords()
+
+    def send_new_activation_email(self):
+        if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is True:
+            FRONTEND_SETTINGS = settings.LOCAL_SETTINGS[
+                'FRONTEND_INTEGRATION'
+            ]
+
+            # Create an ActivationToken to activate user in the future
+            activation_token = ActionToken.objects.create(
+                user=self,
+                type='account_activation',
+                expires=timezone.now() + timezone.timedelta(
+                    minutes=settings.ACTIVATION_TOKENS['MINUTES']
+                )
+            )
+
+            # Setup the url for the activation button in the email
+            activation_url = FRONTEND_SETTINGS['ACTIVATION_URL'].replace(
+                "{{token}}",
+                activation_token.key
+            )
+
+            services.send_mail(
+                [self],
+                {
+                    "activation_url": activation_url,
+                    "first_name": self.first_name,
+                    "last_name": self.last_name,
+                },
+                "CONFIRM_SIGN_UP",
+            )
+
+    def get_number_of_past_tomatoes(self):
+        timeslots = self.get_nb_tomatoes_timeslot()
+        virtual_retreats = self.get_nb_tomatoes_virtual_retreat()
+        physical_retreats = self.get_nb_tomatoes_physical_retreat()
+
+        past_count = timeslots['past'] + \
+                     virtual_retreats['past'] + \
+                     physical_retreats['past']
+
+        custom_tomatoes = Tomato.objects.filter(
+            user=self,
+        ).aggregate(
+            Sum('number_of_tomato'),
+        )
+
+        if custom_tomatoes['number_of_tomato__sum'] is not None:
+            past_count += custom_tomatoes['number_of_tomato__sum']
+
+        return past_count
+
+    def get_number_of_future_tomatoes(self):
+        timeslots = self.get_nb_tomatoes_timeslot()
+        virtual_retreats = self.get_nb_tomatoes_virtual_retreat()
+        physical_retreats = self.get_nb_tomatoes_physical_retreat()
+
+        future_count = timeslots['future'] + \
+            virtual_retreats['future'] + \
+            physical_retreats['future']
+
+        return future_count
+
+    def get_nb_tomatoes_timeslot(self):
+        from workplace.models import Reservation as TimeslotReservation
+
+        reservations = TimeslotReservation.objects.filter(
+            user=self,
+            is_active=True,
+        )
+
+        past_count = 0
+        future_count = 0
+
+        for reservation in reservations:
+            if reservation.timeslot.end_time < timezone.now():
+                past_count += settings.NUMBER_OF_TOMATOES_TIMESLOT
+            else:
+                future_count += settings.NUMBER_OF_TOMATOES_TIMESLOT
+
+        return {
+            'past': past_count,
+            'future': future_count,
+        }
+
+    def get_nb_tomatoes_virtual_retreat(self):
+        from retirement.models import Reservation as RetreatReservation
+
+        reservations = RetreatReservation.objects.filter(
+            user=self,
+            is_active=True,
+            retreat__type__is_virtual=True,
+        )
+
+        past_count = 0
+        future_count = 0
+
+        for reservation in reservations:
+            if reservation.retreat.end_time < timezone.now():
+                past_count += reservation.retreat.get_number_of_tomatoes()
+            else:
+                future_count += reservation.retreat.get_number_of_tomatoes()
+
+        return {
+            'past': past_count,
+            'future': future_count,
+        }
+
+    def get_nb_tomatoes_physical_retreat(self):
+        from retirement.models import Reservation as RetreatReservation
+
+        reservations = RetreatReservation.objects.filter(
+            user=self,
+            is_active=True,
+            retreat__type__is_virtual=False,
+        )
+
+        past_count = 0
+        future_count = 0
+
+        for reservation in reservations:
+            if reservation.retreat.end_time < timezone.now():
+                past_count += reservation.retreat.get_number_of_tomatoes()
+            else:
+                future_count += reservation.retreat.get_number_of_tomatoes()
+
+        return {
+            'past': past_count,
+            'future': future_count,
+        }
 
     def get_active_membership(self):
         if self.membership_end and self.membership_end > datetime.date.today():

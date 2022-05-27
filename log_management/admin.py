@@ -1,7 +1,11 @@
-
+from admin_auto_filters.filters import AutocompleteFilterFactory
 from django.contrib import admin
 
-from log_management.models import Log, EmailLog
+from log_management.models import (
+    Log,
+    EmailLog,
+    ActionLog,
+)
 
 
 class LogAdmin(admin.ModelAdmin):
@@ -29,5 +33,28 @@ class EmailLogAdmin(admin.ModelAdmin):
     date_hierarchy = 'created'
 
 
+class ActionLogAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'user',
+        'session_key',
+        'source',
+        'action',
+        'created',
+    )
+    search_fields = (
+        'id',
+        'action',
+        'source',
+    )
+    list_filter = (
+        'source',
+        'action',
+        AutocompleteFilterFactory('User', 'user'),
+    )
+    date_hierarchy = 'created'
+
+
 admin.site.register(Log, LogAdmin)
 admin.site.register(EmailLog, EmailLogAdmin)
+admin.site.register(ActionLog)

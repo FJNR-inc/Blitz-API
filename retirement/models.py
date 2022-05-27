@@ -6,13 +6,10 @@ from datetime import timedelta
 
 import requests
 from django.conf import settings
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 from django.core.mail import mail_admins, send_mail
-from django.template.loader import render_to_string
-from django.urls import reverse
 from django.utils import timezone
 
+from blitz_api.services import send_mail as send_templated_email
 from blitz_api.cron_manager_api import CronManager
 from blitz_api.models import Address
 from django.contrib.auth import get_user_model
@@ -22,9 +19,13 @@ from django.utils.translation import ugettext_lazy as _
 from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
 
-from log_management.models import Log, EmailLog
-from store.models import Membership, OrderLine, BaseProduct, \
-    Coupon, Refund
+from store.models import (
+    Membership,
+    OrderLine,
+    BaseProduct,
+    Coupon,
+    Refund,
+)
 from store.services import refund_amount
 
 User = get_user_model()
@@ -103,6 +104,11 @@ class RetreatType(models.Model):
         default='{}',
         null=True,
         blank=True,
+    )
+
+    is_visible = models.BooleanField(
+        verbose_name=_('Is visible'),
+        default=True,
     )
 
     def __str__(self):
@@ -387,8 +393,36 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         default=False
     )
 
+    # Sometime we want the retreat to be shown on a specific month
+    # ---
+    # Ex: If retreat begin on January 29th and finish on February
+    # 29th we maybe want to show it in February
+    display_start_time = models.DateTimeField(
+        null=False,
+        blank=False,
+    )
+
+    hide_from_client_admin_panel = models.BooleanField(
+        verbose_name=_("Hide from client admin panel"),
+        default=False,
+    )
+
+    # Overwrite the number of tomatoes of the retreat
+    # type for this value if not null
+    number_of_tomatoes = models.PositiveIntegerField(
+        verbose_name=_("Number of tomatoes"),
+        null=True,
+        blank=True,
+    )
+
     # History is registered in translation.py
     # history = HistoricalRecords()
+
+    def get_number_of_tomatoes(self):
+        if self.number_of_tomatoes:
+            return self.number_of_tomatoes
+        else:
+            return self.type.number_of_tomatoes
 
     @property
     def start_time(self):
@@ -501,37 +535,33 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         user that he has a reserved seat
         to a retreat for 24h hours.
         """
+        wait_queue: WaitQueue = WaitQueue.objects.get(
+            user=user,
+            retreat=self,
+        )
 
-        merge_data = {'RETREAT_NAME': self.name}
+        # Setup the url for the activation button in the email
+        wait_queue_url = settings.LOCAL_SETTINGS[
+            'FRONTEND_INTEGRATION'][
+            'RETREAT_UNSUBSCRIBE_URL'] \
+            .replace(
+            "{{wait_queue_id}}",
+            str(wait_queue.id)
+        )
 
-        plain_msg = render_to_string("reserved_place.txt", merge_data)
-        msg_html = render_to_string("reserved_place.html", merge_data)
+        context = {
+            'USER_FIRST_NAME': user.first_name,
+            'USER_LAST_NAME': user.last_name,
+            'USER_EMAIL': user.email,
+            'RETREAT_NAME': self.name,
+            'WAIT_QUEUE_URL': wait_queue_url,
+        }
 
-        try:
-            response_send_mail = send_mail(
-                f"Une place est disponible pour la retraite: {self.name}",
-                plain_msg,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                html_message=msg_html,
-            )
-
-            EmailLog.add(user.email, 'reserved_place', response_send_mail)
-            return response_send_mail
-        except Exception as err:
-            additional_data = {
-                'title': "Place exclusive pour 24h",
-                'default_from': settings.DEFAULT_FROM_EMAIL,
-                'user_email': user.email,
-                'merge_data': merge_data,
-                'template': 'reserved_place'
-            }
-            Log.error(
-                source='SENDING_BLUE_TEMPLATE',
-                message=err,
-                additional_data=json.dumps(additional_data)
-            )
-            raise
+        send_templated_email(
+            [user],
+            context,
+            'WAIT_QUEUE_RESERVED_SEAT_CREATED'
+        )
 
     def add_wait_queue_place(self, user_cancel, generate_cron=True):
         new_wait_queue_place = WaitQueuePlace.objects.create(
@@ -797,6 +827,9 @@ class Reservation(SafeDeleteModel):
         return str(self.user)
 
     def get_refund_value(self, total_refund=False):
+        if self.order_line is None:
+            return 0
+
         # First get net pay: total cost
         refund_value = float(self.order_line.cost)
         # Add the tax rate, so we have the real value pay by the user
@@ -835,6 +868,24 @@ class Reservation(SafeDeleteModel):
             refund_id=refund_res_content['id'],
         )
         return refund
+
+
+class RetreatUsageLog(models.Model):
+    """
+    Log usage of the videoconference link for virtual activities
+    """
+
+    reservation = models.ForeignKey(
+        Reservation,
+        on_delete=models.CASCADE,
+        verbose_name=_("Reservation"),
+        related_name='usage_logs',
+    )
+
+    datetime = models.DateTimeField(
+        verbose_name=_("Datetime"),
+        auto_now_add=True,
+    )
 
 
 class AutomaticEmailLog(models.Model):

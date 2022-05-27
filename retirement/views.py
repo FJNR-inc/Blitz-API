@@ -1,26 +1,19 @@
 import json
 from datetime import datetime, timedelta
-import time
 import locale
 import pytz
 from dateutil.rrule import rrule, DAILY
 from django.core.files.base import ContentFile
 from django.db.models import (
-    F,
-    When,
-    Case,
     Max,
     Min,
 )
 from django_filters import (
-    DateTimeFilter,
     FilterSet,
     IsoDateTimeFilter,
     NumberFilter,
-    CharFilter,
+    BooleanFilter,
 )
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter
 
 from blitz_api.mixins import ExportMixin
 from django.conf import settings
@@ -70,6 +63,7 @@ from .models import (
     AutomaticEmail,
     AutomaticEmailLog,
     RetreatDate,
+    RetreatUsageLog,
 )
 from .resources import (
     ReservationResource,
@@ -81,7 +75,9 @@ from .resources import (
 from .serializers import (
     RetreatTypeSerializer,
     AutomaticEmailSerializer,
-    RetreatDateSerializer, BatchRetreatSerializer,
+    RetreatDateSerializer,
+    BatchRetreatSerializer,
+    RetreatUsageLogSerializer,
 )
 from .services import (
     send_retreat_reminder_email,
@@ -112,6 +108,43 @@ class RetreatFilter(FilterSet):
 
     class Meta:
         model = Retreat
+        fields = '__all__'
+
+
+class RetreatReservationFilter(FilterSet):
+    finish_after = IsoDateTimeFilter(
+        field_name='max_end_date',
+        lookup_expr='gte',
+    )
+    start_after = IsoDateTimeFilter(
+        field_name='min_start_date',
+        lookup_expr='gte',
+    )
+    finish_before = IsoDateTimeFilter(
+        field_name='max_end_date',
+        lookup_expr='lte',
+    )
+    start_before = IsoDateTimeFilter(
+        field_name='min_start_date',
+        lookup_expr='lte',
+    )
+    user = NumberFilter(
+        field_name='user__id',
+        lookup_expr='exact',
+    )
+    retreat = NumberFilter(
+        field_name='retreat__id',
+        lookup_expr='exact',
+    )
+    is_active = BooleanFilter(
+        field_name='is_active'
+    )
+    retreat__type__is_virtual = BooleanFilter(
+        field_name='retreat__type__is_virtual'
+    )
+
+    class Meta:
+        model = Reservation
         fields = '__all__'
 
 
@@ -153,10 +186,33 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
                 is_active=True,
                 hidden=False
             )
-        return queryset.annotate(
+
+        queryset = queryset.annotate(
             max_end_date=Max('retreat_dates__end_time'),
             min_start_date=Min('retreat_dates__start_time'),
         )
+
+        # Filter by display_start_time lower than
+        display_start_time_lte = self.request.query_params.get(
+            'display_start_time_lte',
+            None,
+        )
+        if display_start_time_lte:
+            queryset = queryset.filter(
+                display_start_time__lte=display_start_time_lte
+            )
+
+        # Filter by display_start_time greater than
+        display_start_time_gte = self.request.query_params.get(
+            'display_start_time_gte',
+            None,
+        )
+        if display_start_time_gte:
+            queryset = queryset.filter(
+                display_start_time__gte=display_start_time_gte
+            )
+
+        return queryset
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -224,6 +280,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             validated_data['name'] = tz.localize(start).strftime(
                 "Bloc %d %b"
             ) + ' ' + suffix
+            validated_data['display_start_time'] = tz.localize(start)
             new_retreat = Retreat.objects.create(**validated_data)
             new_retreat.exclusive_memberships.set(memberships)
             RetreatDate.objects.create(
@@ -478,12 +535,9 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     serializer_class = serializers.ReservationSerializer
     queryset = Reservation.objects.all()
-    filterset_fields = [
-        'user',
-        'retreat',
-        'is_active',
-        'retreat__type__is_virtual'
-    ]
+
+    filter_class = RetreatReservationFilter
+
     ordering_fields = (
         'is_active',
         'is_present',
@@ -500,8 +554,14 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         the currently authenticated user is an admin (is_staff).
         """
         if self.request.user.is_staff:
-            return Reservation.objects.all()
-        return Reservation.objects.filter(user=self.request.user)
+            queryset = Reservation.objects.all()
+        else:
+            queryset = Reservation.objects.filter(user=self.request.user)
+
+        return queryset.annotate(
+            max_end_date=Max('retreat__retreat_dates__end_time'),
+            min_start_date=Min('retreat__retreat_dates__start_time'),
+        ).order_by('min_start_date')
 
     def get_permissions(self):
         """
@@ -574,13 +634,18 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         #
         #  2 - An admin want to force a refund and the user paid for
         #  his reservation
+        #
+        # In all case, only paid reservation (amount > 0) can be refunded
 
-        process_refund = (respects_minimum_days and refundable) or\
-                         (force_refund and order_line)
+        if instance.get_refund_value() > 0:
+            process_refund = (respects_minimum_days and refundable) or \
+                             force_refund
+        else:
+            process_refund = False
 
         with transaction.atomic():
             # No need to check for previous refunds because a refunded
-            # reservation == canceled reservation, thus not active.
+            # reservation is automatically canceled, thus not active.
             if reservation_active:
                 if order_line and order_line.quantity > 1:
                     raise rest_framework_serializers.ValidationError({
@@ -802,10 +867,21 @@ class WaitQueuePlaceReservedViewSet(mixins.ListModelMixin,
     filterset_fields = '__all__'
 
     def get_queryset(self):
-
         if self.request.user.is_staff:
-            return WaitQueuePlaceReserved.objects.all()
-        return WaitQueuePlaceReserved.objects.filter(user=self.request.user)
+            queryset = WaitQueuePlaceReserved.objects.all()
+        else:
+            queryset = WaitQueuePlaceReserved.objects.filter(
+                user=self.request.user,
+            )
+
+        # Filter by retreat
+        retreat = self.request.query_params.get('retreat', None)
+        if retreat:
+            queryset = queryset.filter(
+                wait_queue_place__retreat__id=retreat
+            )
+
+        return queryset
 
 
 class RetreatDateViewSet(viewsets.ModelViewSet):
@@ -819,11 +895,31 @@ class RetreatTypeViewSet(viewsets.ModelViewSet):
     serializer_class = RetreatTypeSerializer
     queryset = RetreatType.objects.all()
     permission_classes = [permissions.IsAdminOrReadOnly]
-    filter_fields = ['is_virtual']
+    filter_fields = [
+        'is_virtual',
+        'is_visible',
+    ]
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            queryset = RetreatType.objects.all()
+        else:
+            queryset = RetreatType.objects.filter(
+                is_visible=True,
+            )
+
+        return queryset
 
 
 class AutomaticEmailViewSet(viewsets.ModelViewSet):
     serializer_class = AutomaticEmailSerializer
     queryset = AutomaticEmail.objects.all()
     permission_classes = [permissions.IsAdminOrReadOnly]
+    filter_fields = '__all__'
+
+
+class RetreatUsageLogViewSet(viewsets.ModelViewSet):
+    serializer_class = RetreatUsageLogSerializer
+    queryset = RetreatUsageLog.objects.all()
+    permission_classes = [IsAuthenticated]
     filter_fields = '__all__'

@@ -83,6 +83,7 @@ class MembershipTests(APITestCase):
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
+            'picture': None,
         }
 
         self.assertEqual(
@@ -256,6 +257,7 @@ class MembershipTests(APITestCase):
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
+            'picture': None,
         }
 
         self.assertEqual(
@@ -348,6 +350,7 @@ class MembershipTests(APITestCase):
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
+                'picture': None,
             }]
         }
 
@@ -389,6 +392,7 @@ class MembershipTests(APITestCase):
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
+                'picture': None,
             }, {
                 'available': False,
                 'id': self.membership_unavailable.id,
@@ -403,6 +407,7 @@ class MembershipTests(APITestCase):
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
+                'picture': None,
             }]
         }
 
@@ -435,6 +440,7 @@ class MembershipTests(APITestCase):
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
+            'picture': None,
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -467,6 +473,7 @@ class MembershipTests(APITestCase):
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
+            'picture': None,
         }
 
         self.assertEqual(

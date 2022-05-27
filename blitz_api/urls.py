@@ -21,11 +21,16 @@ from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls.static import static
 
+from websocket.urls import websocket
+from tomato import views as tomato_views
+
 from workplace.urls import router as workplace_router
 from store.urls import router as store_router
 from retirement.urls import router as retirement_router
 from cron_manager.urls import router as cron_manager_router
 from ckeditor_api.urls import router as ckeditor_api_router
+from tomato.urls import router as tomato_router
+from log_management.urls import router as log_management_router
 
 from . import views
 
@@ -48,7 +53,8 @@ router.registry.extend(workplace_router.registry)
 router.registry.extend(store_router.registry)
 router.registry.extend(cron_manager_router.registry)
 router.registry.extend(ckeditor_api_router.registry)
-# router.registry.extend(retirement_router.registry)
+router.registry.extend(tomato_router.registry)
+router.registry.extend(log_management_router.registry)
 
 router.register('users', views.UserViewSet)
 router.register('domains', views.DomainViewSet)
@@ -64,6 +70,9 @@ router.register(
 router.register('export_media', views.ExportMediaViewSet)
 
 urlpatterns = [
+    websocket("ws/last_messages", tomato_views.last_messages),
+    websocket("ws/current_attendances", tomato_views.current_attendances),
+    path("test", tomato_views.IndexView.as_view()),
     path(
         'authentication',
         views.ObtainTemporaryAuthToken.as_view(),

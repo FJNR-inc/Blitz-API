@@ -53,11 +53,38 @@ from .models import (
     RetreatType,
     AutomaticEmail,
     RetreatDate,
+    RetreatUsageLog,
 )
 
 User = get_user_model()
 
 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
+
+
+class RetreatUsageLogSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = RetreatUsageLog
+        fields = '__all__'
+        extra_kwargs = {
+            'url': {
+                'view_name': 'retreat:retreatusagelog-detail',
+            },
+            'reservation': {
+                'view_name': 'retreat:reservation-detail',
+            }
+        }
+
+    def validate_reservation(self, value):
+        user = self.context['request'].user
+
+        if value.user.id != user.id:
+            raise serializers.ValidationError(_(
+                "You need to own the reservation to log a usage."
+            ))
+
+        return value
 
 
 class RetreatDateSerializer(serializers.HyperlinkedModelSerializer):
@@ -294,6 +321,7 @@ class RetreatSerializer(BaseProductSerializer):
 class BatchRetreatSerializer(RetreatSerializer):
     bulk_start_time = serializers.DateTimeField()
     bulk_end_time = serializers.DateTimeField()
+    display_start_time = serializers.DateTimeField(required=False)
     weekdays = serializers.ListField(
         child=serializers.IntegerField(
             max_value=6,
@@ -365,10 +393,6 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
     retreat_details = RetreatSerializer(
         read_only=True,
         source='retreat',
-    )
-    user_details = UserSerializer(
-        read_only=True,
-        source='user',
     )
     payment_token = serializers.CharField(
         write_only=True,
@@ -925,6 +949,19 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
 
         return Reservation.objects.get(id=instance_pk)
 
+    def to_representation(self, instance):
+        is_staff = self.context['request'].user.is_staff
+        if is_staff:
+            from blitz_api.serializers import UserSerializer
+            self.fields['user_details'] = UserSerializer(
+                source='user'
+            )
+        data = super(ReservationSerializer, self).to_representation(instance)
+
+        if is_staff:
+            return data
+        return remove_translation_fields(data)
+
     class Meta:
         model = Reservation
         exclude = ('deleted', )
@@ -1015,3 +1052,11 @@ class WaitQueuePlaceReservedSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = WaitQueuePlaceReserved
         fields = '__all__'
+        extra_kwargs = {
+            'wait_queue_place': {
+                'view_name': 'retreat:waitqueueplace-detail',
+            },
+            'url': {
+                'view_name': 'retreat:waitqueueplacereserved-detail',
+            },
+        }

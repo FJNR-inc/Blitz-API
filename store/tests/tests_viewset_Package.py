@@ -100,6 +100,7 @@ class PackageTests(APITestCase):
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
+            'picture': None,
         }
 
         response_content = json.loads(response.content)
@@ -259,7 +260,7 @@ class PackageTests(APITestCase):
 
         content = {
             'price': [
-                'Ensure this value is greater than or equal to 0.1.'
+                'Ensure this value is greater than or equal to 0.'
             ],
             'reservations': [
                 'Ensure this value is greater than or equal to 1.'
@@ -305,6 +306,7 @@ class PackageTests(APITestCase):
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
+            'picture': None,
         }
 
         self.assertEqual(
@@ -346,6 +348,7 @@ class PackageTests(APITestCase):
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
+            'picture': None,
         }
 
         self.assertEqual(
@@ -436,6 +439,7 @@ class PackageTests(APITestCase):
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
+                'picture': None,
             }]
         }
 
@@ -475,6 +479,7 @@ class PackageTests(APITestCase):
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
+                'picture': None,
             }, {
                 'available': False,
                 'details': 'todo',
@@ -489,6 +494,7 @@ class PackageTests(APITestCase):
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
+                'picture': None,
             }]
         }
 
@@ -520,6 +526,7 @@ class PackageTests(APITestCase):
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
+            'picture': None,
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -551,6 +558,7 @@ class PackageTests(APITestCase):
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
+            'picture': None,
         }
 
         self.assertEqual(

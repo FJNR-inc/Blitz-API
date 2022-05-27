@@ -1,8 +1,7 @@
-import json
 import traceback
 
+from django.conf import settings
 from django.db import models
-
 from django.utils.translation import ugettext_lazy as _
 
 
@@ -110,3 +109,45 @@ class EmailLog(models.Model):
         )
 
         return new_email_log
+
+
+class ActionLog(models.Model):
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name=_("User"),
+        related_name='action_logs',
+        null=True,
+        blank=True
+    )
+
+    session_key = models.CharField(
+        verbose_name=_("Session key"),
+        max_length=300,
+    )
+
+    source = models.CharField(
+        max_length=100,
+        verbose_name=_("Source"),
+    )
+
+    action = models.CharField(
+        max_length=100,
+        verbose_name=_("Action"),
+    )
+
+    additional_data = models.JSONField(
+        verbose_name=_("Additional data"),
+        blank=True,
+        null=True,
+    )
+
+    created = models.DateTimeField(
+        verbose_name="Creation date",
+        auto_now_add=True,
+    )
+
+    class Meta:
+        verbose_name = _("Action Log")
+        verbose_name_plural = _("Action Logs")

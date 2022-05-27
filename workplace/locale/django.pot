@@ -1,0 +1,275 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-03-24 17:04-0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: workplace/fields.py:14
+msgid "Unknown timezone"
+msgstr ""
+
+#: workplace/models.py:19 workplace/models.py:67 workplace/models.py:110
+msgid "Workplace"
+msgstr ""
+
+#: workplace/models.py:20
+msgid "Workplaces"
+msgstr ""
+
+#: workplace/models.py:23 workplace/models.py:58 workplace/models.py:101
+#: workplace/models.py:158
+msgid "Name"
+msgstr ""
+
+#: workplace/models.py:28
+msgid "Details"
+msgstr ""
+
+#: workplace/models.py:33
+msgid "Seats"
+msgstr ""
+
+#: workplace/models.py:39
+msgid "Volunteer"
+msgstr ""
+
+#: workplace/models.py:54
+msgid "Picture"
+msgstr ""
+
+#: workplace/models.py:55
+msgid "Pictures"
+msgstr ""
+
+#: workplace/models.py:72
+msgid "picture"
+msgstr ""
+
+#: workplace/models.py:97 workplace/models.py:167
+msgid "Period"
+msgstr ""
+
+#: workplace/models.py:98
+msgid "Periods"
+msgstr ""
+
+#: workplace/models.py:117 workplace/models.py:182
+msgid "Price"
+msgstr ""
+
+#: workplace/models.py:121
+msgid "Start Date"
+msgstr ""
+
+#: workplace/models.py:126
+msgid "End Date"
+msgstr ""
+
+#: workplace/models.py:131
+msgid "Activation"
+msgstr ""
+
+#: workplace/models.py:154 workplace/models.py:227
+msgid "Time slot"
+msgstr ""
+
+#: workplace/models.py:155
+msgid "Time slots"
+msgstr ""
+
+#: workplace/models.py:175 workplace/models.py:221
+msgid "User"
+msgstr ""
+
+#: workplace/models.py:188
+msgid "Start time"
+msgstr ""
+
+#: workplace/models.py:192
+msgid "End time"
+msgstr ""
+
+#: workplace/models.py:213
+msgid "User canceled"
+msgstr ""
+
+#: workplace/models.py:214
+msgid "Timeslot deleted"
+msgstr ""
+
+#: workplace/models.py:215
+msgid "Timeslot modified"
+msgstr ""
+
+#: workplace/models.py:231
+msgid "Active"
+msgstr ""
+
+#: workplace/models.py:238
+msgid "Cancelation reason"
+msgstr ""
+
+#: workplace/models.py:243
+msgid "Cancelation date"
+msgstr ""
+
+#: workplace/models.py:246
+msgid "Present"
+msgstr ""
+
+#: workplace/serializers.py:40
+msgid "Timezone of the workplace."
+msgstr ""
+
+#: workplace/serializers.py:102 workplace/serializers.py:104
+#: workplace/serializers.py:106 workplace/serializers.py:191
+msgid "This field is required."
+msgstr ""
+
+#: workplace/serializers.py:121
+msgid "Description of the workplace."
+msgstr ""
+
+#: workplace/serializers.py:123
+msgid "Name of the workplace."
+msgstr ""
+
+#: workplace/serializers.py:130
+msgid "Number of available seats."
+msgstr ""
+
+#: workplace/serializers.py:152
+msgid "Workplace represented by the picture."
+msgstr ""
+
+#: workplace/serializers.py:155
+msgid "Name of the picture."
+msgstr ""
+
+#: workplace/serializers.py:158
+msgid "File to upload."
+msgstr ""
+
+#: workplace/serializers.py:201
+msgid "The period contains timeslots with user reservations."
+msgstr ""
+
+#: workplace/serializers.py:220 workplace/serializers.py:608
+msgid "End date must be later than start_date."
+msgstr ""
+
+#: workplace/serializers.py:221 workplace/serializers.py:609
+msgid "Start date must be earlier than end_date."
+msgstr ""
+
+#: workplace/serializers.py:247
+msgid ""
+"An active period associated to the same workplace overlaps with the provided "
+"start_date and end_date."
+msgstr ""
+
+#: workplace/serializers.py:267
+msgid "Workplaces to which this period applies."
+msgstr ""
+
+#: workplace/serializers.py:271
+msgid "Hourly rate applied to this period."
+msgstr ""
+
+#: workplace/serializers.py:275
+msgid "Whether users can see this period or not."
+msgstr ""
+
+#: workplace/serializers.py:367
+msgid ""
+"Trying to push an update that affects users without providing `force_update` "
+"field."
+msgstr ""
+
+#: workplace/serializers.py:378
+msgid "Start time must be set within the period's start_date and end_date."
+msgstr ""
+
+#: workplace/serializers.py:385
+msgid "End time must be set within the period's start_date and end_date."
+msgstr ""
+
+#: workplace/serializers.py:394
+msgid "End time must be the same day as start_time."
+msgstr ""
+
+#: workplace/serializers.py:397
+msgid "Start time must be the same day as end_time."
+msgstr ""
+
+#: workplace/serializers.py:403
+msgid "End time must be later than start_time."
+msgstr ""
+
+#: workplace/serializers.py:404
+msgid "Start time must be earlier than end_time."
+msgstr ""
+
+#: workplace/serializers.py:420 workplace/serializers.py:668
+msgid ""
+"An existing timeslot overlaps with the provided start_time and end_time."
+msgstr ""
+
+#: workplace/serializers.py:521
+msgid "Period to which this time slot applies."
+msgstr ""
+
+#: workplace/serializers.py:525
+msgid "Name of the time slot."
+msgstr ""
+
+#: workplace/serializers.py:529
+msgid "Hourly rate applied to this time slot. Overrides period price."
+msgstr ""
+
+#: workplace/serializers.py:564
+msgid "Duplicated weekdays are not authorized."
+msgstr ""
+
+#: workplace/serializers.py:593
+msgid "Start date must be set within the period's start_date and end_date."
+msgstr ""
+
+#: workplace/serializers.py:600
+msgid "End date must be set within the period's start_date and end_date."
+msgstr ""
+
+#: workplace/serializers.py:708
+msgid ""
+"Only is_present can be updated. To change other fields, delete this "
+"reservation and create a new one."
+msgstr ""
+
+#: workplace/serializers.py:766
+msgid "Whether the reservation is active or not."
+msgstr ""
+
+#: workplace/views.py:138
+msgid ""
+"Trying to do a Period deletion that affects users without providing "
+"`force_delete` field set to True."
+msgstr ""
+
+#: workplace/views.py:349
+msgid ""
+"Trying to do a TimeSlot deletion that affects users without providing "
+"`force_delete` field set to True."
+msgstr ""

@@ -446,7 +446,15 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     serializer_class = serializers.ReservationSerializer
     queryset = Reservation.objects.all()
-    filterset_fields = '__all__'
+
+    filterset_fields = {
+        'user': ['exact'],
+        'timeslot': ['exact'],
+        'is_active': ['exact'],
+        'timeslot__start_time': ['exact', 'gte', 'lte'],
+        'timeslot__end_time': ['exact', 'gte', 'lte'],
+    }
+
     ordering_fields = (
         'is_active',
         'is_present',

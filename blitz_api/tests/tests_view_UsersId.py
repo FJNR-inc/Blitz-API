@@ -59,7 +59,10 @@ class UsersIdTests(APITestCase):
             'hide_newsletter',
             'is_in_newsletter',
             'number_of_free_virtual_retreat',
-            'membership_end_notification'
+            'membership_end_notification',
+            'get_number_of_past_tomatoes',
+            'get_number_of_future_tomatoes',
+            'last_acceptation_terms_and_conditions',
         ]
 
     def setUp(self):
@@ -294,6 +297,64 @@ class UsersIdTests(APITestCase):
 
         # Check id of the user
         self.assertEqual(content['id'], self.user.id)
+
+        # Check the system doesn't return attributes not expected
+        attributes = self.user_attrs.copy()
+        for key in content.keys():
+            self.assertTrue(
+                key in attributes,
+                'Attribute "{0}" is not expected but is '
+                'returned by the system.'.format(key)
+            )
+            attributes.remove(key)
+
+        # Ensure the system returns all expected attributes
+        self.assertTrue(
+            len(attributes) == 0,
+            'The system failed to return some '
+            'attributes : {0}'.format(attributes)
+        )
+
+    def test_partial_update_last_accept_terms(self):
+        """
+        Ensure we can't update a specific user last acceptance of terms.
+        """
+
+        data = {
+            "last_acceptation_terms_and_conditions": timezone.now().isoformat()
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse(
+                'user-detail',
+                kwargs={'pk': self.user.id},
+            ),
+            data,
+            format='json',
+        )
+
+        # Check the status code
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content,
+        )
+
+        content = json.loads(response.content)
+
+        # Check if membership didn't not change
+        self.assertNotEqual(
+            content['last_acceptation_terms_and_conditions'],
+            data['last_acceptation_terms_and_conditions'],
+        )
+
+        # Check id of the user
+        self.assertEqual(
+            content['id'],
+            self.user.id,
+        )
 
         # Check the system doesn't return attributes not expected
         attributes = self.user_attrs.copy()
@@ -1058,3 +1119,114 @@ class UsersIdTests(APITestCase):
         self.assertEqual(
             response.status_code, status.HTTP_204_NO_CONTENT
         )
+
+    def test_accept_terms(self):
+        """
+        Ensure we can accept terms for ourself
+        """
+        self.client.force_authenticate(user=self.user)
+
+        date_before = self.user.last_acceptation_terms_and_conditions
+
+        response = self.client.get(
+            reverse(
+                'user-accept-terms',
+                kwargs={'pk': self.user.pk}
+            )
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(
+            response.content,
+            b''
+        )
+
+        self.user.refresh_from_db()
+
+        self.assertEqual(
+            date_before,
+            None
+        )
+        self.assertNotEqual(
+            self.user.last_acceptation_terms_and_conditions,
+            None
+        )
+
+    def test_accept_terms_as_admin(self):
+        """
+        Ensure we can't accept terms for other people as an admin
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        date_before = self.user.last_acceptation_terms_and_conditions
+
+        response = self.client.get(
+            reverse(
+                'user-accept-terms',
+                kwargs={'pk': self.user.pk}
+            )
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+            response.content
+        )
+
+        self.assertEqual(
+            json.loads(response.content),
+            {
+                'non_field_errors': "You can't accept the terms for others "
+                                    "peoples."
+            }
+        )
+
+        self.user.refresh_from_db()
+
+        self.assertEqual(
+            date_before,
+            self.user.last_acceptation_terms_and_conditions,
+        )
+
+    def test_accept_terms_of_other_user(self):
+        """
+        Ensure we can't accept terms for others peoples as a simple user
+        """
+        self.client.force_authenticate(user=self.user)
+
+        date_before = self.user.last_acceptation_terms_and_conditions
+
+        response = self.client.get(
+            reverse(
+                'user-accept-terms',
+                kwargs={'pk': self.admin.pk}
+            )
+        )
+
+        content = {
+            'detail': 'You do not have permission to perform this action.'
+        }
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+            response.content
+        )
+
+        self.assertEqual(
+            json.loads(response.content),
+            content
+        )
+
+        self.user.refresh_from_db()
+
+        self.assertEqual(
+            date_before,
+            self.user.last_acceptation_terms_and_conditions,
+        )
+

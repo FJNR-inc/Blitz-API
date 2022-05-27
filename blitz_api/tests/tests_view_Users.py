@@ -129,18 +129,8 @@ class UsersTests(APITestCase):
         Ensure we can't create a student user without academic_* fields.
         """
         data = {
-            'username': 'John',
             'email': 'John@mailinator.com',
             'password': 'test123!',
-            'phone': '1234567890',
-            'first_name': 'Chuck',
-            'last_name': 'Norris',
-            'university': {
-                'name': "random_university"
-            },
-            'academic_field': {'name': "random_field"},
-            'gender': "M",
-            'birthdate': "1999-11-11",
         }
 
         response = self.client.post(
@@ -149,30 +139,16 @@ class UsersTests(APITestCase):
             format='json',
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        content = {
-            'academic_level': ['This field is required.']
-        }
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_create_new_user_blank_fields(self):
         """
         Ensure we can't create a new user with blank fields
         """
+        self.maxDiff = None
         data = {
             'email': '',
             'password': '',
-            'phone': '',
-            'first_name': '',
-            'last_name': '',
-            'university': {
-                'name': ""
-            },
-            'academic_field': {'name': ""},
-            'academic_level': {'name': ""},
-            'gender': "",
-            'birthdate': "",
         }
 
         response = self.client.post(
@@ -184,19 +160,8 @@ class UsersTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         content = {
-            'academic_field': {'name': ['This field may not be blank.']},
-            'academic_level': {'name': ['This field may not be blank.']},
-            'birthdate': [
-                'Date has wrong format. Use one of these formats instead: '
-                'YYYY-MM-DD.'
-            ],
-            'first_name': ['This field may not be blank.'],
-            'gender': ['"" is not a valid choice.'],
-            'last_name': ['This field may not be blank.'],
             'email': ['This field may not be blank.'],
             'password': ['This field may not be blank.'],
-            'phone': ['Invalid format.'],
-            'university': {'name': ['This field may not be blank.']}
         }
         self.assertEqual(json.loads(response.content), content)
 
@@ -215,11 +180,7 @@ class UsersTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         content = {
-            'birthdate': ['This field is required.'],
             'email': ['This field is required.'],
-            'first_name': ['This field is required.'],
-            'gender': ['This field is required.'],
-            'last_name': ['This field is required.'],
             'password': ['This field is required.']
         }
         self.assertEqual(json.loads(response.content), content)
@@ -252,110 +213,6 @@ class UsersTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         content = {"password": ['This password is entirely numeric.']}
-        self.assertEqual(json.loads(response.content), content)
-
-    def test_create_new_user_invalid_domain(self):
-        """
-        Ensure we can't create a new user with an invalid domain.
-        An invalid domain can be defined as:
-            - Non-existent
-            - Not matching with selected university
-        """
-        data = {
-            'username': 'John',
-            'email': 'John@invalid.com',
-            'password': '1927nce-736',
-            'first_name': 'Chuck',
-            'last_name': 'Norris',
-            'university': {
-                "name": "random_university"
-            },
-            'academic_field': {'name': "random_field"},
-            'academic_level': {'name': "random_level"},
-            'gender': "M",
-            'birthdate': "1999-11-11",
-        }
-
-        response = self.client.post(
-            reverse('user-list'),
-            data,
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        content = {'email': ['Invalid domain name.']}
-        self.assertEqual(json.loads(response.content), content)
-
-    def test_create_new_user_invalid_university(self):
-        """
-        Ensure we can't create a new user with an invalid university.
-        """
-        data = {
-            'username': 'John',
-            'email': 'John@mailinator.com',
-            'password': '1927nce-736',
-            'first_name': 'Chuck',
-            'last_name': 'Norris',
-            'university': {
-                "name": "invalid_university"
-            },
-            'academic_field': {'name': "random_field"},
-            'academic_level': {'name': "random_level"},
-            'gender': "M",
-            'birthdate': "1999-11-11",
-        }
-
-        response = self.client.post(
-            reverse('user-list'),
-            data,
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        content = {'university': ['This university does not exist.']}
-        self.assertEqual(json.loads(response.content), content)
-
-    def test_create_new_user_invalid_fields(self):
-        """
-        Ensure we can't create a new user with invalid fields.
-        Emails are validated at creation time, this is why no email validation
-        messages are sent in this case.
-        """
-        data = {
-            'username': 'John',
-            'email': 'John@invalid.com',
-            'password': '1927nce-736',
-            'first_name': 'Chuck',
-            'last_name': 'Norris',
-            'university': {
-                "name": "invalid_university"
-            },
-            'academic_field': {'name': "invalid_field"},
-            'academic_level': {'name': "invalid_level"},
-            'gender': "invalid_gender",
-            'birthdate': "invalid_date",
-        }
-
-        response = self.client.post(
-            reverse('user-list'),
-            data,
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        content = {
-            'academic_field': ['This academic field does not exist.'],
-            'academic_level': ['This academic level does not exist.'],
-            'birthdate': [
-                'Date has wrong format. Use one of these formats instead: '
-                'YYYY-MM-DD.'
-            ],
-            'gender': ['"invalid_gender" is not a valid choice.'],
-            'university': ['This university does not exist.']
-        }
         self.assertEqual(json.loads(response.content), content)
 
     def test_create_new_user_invalid_phone(self):
@@ -520,14 +377,8 @@ class UsersTests(APITestCase):
             format='json',
         )
 
-        content = {
-            'detail': "The account was created but no email was "
-                      "sent. If your account is not activated, "
-                      "contact the administration.",
-        }
-
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(json.loads(response.content)['phone'], '1234567890')
 
         user = User.objects.get(email="John@mailinator.com")
         activation_token = ActionToken.objects.filter(
@@ -577,14 +428,8 @@ class UsersTests(APITestCase):
             format='json',
         )
 
-        content = {
-            'detail': "The account was created but no email was "
-                      "sent. If your account is not activated, "
-                      "contact the administration.",
-        }
-
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(json.loads(response.content)['phone'], '1234567890')
 
         user = User.objects.get(email="John@mailinator.com")
         activation_token = ActionToken.objects.filter(
@@ -620,6 +465,7 @@ class UsersTests(APITestCase):
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
+            'picture': None,
             'price': '50.00',
             'details': '1-Year student membership',
             'duration': '365 00:00:00',
@@ -666,7 +512,10 @@ class UsersTests(APITestCase):
             'hide_newsletter',
             'is_in_newsletter',
             'number_of_free_virtual_retreat',
-            'membership_end_notification'
+            'membership_end_notification',
+            'get_number_of_past_tomatoes',
+            'get_number_of_future_tomatoes',
+            'last_acceptation_terms_and_conditions',
         ]
         for key in first_user.keys():
             self.assertTrue(
@@ -732,7 +581,10 @@ class UsersTests(APITestCase):
             'hide_newsletter',
             'is_in_newsletter',
             'number_of_free_virtual_retreat',
-            'membership_end_notification'
+            'membership_end_notification',
+            'get_number_of_past_tomatoes',
+            'get_number_of_future_tomatoes',
+            'last_acceptation_terms_and_conditions',
         ]
         for key in first_user.keys():
             self.assertTrue(
@@ -848,4 +700,41 @@ class UsersTests(APITestCase):
         )
 
         # no new mail
+        self.assertEqual(len(mail.outbox), 1)
+
+
+    @override_settings(
+        LOCAL_SETTINGS={
+            "EMAIL_SERVICE": True,
+            "FRONTEND_INTEGRATION": {
+                'ACTIVATION_URL': 'https://example.com/activate/{{token}}'
+            }
+        }
+    )
+    def test_resend_activation_email(self):
+        """
+        Ensure we can resend an activation email on demand
+        """
+
+        data = {
+            'email': self.user.email,
+        }
+
+        response = self.client.post(
+            reverse('user-resend-activation-email'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(
+            response.content,
+            b'',
+        )
+
         self.assertEqual(len(mail.outbox), 1)

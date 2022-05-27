@@ -82,7 +82,8 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
         "FRONTEND_INTEGRATION": {
             "POLICY_URL": "fake_url",
             "LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT": "fake_url",
-            "PROFILE_URL": "fake_url"
+            "PROFILE_URL": "fake_url",
+            "RETREAT_UNSUBSCRIBE_URL": "fake_url",
         }
     }
 )
@@ -222,6 +223,9 @@ class OrderTests(APITestCase):
             has_shared_rooms=True,
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8),
+            ),
             type=self.retreatType,
         )
         RetreatDate.objects.create(
@@ -250,6 +254,9 @@ class OrderTests(APITestCase):
             has_shared_rooms=True,
             toilet_gendered=False,
             room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8),
+            ),
             type=self.retreatType,
         )
         RetreatDate.objects.create(
