@@ -40,4 +40,4 @@ google-cloud-storage==1.42.3
 celery[pytest]==5.1.2
 pytest==6.2.4
 django-celery-results==2.2.0
-django-celery-beat==2.2.1
+django-celery-beat==2.3.0
