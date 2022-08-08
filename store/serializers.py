@@ -80,10 +80,11 @@ class OrderLineBaseProductSerializer(serializers.ModelSerializer):
 
     id = serializers.IntegerField()
     quantity = serializers.IntegerField()
+    metadata = serializers.JSONField(required=False)
 
     class Meta:
         model = BaseProduct
-        fields = ('id', 'quantity')
+        fields = ('id', 'quantity', 'metadata')
 
     def validate(self, attrs):
         product_id = attrs['id']

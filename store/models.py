@@ -176,10 +176,14 @@ class Order(models.Model):
                     option: BaseProduct = BaseProduct.objects.get(
                         id=option_id_quantity['id'])
                     quantity = option_id_quantity['quantity']
+                    metadata = None
+                    if 'metadata' in option_id_quantity:
+                        metadata = option_id_quantity['metadata']
                     OrderLineBaseProduct.objects.create(
                         option=option,
                         order_line=order_line,
-                        quantity=quantity
+                        quantity=quantity,
+                        metadata=metadata
                     )
                     order_line.cost += option.price
                 order_line.save()
@@ -284,6 +288,12 @@ class OrderLineBaseProduct(models.Model):
 
     quantity = models.PositiveIntegerField(
         verbose_name=_("Quantity"),
+    )
+
+    metadata = models.JSONField(
+        verbose_name=_("Metadata"),
+        null=True,
+        blank=True
     )
 
     def __str__(self):
