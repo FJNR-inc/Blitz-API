@@ -3854,3 +3854,57 @@ class OrderWithOptionsTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(OptionProduct.objects.get(id=self.options_with_stock.id).stock,
                          self.options_with_stock_quantity)
+
+
+    @responses.activate
+    def test_option_with_metadata(self):
+        """
+        Test that we can order an option with metadata
+        """
+        self.client.force_authenticate(user=self.admin)
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+        quantity = 99
+
+        metadata_dict = {
+                        'my_dict': 'that works as json',
+                        'with': [
+                            {
+                                'data': 'for',
+                                'the option': 'without stock'
+                            }
+                        ]
+                    }
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
+                'quantity': 1,
+                'options': [{
+                    'id': self.options_without_stock.id,
+                    'quantity': quantity,
+                    'metadata': metadata_dict
+                }]
+            }],
+        }
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+
+        order_line = OrderLine.objects.get(pk=response.data['order_lines'][0]['id'])
+        orderline_base = OrderLineBaseProduct.objects.get(order_line=order_line,
+                                                          option=self.options_without_stock)
+        self.assertEqual(orderline_base.metadata, metadata_dict)
