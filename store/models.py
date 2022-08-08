@@ -6,6 +6,9 @@ from decimal import Decimal
 from blitz_api.services import send_email_from_template_id
 from babel.dates import format_date
 import pytz
+
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
@@ -286,6 +289,25 @@ class OrderLineBaseProduct(models.Model):
     def __str__(self):
         return f'{self.order_line}'
 
+    def save(self, *args, **kwargs):
+        product_id = self.option.id
+        base_product = BaseProduct.objects.get_subclass(id=product_id)
+        if isinstance(base_product, OptionProduct):
+            if base_product.has_stock:
+                base_product.stock = base_product.stock - self.quantity
+                base_product.save()
+        super(OrderLineBaseProduct, self).save()
+
+
+@receiver(pre_delete, sender=OrderLineBaseProduct)
+def update_quantity(instance, **kwargs):
+    product_id = instance.option.id
+    base_product = BaseProduct.objects.get_subclass(id=product_id)
+    if isinstance(base_product, OptionProduct):
+        if base_product.has_stock:
+            base_product.stock = base_product.stock + instance.quantity
+            base_product.save()
+
 
 class Refund(SafeDeleteModel):
     """
@@ -522,8 +544,27 @@ class Package(BaseProduct):
 class OptionProduct(BaseProduct):
     max_quantity = models.IntegerField(
         verbose_name=_("Max Quantity"),
+        help_text=_("Maximum allowed quantity per orderline"),
         default=0
     )
+    has_stock = models.BooleanField(
+        verbose_name=_("Has stock"),
+        help_text=_("True if option has stock, False if stock is infinite or NA"),
+        default=False
+    )
+    stock = models.PositiveIntegerField(
+        verbose_name=_("Stock"),
+        help_text=_("Maximum quantity available for this option"),
+        default=0
+    )
+
+    def has_sufficient_stock(self, quantity_required):
+        """
+        Check if we can get enough option
+        :params quantity_required: quantity required for this stock
+        Return True if option has enough stock for the purchase, False otherwise
+        """
+        return not self.has_stock or quantity_required <= self.stock
 
 
 class CustomPayment(models.Model):
