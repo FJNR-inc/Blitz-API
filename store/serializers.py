@@ -90,6 +90,13 @@ class OrderLineBaseProductSerializer(serializers.ModelSerializer):
         quantity = attrs['quantity']
         base_product = BaseProduct.objects.get_subclass(id=product_id)
         if isinstance(base_product, OptionProduct):
+            if not base_product.has_sufficient_stock(quantity):
+                raise serializers.ValidationError({
+                    'quantity': [
+                        f'Not enough quantity left. Only '
+                        f'{base_product.stock} remain.'
+                    ]
+                })
             if quantity > base_product.max_quantity:
                 raise serializers.ValidationError({
                     'quantity': [
@@ -97,7 +104,6 @@ class OrderLineBaseProductSerializer(serializers.ModelSerializer):
                         f'{base_product.max_quantity}'
                     ]
                 })
-
         return attrs
 
 
@@ -385,7 +391,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
     options = OrderLineBaseProductSerializer(
         many=True,
         required=False,
-        write_only=True
+        write_only=True,
     )
 
     def validate(self, attrs):
@@ -512,7 +518,6 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     #     write_only=True,
     #     required=False,
     # )
-
     def create(self, validated_data):
         """
         Create an Order and charge the user.
