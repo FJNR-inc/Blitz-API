@@ -4,7 +4,7 @@ from django.conf import settings
 from datetime import datetime
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.test import APITestCase
-from blitz_api.factories import UserFactory, RetreatFactory
+from blitz_api.factories import UserFactory
 from retirement.models import Retreat, RetreatDate, RetreatType
 from store.models import Order, OptionProduct, Package
 

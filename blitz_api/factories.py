@@ -1,4 +1,7 @@
-from datetime import timedelta
+import pytz
+from datetime import timedelta, datetime
+from django.conf import settings
+from django.utils import timezone
 
 import factory
 from factory.django import DjangoModelFactory
@@ -8,12 +11,14 @@ from django.contrib.auth import get_user_model
 
 from blitz_api.models import Organization, AcademicLevel, AcademicField, \
     Address
-from retirement.models import Retreat
-
+from retirement.models import Retreat, RetreatDate, RetreatType
+from store.models import Order, OptionProduct
 from faker import Faker
 
 User = get_user_model()
 fake = Faker()
+
+LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
 class UserFactory(DjangoModelFactory):
@@ -64,6 +69,15 @@ class AcademicFieldFactory(DjangoModelFactory):
     name = factory.Sequence(lambda n: f'AcademicField {n}')
 
 
+class RetreatTypeFactory(DjangoModelFactory):
+    class Meta:
+        model = RetreatType
+
+    name = factory.sequence(lambda n: f'Retreat {n}')
+    minutes_before_display_link = 1
+    number_of_tomatoes = 1
+
+
 class RetreatFactory(DjangoModelFactory):
     class Meta:
         model = Retreat
@@ -95,3 +109,33 @@ class RetreatFactory(DjangoModelFactory):
     email_content = factory.Faker('email')
     accessibility = factory.Faker('boolean', chance_of_getting_true=50)
     has_shared_rooms = factory.Faker('boolean', chance_of_getting_true=50)
+
+
+class RetreatDateFactory(DjangoModelFactory):
+
+    class Meta:
+        model = RetreatDate
+
+    start_time = datetime(2130, 1, 15, 8)
+    end_time = datetime(2130, 1, 17, 12)
+
+
+class OrderFactory(DjangoModelFactory):
+
+    class Meta:
+        model = Order
+
+    transaction_date = timezone.now()
+    authorization_id = 1
+    settlement_id = 1
+
+
+class OptionProductFactory(DjangoModelFactory):
+    class Meta:
+        model = OptionProduct
+
+    name = factory.sequence(lambda n: f'Option Product {n}')
+    details = "detail of the option"
+    available = True
+    price = 50.00
+    max_quantity = 100
