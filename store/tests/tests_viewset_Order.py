@@ -25,9 +25,8 @@ import responses
 from unittest import mock
 
 from blitz_api.factories import (
-    UserFactory,
-    AdminFactory,
-)
+    UserFactory, AdminFactory, RetreatFactory, RetreatTypeFactory,
+    RetreatDateFactory, OrderFactory, OptionProductFactory)
 
 from workplace.models import (
     TimeSlot,
@@ -61,6 +60,7 @@ from store.models import (
     CouponUser,
     MembershipCoupon,
     OptionProduct,
+    OrderLineBaseProduct,
 )
 
 User = get_user_model()
@@ -3615,3 +3615,242 @@ class OrderTests(APITestCase):
         self.assertEqual(response_data, content)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+@override_settings(
+    PAYSAFE={
+        'ACCOUNT_NUMBER': "0123456789",
+        'USER': "user",
+        'PASSWORD': "password",
+        'BASE_URL': "http://example.com/",
+        'VAULT_URL': "customervault/v1/",
+        'CARD_URL': "cardpayments/v1/"
+    },
+    LOCAL_SETTINGS={
+        "EMAIL_SERVICE": True,
+        "FRONTEND_INTEGRATION": {
+            "POLICY_URL": "fake_url",
+            "LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT": "fake_url",
+            "PROFILE_URL": "fake_url",
+            "RETREAT_UNSUBSCRIBE_URL": "fake_url",
+        }
+    }
+)
+class OrderWithOptionsTests(APITestCase):
+    """
+    Test Order with options
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.admin = AdminFactory(
+            phone='1',
+            city='MTL'
+        )
+        self.retreat_type = RetreatTypeFactory()
+        self.retreat = RetreatFactory(
+            accessibility=True,
+            seats=100000,
+            is_active=True,
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8),
+            ),
+            type=self.retreat_type,
+        )
+        self.retreat_date = RetreatDateFactory(retreat=self.retreat)
+        self.retreat.activate()
+        self.retreat_content_types = ContentType.objects.get_for_model(Retreat)
+
+        self.order = OrderFactory(user=self.admin)
+
+        self.options_with_stock_quantity = 10
+        self.options_with_stock = OptionProductFactory(
+            has_stock=True,
+            stock=self.options_with_stock_quantity
+        )
+        self.options_with_stock.available_on_products.add(self.retreat)
+        self.options_with_stock.save()
+
+        self.options_without_stock = OptionProductFactory()
+        self.options_without_stock.available_on_products.add(self.retreat)
+        self.options_without_stock.save()
+
+    @responses.activate
+    def test_option_no_stock(self):
+        """
+        Test that we can order an option with no stock (infinite or NA)
+        """
+        self.client.force_authenticate(user=self.admin)
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+        quantity = 99
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
+                'quantity': 1,
+                'options': [{
+                    'id': self.options_without_stock.id,
+                    'quantity': quantity
+                }]
+            }],
+        }
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+
+        order_line = OrderLine.objects.get(pk=response.data['order_lines'][0]['id'])
+        orderline_base = OrderLineBaseProduct.objects.get(order_line=order_line,
+                                                          option=self.options_without_stock)
+        self.assertEqual(orderline_base.quantity, quantity)
+
+    @responses.activate
+    def test_option_sufficient_stock(self):
+        """
+        Test we can take an option with sufficient stock
+        """
+        self.client.force_authenticate(user=self.admin)
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+        quantity = 5
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
+                'quantity': 1,
+                'options': [{
+                    'id': self.options_with_stock.id,
+                    'quantity': quantity
+                }]
+            }],
+        }
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+
+        order_line = OrderLine.objects.get(pk=response.data['order_lines'][0]['id'])
+        orderline_base = OrderLineBaseProduct.objects.get(order_line=order_line,
+                                                          option=self.options_with_stock)
+        self.assertEqual(orderline_base.quantity, quantity)
+        self.assertEqual(OptionProduct.objects.get(id=self.options_with_stock.id).stock,
+                         self.options_with_stock_quantity - quantity)
+
+    @responses.activate
+    def test_option_insufficient_stock(self):
+        """
+        Test we can't take an option with insufficient stock
+        """
+        self.client.force_authenticate(user=self.admin)
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+        quantity = 15
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
+                'quantity': 1,
+                'options': [{
+                    'id': self.options_with_stock.id,
+                    'quantity': quantity
+                }]
+            }],
+        }
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.content)
+
+    @responses.activate
+    def test_delete(self):
+        """
+        Ensure we can delete an order line and the option quantity is updated.
+        """
+        self.client.force_authenticate(user=self.admin)
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+        quantity = 5
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
+                'quantity': 1,
+                'options': [{
+                    'id': self.options_with_stock.id,
+                    'quantity': quantity
+                }]
+            }],
+        }
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+
+        order_line = OrderLine.objects.get(pk=response.data['order_lines'][0]['id'])
+        orderline_base = OrderLineBaseProduct.objects.get(order_line=order_line,
+                                                          option=self.options_with_stock)
+        self.assertEqual(orderline_base.quantity, quantity)
+        self.assertEqual(OptionProduct.objects.get(id=self.options_with_stock.id).stock,
+                         self.options_with_stock_quantity - quantity)
+
+        response = self.client.delete(
+            reverse(
+                'orderline-detail',
+                args=[order_line.id]
+            ),
+        )
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(OptionProduct.objects.get(id=self.options_with_stock.id).stock,
+                         self.options_with_stock_quantity)
