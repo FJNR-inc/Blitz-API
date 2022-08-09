@@ -6,6 +6,7 @@ from decimal import Decimal
 from blitz_api.services import send_email_from_template_id
 from babel.dates import format_date
 import pytz
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
@@ -164,19 +165,23 @@ class Order(models.Model):
 
         # We add orderline in the order
         for orderline_data in orderlines_data:
-            options_ids_quantity = orderline_data.pop('options', None)
+            options = orderline_data.pop('options', None)
             order_line: OrderLine = OrderLine.objects.create(
                 order=self, **orderline_data)
 
-            if options_ids_quantity:
-                for option_id_quantity in options_ids_quantity:
+            if options:
+                for opt in options:
                     option: BaseProduct = BaseProduct.objects.get(
-                        id=option_id_quantity['id'])
-                    quantity = option_id_quantity['quantity']
+                        id=opt['id'])
+                    quantity = opt['quantity']
+                    metadata = None
+                    if 'metadata' in opt:
+                        metadata = opt['metadata']
                     OrderLineBaseProduct.objects.create(
                         option=option,
                         order_line=order_line,
-                        quantity=quantity
+                        quantity=quantity,
+                        metadata=metadata
                     )
                     order_line.cost += option.price
                 order_line.save()
@@ -283,8 +288,23 @@ class OrderLineBaseProduct(models.Model):
         verbose_name=_("Quantity"),
     )
 
+    metadata = models.JSONField(
+        verbose_name=_("Metadata"),
+        null=True,
+        blank=True
+    )
+
     def __str__(self):
         return f'{self.order_line}'
+
+    def save(self, *args, **kwargs):
+        product_id = self.option.id
+        base_product = BaseProduct.objects.get_subclass(id=product_id)
+        if isinstance(base_product, OptionProduct):
+            if base_product.has_stock:
+                base_product.stock = base_product.stock - self.quantity
+                base_product.save()
+        super(OrderLineBaseProduct, self).save()
 
 
 class Refund(SafeDeleteModel):
@@ -332,6 +352,23 @@ class Refund(SafeDeleteModel):
 
     def __str__(self):
         return str(self.orderline) + ', ' + str(self.amount) + "$"
+
+    def update_options_quantity(self):
+        """
+        If an orderline is refunded, we put back its quantity in the stock of options
+        """
+        orderline_options = OrderLineBaseProduct.objects.filter(order_line=self.orderline)
+        for orderline_option in orderline_options:
+            base_product = BaseProduct.objects.get_subclass(id=orderline_option.option.id)
+            if isinstance(base_product, OptionProduct):
+                if base_product.has_stock:
+                    base_product.stock = base_product.stock + orderline_option.quantity
+                    base_product.save()
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.update_options_quantity()
+        super(Refund, self).save(*args, **kwargs)
 
 
 class BaseProduct(models.Model):
@@ -522,8 +559,27 @@ class Package(BaseProduct):
 class OptionProduct(BaseProduct):
     max_quantity = models.IntegerField(
         verbose_name=_("Max Quantity"),
+        help_text=_("Maximum allowed quantity per orderline"),
         default=0
     )
+    has_stock = models.BooleanField(
+        verbose_name=_("Has stock"),
+        help_text=_("True if option has stock, False if stock is infinite or NA"),
+        default=False
+    )
+    stock = models.PositiveIntegerField(
+        verbose_name=_("Stock"),
+        help_text=_("Maximum quantity available for this option"),
+        default=0
+    )
+
+    def has_sufficient_stock(self, quantity_required):
+        """
+        Check if we can get enough option
+        :params quantity_required: quantity required for this stock
+        Return True if option has enough stock for the purchase, False otherwise
+        """
+        return not self.has_stock or quantity_required <= self.stock
 
 
 class CustomPayment(models.Model):
