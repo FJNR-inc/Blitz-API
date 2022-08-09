@@ -137,5 +137,5 @@ class OptionProductFactory(DjangoModelFactory):
     name = factory.sequence(lambda n: f'Option Product {n}')
     details = "detail of the option"
     available = True
-    price = 50.00
+    price = 50
     max_quantity = 100
