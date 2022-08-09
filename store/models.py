@@ -7,8 +7,6 @@ from blitz_api.services import send_email_from_template_id
 from babel.dates import format_date
 import pytz
 
-from django.db.models.signals import pre_delete
-from django.dispatch import receiver
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
@@ -309,16 +307,6 @@ class OrderLineBaseProduct(models.Model):
         super(OrderLineBaseProduct, self).save()
 
 
-@receiver(pre_delete, sender=OrderLineBaseProduct)
-def update_quantity(instance, **kwargs):
-    product_id = instance.option.id
-    base_product = BaseProduct.objects.get_subclass(id=product_id)
-    if isinstance(base_product, OptionProduct):
-        if base_product.has_stock:
-            base_product.stock = base_product.stock + instance.quantity
-            base_product.save()
-
-
 class Refund(SafeDeleteModel):
     """
     Represents a refund. It is always linked to an orderline and it can refund
@@ -364,6 +352,23 @@ class Refund(SafeDeleteModel):
 
     def __str__(self):
         return str(self.orderline) + ', ' + str(self.amount) + "$"
+
+    def update_options_quantity(self):
+        """
+        If an orderline is refunded, we put back its quantity in the stock of options
+        """
+        orderline_options = OrderLineBaseProduct.objects.filter(order_line=self.orderline)
+        for orderline_option in orderline_options:
+            base_product = BaseProduct.objects.get_subclass(id=orderline_option.option.id)
+            if isinstance(base_product, OptionProduct):
+                if base_product.has_stock:
+                    base_product.stock = base_product.stock + orderline_option.quantity
+                    base_product.save()
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.update_options_quantity()
+        super(Refund, self).save(*args, **kwargs)
 
 
 class BaseProduct(models.Model):
