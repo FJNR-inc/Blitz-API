@@ -165,18 +165,18 @@ class Order(models.Model):
 
         # We add orderline in the order
         for orderline_data in orderlines_data:
-            options_ids_quantity = orderline_data.pop('options', None)
+            options = orderline_data.pop('options', None)
             order_line: OrderLine = OrderLine.objects.create(
                 order=self, **orderline_data)
 
-            if options_ids_quantity:
-                for option_id_quantity in options_ids_quantity:
+            if options:
+                for opt in options:
                     option: BaseProduct = BaseProduct.objects.get(
-                        id=option_id_quantity['id'])
-                    quantity = option_id_quantity['quantity']
+                        id=opt['id'])
+                    quantity = opt['quantity']
                     metadata = None
-                    if 'metadata' in option_id_quantity:
-                        metadata = option_id_quantity['metadata']
+                    if 'metadata' in opt:
+                        metadata = opt['metadata']
                     OrderLineBaseProduct.objects.create(
                         option=option,
                         order_line=order_line,

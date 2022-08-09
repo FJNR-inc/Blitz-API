@@ -25,8 +25,13 @@ import responses
 from unittest import mock
 
 from blitz_api.factories import (
-    UserFactory, AdminFactory, RetreatFactory, RetreatTypeFactory,
-    RetreatDateFactory, OrderFactory, OptionProductFactory)
+    UserFactory,
+    AdminFactory,
+    RetreatFactory,
+    RetreatTypeFactory,
+    RetreatDateFactory,
+    OrderFactory,
+    OptionProductFactory)
 
 from workplace.models import (
     TimeSlot,
