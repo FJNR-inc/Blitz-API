@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-24 17:04-0400\n"
+"POT-Creation-Date: 2022-08-08 15:53-0400\n"
 "PO-Revision-Date: 2022-03-25 23:32+0000\n"
 "Last-Translator: Mélanie Guérin <melanie.guerin@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
@@ -150,7 +150,7 @@ msgstr "Chambre simple et double"
 #: retirement/models.py:187 retirement/models.py:680 retirement/models.py:710
 #: retirement/models.py:756 retirement/models.py:953 retirement/models.py:990
 #: retirement/models.py:1046 retirement/serializers.py:1039
-#: retirement/views.py:733
+#: retirement/views.py:720
 msgid "Retreat"
 msgstr "Retraite"
 
@@ -562,7 +562,7 @@ msgstr "Cette réservation a déjà été annulée."
 msgid "There are no places left in the requested retreat."
 msgstr "Il n'y a plus de places dans la retraite demandée."
 
-#: retirement/serializers.py:572 retirement/views.py:656
+#: retirement/serializers.py:572 retirement/views.py:653
 msgid ""
 "The order containing this reservation has a quantity bigger than 1. Please "
 "contact the support team."
@@ -588,7 +588,7 @@ msgid "Maximum exchange date exceeded."
 msgstr "Date d'échange maximale est dépassée."
 
 #: retirement/serializers.py:711 retirement/serializers.py:793
-#: retirement/views.py:668
+#: retirement/views.py:665
 msgid "The order has not been charged yet. Try again later."
 msgstr "La commande n'a pas encore été débitée. Réessayez plus tard."
 
@@ -600,7 +600,7 @@ msgstr "Échange"
 msgid "Whether the reservation is active or not."
 msgstr "Si la réservation est active ou non."
 
-#: retirement/views.py:677
+#: retirement/views.py:674
 msgid "An error occured with the payment system. Please try again later."
 msgstr ""
 "Une erreur s'est produite avec le système de paiement. Veuillez réessayer "
