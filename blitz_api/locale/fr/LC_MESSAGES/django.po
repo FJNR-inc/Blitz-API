@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-24 17:04-0400\n"
+"POT-Creation-Date: 2022-08-08 15:53-0400\n"
 "PO-Revision-Date: 2022-03-25 22:32+0000\n"
 "Last-Translator: Mélanie Guérin <melanie.guerin@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
@@ -233,17 +233,17 @@ msgid "Invalid format."
 msgstr "Format invalide."
 
 #: blitz_api/serializers.py:63 blitz_api/serializers.py:96
-#: blitz_api/serializers.py:129 blitz_api/serializers.py:331
+#: blitz_api/serializers.py:129 blitz_api/serializers.py:339
 #: blitz_api/services.py:125
 msgid "This field is required."
 msgstr "Ce champ est requis."
 
-#: blitz_api/serializers.py:181 blitz_api/serializers.py:388
-#: blitz_api/serializers.py:533
+#: blitz_api/serializers.py:181 blitz_api/serializers.py:396
+#: blitz_api/serializers.py:541
 msgid "Email address"
 msgstr "Adresse e-mail"
 
-#: blitz_api/serializers.py:196 blitz_api/serializers.py:412
+#: blitz_api/serializers.py:196 blitz_api/serializers.py:420
 msgid "An account for the specified email address already exists."
 msgstr "Un compte pour l'adresse e-mail spécifiée existe déjà."
 
@@ -263,31 +263,37 @@ msgstr "Cette université n'existe pas."
 msgid "Invalid domain name."
 msgstr "Nom de domaine invalide."
 
-#: blitz_api/serializers.py:347
+#: blitz_api/serializers.py:287
+#, fuzzy
+#| msgid "An account for the specified email address already exists."
+msgid "An account with the same email already exist."
+msgstr "Un compte pour l'adresse e-mail spécifiée existe déjà."
+
+#: blitz_api/serializers.py:355
 msgid "Bad password"
 msgstr "Mauvais mot de passe"
 
-#: blitz_api/serializers.py:485
+#: blitz_api/serializers.py:493
 msgid "Username"
 msgstr "Nom d'utilisateur"
 
-#: blitz_api/serializers.py:487
+#: blitz_api/serializers.py:495
 msgid "Password"
 msgstr "Mot de passe"
 
-#: blitz_api/serializers.py:503
+#: blitz_api/serializers.py:511
 msgid "Your account is not activated. [code: not-activated]"
 msgstr "Votre compte n'est pas activé. [code: not-activated]"
 
-#: blitz_api/serializers.py:522
+#: blitz_api/serializers.py:530
 msgid "Unable to log in with provided credentials."
 msgstr "Impossible de se connecter avec les identifiants fournis."
 
-#: blitz_api/serializers.py:542
+#: blitz_api/serializers.py:550
 msgid "No account associated to this email address."
 msgstr "Aucun compte associé à cette adresse e-mail."
 
-#: blitz_api/serializers.py:589
+#: blitz_api/serializers.py:597
 msgid "Email already register to this newsletter"
 msgstr "Cet e-mail est déjà inscrit à cette newsletter"
 
@@ -308,7 +314,7 @@ msgstr "Cet e-mail n'est lié à aucun compte"
 msgid "You can't accept the terms for others peoples."
 msgstr "Vous ne pouvez pas accepter les conditions pour quelqu'un d'autre."
 
-#: blitz_api/views.py:411
+#: blitz_api/views.py:421
 msgid ""
 "Your token has been created but no email has been sent. Please contact the "
 "administration."
