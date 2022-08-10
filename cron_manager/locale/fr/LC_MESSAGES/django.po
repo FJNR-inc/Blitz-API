@@ -3,64 +3,66 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-26 17:15-0500\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"POT-Creation-Date: 2022-08-08 15:53-0400\n"
+"PO-Revision-Date: 2022-03-25 23:32+0000\n"
+"Last-Translator: Mélanie Guérin <melanie.guerin@fjnr.ca>\n"
+"Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
+"cron_manager/fr/>\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: Weblate 4.9.1\n"
+
 #: cron_manager/admin.py:18
 msgid "Executions"
-msgstr ""
+msgstr "Exécutions"
 
 #: cron_manager/models.py:14
 msgid "URL to execute"
-msgstr ""
+msgstr "URL à exécuter"
 
 #: cron_manager/models.py:19
 msgid "Description"
-msgstr ""
+msgstr "Description"
 
 #: cron_manager/models.py:23
 msgid "Execution datetime"
-msgstr ""
+msgstr "Date et heure d'exécution"
 
 #: cron_manager/models.py:29
 msgid "Execution intervals ms"
-msgstr ""
+msgstr "Intervalles d'exécution en ms"
 
 #: cron_manager/models.py:34
 msgid "Active"
-msgstr ""
+msgstr "Actif"
 
 #: cron_manager/models.py:39
 msgid "Created_at"
-msgstr ""
+msgstr "Créé à"
 
 #: cron_manager/models.py:115
 msgid "Created at"
-msgstr ""
+msgstr "Créé à"
 
 #: cron_manager/models.py:119
 msgid "Executed at"
-msgstr ""
+msgstr "Éxécuté à"
 
 #: cron_manager/models.py:126
 msgid "Succeded ?"
-msgstr ""
+msgstr "Réussi ?"
 
 #: cron_manager/models.py:133
 msgid "HTTP code"
-msgstr ""
+msgstr "Code HTTP"
 
 #: cron_manager/models.py:137
 msgid "HTTP response"
-msgstr ""
+msgstr "Réponse HTTP"
