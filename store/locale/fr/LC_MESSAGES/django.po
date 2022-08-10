@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-08-08 15:53-0400\n"
-"PO-Revision-Date: 2022-03-25 23:32+0000\n"
-"Last-Translator: Mélanie Guérin <melanie.guerin@fjnr.ca>\n"
+"PO-Revision-Date: 2022-08-10 14:17+0000\n"
+"Last-Translator: Noel Rignon <noel.rignon@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/store/"
 "fr/>\n"
 "Language: fr\n"
@@ -93,8 +93,6 @@ msgid "Metada"
 msgstr "Métadonnées"
 
 #: store/models.py:294
-#, fuzzy
-#| msgid "Metada"
 msgid "Metadata"
 msgstr "Métadonnées"
 
@@ -189,23 +187,23 @@ msgstr "Quantité maximum"
 
 #: store/models.py:557
 msgid "Maximum allowed quantity per orderline"
-msgstr ""
+msgstr "Quantité maximale autorisée par ligne de commande"
 
 #: store/models.py:561
 msgid "Has stock"
-msgstr ""
+msgstr "Gestion de stock"
 
 #: store/models.py:562
 msgid "True if option has stock, False if stock is infinite or NA"
-msgstr ""
+msgstr "Vrai si l'option a un stock, Faux si le stock est infini ou N/A"
 
 #: store/models.py:566
 msgid "Stock"
-msgstr ""
+msgstr "Stock"
 
 #: store/models.py:567
 msgid "Maximum quantity available for this option"
-msgstr ""
+msgstr "Quantité maximale disponible pour cette option"
 
 #: store/models.py:633
 msgid "Custom payment"
@@ -289,19 +287,19 @@ msgstr "Coupon"
 
 #: store/serializers.py:224
 msgid "Name of the membership."
-msgstr "Nom du membership"
+msgstr "Nom du membership."
 
 #: store/serializers.py:248
 msgid "Name of the package."
-msgstr "Nom du lot"
+msgstr "Nom du lot."
 
 #: store/serializers.py:344
 msgid "Name of the product."
-msgstr "Nom du produit"
+msgstr "Nom du produit."
 
 #: store/serializers.py:369
 msgid "Name of the payment profile."
-msgstr "Nom du profil de paiement"
+msgstr "Nom du profil de paiement."
 
 #: store/serializers.py:420
 msgid "The referenced object does not exist."
@@ -320,7 +318,7 @@ msgstr ""
 
 #: store/serializers.py:545
 msgid "You don't have the permission to bypass the payment"
-msgstr "Vous n'êtes pas autorisé à contourner le paiement."
+msgstr "Vous n'êtes pas autorisé à contourner le paiement"
 
 #: store/serializers.py:625
 msgid "You already have an active membership."
