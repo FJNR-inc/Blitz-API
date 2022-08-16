@@ -557,6 +557,14 @@ class Package(BaseProduct):
 
 
 class OptionProduct(BaseProduct):
+    TYPE_COMMON = 'common'
+    TYPE_SHARED_ROOM = 'shared_room'
+
+    TYPE_CHOICES = [
+        (TYPE_COMMON, 'Common'),
+        (TYPE_SHARED_ROOM, 'Shared room'),
+    ]
+
     max_quantity = models.IntegerField(
         verbose_name=_("Max Quantity"),
         help_text=_("Maximum allowed quantity per orderline"),
@@ -571,6 +579,12 @@ class OptionProduct(BaseProduct):
         verbose_name=_("Stock"),
         help_text=_("Maximum quantity available for this option"),
         default=0
+    )
+
+    type = models.CharField(
+        max_length=100,
+        choices=TYPE_CHOICES,
+        default=TYPE_COMMON,
     )
 
     def has_sufficient_stock(self, quantity_required):
