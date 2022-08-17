@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-08 15:53-0400\n"
+"POT-Creation-Date: 2022-08-17 05:49-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,8 +21,8 @@ msgstr ""
 msgid "Orderlines"
 msgstr ""
 
-#: store/admin.py:184 store/models.py:44 store/models.py:589
-#: store/models.py:657 store/models.py:779 store/models.py:831
+#: store/admin.py:184 store/models.py:42 store/models.py:618
+#: store/models.py:686 store/models.py:808 store/models.py:860
 msgid "User"
 msgstr ""
 
@@ -34,252 +34,260 @@ msgstr ""
 msgid "Coupon users"
 msgstr ""
 
-#: store/models.py:38 store/models.py:217
+#: store/models.py:36 store/models.py:215
 msgid "Order"
 msgstr ""
 
-#: store/models.py:39
+#: store/models.py:37
 msgid "Orders"
 msgstr ""
 
-#: store/models.py:49 store/models.py:612
+#: store/models.py:47 store/models.py:641
 msgid "Transaction date"
 msgstr ""
 
-#: store/models.py:53 store/models.py:616
+#: store/models.py:51 store/models.py:645
 msgid "Authorization ID"
 msgstr ""
 
-#: store/models.py:58 store/models.py:621
+#: store/models.py:56 store/models.py:650
 msgid "Settlement ID"
 msgstr ""
 
-#: store/models.py:63 store/models.py:626
+#: store/models.py:61 store/models.py:655
 msgid "Reference number"
 msgstr ""
 
-#: store/models.py:199
+#: store/models.py:197
 msgid "Order line"
 msgstr ""
 
-#: store/models.py:200
+#: store/models.py:198
 msgid "Order lines"
 msgstr ""
 
-#: store/models.py:222 store/models.py:290
+#: store/models.py:220 store/models.py:288
 msgid "Quantity"
 msgstr ""
 
-#: store/models.py:228
+#: store/models.py:226
 msgid "Applied coupon"
 msgstr ""
 
-#: store/models.py:237
+#: store/models.py:235
 msgid "Coupon real value"
 msgstr ""
 
-#: store/models.py:244
+#: store/models.py:242
 msgid "Orderline cost"
 msgstr ""
 
-#: store/models.py:250
+#: store/models.py:248
 msgid "Options"
 msgstr ""
 
-#: store/models.py:256
+#: store/models.py:254
 msgid "Metada"
 msgstr ""
 
-#: store/models.py:294
+#: store/models.py:292
 msgid "Metadata"
 msgstr ""
 
-#: store/models.py:329
+#: store/models.py:317
 msgid "Refund"
 msgstr ""
 
-#: store/models.py:330
+#: store/models.py:318
 msgid "Refunds"
 msgstr ""
 
-#: store/models.py:335
+#: store/models.py:323
 msgid "Orderline"
 msgstr ""
 
-#: store/models.py:342
+#: store/models.py:330
 msgid "Amount"
 msgstr ""
 
-#: store/models.py:346 store/models.py:389 store/models.py:605
-#: store/models.py:703
+#: store/models.py:334 store/models.py:394 store/models.py:634
+#: store/models.py:732
 msgid "Details"
 msgstr ""
 
-#: store/models.py:353
+#: store/models.py:341
 msgid "Refund date"
 msgstr ""
 
-#: store/models.py:357
+#: store/models.py:345
 msgid "Refund ID"
 msgstr ""
 
-#: store/models.py:373 store/models.py:594 store/models.py:650
+#: store/models.py:378 store/models.py:623 store/models.py:679
 msgid "Name"
 msgstr ""
 
-#: store/models.py:378
+#: store/models.py:383
 msgid "Available"
 msgstr ""
 
-#: store/models.py:385 store/models.py:601
+#: store/models.py:390 store/models.py:630
 msgid "Price"
 msgstr ""
 
-#: store/models.py:399
+#: store/models.py:404
 msgid "Applicable products"
 msgstr ""
 
-#: store/models.py:407
+#: store/models.py:412
 msgid "Applicable product types"
 msgstr ""
 
-#: store/models.py:435
+#: store/models.py:440
 msgid "Membership"
 msgstr ""
 
-#: store/models.py:436 store/models.py:539
+#: store/models.py:441 store/models.py:544
 msgid "Memberships"
 msgstr ""
 
-#: store/models.py:440 store/models.py:527
+#: store/models.py:445 store/models.py:532
 msgid "Id before migrate to base product"
 msgstr ""
 
-#: store/models.py:450
+#: store/models.py:455
 msgid "Academic levels"
 msgstr ""
 
-#: store/models.py:455 store/models.py:544
+#: store/models.py:460 store/models.py:549
 msgid "picture"
 msgstr ""
 
-#: store/models.py:462
+#: store/models.py:467
 msgid "Welcome email template ID"
 msgstr ""
 
-#: store/models.py:522
+#: store/models.py:527
 msgid "Package"
 msgstr ""
 
-#: store/models.py:523
+#: store/models.py:528
 msgid "Packages"
 msgstr ""
 
-#: store/models.py:533
+#: store/models.py:538
 msgid "Reservations"
 msgstr ""
 
-#: store/models.py:556
+#: store/models.py:569
 msgid "Max Quantity"
 msgstr ""
 
-#: store/models.py:557
+#: store/models.py:570
 msgid "Maximum allowed quantity per orderline"
 msgstr ""
 
-#: store/models.py:561
-msgid "Has stock"
+#: store/models.py:574
+msgid "Manage stock"
 msgstr ""
 
-#: store/models.py:562
-msgid "True if option has stock, False if stock is infinite or NA"
+#: store/models.py:575
+msgid "True if option manage stock, False if stock is infinite or NA"
 msgstr ""
 
-#: store/models.py:566
+#: store/models.py:579
 msgid "Stock"
 msgstr ""
 
-#: store/models.py:567
-msgid "Maximum quantity available for this option"
+#: store/models.py:580
+msgid "Current quantity available for this option"
 msgstr ""
 
-#: store/models.py:633
-msgid "Custom payment"
+#: store/models.py:584
+msgid "Initial stock"
 msgstr ""
 
-#: store/models.py:634
-msgid "Custom payments"
-msgstr ""
-
-#: store/models.py:646
-msgid "Payment profile"
-msgstr ""
-
-#: store/models.py:647
-msgid "Payment profiles"
+#: store/models.py:585
+msgid "Initial stock for this option"
 msgstr ""
 
 #: store/models.py:662
+msgid "Custom payment"
+msgstr ""
+
+#: store/models.py:663
+msgid "Custom payments"
+msgstr ""
+
+#: store/models.py:675
+msgid "Payment profile"
+msgstr ""
+
+#: store/models.py:676
+msgid "Payment profiles"
+msgstr ""
+
+#: store/models.py:691
 msgid "External profile ID"
 msgstr ""
 
-#: store/models.py:667
+#: store/models.py:696
 msgid "External profile url"
 msgstr ""
 
-#: store/models.py:686
+#: store/models.py:715
 msgid "Value"
 msgstr ""
 
-#: store/models.py:693
+#: store/models.py:722
 msgid "Percentage off"
 msgstr ""
 
-#: store/models.py:712
+#: store/models.py:741
 msgid "Applicable retreats"
 msgstr ""
 
-#: store/models.py:719
+#: store/models.py:748
 msgid "Applicable timeslots"
 msgstr ""
 
-#: store/models.py:726
+#: store/models.py:755
 msgid "Applicable packages"
 msgstr ""
 
-#: store/models.py:733
+#: store/models.py:762
 msgid "Applicable memberships"
 msgstr ""
 
-#: store/models.py:747
+#: store/models.py:776
 msgid "Applicable to virtual retreat"
 msgstr ""
 
-#: store/models.py:752
+#: store/models.py:781
 msgid "Applicable to physical retreat"
 msgstr ""
 
-#: store/models.py:765
+#: store/models.py:794
 msgid "Start time"
 msgstr ""
 
-#: store/models.py:767
+#: store/models.py:796
 msgid "End time"
 msgstr ""
 
-#: store/models.py:770
+#: store/models.py:799
 msgid "Code"
 msgstr ""
 
-#: store/models.py:786
+#: store/models.py:815
 msgid "Users"
 msgstr ""
 
-#: store/models.py:814
+#: store/models.py:843
 msgid "Limit date"
 msgstr ""
 
-#: store/models.py:837
+#: store/models.py:866
 msgid "Coupon"
 msgstr ""
 
