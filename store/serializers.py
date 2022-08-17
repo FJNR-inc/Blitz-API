@@ -251,6 +251,7 @@ class PackageSerializer(BaseProductSerializer):
 
 
 class OptionProductSerializer(BaseProductSerializer):
+    remaining_quantity = serializers.ReadOnlyField()
     class Meta:
         model = OptionProduct
         fields = '__all__'
