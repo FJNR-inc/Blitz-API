@@ -8,6 +8,7 @@ from babel.dates import format_date
 import pytz
 
 from django.db import models
+from django.db.models import Sum
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -297,15 +298,6 @@ class OrderLineBaseProduct(models.Model):
     def __str__(self):
         return f'{self.order_line}'
 
-    def save(self, *args, **kwargs):
-        product_id = self.option.id
-        base_product = BaseProduct.objects.get_subclass(id=product_id)
-        if isinstance(base_product, OptionProduct):
-            if base_product.has_stock:
-                base_product.stock = base_product.stock - self.quantity
-                base_product.save()
-        super(OrderLineBaseProduct, self).save()
-
 
 class Refund(SafeDeleteModel):
     """
@@ -352,23 +344,6 @@ class Refund(SafeDeleteModel):
 
     def __str__(self):
         return str(self.orderline) + ', ' + str(self.amount) + "$"
-
-    def update_options_quantity(self):
-        """
-        If an orderline is refunded, we put back its quantity in the stock of options
-        """
-        orderline_options = OrderLineBaseProduct.objects.filter(order_line=self.orderline)
-        for orderline_option in orderline_options:
-            base_product = BaseProduct.objects.get_subclass(id=orderline_option.option.id)
-            if isinstance(base_product, OptionProduct):
-                if base_product.has_stock:
-                    base_product.stock = base_product.stock + orderline_option.quantity
-                    base_product.save()
-
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            self.update_options_quantity()
-        super(Refund, self).save(*args, **kwargs)
 
 
 class BaseProduct(models.Model):
@@ -570,9 +545,9 @@ class OptionProduct(BaseProduct):
         help_text=_("Maximum allowed quantity per orderline"),
         default=0
     )
-    has_stock = models.BooleanField(
-        verbose_name=_("Has stock"),
-        help_text=_("True if option has stock, False if stock is infinite or NA"),
+    manage_stock = models.BooleanField(
+        verbose_name=_("Manage stock"),
+        help_text=_("True if option manage stock, False if stock is infinite or NA"),
         default=False
     )
     stock = models.PositiveIntegerField(
@@ -587,13 +562,24 @@ class OptionProduct(BaseProduct):
         default=TYPE_COMMON,
     )
 
+    @property
+    def remaining_quantity(self):
+        remaining_quantity = self.stock
+        if self.manage_stock:
+            from retirement.models import Reservation
+            refunded_order_lines = Reservation.objects.filter(is_active=False).values_list('order_line', flat=True)
+            remaining_quantity = OrderLineBaseProduct.objects.filter(option=self)\
+                .exclude(order_line__in=refunded_order_lines)\
+                .aggregate(sum=Sum('quantity'))['sum']
+        return remaining_quantity if remaining_quantity else self.stock
+
     def has_sufficient_stock(self, quantity_required):
         """
         Check if we can get enough option
         :params quantity_required: quantity required for this stock
         Return True if option has enough stock for the purchase, False otherwise
         """
-        return not self.has_stock or quantity_required <= self.stock
+        return not self.manage_stock or quantity_required <= self.remaining_quantity
 
 
 class CustomPayment(models.Model):
