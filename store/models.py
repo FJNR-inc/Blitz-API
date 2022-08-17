@@ -301,7 +301,7 @@ class OrderLineBaseProduct(models.Model):
         product_id = self.option.id
         base_product = BaseProduct.objects.get_subclass(id=product_id)
         if isinstance(base_product, OptionProduct):
-            if base_product.has_stock:
+            if base_product.manage_stock:
                 base_product.stock = base_product.stock - self.quantity
                 base_product.save()
         super(OrderLineBaseProduct, self).save()
@@ -361,7 +361,7 @@ class Refund(SafeDeleteModel):
         for orderline_option in orderline_options:
             base_product = BaseProduct.objects.get_subclass(id=orderline_option.option.id)
             if isinstance(base_product, OptionProduct):
-                if base_product.has_stock:
+                if base_product.manage_stock:
                     base_product.stock = base_product.stock + orderline_option.quantity
                     base_product.save()
 
@@ -570,14 +570,19 @@ class OptionProduct(BaseProduct):
         help_text=_("Maximum allowed quantity per orderline"),
         default=0
     )
-    has_stock = models.BooleanField(
-        verbose_name=_("Has stock"),
-        help_text=_("True if option has stock, False if stock is infinite or NA"),
+    manage_stock = models.BooleanField(
+        verbose_name=_("Manage stock"),
+        help_text=_("True if option manage stock, False if stock is infinite or NA"),
         default=False
     )
     stock = models.PositiveIntegerField(
         verbose_name=_("Stock"),
-        help_text=_("Maximum quantity available for this option"),
+        help_text=_("Current quantity available for this option"),
+        default=0
+    )
+    initial_stock = models.PositiveIntegerField(
+        verbose_name=_("Initial stock"),
+        help_text=_("Initial stock for this option"),
         default=0
     )
 
@@ -593,7 +598,12 @@ class OptionProduct(BaseProduct):
         :params quantity_required: quantity required for this stock
         Return True if option has enough stock for the purchase, False otherwise
         """
-        return not self.has_stock or quantity_required <= self.stock
+        return not self.manage_stock or quantity_required <= self.stock
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.initial_stock = self.stock
+        super().save(*args, **kwargs)
 
 
 class CustomPayment(models.Model):
