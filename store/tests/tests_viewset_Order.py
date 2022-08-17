@@ -31,7 +31,8 @@ from blitz_api.factories import (
     RetreatTypeFactory,
     RetreatDateFactory,
     OrderFactory,
-    OptionProductFactory)
+    OptionProductFactory
+)
 
 from workplace.models import (
     TimeSlot,
@@ -3675,7 +3676,7 @@ class OrderWithOptionsTests(APITestCase):
 
         self.options_with_stock_quantity = 10
         self.options_with_stock = OptionProductFactory(
-            has_stock=True,
+            manage_stock=True,
             stock=self.options_with_stock_quantity
         )
         self.options_with_stock.available_on_products.add(self.retreat)
@@ -3768,7 +3769,7 @@ class OrderWithOptionsTests(APITestCase):
         orderline_base = OrderLineBaseProduct.objects.get(order_line=order_line,
                                                           option=self.options_with_stock)
         self.assertEqual(orderline_base.quantity, quantity)
-        self.assertEqual(OptionProduct.objects.get(id=self.options_with_stock.id).stock,
+        self.assertEqual(OptionProduct.objects.get(id=self.options_with_stock.id).remaining_quantity,
                          self.options_with_stock_quantity - quantity)
 
     @responses.activate
@@ -3902,7 +3903,7 @@ class OrderWithOptionsTests(APITestCase):
         orderline_base = OrderLineBaseProduct.objects.get(order_line=order_line,
                                                           option=self.options_with_stock)
         self.assertEqual(orderline_base.quantity, quantity)
-        self.assertEqual(OptionProduct.objects.get(id=self.options_with_stock.id).stock,
+        self.assertEqual(OptionProduct.objects.get(id=self.options_with_stock.id).remaining_quantity,
                          self.options_with_stock_quantity - quantity)
 
         reservation = Reservation.objects.create(
@@ -3932,5 +3933,5 @@ class OrderWithOptionsTests(APITestCase):
             status.HTTP_204_NO_CONTENT,
             response.content
         )
-        self.assertEqual(OptionProduct.objects.get(id=self.options_with_stock.id).stock,
+        self.assertEqual(OptionProduct.objects.get(id=self.options_with_stock.id).remaining_quantity,
                          self.options_with_stock_quantity)
