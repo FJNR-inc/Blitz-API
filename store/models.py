@@ -532,12 +532,12 @@ class Package(BaseProduct):
 
 
 class OptionProduct(BaseProduct):
-    TYPE_COMMON = 'common'
-    TYPE_SHARED_ROOM = 'shared_room'
+    METADATA_NONE = 'none'
+    METADATA_SHARED_ROOM = 'shared_room'
 
-    TYPE_CHOICES = [
-        (TYPE_COMMON, 'Common'),
-        (TYPE_SHARED_ROOM, 'Shared room'),
+    METADATA_CHOICES = [
+        (METADATA_NONE, 'None'),
+        (METADATA_SHARED_ROOM, 'Shared room'),
     ]
 
     max_quantity = models.IntegerField(
@@ -558,8 +558,13 @@ class OptionProduct(BaseProduct):
 
     type = models.CharField(
         max_length=100,
-        choices=TYPE_CHOICES,
-        default=TYPE_COMMON,
+        choices=METADATA_CHOICES,
+        default=METADATA_NONE,
+    )
+
+    is_room_option = models.BooleanField(
+        verbose_name=_('Determine if this option can be considered as a room option'),
+        default=False,
     )
 
     @property

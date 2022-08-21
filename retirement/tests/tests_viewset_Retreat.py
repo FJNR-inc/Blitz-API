@@ -97,6 +97,7 @@ class RetreatTests(CustomAPITestCase):
         'animator',
         'display_start_time',
         'hide_from_client_admin_panel',
+        'require_purchase_room',
     ]
 
     @classmethod
