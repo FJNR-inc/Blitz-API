@@ -95,7 +95,7 @@ class OrderLineBaseProductSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     'quantity': [
                         f'Not enough quantity left. Only '
-                        f'{base_product.stock} remain.'
+                        f'{base_product.remaining_quantity} remain.'
                     ]
                 })
             if quantity > base_product.max_quantity:
@@ -251,6 +251,7 @@ class PackageSerializer(BaseProductSerializer):
 
 
 class OptionProductSerializer(BaseProductSerializer):
+    remaining_quantity = serializers.ReadOnlyField()
     class Meta:
         model = OptionProduct
         fields = '__all__'
