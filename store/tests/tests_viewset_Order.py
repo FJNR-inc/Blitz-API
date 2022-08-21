@@ -3863,6 +3863,142 @@ class OrderWithOptionsTests(APITestCase):
         self.assertEqual(orderline_base.metadata, metadata_dict)
 
     @responses.activate
+    def test_retreat_without_required_room_option(self):
+        """
+        Test we can't take a retreat that need a required room option without
+        the required room option
+        """
+
+        # Prepare retreat
+        self.retreat_type = RetreatTypeFactory()
+        self.retreat = RetreatFactory(
+            accessibility=True,
+            seats=100000,
+            is_active=True,
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            refund_rate=1,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            require_purchase_room=True,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8),
+            ),
+            type=self.retreat_type,
+        )
+        self.retreat_date = RetreatDateFactory(retreat=self.retreat)
+        self.retreat.activate()
+
+        self.room_option = OptionProductFactory(
+            manage_stock=False
+        )
+
+        self.client.force_authenticate(user=self.admin)
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
+                'quantity': 1,
+                'options': [{
+                    'id': self.room_option.id,
+                    'quantity': 1
+                }]
+            }],
+        }
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.json(),
+            {
+                "non_field_errors": [
+                    "You need a room option for this requested retreat."
+                ]
+            }
+        )
+
+    @responses.activate
+    def test_retreat_with_required_room_option(self):
+        """
+        Test we can take a retreat that need a required room option if we
+        put the required room option inside the cart
+        """
+
+        # Prepare retreat
+        self.retreat_type = RetreatTypeFactory()
+        self.retreat = RetreatFactory(
+            accessibility=True,
+            seats=100000,
+            is_active=True,
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            refund_rate=1,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            require_purchase_room=True,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8),
+            ),
+            type=self.retreat_type,
+        )
+        self.retreat_date = RetreatDateFactory(retreat=self.retreat)
+        self.retreat.activate()
+
+        self.room_option = OptionProductFactory(
+            manage_stock=False,
+            is_room_option=True,
+        )
+
+        self.client.force_authenticate(user=self.admin)
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'retreat',
+                'object_id': self.retreat.id,
+                'quantity': 1,
+                'options': [{
+                    'id': self.room_option.id,
+                    'quantity': 1
+                }]
+            }],
+        }
+        with mock.patch(
+                'store.serializers.timezone.now', return_value=FIXED_TIME):
+            response = self.client.post(
+                reverse('order-list'),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+
+    @responses.activate
     def test_refund(self):
         """
         Test that we can refund an orderline and it updates the options

@@ -780,6 +780,29 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                             )]
                         })
 
+                    if retreat.require_purchase_room:
+                        has_room_in_option = False
+
+                        options = OrderLineBaseProduct.objects.filter(
+                            order_line=retreat_orderline
+                        )
+                        for orderline_option in options:
+                            option = OptionProduct.objects.get(
+                                id=orderline_option.option.id
+                            )
+                            if orderline_option.quantity >= 0:
+                                if option.is_room_option:
+                                    has_room_in_option = True
+
+                        if has_room_in_option is False:
+                            raise serializers.ValidationError({
+                                'non_field_errors': [_(
+                                    "You need a room option for this "
+                                    "requested retreat."
+                                )]
+                            })
+
+
                     invitation = retreat_orderline.get_invitation()
                     if retreat.can_order_the_retreat(user, invitation):
 
