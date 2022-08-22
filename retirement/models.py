@@ -1164,3 +1164,6 @@ class WaitQueuePlaceReserved(models.Model):
         self.save()
 
         return self.user.email
+
+    def available(self):
+        return self.wait_queue_place.available
