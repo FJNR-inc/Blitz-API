@@ -1048,6 +1048,7 @@ class RetreatInvitationSerializer(serializers.HyperlinkedModelSerializer):
 class WaitQueuePlaceReservedSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     create = serializers.ReadOnlyField()
+    available = serializers.ReadOnlyField()
 
     class Meta:
         model = WaitQueuePlaceReserved

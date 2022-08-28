@@ -6,7 +6,9 @@ from decimal import Decimal
 from blitz_api.services import send_email_from_template_id
 from babel.dates import format_date
 import pytz
+
 from django.db import models
+from django.db.models import Sum
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -164,19 +166,23 @@ class Order(models.Model):
 
         # We add orderline in the order
         for orderline_data in orderlines_data:
-            options_ids_quantity = orderline_data.pop('options', None)
+            options = orderline_data.pop('options', None)
             order_line: OrderLine = OrderLine.objects.create(
                 order=self, **orderline_data)
 
-            if options_ids_quantity:
-                for option_id_quantity in options_ids_quantity:
+            if options:
+                for opt in options:
                     option: BaseProduct = BaseProduct.objects.get(
-                        id=option_id_quantity['id'])
-                    quantity = option_id_quantity['quantity']
+                        id=opt['id'])
+                    quantity = opt['quantity']
+                    metadata = None
+                    if 'metadata' in opt:
+                        metadata = opt['metadata']
                     OrderLineBaseProduct.objects.create(
                         option=option,
                         order_line=order_line,
-                        quantity=quantity
+                        quantity=quantity,
+                        metadata=metadata
                     )
                     order_line.cost += option.price
                 order_line.save()
@@ -281,6 +287,12 @@ class OrderLineBaseProduct(models.Model):
 
     quantity = models.PositiveIntegerField(
         verbose_name=_("Quantity"),
+    )
+
+    metadata = models.JSONField(
+        verbose_name=_("Metadata"),
+        null=True,
+        blank=True
     )
 
     def __str__(self):
@@ -520,10 +532,59 @@ class Package(BaseProduct):
 
 
 class OptionProduct(BaseProduct):
+    METADATA_NONE = 'none'
+    METADATA_SHARED_ROOM = 'shared_room'
+
+    METADATA_CHOICES = [
+        (METADATA_NONE, 'None'),
+        (METADATA_SHARED_ROOM, 'Shared room'),
+    ]
+
     max_quantity = models.IntegerField(
         verbose_name=_("Max Quantity"),
+        help_text=_("Maximum allowed quantity per orderline"),
         default=0
     )
+    manage_stock = models.BooleanField(
+        verbose_name=_("Manage stock"),
+        help_text=_("True if option manage stock, False if stock is infinite or NA"),
+        default=False
+    )
+    stock = models.PositiveIntegerField(
+        verbose_name=_("Stock"),
+        help_text=_("Maximum quantity available for this option"),
+        default=0
+    )
+
+    type = models.CharField(
+        max_length=100,
+        choices=METADATA_CHOICES,
+        default=METADATA_NONE,
+    )
+
+    is_room_option = models.BooleanField(
+        verbose_name=_('Determine if this option can be considered as a room option'),
+        default=False,
+    )
+
+    @property
+    def remaining_quantity(self):
+        remaining_quantity = self.stock
+        if self.manage_stock:
+            from retirement.models import Reservation
+            refunded_order_lines = Reservation.objects.filter(is_active=False).values_list('order_line', flat=True)
+            remaining_quantity = OrderLineBaseProduct.objects.filter(option=self)\
+                .exclude(order_line__in=refunded_order_lines)\
+                .aggregate(sum=Sum('quantity'))['sum']
+        return remaining_quantity if remaining_quantity else self.stock
+
+    def has_sufficient_stock(self, quantity_required):
+        """
+        Check if we can get enough option
+        :params quantity_required: quantity required for this stock
+        Return True if option has enough stock for the purchase, False otherwise
+        """
+        return not self.manage_stock or quantity_required <= self.remaining_quantity
 
 
 class CustomPayment(models.Model):

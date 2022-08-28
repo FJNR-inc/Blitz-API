@@ -1,21 +1,36 @@
-import json
-from datetime import datetime, timedelta
-from unittest import mock
+from datetime import datetime
 
 import pytz
 from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
 
-from blitz_api.factories import RetreatFactory, UserFactory, AdminFactory
-from ..models import WaitQueuePlace, WaitQueue, WaitQueuePlaceReserved, \
-    Retreat, RetreatDate, RetreatType
+from blitz_api.factories import UserFactory, AdminFactory
+from blitz_api.testing_tools import CustomAPITestCase
+from retirement.models import (
+    WaitQueuePlace,
+    WaitQueue,
+    WaitQueuePlaceReserved,
+    Retreat,
+    RetreatDate,
+    RetreatType,
+)
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
-class WaitQueuePlaceReservedTests(APITestCase):
+class WaitQueuePlaceReservedTests(CustomAPITestCase):
+
+    ATTRIBUTES = [
+        'id',
+        'url',
+        'wait_queue_place',
+        'user',
+        'notified',
+        'used',
+        'available',
+        'create',
+    ]
 
     def setUp(self) -> None:
         self.admin = AdminFactory()
@@ -118,6 +133,9 @@ class WaitQueuePlaceReservedTests(APITestCase):
             response.json()['count'],
             1,
         )
+
+        for item in response.json()['results']:
+            self.check_attributes(item)
 
     def test_filter_wait_queue_place_reserved_by_retreat_as_user(self):
         self.client.force_authenticate(user=self.user1)

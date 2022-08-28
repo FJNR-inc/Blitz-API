@@ -337,6 +337,11 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         null=True,
     )
 
+    require_purchase_room = models.BooleanField(
+        verbose_name=_('Requires purchase of room option'),
+        default=False,
+    )
+
     hidden = models.BooleanField(
         verbose_name=_("Hidden"),
         default=False
@@ -1159,3 +1164,6 @@ class WaitQueuePlaceReserved(models.Model):
         self.save()
 
         return self.user.email
+
+    def available(self):
+        return self.wait_queue_place.available

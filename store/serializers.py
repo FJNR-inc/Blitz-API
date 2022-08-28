@@ -80,16 +80,24 @@ class OrderLineBaseProductSerializer(serializers.ModelSerializer):
 
     id = serializers.IntegerField()
     quantity = serializers.IntegerField()
+    metadata = serializers.JSONField(required=False)
 
     class Meta:
         model = BaseProduct
-        fields = ('id', 'quantity')
+        fields = ('id', 'quantity', 'metadata')
 
     def validate(self, attrs):
         product_id = attrs['id']
         quantity = attrs['quantity']
         base_product = BaseProduct.objects.get_subclass(id=product_id)
         if isinstance(base_product, OptionProduct):
+            if not base_product.has_sufficient_stock(quantity):
+                raise serializers.ValidationError({
+                    'quantity': [
+                        f'Not enough quantity left. Only '
+                        f'{base_product.remaining_quantity} remain.'
+                    ]
+                })
             if quantity > base_product.max_quantity:
                 raise serializers.ValidationError({
                     'quantity': [
@@ -97,7 +105,6 @@ class OrderLineBaseProductSerializer(serializers.ModelSerializer):
                         f'{base_product.max_quantity}'
                     ]
                 })
-
         return attrs
 
 
@@ -244,6 +251,7 @@ class PackageSerializer(BaseProductSerializer):
 
 
 class OptionProductSerializer(BaseProductSerializer):
+    remaining_quantity = serializers.ReadOnlyField()
     class Meta:
         model = OptionProduct
         fields = '__all__'
@@ -385,7 +393,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
     options = OrderLineBaseProductSerializer(
         many=True,
         required=False,
-        write_only=True
+        write_only=True,
     )
 
     def validate(self, attrs):
@@ -512,7 +520,6 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     #     write_only=True,
     #     required=False,
     # )
-
     def create(self, validated_data):
         """
         Create an Order and charge the user.
@@ -772,6 +779,29 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                                 "retreat: {0}.".format(str(retreat))
                             )]
                         })
+
+                    if retreat.require_purchase_room:
+                        has_room_in_option = False
+
+                        options = OrderLineBaseProduct.objects.filter(
+                            order_line=retreat_orderline
+                        )
+                        for orderline_option in options:
+                            option = OptionProduct.objects.get(
+                                id=orderline_option.option.id
+                            )
+                            if orderline_option.quantity >= 0:
+                                if option.is_room_option:
+                                    has_room_in_option = True
+
+                        if has_room_in_option is False:
+                            raise serializers.ValidationError({
+                                'non_field_errors': [_(
+                                    "You need a room option for this "
+                                    "requested retreat."
+                                )]
+                            })
+
 
                     invitation = retreat_orderline.get_invitation()
                     if retreat.can_order_the_retreat(user, invitation):

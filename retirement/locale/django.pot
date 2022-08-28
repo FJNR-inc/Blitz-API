@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-24 17:04-0400\n"
+"POT-Creation-Date: 2022-08-17 11:13-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -148,7 +148,7 @@ msgstr ""
 #: retirement/models.py:187 retirement/models.py:680 retirement/models.py:710
 #: retirement/models.py:756 retirement/models.py:953 retirement/models.py:990
 #: retirement/models.py:1046 retirement/serializers.py:1039
-#: retirement/views.py:733
+#: retirement/views.py:720
 msgid "Retreat"
 msgstr ""
 
@@ -545,7 +545,7 @@ msgstr ""
 msgid "There are no places left in the requested retreat."
 msgstr ""
 
-#: retirement/serializers.py:572 retirement/views.py:656
+#: retirement/serializers.py:572 retirement/views.py:653
 msgid ""
 "The order containing this reservation has a quantity bigger than 1. Please "
 "contact the support team."
@@ -566,7 +566,7 @@ msgid "Maximum exchange date exceeded."
 msgstr ""
 
 #: retirement/serializers.py:711 retirement/serializers.py:793
-#: retirement/views.py:668
+#: retirement/views.py:665
 msgid "The order has not been charged yet. Try again later."
 msgstr ""
 
@@ -578,6 +578,6 @@ msgstr ""
 msgid "Whether the reservation is active or not."
 msgstr ""
 
-#: retirement/views.py:677
+#: retirement/views.py:674
 msgid "An error occured with the payment system. Please try again later."
 msgstr ""
