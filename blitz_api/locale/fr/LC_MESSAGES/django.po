@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-08-30 10:12-0400\n"
-"PO-Revision-Date: 2022-03-25 22:32+0000\n"
-"Last-Translator: Mélanie Guérin <melanie.guerin@fjnr.ca>\n"
+"PO-Revision-Date: 2022-08-30 14:24+0000\n"
+"Last-Translator: Noel Rignon <noel.rignon@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
 "blitz_api/fr/>\n"
 "Language: fr\n"
@@ -262,12 +262,11 @@ msgstr "Cette université n'existe pas."
 #: blitz_api/serializers.py:281
 msgid "You must use your university address to choose this university."
 msgstr ""
+"Tu dois utiliser ton adresse universitaire pour choisir cette université."
 
 #: blitz_api/serializers.py:292
-#, fuzzy
-#| msgid "An account for the specified email address already exists."
 msgid "An account with the same email already exist."
-msgstr "Un compte pour l'adresse e-mail spécifiée existe déjà."
+msgstr "Un compte avec la même adresse e-mail existe déjà."
 
 #: blitz_api/serializers.py:360
 msgid "Bad password"
