@@ -137,15 +137,18 @@ class RetreatAdmin(SimpleHistoryAdmin,
         highlight_deleted,
     ) + SafeDeleteAdmin.list_display
     list_filter = (
-        'name',
-        'seats',
-        'price',
+        'type',
+        'activity_language',
+        'room_type',
+        'is_active',
+        'require_purchase_room',
+        'hidden',
+        'hide_from_client_admin_panel',
     ) + SafeDeleteAdmin.list_filter
 
     search_fields = [
         'name_fr',
         'name_en',
-        'id'
     ]
 
     actions = [
