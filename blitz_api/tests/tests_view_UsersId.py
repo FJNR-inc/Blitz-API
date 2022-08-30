@@ -512,7 +512,10 @@ class UsersIdTests(APITestCase):
         )
 
         content = {
-            'email': ['Invalid domain name.']
+            'email': [
+                'You must use your university address to choose this '
+                'university.'
+            ]
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -604,7 +607,10 @@ class UsersIdTests(APITestCase):
         )
 
         content = {
-            'email': ['Invalid domain name.']
+            'email': [
+                'You must use your university address to choose this '
+                'university.'
+            ]
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -705,7 +711,10 @@ class UsersIdTests(APITestCase):
         )
 
         content = {
-            'email': ['Invalid domain name.']
+            'email': [
+                'You must use your university address to choose this '
+                'university.'
+            ]
         }
 
         self.assertEqual(json.loads(response.content), content)
