@@ -1,4 +1,4 @@
-FROM lambci/lambda:build-python3.6
+FROM lambci/lambda:build-python3.8
 
 LABEL maintainer="support@fjnr.ca"
 

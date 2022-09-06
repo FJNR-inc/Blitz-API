@@ -1,5 +1,8 @@
 from unittest import mock
 from django.test import TestCase
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
 
 from log_management.tasks import export_anonymous_chrono_data
 from log_management.factories import (
@@ -28,7 +31,11 @@ class TestExportAnonymousChronoDataTask(TestCase):
         """
         """
         mock_method.return_value = None
-        export_anonymous_chrono_data(self.admin.id)
+        end_date = datetime.now()
+        start_date = end_date - relativedelta(months=1)
+        start_date = start_date.strftime('%Y-%m-%d %H:%M:%S')
+        end_date = end_date.strftime('%Y-%m-%d %H:%M:%S')
+        export_anonymous_chrono_data(self.admin.id, start_date, end_date)
         self.assertEqual(
             ExportMedia.objects.all().count(),
             1)
