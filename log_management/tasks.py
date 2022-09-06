@@ -27,27 +27,25 @@ def export_anonymous_chrono_data(admin_id, start_date=None, end_date=None):
 
     # Create a csv
     export_data = []
-    title = [None] * 6
+    title = [None] * 5
     title[0] = 'Export Chrono Data'
     export_data.append(title)
 
-    headers = [None] * 6
+    headers = [None] * 5
     headers[0] = 'User'
-    headers[1] = 'Session key'
-    headers[2] = 'Source'
-    headers[3] = 'Action'
-    headers[4] = 'Additional data'
-    headers[5] = 'Timestamp'
+    headers[1] = 'Source'
+    headers[2] = 'Action'
+    headers[3] = 'Additional data'
+    headers[4] = 'Timestamp'
     export_data.append(headers)
 
     for action in anonymized_actions:
-        line_array = [None] * 6
+        line_array = [None] * 5
         line_array[0] = action['user']
-        line_array[1] = action['session_key']
-        line_array[2] = action['source']
-        line_array[3] = action['action']
-        line_array[4] = action['additional_data']
-        line_array[5] = action['created']
+        line_array[1] = action['source']
+        line_array[2] = action['action']
+        line_array[3] = action['additional_data']
+        line_array[4] = action['created']
         export_data.append(line_array)
 
     # Save CSV
