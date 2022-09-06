@@ -3,14 +3,16 @@ import datetime
 import io
 import csv
 from django.core.files.base import ContentFile
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 
 @shared_task()
-def export_anonymous_chrono_data(admin, start_date=None, end_date=None):
+def export_anonymous_chrono_data(admin_id, start_date=None, end_date=None):
     """
     Allow an admin to export chrono data between 2 dates.
     Data will be anonymized and sent by email to the admin as CSV.
-    :params admin: admin doing the export
+    :params admin_id: id of admin doing the export
     :params start_date: date to filter the range
     :params end_date: date to filter the range
     return nothing but will send an email when export is ready
@@ -57,7 +59,7 @@ def export_anonymous_chrono_data(admin, start_date=None, end_date=None):
         file_name = f'export_chrono_data_all_{datetime.datetime.now().strftime("%Y-%m-%d")}.csv'
     new_export = ExportMedia.objects.create(
         name=file_name,
-        author=admin,
+        author_id=admin_id,
         type=ExportMedia.EXPORT_ANONYMOUS_CHRONO_DATA,
     )
     new_export.file.save(

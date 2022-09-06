@@ -28,7 +28,7 @@ class TestExportAnonymousChronoDataTask(TestCase):
         """
         """
         mock_method.return_value = None
-        export_anonymous_chrono_data(self.admin)
+        export_anonymous_chrono_data(self.admin.id)
         self.assertEqual(
             ExportMedia.objects.all().count(),
             1)

@@ -11,11 +11,11 @@ from log_management.models import (
 )
 
 
-def export_anonymous_chrono_data_month(self, request):
+def export_anonymous_chrono_data_month(self, request, queryset):
 
     end_date = datetime.now()
     start_date = end_date - relativedelta(months=1)
-    export_anonymous_chrono_data.delay(request.user, start_date, end_date)
+    export_anonymous_chrono_data.delay(request.user.id, start_date, end_date)
 
 
 export_anonymous_chrono_data_month.short_description = \
@@ -71,7 +71,6 @@ class ActionLogAdmin(admin.ModelAdmin):
     )
     date_hierarchy = 'created'
 
-
 admin.site.register(Log, LogAdmin)
 admin.site.register(EmailLog, EmailLogAdmin)
-admin.site.register(ActionLog)
+admin.site.register(ActionLog, ActionLogAdmin)
