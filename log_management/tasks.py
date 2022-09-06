@@ -20,6 +20,9 @@ def export_anonymous_chrono_data(admin_id, start_date=None, end_date=None):
     from log_management.models import ActionLog
     from blitz_api.models import ExportMedia
 
+    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d %H:%M:%S')
+    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d %H:%M:%S')
+
     anonymized_actions = ActionLog.anonymize_data(start_date, end_date)
 
     # Create a csv

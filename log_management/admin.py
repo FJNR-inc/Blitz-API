@@ -15,6 +15,8 @@ def export_anonymous_chrono_data_month(self, request, queryset):
 
     end_date = datetime.now()
     start_date = end_date - relativedelta(months=1)
+    start_date = start_date.strftime('%Y-%m-%d %H:%M:%S')
+    end_date = end_date.strftime('%Y-%m-%d %H:%M:%S')
     export_anonymous_chrono_data.delay(request.user.id, start_date, end_date)
 
 
