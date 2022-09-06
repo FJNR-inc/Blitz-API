@@ -39,7 +39,7 @@ def generate_retreat_sales(
 
         writer.writerow(line_array)
 
-    new_export = ExportMedia.objects.create()
+    new_export = ExportMedia.objects.create(type=ExportMedia.EXPORT_RETREAT_SALES)
     new_export.file.save(
         f'export_retreats_sales.csv',
         ContentFile(output_stream.getvalue().encode()))
