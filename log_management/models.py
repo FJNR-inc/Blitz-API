@@ -157,7 +157,7 @@ class ActionLog(models.Model):
     def anonymize_data(cls, start_date=None, end_date=None):
         """
         Return a list of dict, one per ActionLog, where any reference to a user has
-        been modified to a new UUID
+        been modified to a new UUID. We only want either the user or the session in a user column
         :params start_date: date to filter the range
         :params end_date: date to filter the range
         return nothing but will send an email when export is ready
@@ -177,10 +177,9 @@ class ActionLog(models.Model):
                     user_uuid_matching[action.user] = str(uuid.uuid4())
                 anonymized_action["user"] = user_uuid_matching[action.user]
             else:
-                anonymized_action["user"] = ""
-            if action.session_key not in session_uuid_matching:
-                session_uuid_matching[action.session_key] = str(uuid.uuid4())
-            anonymized_action["session_key"] = session_uuid_matching[action.session_key]
+                if action.session_key not in session_uuid_matching:
+                    session_uuid_matching[action.session_key] = str(uuid.uuid4())
+                anonymized_action["user"] = session_uuid_matching[action.session_key]
             anonymized_action["source"] = action.source
             anonymized_action["action"] = action.action
             anonymized_action["additional_data"] = action.additional_data
