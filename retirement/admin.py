@@ -33,7 +33,10 @@ from .resources import (
     WaitQueueResource
 )
 
-from .exports import generate_retreat_sales
+from .exports import (
+    generate_retreat_sales,
+    generate_retreat_room_distribution
+)
 
 User = get_user_model()
 
@@ -122,6 +125,13 @@ def export_retreat_sales(self, request, queryset):
 export_retreat_sales.short_description = 'export_retreat_sales'
 
 
+def export_retreat_room_distribution(self, request, queryset):
+    generate_retreat_room_distribution.delay(request.user.id, queryset)
+
+
+export_retreat_room_distribution.short_description = 'export_retreat_room_distribution'
+
+
 class RetreatAdmin(SimpleHistoryAdmin,
                    ExportActionModelAdmin,
                    SafeDeleteAdmin,
@@ -156,7 +166,8 @@ class RetreatAdmin(SimpleHistoryAdmin,
         'export_admin_action',
         make_reservation_not_refundable,
         make_reservation_refundable,
-        export_retreat_sales
+        export_retreat_sales,
+        export_retreat_room_distribution
     ]
 
 
