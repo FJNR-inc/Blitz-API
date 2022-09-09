@@ -79,8 +79,7 @@ class TestExportAnonymousChronoDataTask(TestCase):
             {'first_name': 'Justin', 'last_name': 'Martin', 'email': '11@test.ca', 'room_option': 'shared',
              'gender_preference': 'woman', 'share_with': '2@test.ca', 'room_number': 4, 'placed': True}
         ]
-        retreat = Retreat.objects.get(pk=self.retreat.id)
-        generate_retreat_room_distribution(self.admin.id, retreat)
+        generate_retreat_room_distribution(self.admin.id, self.retreat.id)
         self.assertEqual(
             ExportMedia.objects.all().count(),
             1)

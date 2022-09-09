@@ -8,6 +8,7 @@ from django.db.models import QuerySet, Sum
 from django.utils import timezone
 
 from blitz_api.models import ExportMedia
+from retirement.models import Retreat
 
 
 def generate_retreat_sales(
@@ -52,12 +53,12 @@ def generate_retreat_sales(
 @shared_task()
 def generate_retreat_room_distribution(
         admin_id,
-        retreat
+        retreat_id
 ):
     """
     For given retreats, generate a csv file for room distribution
     :params admin_id: id of admin doing the request
-    :params retreat: django retreat object
+    :params retreat_id: id of django retreat object
     """
 
     output_stream = io.StringIO()
@@ -69,6 +70,7 @@ def generate_retreat_room_distribution(
     ]
 
     writer.writerow(header)
+    retreat = Retreat.objects.get(pk=retreat_id)
     participants_distribution_data = retreat.get_retreat_room_distribution()
 
     for p in participants_distribution_data:
