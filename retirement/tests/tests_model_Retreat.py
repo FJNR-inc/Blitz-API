@@ -128,23 +128,23 @@ class RetreatTests(APITestCase):
         """
         Test the room distribution for a retreat
         """
-        user_1 = UserFactory(email='1@test.ca')
-        user_2 = UserFactory(email='2@test.ca')
-        user_3 = UserFactory(email='3@test.ca')
-        user_4 = UserFactory(email='4@test.ca')
-        user_5 = UserFactory(email='5@test.ca')
-        user_6 = UserFactory(email='6@test.ca')
-        user_7 = UserFactory(email='7@test.ca')
-        user_8 = UserFactory(email='8@test.ca')
-        user_9 = UserFactory(email='9@test.ca')
-        user_10 = UserFactory(email='10@test.ca')
-        user_11 = UserFactory(email='11@test.ca')
-        user_12 = UserFactory(email='12@test.ca')  # will be non-active
-        user_13 = UserFactory(email='13@test.ca')
-        user_14 = UserFactory(email='14@test.ca')
-        user_15 = UserFactory(email='15@test.ca')
-        user_16 = UserFactory(email='16@test.ca')
-        user_17 = UserFactory(email='17@test.ca')
+        user_1 = UserFactory(first_name='x', last_name='y', email='1@test.ca')
+        user_2 = UserFactory(first_name='x', last_name='y', email='2@test.ca')
+        user_3 = UserFactory(first_name='x', last_name='y', email='3@test.ca')
+        user_4 = UserFactory(first_name='x', last_name='y', email='4@test.ca')
+        user_5 = UserFactory(first_name='x', last_name='y', email='5@test.ca')
+        user_6 = UserFactory(first_name='x', last_name='y', email='6@test.ca')
+        user_7 = UserFactory(first_name='x', last_name='y', email='7@test.ca')
+        user_8 = UserFactory(first_name='x', last_name='y', email='8@test.ca')
+        user_9 = UserFactory(first_name='x', last_name='y', email='9@test.ca')
+        user_10 = UserFactory(first_name='x', last_name='y', email='10@test.ca')
+        user_11 = UserFactory(first_name='x', last_name='y', email='11@test.ca')
+        user_12 = UserFactory(first_name='x', last_name='y', email='12@test.ca')  # will be non-active
+        user_13 = UserFactory(first_name='x', last_name='y', email='13@test.ca')
+        user_14 = UserFactory(first_name='x', last_name='y', email='14@test.ca')
+        user_15 = UserFactory(first_name='x', last_name='y', email='15@test.ca')
+        user_16 = UserFactory(first_name='x', last_name='y', email='16@test.ca')
+        user_17 = UserFactory(first_name='x', last_name='y', email='17@test.ca')
 
         order_1 = OrderFactory(user=user_1)
         order_2 = OrderFactory(user=user_2)
@@ -253,36 +253,44 @@ class RetreatTests(APITestCase):
                     order_line=order_line_17, option=self.single_room_option)
 
         distribution = self.retreat.get_retreat_room_distribution()
+        expected_distribution = [
+            {'first_name': 'x', 'last_name': 'y', 'email': '16@test.ca', 'room_option': 'single',
+             'gender_preference': 'NA', 'share_with': 'NA', 'room_number': 1, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '17@test.ca', 'room_option': 'single',
+             'gender_preference': 'NA', 'share_with': 'NA', 'room_number': 2, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '1@test.ca', 'room_option': 'shared',
+             'gender_preference': 'mixte', 'share_with': '14@test.ca', 'room_number': 3, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '14@test.ca', 'room_option': 'shared',
+             'gender_preference': 'woman', 'share_with': '1@test.ca', 'room_number': 3, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '2@test.ca', 'room_option': 'shared',
+             'gender_preference': 'man', 'share_with': '11@test.ca', 'room_number': 4, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '11@test.ca', 'room_option': 'shared',
+             'gender_preference': 'woman', 'share_with': '2@test.ca', 'room_number': 4, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '5@test.ca', 'room_option': 'shared',
+             'gender_preference': 'non-binary', 'share_with': 'NA', 'room_number': 5, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '4@test.ca', 'room_option': 'shared',
+             'gender_preference': 'non-binary', 'share_with': 'NA', 'room_number': 5, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '6@test.ca', 'room_option': 'shared',
+             'gender_preference': 'woman', 'share_with': 'NA', 'room_number': 6, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '3@test.ca', 'room_option': 'shared',
+             'gender_preference': 'woman', 'share_with': 'NA', 'room_number': 6, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '9@test.ca', 'room_option': 'shared',
+             'gender_preference': 'man', 'share_with': 'NA', 'room_number': 7, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '8@test.ca', 'room_option': 'shared',
+             'gender_preference': 'man', 'share_with': 'NA', 'room_number': 7, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '15@test.ca', 'room_option': 'shared',
+             'gender_preference': 'mixte', 'share_with': 'not@found.ca', 'room_number': 8, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '10@test.ca', 'room_option': 'shared',
+             'gender_preference': 'man', 'share_with': 'NA', 'room_number': 8, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '13@test.ca', 'room_option': 'shared',
+             'gender_preference': 'woman', 'share_with': 'NA', 'room_number': 9, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '7@test.ca', 'room_option': 'shared',
+             'gender_preference': 'non-binary', 'share_with': 'NA', 'room_number': 9, 'placed': True}
+        ]
+
         self.assertEqual(len(distribution), 16)
+        self.assertEqual(distribution, expected_distribution)
         room_set = set()
         for user in distribution:
             room_set.add(user['room_number'])
         self.assertEqual(len(room_set), 9)
-        # Single room
-        self.assertEqual(distribution[0]['email'], user_16.email)
-        self.assertEqual(distribution[1]['email'], user_17.email)
-        # Friend room
-        self.assertEqual(distribution[2]['email'], distribution[3]['share_with'])
-        self.assertEqual(distribution[3]['email'], distribution[2]['share_with'])
-        self.assertEqual(distribution[2]['room_number'], distribution[3]['room_number'])
-
-        self.assertEqual(distribution[4]['email'], distribution[5]['share_with'])
-        self.assertEqual(distribution[5]['email'], distribution[4]['share_with'])
-        self.assertEqual(distribution[4]['room_number'], distribution[5]['room_number'])
-
-        # Match room
-        self.assertEqual(distribution[6]['gender_preference'], distribution[7]['gender_preference'])
-        self.assertEqual(distribution[6]['room_number'], distribution[7]['room_number'])
-
-        self.assertEqual(distribution[8]['gender_preference'], distribution[9]['gender_preference'])
-        self.assertEqual(distribution[8]['room_number'], distribution[9]['room_number'])
-
-        self.assertEqual(distribution[10]['gender_preference'], distribution[11]['gender_preference'])
-        self.assertEqual(distribution[10]['room_number'], distribution[11]['room_number'])
-
-        # Match as possible
-        self.assertEqual(distribution[12]['gender_preference'], metadata_15['share_with_preferred_gender'])
-        self.assertEqual(distribution[12]['share_with'], metadata_15['share_with_member'])
-        self.assertEqual(distribution[12]['room_number'], distribution[13]['room_number'])
-
-        self.assertEqual(distribution[14]['room_number'], distribution[15]['room_number'])
