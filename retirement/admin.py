@@ -126,7 +126,8 @@ export_retreat_sales.short_description = 'export_retreat_sales'
 
 
 def export_retreat_room_distribution(self, request, queryset):
-    generate_retreat_room_distribution.delay(request.user.id, queryset)
+    for retreat in queryset:
+        generate_retreat_room_distribution.delay(request.user.id, retreat)
 
 
 export_retreat_room_distribution.short_description = 'export_retreat_room_distribution'
