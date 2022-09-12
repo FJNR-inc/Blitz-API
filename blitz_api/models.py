@@ -675,10 +675,63 @@ class Address(models.Model):
 
 
 class ExportMedia(models.Model):
+    EXPORT_ANONYMOUS_CHRONO_DATA = 'ANONYMOUS CHRONO DATA'
+    EXPORT_OTHER = 'OTHER'
+    EXPORT_RETREAT_SALES = 'RETREAT SALES'
+    EXPORT_RETREAT_PARTICIPATION = 'RETREAT PARTICIPATION'
+    EXPORT_RETREAT_OPTIONS = 'RETREAT OPTIONS'
+    EXPORT_RETREAT_ROOM_DISTRIBUTION = 'RETREAT ROOM DISTRIBUTION'
+
+    EXPORT_CHOICES = (
+        (EXPORT_ANONYMOUS_CHRONO_DATA, _('Anonymous Chrono data')),
+        (EXPORT_OTHER, _('Other')),
+        (EXPORT_RETREAT_SALES, _('Retreat sales')),
+        (EXPORT_RETREAT_PARTICIPATION, _('Retreat participation')),
+        (EXPORT_RETREAT_OPTIONS, _('Retreat options')),
+        (EXPORT_RETREAT_ROOM_DISTRIBUTION, _('Retreat room distribution')),
+    )
+
     file = models.FileField(
         verbose_name='file',
         upload_to='export/%Y/%m/'
     )
 
+    name = models.CharField(
+        max_length=512,
+        blank=True,
+        null=True
+    )
+
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_('Author'),
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    type = models.CharField(
+        max_length=255,
+        choices=EXPORT_CHOICES,
+        default=EXPORT_OTHER,
+    )
+
     def __str__(self):
-        return self.file.name
+        return self.name if self.name else str(self.id)
+
+    @property
+    def size(self):
+        return self.file.size if self.file else None
+
+    def send_confirmation_email(self):
+        if self.author:
+            services.send_mail(
+                [self.author],
+                {
+                    "USER_FIRST_NAME": self.author.first_name,
+                    "USER_LAST_NAME": self.author.last_name,
+                    "export_link": self.file.url,
+                },
+                "EXPORT_DONE",
+            )
+

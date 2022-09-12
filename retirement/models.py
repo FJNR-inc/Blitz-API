@@ -3,6 +3,7 @@ import os
 import json
 import traceback
 from datetime import timedelta
+from operator import itemgetter
 
 import requests
 from django.conf import settings
@@ -23,6 +24,8 @@ from store.models import (
     Membership,
     OrderLine,
     BaseProduct,
+    OrderLineBaseProduct,
+    OptionProduct,
     Coupon,
     Refund,
 )
@@ -670,6 +673,184 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
         self.is_active = True
         self.save()
+
+    @staticmethod
+    def _set_participant_room(participant_data, room_number):
+        participant_data['room_number'] = room_number
+        participant_data['placed'] = True
+        return participant_data
+
+    def get_retreat_room_distribution(self):
+        """
+        Generate room distribution for a retreat, matching people with their friends or their preferred gender.
+        Return a list of dict with data and room number for each participant
+        """
+        active_reservations = self.reservations.filter(is_active=True)
+        room_pool = {}
+        single_pool = {}
+        friend_pool = {}
+        mixed_pool = {}
+
+        current_man_room = None
+        current_woman_room = None
+        current_non_binary_room = None
+        current_mixte_room = None
+
+        retreat_room_distribution = []
+        room_number = 0
+
+        for reservation in active_reservations:
+            participant_data = {
+                'first_name': reservation.user.first_name,
+                'last_name': reservation.user.last_name,
+                'email': reservation.user.email,
+                'room_option': 'single',
+                'gender_preference': 'NA',
+                'share_with': 'NA',
+                'room_number': 0,
+                'placed': False
+            }
+            room_options = OptionProduct.objects.filter(is_room_option=True)
+            participant_order_detail = OrderLineBaseProduct.objects.get(
+                order_line=reservation.order_line,
+                option__in=room_options
+            )
+            current_option = OptionProduct.objects.get(id=participant_order_detail.option_id)
+
+            if current_option.type == OptionProduct.METADATA_SHARED_ROOM:
+                participant_data['gender_preference'] = participant_order_detail.metadata[
+                    'share_with_preferred_gender']
+                participant_data['room_option'] = 'shared'
+                if participant_order_detail.metadata['share_with_member']:
+                    participant_data['share_with'] = participant_order_detail.metadata['share_with_member']
+                    friend_pool[reservation.user.email] = participant_data
+                    continue
+                elif participant_data['gender_preference'] == 'mixte':
+                    mixed_pool[reservation.user.email] = participant_data
+                    continue
+                room_pool[reservation.user.email] = participant_data
+            else:
+                single_pool[reservation.user.email] = participant_data
+
+        # Handling single pool
+        for key, value in single_pool.items():
+            if not value['placed']:
+                room_number += 1
+                retreat_room_distribution.append(self._set_participant_room(value, room_number))
+
+        # Handling friend pool
+        for key, value in friend_pool.items():
+            if not value['placed']:
+                if value['share_with'] in friend_pool:
+                    if friend_pool[value['share_with']]['share_with'] == key:
+                        room_number += 1
+                        retreat_room_distribution.append(self._set_participant_room(
+                            value, room_number))
+                        retreat_room_distribution.append(self._set_participant_room(
+                            friend_pool[value['share_with']], room_number))
+                        continue
+                # Pairing not found, putting in other pool
+                if value['gender_preference'] == 'mixte':
+                    mixed_pool[key] = value
+                else:
+                    room_pool[key] = value
+
+        # Handling main pool
+        for key, value in room_pool.items():
+            if not value['placed']:
+                if value['gender_preference'] == 'man':
+                    if current_man_room:
+                        room_number += 1
+                        retreat_room_distribution.append(self._set_participant_room(
+                            value, room_number))
+                        retreat_room_distribution.append(self._set_participant_room(
+                            room_pool[current_man_room], room_number))
+                        current_man_room = None
+                    else:
+                        current_man_room = key
+                elif value['gender_preference'] == 'woman':
+                    if current_woman_room:
+                        room_number += 1
+                        retreat_room_distribution.append(self._set_participant_room(
+                            value, room_number))
+                        retreat_room_distribution.append(self._set_participant_room(
+                            room_pool[current_woman_room], room_number))
+                        current_woman_room = None
+                    else:
+                        current_woman_room = key
+                elif value['gender_preference'] == 'non-binary':
+                    if current_non_binary_room:
+                        room_number += 1
+                        retreat_room_distribution.append(self._set_participant_room(
+                            value, room_number))
+                        retreat_room_distribution.append(self._set_participant_room(
+                            room_pool[current_non_binary_room], room_number))
+                        current_non_binary_room = None
+                    else:
+                        current_non_binary_room = key
+
+        # Handling shared rooms for mixte
+        for key, value in mixed_pool.items():
+            # fill the rooms or create mixte room
+            if current_man_room:
+                room_number += 1
+                retreat_room_distribution.append(self._set_participant_room(
+                    value, room_number))
+                retreat_room_distribution.append(self._set_participant_room(
+                    room_pool[current_man_room], room_number))
+                current_man_room = None
+            elif current_woman_room:
+                room_number += 1
+                retreat_room_distribution.append(self._set_participant_room(
+                    value, room_number))
+                retreat_room_distribution.append(self._set_participant_room(
+                    room_pool[current_woman_room], room_number))
+                current_woman_room = None
+            elif current_non_binary_room:
+                room_number += 1
+                retreat_room_distribution.append(self._set_participant_room(
+                    value, room_number))
+                retreat_room_distribution.append(self._set_participant_room(
+                    room_pool[current_non_binary_room], room_number))
+                current_non_binary_room = None
+            elif current_mixte_room:
+                room_number += 1
+                retreat_room_distribution.append(self._set_participant_room(
+                    value, room_number))
+                retreat_room_distribution.append(self._set_participant_room(
+                    mixed_pool[current_mixte_room], room_number))
+                current_mixte_room = None
+            else:
+                current_mixte_room = key
+
+        # Handling unpaired participants
+        if current_mixte_room:
+            room_number += 1
+            retreat_room_distribution.append(self._set_participant_room(
+                mixed_pool[current_mixte_room], room_number))
+        else:
+            if current_man_room and current_woman_room and current_non_binary_room:
+                room_number += 1
+                retreat_room_distribution.append(self._set_participant_room(
+                    room_pool[current_man_room], room_number))
+                retreat_room_distribution.append(self._set_participant_room(
+                    room_pool[current_woman_room], room_number))
+                room_number += 1
+                retreat_room_distribution.append(self._set_participant_room(
+                    room_pool[current_non_binary_room], room_number))
+            elif current_man_room or current_woman_room or current_non_binary_room:
+                room_number += 1
+                if current_man_room:
+                    retreat_room_distribution.append(self._set_participant_room(
+                        room_pool[current_man_room], room_number))
+                if current_woman_room:
+                    retreat_room_distribution.append(self._set_participant_room(
+                        room_pool[current_woman_room], room_number))
+                if current_non_binary_room:
+                    retreat_room_distribution.append(self._set_participant_room(
+                        room_pool[current_non_binary_room], room_number))
+
+        return sorted(retreat_room_distribution, key=itemgetter('room_number'))
 
 
 class RetreatDate(models.Model):

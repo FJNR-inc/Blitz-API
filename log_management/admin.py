@@ -1,11 +1,27 @@
 from admin_auto_filters.filters import AutocompleteFilterFactory
 from django.contrib import admin
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
+from log_management.tasks import export_anonymous_chrono_data
 from log_management.models import (
     Log,
     EmailLog,
     ActionLog,
 )
+
+
+def export_anonymous_chrono_data_month(self, request, queryset):
+
+    end_date = datetime.now()
+    start_date = end_date - relativedelta(months=1)
+    start_date = start_date.strftime('%Y-%m-%d %H:%M:%S')
+    end_date = end_date.strftime('%Y-%m-%d %H:%M:%S')
+    export_anonymous_chrono_data.delay(request.user.id, start_date, end_date)
+
+
+export_anonymous_chrono_data_month.short_description = \
+    'export_anonymous_chrono_data_month'
 
 
 class LogAdmin(admin.ModelAdmin):
@@ -34,6 +50,9 @@ class EmailLogAdmin(admin.ModelAdmin):
 
 
 class ActionLogAdmin(admin.ModelAdmin):
+    actions = [
+        export_anonymous_chrono_data_month,
+    ]
     list_display = (
         'id',
         'user',
@@ -54,7 +73,6 @@ class ActionLogAdmin(admin.ModelAdmin):
     )
     date_hierarchy = 'created'
 
-
 admin.site.register(Log, LogAdmin)
 admin.site.register(EmailLog, EmailLogAdmin)
-admin.site.register(ActionLog)
+admin.site.register(ActionLog, ActionLogAdmin)

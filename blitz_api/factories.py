@@ -11,8 +11,18 @@ from django.contrib.auth import get_user_model
 
 from blitz_api.models import Organization, AcademicLevel, AcademicField, \
     Address
-from retirement.models import Retreat, RetreatDate, RetreatType
-from store.models import Order, OptionProduct
+from retirement.models import (
+    Retreat,
+    RetreatDate,
+    RetreatType,
+    Reservation,
+)
+from store.models import (
+    Order,
+    OrderLine,
+    OptionProduct,
+    OrderLineBaseProduct
+)
 from faker import Faker
 
 User = get_user_model()
@@ -130,6 +140,14 @@ class OrderFactory(DjangoModelFactory):
     settlement_id = 1
 
 
+class ReservationFactory(DjangoModelFactory):
+
+    class Meta:
+        model = Reservation
+
+    is_active = True
+
+
 class OptionProductFactory(DjangoModelFactory):
     class Meta:
         model = OptionProduct
@@ -139,3 +157,17 @@ class OptionProductFactory(DjangoModelFactory):
     available = True
     price = 50
     max_quantity = 100
+
+
+class OrderLineFactory(DjangoModelFactory):
+    class Meta:
+        model = OrderLine
+
+    quantity = 1
+
+
+class OrderLineBaseProductFactory(DjangoModelFactory):
+    class Meta:
+        model = OrderLineBaseProduct
+
+    quantity = 1

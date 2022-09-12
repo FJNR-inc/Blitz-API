@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-17 11:13-0400\n"
+"POT-Creation-Date: 2022-08-30 10:12-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -231,17 +231,17 @@ msgid "Invalid format."
 msgstr ""
 
 #: blitz_api/serializers.py:63 blitz_api/serializers.py:96
-#: blitz_api/serializers.py:129 blitz_api/serializers.py:339
+#: blitz_api/serializers.py:129 blitz_api/serializers.py:344
 #: blitz_api/services.py:125
 msgid "This field is required."
 msgstr ""
 
-#: blitz_api/serializers.py:181 blitz_api/serializers.py:396
-#: blitz_api/serializers.py:541
+#: blitz_api/serializers.py:181 blitz_api/serializers.py:401
+#: blitz_api/serializers.py:546
 msgid "Email address"
 msgstr ""
 
-#: blitz_api/serializers.py:196 blitz_api/serializers.py:420
+#: blitz_api/serializers.py:196 blitz_api/serializers.py:425
 msgid "An account for the specified email address already exists."
 msgstr ""
 
@@ -257,39 +257,39 @@ msgstr ""
 msgid "This university does not exist."
 msgstr ""
 
-#: blitz_api/serializers.py:279
-msgid "Invalid domain name."
+#: blitz_api/serializers.py:281
+msgid "You must use your university address to choose this university."
 msgstr ""
 
-#: blitz_api/serializers.py:287
+#: blitz_api/serializers.py:292
 msgid "An account with the same email already exist."
 msgstr ""
 
-#: blitz_api/serializers.py:355
+#: blitz_api/serializers.py:360
 msgid "Bad password"
 msgstr ""
 
-#: blitz_api/serializers.py:493
+#: blitz_api/serializers.py:498
 msgid "Username"
 msgstr ""
 
-#: blitz_api/serializers.py:495
+#: blitz_api/serializers.py:500
 msgid "Password"
 msgstr ""
 
-#: blitz_api/serializers.py:511
+#: blitz_api/serializers.py:516
 msgid "Your account is not activated. [code: not-activated]"
 msgstr ""
 
-#: blitz_api/serializers.py:530
+#: blitz_api/serializers.py:535
 msgid "Unable to log in with provided credentials."
 msgstr ""
 
-#: blitz_api/serializers.py:550
+#: blitz_api/serializers.py:555
 msgid "No account associated to this email address."
 msgstr ""
 
-#: blitz_api/serializers.py:597
+#: blitz_api/serializers.py:602
 msgid "Email already register to this newsletter"
 msgstr ""
 

@@ -3741,7 +3741,7 @@ class OrderWithOptionsTests(APITestCase):
             json=SAMPLE_PAYMENT_RESPONSE,
             status=200
         )
-        quantity = 5
+        quantity = 6
 
         data = {
             'payment_token': "CZgD1NlBzPuSefg",

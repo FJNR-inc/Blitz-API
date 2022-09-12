@@ -361,6 +361,11 @@ ANYMAIL = {
             'WAIT_QUEUE_RESERVED_SEAT_CREATED',
             default='0',
             cast=int
+        ),
+        'EXPORT_DONE': config(
+            'EXPORT_DONE',
+            default='67',
+            cast=int
         )
     },
 }

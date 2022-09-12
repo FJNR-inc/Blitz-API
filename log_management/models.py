@@ -1,4 +1,5 @@
 import traceback
+import uuid
 
 from django.conf import settings
 from django.db import models
@@ -151,3 +152,37 @@ class ActionLog(models.Model):
     class Meta:
         verbose_name = _("Action Log")
         verbose_name_plural = _("Action Logs")
+
+    @classmethod
+    def anonymize_data(cls, start_date=None, end_date=None):
+        """
+        Return a list of dict, one per ActionLog, where any reference to a user has
+        been modified to a new UUID. We only want either the user or the session in a user column
+        :params start_date: date to filter the range
+        :params end_date: date to filter the range
+        return nothing but will send an email when export is ready
+        """
+        anonymized_data = []
+        user_uuid_matching = {}
+        session_uuid_matching = {}
+        if start_date and end_date:
+            queryset = cls.objects.filter(created__gte=start_date, created__lte=end_date)
+        else:
+            queryset = cls.objects.all()
+
+        for action in queryset:
+            anonymized_action = {}
+            if action.user:
+                if action.user not in user_uuid_matching:
+                    user_uuid_matching[action.user] = str(uuid.uuid4())
+                anonymized_action["user"] = user_uuid_matching[action.user]
+            else:
+                if action.session_key not in session_uuid_matching:
+                    session_uuid_matching[action.session_key] = str(uuid.uuid4())
+                anonymized_action["user"] = session_uuid_matching[action.session_key]
+            anonymized_action["source"] = action.source
+            anonymized_action["action"] = action.action
+            anonymized_action["additional_data"] = action.additional_data
+            anonymized_action["created"] = action.created
+            anonymized_data.append(anonymized_action)
+        return anonymized_data

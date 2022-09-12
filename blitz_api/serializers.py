@@ -276,7 +276,12 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
             email_d = email.split("@", 1)[1]
             if not any(d.name.lower() == email_d.lower() for d in domains):
                 raise serializers.ValidationError({
-                    'email': [_("Invalid domain name.")]
+                    'email': [
+                        _(
+                            "You must use your university address to "
+                            "choose this university."
+                        )
+                    ]
                 })
 
         if new_email and new_email != old_email:

@@ -573,10 +573,11 @@ class OptionProduct(BaseProduct):
         if self.manage_stock:
             from retirement.models import Reservation
             refunded_order_lines = Reservation.objects.filter(is_active=False).values_list('order_line', flat=True)
-            remaining_quantity = OrderLineBaseProduct.objects.filter(option=self)\
+            ordered_quantity = OrderLineBaseProduct.objects.filter(option=self)\
                 .exclude(order_line__in=refunded_order_lines)\
                 .aggregate(sum=Sum('quantity'))['sum']
-        return remaining_quantity if remaining_quantity else self.stock
+            remaining_quantity -= (ordered_quantity if ordered_quantity else 0)
+        return remaining_quantity
 
     def has_sufficient_stock(self, quantity_required):
         """
