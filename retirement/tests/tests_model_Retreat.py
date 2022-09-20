@@ -204,7 +204,7 @@ class RetreatTests(APITestCase):
         metadata_1 = {"share_with_member": "14@test.ca", "share_with_preferred_gender": "mixte"}
         metadata_2 = {"share_with_member": "11@test.ca", "share_with_preferred_gender": "man"}
         metadata_3 = {"share_with_member": "", "share_with_preferred_gender": "woman"}
-        metadata_4 = {"share_with_member": "", "share_with_preferred_gender": "non-binary"}
+        metadata_4 = {"share_with_member": "4@test.ca", "share_with_preferred_gender": "non-binary"}
         metadata_5 = {"share_with_member": "", "share_with_preferred_gender": "non-binary"}
         metadata_6 = {"share_with_member": "", "share_with_preferred_gender": "woman"}
         metadata_7 = {"share_with_member": "", "share_with_preferred_gender": "non-binary"}
@@ -266,14 +266,14 @@ class RetreatTests(APITestCase):
              'gender_preference': 'man', 'share_with': '11@test.ca', 'room_number': 4, 'placed': True},
             {'first_name': 'x', 'last_name': 'y', 'email': '11@test.ca', 'room_option': 'shared',
              'gender_preference': 'woman', 'share_with': '2@test.ca', 'room_number': 4, 'placed': True},
-            {'first_name': 'x', 'last_name': 'y', 'email': '5@test.ca', 'room_option': 'shared',
-             'gender_preference': 'non-binary', 'share_with': 'NA', 'room_number': 5, 'placed': True},
-            {'first_name': 'x', 'last_name': 'y', 'email': '4@test.ca', 'room_option': 'shared',
-             'gender_preference': 'non-binary', 'share_with': 'NA', 'room_number': 5, 'placed': True},
             {'first_name': 'x', 'last_name': 'y', 'email': '6@test.ca', 'room_option': 'shared',
-             'gender_preference': 'woman', 'share_with': 'NA', 'room_number': 6, 'placed': True},
+             'gender_preference': 'woman', 'share_with': 'NA', 'room_number': 5, 'placed': True},
             {'first_name': 'x', 'last_name': 'y', 'email': '3@test.ca', 'room_option': 'shared',
-             'gender_preference': 'woman', 'share_with': 'NA', 'room_number': 6, 'placed': True},
+             'gender_preference': 'woman', 'share_with': 'NA', 'room_number': 5, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '7@test.ca', 'room_option': 'shared',
+             'gender_preference': 'non-binary', 'share_with': 'NA', 'room_number': 6, 'placed': True},
+            {'first_name': 'x', 'last_name': 'y', 'email': '5@test.ca', 'room_option': 'shared',
+             'gender_preference': 'non-binary', 'share_with': 'NA', 'room_number': 6, 'placed': True},
             {'first_name': 'x', 'last_name': 'y', 'email': '9@test.ca', 'room_option': 'shared',
              'gender_preference': 'man', 'share_with': 'NA', 'room_number': 7, 'placed': True},
             {'first_name': 'x', 'last_name': 'y', 'email': '8@test.ca', 'room_option': 'shared',
@@ -284,10 +284,9 @@ class RetreatTests(APITestCase):
              'gender_preference': 'man', 'share_with': 'NA', 'room_number': 8, 'placed': True},
             {'first_name': 'x', 'last_name': 'y', 'email': '13@test.ca', 'room_option': 'shared',
              'gender_preference': 'woman', 'share_with': 'NA', 'room_number': 9, 'placed': True},
-            {'first_name': 'x', 'last_name': 'y', 'email': '7@test.ca', 'room_option': 'shared',
-             'gender_preference': 'non-binary', 'share_with': 'NA', 'room_number': 9, 'placed': True}
+            {'first_name': 'x', 'last_name': 'y', 'email': '4@test.ca', 'room_option': 'shared',
+             'gender_preference': 'non-binary', 'share_with': '4@test.ca', 'room_number': 9, 'placed': True}
         ]
-
         self.assertEqual(len(distribution), 16)
         self.assertEqual(distribution, expected_distribution)
         room_set = set()
