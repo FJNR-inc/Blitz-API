@@ -1,6 +1,6 @@
 # Documentation tools
 mkdocs==1.2.3
-mkdocs-material==7.3.6
+mkdocs-material==8.5.3
 
 Django==3.2.8
 djangorestframework==3.12.4
