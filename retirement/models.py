@@ -741,7 +741,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         # Handling friend pool
         for key, value in friend_pool.items():
             if not value['placed']:
-                if value['share_with'] in friend_pool:
+                if value['share_with'] in friend_pool and value['share_with'] != key:
                     if friend_pool[value['share_with']]['share_with'] == key:
                         room_number += 1
                         retreat_room_distribution.append(self._set_participant_room(
