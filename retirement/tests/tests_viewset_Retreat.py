@@ -107,6 +107,21 @@ class RetreatTests(CustomAPITestCase):
         'total_reservations',
         'dates',
     ]
+    RETRIEVE_ATTRIBUTES = [
+        'id',
+        'name',
+        'type',
+        'price',
+        'seats',
+        'number_of_tomatoes',
+        'display_start_time',
+        'min_day_refund',
+        'min_day_exchange',
+        'refund_rate',
+        'exclusive_memberships',
+        'dates',
+        'is_active',
+    ]
 
     @classmethod
     def setUpClass(cls):
@@ -1119,7 +1134,7 @@ class RetreatTests(CustomAPITestCase):
         )
 
         content = json.loads(response.content)
-        self.check_attributes(content)
+        self.check_attributes(content, self.RETRIEVE_ATTRIBUTES)
 
     def test_read_as_admin(self):
         """
@@ -1141,25 +1156,7 @@ class RetreatTests(CustomAPITestCase):
             status.HTTP_200_OK,
             response.content
         )
-
-        attributes = self.ATTRIBUTES + [
-            'state_province_fr',
-            'old_id',
-            'details_en',
-            'details_fr',
-            'address_line2_en',
-            'name_en',
-            'name_fr',
-            'state_province_en',
-            'country_fr',
-            'country_en',
-            'city_en',
-            'address_line2_fr',
-            'address_line1_fr',
-            'city_fr',
-            'address_line1_en',
-        ]
-        self.check_attributes(content, attributes)
+        self.check_attributes(content, self.RETRIEVE_ATTRIBUTES)
 
     def test_read_non_existent_retreat(self):
         """

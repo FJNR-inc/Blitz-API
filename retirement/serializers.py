@@ -31,6 +31,7 @@ from store.models import (
 from store.serializers import (
     BaseProductSerializer,
     CouponSerializer,
+    RetrieveMembershipSerializer,
 )
 from store.services import (
     charge_payment,
@@ -110,6 +111,18 @@ class ListRetreatDateSerializer(serializers.Serializer):
     class Meta:
         model = RetreatDate
         fields = ['start_time', 'end_time']
+
+
+class RetrieveRetreatTypeSerializer(serializers.Serializer):
+    id = serializers.ReadOnlyField()
+    name = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = RetreatType
+        fields = [
+            'id',
+            'name',
+        ]
 
 
 class RetreatTypeSerializer(serializers.HyperlinkedModelSerializer):
@@ -342,6 +355,58 @@ class ListRetreatSerializer(serializers.Serializer):
     class Meta:
         model = Retreat
         fields = ['id', 'name', 'retreat_dates', 'total_reservations', 'seats', 'is_active']
+        exclude = ('deleted',)
+
+
+class RetrieveRetreatSerializer(serializers.Serializer):
+    id = serializers.ReadOnlyField()
+    name = serializers.CharField(read_only=True)
+    price = serializers.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        read_only=True
+    )
+    seats = serializers.IntegerField(read_only=True)
+    number_of_tomatoes = serializers.IntegerField(read_only=True)
+    display_start_time = serializers.DateTimeField(read_only=True)
+    min_day_refund = serializers.IntegerField(read_only=True)
+    min_day_exchange = serializers.IntegerField(read_only=True)
+    refund_rate = serializers.IntegerField(read_only=True)
+    dates = ListRetreatDateSerializer(
+        source='retreat_dates',
+        many=True,
+        read_only=True,
+    )
+    is_active = serializers.BooleanField(read_only=True)
+
+    def to_representation(self, instance):
+        data = super(RetrieveRetreatSerializer, self).to_representation(instance)
+        data['type'] = RetrieveRetreatTypeSerializer(
+            instance.type,
+            context=self.context
+        ).data
+        data['exclusive_memberships'] = RetrieveMembershipSerializer(
+            instance.exclusive_memberships,
+            many=True,
+            context=self.context
+        ).data
+        return data
+
+    class Meta:
+        model = Retreat
+        fields = [
+            'id',
+            'name',
+            'price',
+            'seats',
+            'number_of_tomatoes',
+            'display_start_time',
+            'min_day_refund',
+            'min_day_exchange',
+            'refund_rate',
+            'dates',
+            'is_active',
+        ]
         exclude = ('deleted',)
 
 

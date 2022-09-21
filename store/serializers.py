@@ -226,6 +226,18 @@ class MembershipSerializer(BaseProductSerializer):
         }
 
 
+class RetrieveMembershipSerializer(serializers.Serializer):
+    id = serializers.ReadOnlyField()
+    name = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Membership
+        fields = [
+            'id',
+            'name',
+        ]
+
+
 class PackageSerializer(BaseProductSerializer):
     reservations = serializers.IntegerField(
         min_value=1,
