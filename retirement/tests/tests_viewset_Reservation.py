@@ -312,13 +312,9 @@ class ReservationTests(CustomAPITestCase):
         )
 
         content = json.loads(response.content)
-
-        self.assertCountEqual(
-            content['retreat_details']['users'],
-            [
-                'http://testserver/users/' + str(self.admin.id),
-                'http://testserver/users/' + str(self.user.id)
-            ]
+        self.assertEqual(
+            content['user_details']['url'],
+            'http://testserver/users/' + str(self.user.id)
         )
         self.check_attributes(content)
 
@@ -383,11 +379,9 @@ class ReservationTests(CustomAPITestCase):
 
         content = json.loads(response.content)
 
-        self.assertCountEqual(
-            content['retreat_details']['users'],
-            [
-                'http://testserver/users/' + str(self.user.id)
-            ]
+        self.assertEqual(
+            content['user_details']['url'],
+            'http://testserver/users/' + str(self.user.id)
         )
         self.check_attributes(content)
 
