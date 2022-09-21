@@ -164,19 +164,25 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     create:
     Create a new retreat instance.
     """
-    serializer_class = serializers.RetreatSerializer
     queryset = Retreat.objects.all()
     permission_classes = (
         permissions.IsAdminOrReadOnly,
     )
-
     ordering = [
         'name',
     ]
+    ordering_fields = (
+        'display_start_time',
+    )
 
     filter_class = RetreatFilter
     search_fields = ('name',)
     export_resource = RetreatResource()
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return serializers.ListRetreatSerializer
+        return serializers.RetreatSerializer
 
     def get_queryset(self):
         """
@@ -217,20 +223,6 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
                 display_start_time__gte=display_start_time_gte
             )
         return queryset
-
-    def list(self, request, *args, **kwargs):
-        """
-        Override DRF list to change serializer with fewer data
-        """
-        serializer = ListRetreatSerializer
-        queryset = self.filter_queryset(self.get_queryset())\
-            .order_by('-display_start_time')
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = serializer(queryset, many=True)
-        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
