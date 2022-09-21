@@ -103,6 +103,15 @@ class RetreatDateSerializer(serializers.HyperlinkedModelSerializer):
         }
 
 
+class ListRetreatDateSerializer(serializers.Serializer):
+    start_time = serializers.DateTimeField()
+    end_time = serializers.DateTimeField()
+
+    class Meta:
+        model = RetreatDate
+        fields = ['start_time', 'end_time']
+
+
 class RetreatTypeSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
 
@@ -316,6 +325,24 @@ class RetreatSerializer(BaseProductSerializer):
                 'view_name': 'retreat:retreattype-detail',
             },
         }
+
+
+class ListRetreatSerializer(serializers.Serializer):
+    id = serializers.ReadOnlyField()
+    name = serializers.CharField(read_only=True)
+    dates = ListRetreatDateSerializer(
+        source='retreat_dates',
+        many=True,
+        read_only=True,
+    )
+    total_reservations = serializers.ReadOnlyField()
+    seats = serializers.IntegerField(read_only=True)
+    is_active = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Retreat
+        fields = ['id', 'name', 'retreat_dates', 'total_reservations', 'seats', 'is_active']
+        exclude = ('deleted',)
 
 
 class BatchRetreatSerializer(RetreatSerializer):

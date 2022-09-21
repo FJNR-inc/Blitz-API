@@ -78,6 +78,7 @@ from .serializers import (
     RetreatDateSerializer,
     BatchRetreatSerializer,
     RetreatUsageLogSerializer,
+    ListRetreatSerializer,
 )
 from .services import (
     send_retreat_reminder_email,
@@ -100,6 +101,10 @@ class RetreatFilter(FilterSet):
     start_after = IsoDateTimeFilter(
         field_name='min_start_date',
         lookup_expr='gte',
+    )
+    start_before = IsoDateTimeFilter(
+        field_name='min_start_date',
+        lookup_expr='lte',
     )
     type__id = NumberFilter(
         field_name='type',
@@ -211,8 +216,21 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             queryset = queryset.filter(
                 display_start_time__gte=display_start_time_gte
             )
-
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        """
+        Override DRF list to change serializer with fewer data
+        """
+        serializer = ListRetreatSerializer
+        queryset = self.filter_queryset(self.get_queryset())\
+            .order_by('-display_start_time')
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
