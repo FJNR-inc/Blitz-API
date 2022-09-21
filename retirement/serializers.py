@@ -31,8 +31,6 @@ from store.models import (
 from store.serializers import (
     BaseProductSerializer,
     CouponSerializer,
-    RetrieveMembershipSerializer,
-    BaseProductManagerSerializer,
 )
 from store.services import (
     charge_payment,
@@ -105,27 +103,6 @@ class RetreatDateSerializer(serializers.HyperlinkedModelSerializer):
         }
 
 
-class ListRetreatDateSerializer(serializers.Serializer):
-    start_time = serializers.DateTimeField()
-    end_time = serializers.DateTimeField()
-
-    class Meta:
-        model = RetreatDate
-        fields = ['start_time', 'end_time']
-
-
-class RetrieveRetreatTypeSerializer(serializers.Serializer):
-    id = serializers.ReadOnlyField()
-    name = serializers.CharField(read_only=True)
-
-    class Meta:
-        model = RetreatType
-        fields = [
-            'id',
-            'name',
-        ]
-
-
 class RetreatTypeSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
 
@@ -189,8 +166,6 @@ class RetreatSerializer(BaseProductSerializer):
     total_reservations = serializers.ReadOnlyField()
     is_active = serializers.BooleanField(read_only=True)
     reserved_seats = serializers.ReadOnlyField()
-    reservations = serializers.SerializerMethodField()
-    reservations_canceled = serializers.SerializerMethodField()
     timezone = TimezoneField(
         required=True,
         help_text=_("Timezone of the workplace."),
@@ -244,38 +219,6 @@ class RetreatSerializer(BaseProductSerializer):
         picture_urls = [picture.picture.url for picture in obj.pictures.all()]
         return [request.build_absolute_uri(url) for url in picture_urls]
 
-    def get_reservations(self, obj):
-        reservation_ids = Reservation.objects.filter(
-            is_active=True,
-            retreat=obj,
-        ).values_list(
-            'id',
-            flat=True,
-        )
-        return [
-            reverse(
-                'retreat:reservation-detail',
-                args=[id],
-                request=self.context['request'],
-            ) for id in reservation_ids
-        ]
-
-    def get_reservations_canceled(self, obj):
-        reservation_ids = Reservation.objects.filter(
-            is_active=False,
-            retreat=obj,
-        ).values_list(
-            'id',
-            flat=True,
-        )
-        return [
-            reverse(
-                'retreat:reservation-detail',
-                args=[id],
-                request=self.context['request'],
-            ) for id in reservation_ids
-        ]
-
     def validate(self, attr):
         err = {}
 
@@ -296,11 +239,7 @@ class RetreatSerializer(BaseProductSerializer):
 
     def to_representation(self, instance):
         is_staff = self.context['request'].user.is_staff
-        if self.context['view'].action == 'retrieve' and is_staff:
-            from blitz_api.serializers import UserSerializer
-            self.fields['users'] = UserSerializer(many=True)
         data = super(RetreatSerializer, self).to_representation(instance)
-
         # We don't need orderlines for retreat in this serializer
         if data.get("order_lines") is not None:
             data.pop("order_lines")
@@ -319,7 +258,7 @@ class RetreatSerializer(BaseProductSerializer):
 
     class Meta:
         model = Retreat
-        exclude = ('deleted',)
+        exclude = ('deleted', 'users')
         extra_kwargs = {
             'details': {
                 'help_text': _("Description of the retreat.")
@@ -339,78 +278,6 @@ class RetreatSerializer(BaseProductSerializer):
                 'view_name': 'retreat:retreattype-detail',
             },
         }
-
-
-class ListRetreatSerializer(serializers.Serializer):
-    id = serializers.ReadOnlyField()
-    name = serializers.CharField(read_only=True)
-    dates = ListRetreatDateSerializer(
-        source='retreat_dates',
-        many=True,
-        read_only=True,
-    )
-    total_reservations = serializers.ReadOnlyField()
-    seats = serializers.IntegerField(read_only=True)
-    is_active = serializers.BooleanField(read_only=True)
-
-    class Meta:
-        model = Retreat
-        fields = ['id', 'name', 'retreat_dates', 'total_reservations', 'seats', 'is_active']
-        exclude = ('deleted',)
-
-
-class RetrieveRetreatSerializer(serializers.Serializer):
-    id = serializers.ReadOnlyField()
-    name = serializers.CharField(read_only=True)
-    price = serializers.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        read_only=True
-    )
-    seats = serializers.IntegerField(read_only=True)
-    number_of_tomatoes = serializers.IntegerField(read_only=True)
-    display_start_time = serializers.DateTimeField(read_only=True)
-    min_day_refund = serializers.IntegerField(read_only=True)
-    min_day_exchange = serializers.IntegerField(read_only=True)
-    refund_rate = serializers.IntegerField(read_only=True)
-    dates = ListRetreatDateSerializer(
-        source='retreat_dates',
-        many=True,
-        read_only=True,
-    )
-    is_active = serializers.BooleanField(read_only=True)
-
-    def to_representation(self, instance):
-        self.fields['options'] = BaseProductManagerSerializer(many=True)
-        data = super(RetrieveRetreatSerializer, self).to_representation(instance)
-        data['type'] = RetrieveRetreatTypeSerializer(
-            instance.type,
-            context=self.context
-        ).data
-        data['exclusive_memberships'] = RetrieveMembershipSerializer(
-            instance.exclusive_memberships,
-            many=True,
-            context=self.context
-        ).data
-
-        return data
-
-    class Meta:
-        model = Retreat
-        fields = [
-            'id',
-            'name',
-            'price',
-            'seats',
-            'number_of_tomatoes',
-            'display_start_time',
-            'min_day_refund',
-            'min_day_exchange',
-            'refund_rate',
-            'dates',
-            'is_active',
-        ]
-        exclude = ('deleted',)
 
 
 class BatchRetreatSerializer(RetreatSerializer):
