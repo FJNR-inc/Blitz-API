@@ -32,6 +32,7 @@ from store.serializers import (
     BaseProductSerializer,
     CouponSerializer,
     RetrieveMembershipSerializer,
+    BaseProductManagerSerializer,
 )
 from store.services import (
     charge_payment,
@@ -380,6 +381,7 @@ class RetrieveRetreatSerializer(serializers.Serializer):
     is_active = serializers.BooleanField(read_only=True)
 
     def to_representation(self, instance):
+        self.fields['options'] = BaseProductManagerSerializer(many=True)
         data = super(RetrieveRetreatSerializer, self).to_representation(instance)
         data['type'] = RetrieveRetreatTypeSerializer(
             instance.type,
@@ -390,6 +392,7 @@ class RetrieveRetreatSerializer(serializers.Serializer):
             many=True,
             context=self.context
         ).data
+
         return data
 
     class Meta:
