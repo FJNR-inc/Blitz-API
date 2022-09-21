@@ -1736,6 +1736,7 @@ class RetreatTests(CustomAPITestCase):
         response = self.client.get(
             reverse('retreat:retreat-list'),
             {
+                'ordering': '-display_start_time',
                 'finish_after': '2099-03-01T00:00:00Z',
                 'start_before': '2099-05-01T00:00:00Z',
             },
@@ -1770,6 +1771,7 @@ class RetreatTests(CustomAPITestCase):
         response = self.client.get(
             reverse('retreat:retreat-list'),
             {
+                'ordering': '-display_start_time',
                 'finish_after': '2099-05-01T00:00:00Z',
             },
             format='json',
