@@ -121,6 +121,7 @@ class RetreatTests(CustomAPITestCase):
         'exclusive_memberships',
         'dates',
         'is_active',
+        'options',
     ]
 
     @classmethod
