@@ -78,7 +78,6 @@ from .serializers import (
     RetreatDateSerializer,
     BatchRetreatSerializer,
     RetreatUsageLogSerializer,
-    ListRetreatSerializer,
 )
 from .services import (
     send_retreat_reminder_email,
@@ -182,6 +181,8 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'list':
             return serializers.ListRetreatSerializer
+        if self.action == 'retrieve':
+            return serializers.RetrieveRetreatSerializer
         return serializers.RetreatSerializer
 
     def get_queryset(self):
