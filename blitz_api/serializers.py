@@ -393,6 +393,39 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
         )
 
 
+class ReservationUserSerializer(serializers.HyperlinkedModelSerializer):
+    """
+    Shorter user serializer for a reservation detail
+    """
+    id = serializers.ReadOnlyField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    email = serializers.CharField()
+    phone = serializers.CharField()
+    personnal_restrictions = serializers.CharField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'first_name',
+            'last_name',
+            'email',
+            'url',
+            'phone',
+            'personnal_restrictions',
+        ]
+        read_only_fields = (
+            'id',
+            'url',
+            'first_name',
+            'last_name',
+            'url',
+            'phone',
+            'personnal_restrictions',
+        )
+
+
 class UserSerializer(UserUpdateSerializer):
     """
     Complete serializer for user creation
