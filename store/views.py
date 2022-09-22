@@ -462,6 +462,7 @@ class CouponViewSet(ExportMixin, viewsets.ModelViewSet):
     queryset = Coupon.objects.all()
     permission_classes = (IsAuthenticated, permissions.IsAdminOrReadOnly)
     filter_fields = '__all__'
+    search_fields = ('code',)
 
     export_resource = CouponResource()
 
