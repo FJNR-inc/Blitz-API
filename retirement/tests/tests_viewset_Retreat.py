@@ -67,10 +67,7 @@ class RetreatTests(CustomAPITestCase):
         'min_day_exchange',
         'min_day_refund',
         'refund_rate',
-        'reservations',
-        'reservations_canceled',
         'total_reservations',
-        'users',
         'accessibility',
         'form_url',
         'carpool_url',
@@ -98,14 +95,6 @@ class RetreatTests(CustomAPITestCase):
         'display_start_time',
         'hide_from_client_admin_panel',
         'require_purchase_room',
-    ]
-    LIST_ATTRIBUTES = [
-        'id',
-        'name',
-        'seats',
-        'is_active',
-        'total_reservations',
-        'dates',
     ]
 
     @classmethod
@@ -1006,9 +995,8 @@ class RetreatTests(CustomAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(content['results']), 1)
 
-        attributes = self.LIST_ATTRIBUTES
         for item in content['results']:
-            self.check_attributes(item, attributes)
+            self.check_attributes(item)
 
     def test_list_with_search(self):
         """
@@ -1033,7 +1021,23 @@ class RetreatTests(CustomAPITestCase):
 
         self.assertEqual(len(content['results']), 1)
 
-        attributes = self.LIST_ATTRIBUTES
+        attributes = self.ATTRIBUTES + [
+            'state_province_fr',
+            'old_id',
+            'details_en',
+            'details_fr',
+            'address_line2_en',
+            'name_en',
+            'name_fr',
+            'state_province_en',
+            'country_fr',
+            'country_en',
+            'city_en',
+            'address_line2_fr',
+            'address_line1_fr',
+            'city_fr',
+            'address_line1_en',
+        ]
         for item in content['results']:
             self.check_attributes(item, attributes)
 
@@ -1096,7 +1100,23 @@ class RetreatTests(CustomAPITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        attributes = self.LIST_ATTRIBUTES
+        attributes = self.ATTRIBUTES + [
+            'state_province_fr',
+            'old_id',
+            'details_en',
+            'details_fr',
+            'address_line2_en',
+            'name_en',
+            'name_fr',
+            'state_province_en',
+            'country_fr',
+            'country_en',
+            'city_en',
+            'address_line2_fr',
+            'address_line1_fr',
+            'city_fr',
+            'address_line1_en',
+        ]
         for item in content['results']:
             self.check_attributes(item, attributes)
 
@@ -1141,7 +1161,6 @@ class RetreatTests(CustomAPITestCase):
             status.HTTP_200_OK,
             response.content
         )
-
         attributes = self.ATTRIBUTES + [
             'state_province_fr',
             'old_id',

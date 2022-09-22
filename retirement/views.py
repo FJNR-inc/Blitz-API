@@ -78,7 +78,6 @@ from .serializers import (
     RetreatDateSerializer,
     BatchRetreatSerializer,
     RetreatUsageLogSerializer,
-    ListRetreatSerializer,
 )
 from .services import (
     send_retreat_reminder_email,
@@ -164,6 +163,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     create:
     Create a new retreat instance.
     """
+    serializer_class = serializers.RetreatSerializer
     queryset = Retreat.objects.all()
     permission_classes = (
         permissions.IsAdminOrReadOnly,
@@ -178,11 +178,6 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     filter_class = RetreatFilter
     search_fields = ('name',)
     export_resource = RetreatResource()
-
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return serializers.ListRetreatSerializer
-        return serializers.RetreatSerializer
 
     def get_queryset(self):
         """
