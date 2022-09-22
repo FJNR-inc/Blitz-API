@@ -21,7 +21,8 @@ from store.models import (
     Order,
     OrderLine,
     OptionProduct,
-    OrderLineBaseProduct
+    OrderLineBaseProduct,
+    Coupon,
 )
 from faker import Faker
 
@@ -171,3 +172,13 @@ class OrderLineBaseProductFactory(DjangoModelFactory):
         model = OrderLineBaseProduct
 
     quantity = 1
+
+
+class CouponFactory(DjangoModelFactory):
+    class Meta:
+        model = Coupon
+
+    start_time = "2019-01-06T15:11:05-05:00"
+    end_time = "2020-01-06T15:11:06-05:00"
+    max_use = 100
+    max_use_per_user = 2
