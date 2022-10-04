@@ -567,6 +567,13 @@ class OptionProduct(BaseProduct):
         default=False,
     )
 
+    available_on_retreat_types = models.ManyToManyField(
+        "retirement.RetreatType",
+        verbose_name=_("Applicable retreat types"),
+        related_name='option_products',
+        blank=True,
+    )
+
     @property
     def remaining_quantity(self):
         remaining_quantity = self.stock
