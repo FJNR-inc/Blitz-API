@@ -152,6 +152,12 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
         required=False
     )
 
+    available_on_retreat_types = serializers.PrimaryKeyRelatedField(
+        queryset=RetreatType.objects.all(),
+        many=True,
+        required=False
+    )
+
     def to_representation(self, instance):
         user = self.context['request'].user
         self.fields['options'] = BaseProductManagerSerializer(many=True)
@@ -255,12 +261,6 @@ class PackageSerializer(BaseProductSerializer):
 
 class OptionProductSerializer(BaseProductSerializer):
     remaining_quantity = serializers.ReadOnlyField()
-
-    available_on_retreat_types = serializers.PrimaryKeyRelatedField(
-        queryset=RetreatType.objects.all(),
-        many=True,
-        required=False
-    )
 
     class Meta:
         model = OptionProduct
