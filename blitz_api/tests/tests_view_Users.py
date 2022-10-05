@@ -469,6 +469,7 @@ class UsersTests(APITestCase):
             'price': '50.00',
             'details': '1-Year student membership',
             'duration': '365 00:00:00',
+            'available_on_retreat_types': [],
             'academic_levels': ['http://testserver/academic_levels/' +
                                 str(self.academic_level.id)]
         }
