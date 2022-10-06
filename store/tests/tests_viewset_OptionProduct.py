@@ -17,6 +17,7 @@ from blitz_api.factories import (
     UserFactory,
     AdminFactory,
     RetreatFactory,
+    OptionProductFactory,
 )
 from retirement.models import (
     Retreat,
@@ -345,3 +346,58 @@ class OrderTests(APITestCase):
         self.assertEqual(content.get('options')[0].get('id'),
                          option_id,
                          content)
+
+    def test_search_by_name_and_active(self):
+
+        self.client.force_authenticate(user=self.admin)
+        option_1 = OptionProductFactory(name='specific_name_1')
+        option_2 = OptionProductFactory(name='specific_name_2',
+                                        available=False)
+        OptionProductFactory(name='random')
+        response = self.client.get(
+            reverse('optionproduct-list'),
+            {
+                'search': 'specific'
+            },
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code, status.HTTP_200_OK
+        )
+        content = json.loads(response.content)
+
+        self.assertEqual(len(content['results']), 2)
+        self.assertEqual(content['results'][0]['id'], option_1.id)
+        self.assertEqual(content['results'][1]['id'], option_2.id)
+
+        response = self.client.get(
+            reverse('optionproduct-list'),
+            {
+                'search': 'specific',
+                'available': 'true',
+            },
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code, status.HTTP_200_OK
+        )
+        content = json.loads(response.content)
+
+        self.assertEqual(len(content['results']), 1)
+        self.assertEqual(content['results'][0]['id'], option_1.id)
+
+        response = self.client.get(
+            reverse('optionproduct-list'),
+            {
+                'search': 'specific',
+                'available': 'false',
+            },
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code, status.HTTP_200_OK
+        )
+        content = json.loads(response.content)
+
+        self.assertEqual(len(content['results']), 1)
+        self.assertEqual(content['results'][0]['id'], option_2.id)

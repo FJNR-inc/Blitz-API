@@ -178,6 +178,10 @@ class OptionProductViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.OptionProductSerializer
     queryset = OptionProduct.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
+    search_fields = ('name',)
+    filter_fields = {
+        'available': ['exact'],
+    }
 
     def get_queryset(self):
         """
