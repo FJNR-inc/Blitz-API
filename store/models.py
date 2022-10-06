@@ -6,6 +6,7 @@ from decimal import Decimal
 from blitz_api.services import send_email_from_template_id
 from babel.dates import format_date
 import pytz
+from itertools import chain
 
 from django.db import models
 from django.db.models import Sum
@@ -389,6 +390,14 @@ class BaseProduct(models.Model):
         blank=True,
     )
 
+    available_on_retreat_types = models.ManyToManyField(
+        "retirement.RetreatType",
+        verbose_name=_("Applicable retreat types"),
+        related_name='option_retreat_types',
+        blank=True,
+        symmetrical=False
+    )
+
     def __str__(self):
         return self.name
 
@@ -398,14 +407,16 @@ class BaseProduct(models.Model):
     @property
     def options(self):
 
-        options_product_from_content_type = ContentType.objects. \
+        product_types_options = ContentType.objects. \
             get_for_model(self) \
             .products.exclude(id=self.id).select_subclasses()
-
-        if options_product_from_content_type.count() > 0:
-            return options_product_from_content_type
-        else:
-            return self.option_products.all().select_subclasses()
+        products_options = self.option_products.all().select_subclasses()
+        options = chain(product_types_options, products_options)
+        if self.__class__.__name__ == 'Retreat':
+            retreat_type = self.type
+            retreat_type_options = OptionProduct.objects.filter(available_on_retreat_types=retreat_type)
+            options = chain(options, retreat_type_options)
+        return list(options)
 
 
 class Membership(BaseProduct):

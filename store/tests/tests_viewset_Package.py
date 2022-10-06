@@ -101,6 +101,7 @@ class PackageTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         response_content = json.loads(response.content)
@@ -307,6 +308,7 @@ class PackageTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(
@@ -349,6 +351,7 @@ class PackageTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(
@@ -440,6 +443,7 @@ class PackageTests(APITestCase):
                 'available_on_products': [],
                 'options': [],
                 'picture': None,
+                'available_on_retreat_types': [],
             }]
         }
 
@@ -480,6 +484,7 @@ class PackageTests(APITestCase):
                 'available_on_products': [],
                 'options': [],
                 'picture': None,
+                'available_on_retreat_types': [],
             }, {
                 'available': False,
                 'details': 'todo',
@@ -495,6 +500,7 @@ class PackageTests(APITestCase):
                 'available_on_products': [],
                 'options': [],
                 'picture': None,
+                'available_on_retreat_types': [],
             }]
         }
 
@@ -527,6 +533,7 @@ class PackageTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -559,6 +566,7 @@ class PackageTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(

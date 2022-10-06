@@ -34,7 +34,10 @@ from retirement.services import send_retreat_confirmation_email
 from workplace.models import Reservation
 from retirement.models import Reservation as RetreatReservation, \
     RetreatInvitation
-from retirement.models import Retreat
+from retirement.models import (
+    Retreat,
+    RetreatType
+)
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
@@ -149,6 +152,12 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
         required=False
     )
 
+    available_on_retreat_types = serializers.PrimaryKeyRelatedField(
+        queryset=RetreatType.objects.all(),
+        many=True,
+        required=False
+    )
+
     def to_representation(self, instance):
         user = self.context['request'].user
         self.fields['options'] = BaseProductManagerSerializer(many=True)
@@ -252,6 +261,7 @@ class PackageSerializer(BaseProductSerializer):
 
 class OptionProductSerializer(BaseProductSerializer):
     remaining_quantity = serializers.ReadOnlyField()
+
     class Meta:
         model = OptionProduct
         fields = '__all__'

@@ -84,6 +84,7 @@ class MembershipTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(
@@ -258,6 +259,7 @@ class MembershipTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(
@@ -351,6 +353,7 @@ class MembershipTests(APITestCase):
                 'available_on_products': [],
                 'options': [],
                 'picture': None,
+                'available_on_retreat_types': [],
             }]
         }
 
@@ -393,6 +396,7 @@ class MembershipTests(APITestCase):
                 'available_on_products': [],
                 'options': [],
                 'picture': None,
+                'available_on_retreat_types': [],
             }, {
                 'available': False,
                 'id': self.membership_unavailable.id,
@@ -408,6 +412,7 @@ class MembershipTests(APITestCase):
                 'available_on_products': [],
                 'options': [],
                 'picture': None,
+                'available_on_retreat_types': [],
             }]
         }
 
@@ -441,6 +446,7 @@ class MembershipTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -474,6 +480,7 @@ class MembershipTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(
