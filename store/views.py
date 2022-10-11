@@ -97,6 +97,7 @@ class MembershipViewSet(ExportMixin, viewsets.ModelViewSet):
         'price': ['exact', 'gte', 'lte'],
     }
     ordering = ('name', 'price')
+    search_fields = ('name',)
 
     export_resource = MembershipResource()
 
@@ -142,6 +143,7 @@ class PackageViewSet(ExportMixin, viewsets.ModelViewSet):
         'price': ['exact', 'gte', 'lte'],
     }
     ordering = ('name', 'price')
+    search_fields = ('name',)
 
     export_resource = PackageResource()
 

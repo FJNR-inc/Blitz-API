@@ -904,6 +904,7 @@ class RetreatTypeViewSet(viewsets.ModelViewSet):
         'is_virtual',
         'is_visible',
     ]
+    search_fields = ('name',)
 
     def get_queryset(self):
         if self.request.user.is_staff:
