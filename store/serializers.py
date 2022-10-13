@@ -111,6 +111,21 @@ class OrderLineBaseProductSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class SimpleBaseProductSerializer(serializers.HyperlinkedModelSerializer):
+    """BaseProduct serializer with basic information"""
+    id = serializers.ReadOnlyField()
+    name = serializers.CharField()
+    product_type = serializers.SerializerMethodField()
+
+    def get_product_type(self, obj):
+        return BaseProduct.objects.get_subclass(id=obj.id).\
+            __class__.__name__.lower()
+
+    class Meta:
+        model = BaseProduct
+        fields = ['id', 'name', 'product_type']
+
+
 class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
 
@@ -164,7 +179,11 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
         data = super(BaseProductSerializer, self).to_representation(instance)
         if not user.is_staff:
             data = remove_translation_fields(data)
-
+        products = BaseProduct.objects.filter(
+            pk__in=data['available_on_products'])
+        data['available_on_products'] = SimpleBaseProductSerializer(
+            products,
+            many=True).data
         return data
 
     def run_validation(self, data=empty):
