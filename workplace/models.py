@@ -213,6 +213,7 @@ class Reservation(SafeDeleteModel):
         ('U', _("User canceled")),
         ('TD', _("Timeslot deleted")),
         ('TM', _("Timeslot modified")),
+        ('A', _("Admin canceled")),
     )
 
     user = models.ForeignKey(
