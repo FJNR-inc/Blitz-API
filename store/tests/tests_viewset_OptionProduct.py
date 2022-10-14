@@ -204,11 +204,22 @@ class OrderTests(APITestCase):
                          response.content)
 
         for key, value in data.items():
-            self.assertEqual(
-                response_content.get(key),
-                value,
-                f'Field tested: {key}'
-            )
+            if key == 'available_on_products':
+                self.assertEqual(
+                    response_content.get(key),
+                    [{
+                        'id': self.retreat.id,
+                        'name': self.retreat.name,
+                        'product_type': self.retreat.__class__.__name__.lower()
+                    }],
+                    f'Field tested: {key}'
+                )
+            else:
+                self.assertEqual(
+                    response_content.get(key),
+                    value,
+                    f'Field tested: {key}'
+                )
 
         self.assertIsNotNone(
             OptionProduct.objects.get(id=response_content.get('id'))
