@@ -747,8 +747,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         is_volunteer = user in volunteers
 
         if is_staff or is_volunteer:
-            from blitz_api.serializers import UserSerializer
-            self.fields['user_details'] = UserSerializer(
+            from blitz_api.serializers import ReservationUserSerializer
+            self.fields['user_details'] = ReservationUserSerializer(
                 source='user'
             )
         data = super(ReservationSerializer, self).to_representation(instance)

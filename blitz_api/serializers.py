@@ -395,7 +395,7 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
 
 class ReservationUserSerializer(serializers.HyperlinkedModelSerializer):
     """
-    Shorter user serializer for a reservation detail
+    Shorter user serializer for a reservation (block or retreat) detail
     """
     id = serializers.ReadOnlyField()
     first_name = serializers.CharField()
