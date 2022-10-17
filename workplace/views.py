@@ -523,11 +523,12 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
             instance.cancelation_date = timezone.now()
             if self.request.user.id != user.id:
                 instance.cancelation_reason = 'A'
+            else:
+                instance.cancelation_reason = 'U'
+            instance.save()
+            if self.request.user.is_staff:
                 ticket_return = request.data.get('ticket_return', False)
                 if ticket_return:
                     user.tickets += 1
                     user.save()
-            else:
-                instance.cancelation_reason = 'U'
-            instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
