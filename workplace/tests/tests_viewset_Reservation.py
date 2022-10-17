@@ -1054,3 +1054,33 @@ class ReservationTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         self.assertEqual(user1.tickets, 1)
+
+
+    def test_delete_admin_own_ticket_return(self):
+        """
+        Ensure that an admin can delete its own reservation and return the
+        ticket to himself.
+        """
+        self.client.force_authenticate(user=self.admin)
+        admin1 = AdminFactory(tickets=1)
+        reservation1 = Reservation.objects.create(
+            user=admin1,
+            timeslot=self.time_slot_active,
+            is_active=True,
+        )
+        self.assertEqual(admin1.tickets, 1)
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        with mock.patch(
+                'workplace.views.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'reservation-detail',
+                    args=[reservation1.id]),
+                data={'ticket_return': True}
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.assertEqual(admin1.tickets, 1)
