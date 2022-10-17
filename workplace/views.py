@@ -517,15 +517,14 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         give back the reservation ticket to the user
         """
         instance = self.get_object()
-
+        user = instance.user
         if instance.is_active:
             instance.is_active = False
             instance.cancelation_date = timezone.now()
-            if self.request.user.is_staff:
+            if self.request.user.id != user.id:
                 instance.cancelation_reason = 'A'
                 ticket_return = request.data.get('ticket_return', False)
                 if ticket_return:
-                    user = instance.user
                     user.tickets += 1
                     user.save()
             else:
