@@ -513,11 +513,22 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         empty response as if it was deleted, but will instead modify specific
         fields to keep a track of events. Subsequent delete request won't do
         anything, but will return a success.
+        An admin can also delete a reservation, but will have the choice to
+        give back the reservation ticket to the user
         """
         instance = self.get_object()
+        user = instance.user
         if instance.is_active:
             instance.is_active = False
-            instance.cancelation_reason = 'U'
             instance.cancelation_date = timezone.now()
+            if self.request.user.id != user.id:
+                instance.cancelation_reason = 'A'
+            else:
+                instance.cancelation_reason = 'U'
             instance.save()
+            if self.request.user.is_staff:
+                ticket_return = request.data.get('ticket_return', False)
+                if ticket_return:
+                    user.tickets += 1
+                    user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
