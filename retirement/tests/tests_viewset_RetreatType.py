@@ -61,4 +61,3 @@ class RetreatTypeTests(CustomAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(content['results']), 1)
         self.assertEqual(content['results'][0]['name'], self.retreatType.name)
-

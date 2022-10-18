@@ -831,7 +831,6 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                                 )]
                             })
 
-
                     invitation = retreat_orderline.get_invitation()
                     if retreat.can_order_the_retreat(user, invitation):
 

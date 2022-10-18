@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
 @shared_task()
 def export_anonymous_chrono_data(admin_id, start_date=None, end_date=None):
     """
@@ -55,9 +56,11 @@ def export_anonymous_chrono_data(admin_id, start_date=None, end_date=None):
     if start_date and end_date:
         date_from_str = start_date.strftime('%Y-%m-%d')
         date_to_str = end_date.strftime('%Y-%m-%d')
-        file_name = f'export_chrono_data_from_{date_from_str}_to_{date_to_str}.csv'
+        file_name = f'export_chrono_data_from_{date_from_str}_to' \
+                    f'_{date_to_str}.csv'
     else:
-        file_name = f'export_chrono_data_all_{datetime.datetime.now().strftime("%Y-%m-%d")}.csv'
+        date = datetime.datetime.now().strftime("%Y-%m-%d")
+        file_name = f'export_chrono_data_all_{date}.csv'
     new_export = ExportMedia.objects.create(
         name=file_name,
         author_id=admin_id,

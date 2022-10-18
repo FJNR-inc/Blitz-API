@@ -229,5 +229,7 @@ class AttendanceTests(CustomAPITestCase):
         )
 
         self.assertTrue(
-            Attendance.objects.get(key=attendance.key).updated_at > attendance.updated_at
+            Attendance.objects.get(
+                key=attendance.key
+            ).updated_at > attendance.updated_at
         )
