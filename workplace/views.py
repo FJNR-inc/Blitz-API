@@ -100,14 +100,47 @@ class PeriodViewSet(ExportMixin, viewsets.ModelViewSet):
 
     export_resource = PeriodResource()
 
+    def _filter_date_queryset(self, queryset):
+        """
+        Apply date filter on queryset
+        """
+        start_date_lte = self.request.query_params.get(
+            'start_date_lte',
+            None,
+        )
+        end_date_gte = self.request.query_params.get(
+            'end_date_gte',
+            None,
+        )
+        start_date_gte = self.request.query_params.get(
+            'start_date_gte',
+            None,
+        )
+        end_date_lte = self.request.query_params.get(
+            'end_date_lte',
+            None,
+        )
+        if start_date_lte:
+            queryset = queryset.filter(start_date__lte=start_date_lte)
+        if end_date_gte:
+            queryset = queryset.filter(end_date__gte=end_date_gte)
+        if start_date_gte:
+            queryset = queryset.filter(start_date__gte=start_date_gte)
+        if end_date_lte:
+            queryset = queryset.filter(end_date__lte=end_date_lte)
+        return queryset
+
     def get_queryset(self):
         """
         This viewset should return active periods except if
         the currently authenticated user is an admin (is_staff).
         """
         if self.request.user.is_staff:
-            return Period.objects.all()
-        return Period.objects.filter(is_active=True)
+            queryset = Period.objects.all()
+        else:
+            queryset = Period.objects.filter(is_active=True)
+
+        return self._filter_date_queryset(queryset)
 
     def destroy(self, request, *args, **kwargs):
         """

@@ -701,6 +701,44 @@ class PeriodTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_admin_list_date_filter(self):
+        """
+        Ensure we can list periods as admin with date filter
+        """
+        client = APIClient()
+        client.force_authenticate(user=self.admin)
+
+        period1 = Period.objects.create(
+            name="current_period",
+            workplace=self.workplace,
+            start_date='2100-01-01T00:00:00Z',
+            end_date='2100-01-03T00:00:00Z',
+            price=3,
+            is_active=False,
+        )
+        period2 = Period.objects.create(
+            name="random_period2",
+            workplace=self.workplace,
+            start_date='2100-01-03T00:00:00Z',
+            end_date='2100-01-05T00:00:00Z',
+            price=3,
+            is_active=False,
+        )
+
+        response = client.get(
+            reverse('period-list'),
+            {
+                'start_date_lte': '2100-01-02T00:00:00Z',
+                'end_date_gte': '2100-01-02T00:00:00Z',
+            },
+            format='json',
+        )
+
+        data = json.loads(response.content)
+        self.assertEqual(len(data['results']), 1)
+        self.assertEqual(data['results'][0]['name'], period1.name)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_list_inactive(self):
         """
         Ensure we can list all periods as an admin user.
