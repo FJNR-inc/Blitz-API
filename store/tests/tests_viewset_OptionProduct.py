@@ -278,8 +278,8 @@ class OrderTests(APITestCase):
 
     def test_option_retreat_type(self):
         """
-        Test that when we have an option product linked to a retreat type, then all retreat
-        created with this type also have this option product.
+        Test that when we have an option product linked to a retreat type,
+        then all retreat created with this type also have this option product.
         """
         self.client.force_authenticate(user=self.admin)
         retreatType1 = RetreatType.objects.create(
@@ -308,7 +308,9 @@ class OrderTests(APITestCase):
         retreat1 = RetreatFactory(
             name='retreat1',
             seats=400,
-            display_start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
             type=retreatType1)
         RetreatDate.objects.create(
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
@@ -319,7 +321,9 @@ class OrderTests(APITestCase):
         retreat2 = RetreatFactory(
             name='retreat2',
             seats=400,
-            display_start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
             type=retreatType1)
         RetreatDate.objects.create(
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),

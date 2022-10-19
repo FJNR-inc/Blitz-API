@@ -100,7 +100,9 @@ async def current_attendances(socket, *args, **kwargs):
         await asyncio.sleep(2)
         now = timezone.now()
         date_limit = now - timedelta(minutes=10)
-        queryset = await sync_to_async(list)(Attendance.objects.filter(updated_at__gte=date_limit))
+        queryset = await sync_to_async(list)(
+            Attendance.objects.filter(updated_at__gte=date_limit)
+        )
         count = len(queryset)
 
         localisations = []
@@ -160,7 +162,9 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         try:
-            attendance = Attendance.objects.get(key=serializer.validated_data.get('key'))
+            attendance = Attendance.objects.get(
+                key=serializer.validated_data.get('key'),
+            )
             attendance.delete()
 
             return Response('', status=status.HTTP_204_NO_CONTENT)
@@ -185,7 +189,9 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         try:
-            attendance = Attendance.objects.get(key=serializer.validated_data.get('key'))
+            attendance = Attendance.objects.get(
+                key=serializer.validated_data.get('key'),
+            )
             attendance.save()
 
             return Response('', status=status.HTTP_200_OK)

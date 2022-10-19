@@ -1238,4 +1238,3 @@ class UsersIdTests(APITestCase):
             date_before,
             self.user.last_acceptation_terms_and_conditions,
         )
-

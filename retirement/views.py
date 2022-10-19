@@ -450,7 +450,9 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             .strftime("%Y%m%d-%H%M%S")
         filename = f'export-participation-{retreat.name}{date_file}.xls'
 
-        new_exprt = ExportMedia.objects.create(type=ExportMedia.EXPORT_RETREAT_PARTICIPATION)
+        new_exprt = ExportMedia.objects.create(
+            type=ExportMedia.EXPORT_RETREAT_PARTICIPATION,
+        )
         content = ContentFile(dataset.xls)
         new_exprt.file.save(filename, content)
 
@@ -483,7 +485,9 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             .strftime("%Y%m%d-%H%M%S")
         filename = f'export-option-{retreat.name}-{date_file}.xls'
 
-        new_exprt = ExportMedia.objects.create(type=ExportMedia.EXPORT_RETREAT_OPTIONS)
+        new_exprt = ExportMedia.objects.create(
+            type=ExportMedia.EXPORT_RETREAT_OPTIONS,
+        )
         content = ContentFile(dataset.xls)
         new_exprt.file.save(filename, content)
 

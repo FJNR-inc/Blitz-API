@@ -703,7 +703,6 @@ class UsersTests(APITestCase):
         # no new mail
         self.assertEqual(len(mail.outbox), 1)
 
-
     @override_settings(
         LOCAL_SETTINGS={
             "EMAIL_SERVICE": True,

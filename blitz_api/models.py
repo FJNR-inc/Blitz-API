@@ -199,8 +199,8 @@ class User(AbstractUser):
         physical_retreats = self.get_nb_tomatoes_physical_retreat()
 
         past_count = timeslots['past'] + \
-                     virtual_retreats['past'] + \
-                     physical_retreats['past']
+            virtual_retreats['past'] + \
+            physical_retreats['past']
 
         custom_tomatoes = Tomato.objects.filter(
             user=self,
@@ -734,4 +734,3 @@ class ExportMedia(models.Model):
                 },
                 "EXPORT_DONE",
             )
-

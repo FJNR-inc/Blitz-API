@@ -1055,7 +1055,6 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(user1.tickets, 1)
 
-
     def test_delete_admin_own_ticket_return(self):
         """
         Ensure that an admin can delete its own reservation and return the

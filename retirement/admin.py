@@ -130,7 +130,8 @@ def export_retreat_room_distribution(self, request, queryset):
         generate_retreat_room_distribution.delay(request.user.id, retreat.id)
 
 
-export_retreat_room_distribution.short_description = 'export_retreat_room_distribution'
+export_retreat_room_distribution.short_description = \
+    'export_retreat_room_distribution'
 
 
 class RetreatAdmin(SimpleHistoryAdmin,

@@ -11,7 +11,8 @@ class State:
 
 class SendEvent:
     """Lists events that application can send.
-    ACCEPT - Sent by the application when it wishes to accept an incoming connection.
+    ACCEPT - Sent by the application when it wishes to accept an incoming
+        connection.
     SEND - Sent by the application to send a data message to the client.
     CLOSE - Sent by the application to tell the server to close the connection.
         If this is sent before the socket is accepted, the server must close
@@ -29,11 +30,12 @@ class ReceiveEvent:
     """Enumerates events that application can receive from protocol server.
     CONNECT - Sent to the application when the client initially
         opens  a connection and is about to finish the WebSocket handshake.
-        This message must be responded to with either an Accept message or a Close message
-        before the socket will pass websocket.receive messages.
-    RECEIVE - Sent to the application when a data message is received from the client.
-    DISCONNECT - Sent to the application when either connection to the client is lost,
-        either from the client closing the connection,
+        This message must be responded to with either an Accept message or a
+        Close message before the socket will pass websocket.receive messages.
+    RECEIVE - Sent to the application when a data message is received from
+        the client.
+    DISCONNECT - Sent to the application when either connection to the
+        client is lost, either from the client closing the connection,
         the server closing the connection, or loss of the socket.
     """
 
@@ -158,7 +160,10 @@ class WebSocket:
             self._client_state = State.CONNECTED
 
         elif self._client_state == State.CONNECTED:
-            assert message["type"] in {ReceiveEvent.RECEIVE, ReceiveEvent.DISCONNECT}, (
+            assert message["type"] in {
+                ReceiveEvent.RECEIVE,
+                ReceiveEvent.DISCONNECT,
+            }, (
                 'WebSocket is connected but received invalid event "%s".'
                 % message["type"]
             )
@@ -205,5 +210,6 @@ class WebSocket:
 
     def _test_if_can_receive(self, message: t.Mapping):
         assert message["type"] == ReceiveEvent.RECEIVE, (
-            'Invalid message type "%s". Was connection accepted?' % message["type"]
+            'Invalid message type "%s". '
+            'Was connection accepted?' % message["type"]
         )

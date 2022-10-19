@@ -414,7 +414,9 @@ class BaseProduct(models.Model):
         options = chain(product_types_options, products_options)
         if self.__class__.__name__ == 'Retreat':
             retreat_type = self.type
-            retreat_type_options = OptionProduct.objects.filter(available_on_retreat_types=retreat_type)
+            retreat_type_options = OptionProduct.objects.filter(
+                available_on_retreat_types=retreat_type,
+            )
             options = chain(options, retreat_type_options)
         return list(options)
 
@@ -558,7 +560,8 @@ class OptionProduct(BaseProduct):
     )
     manage_stock = models.BooleanField(
         verbose_name=_("Manage stock"),
-        help_text=_("True if option manage stock, False if stock is infinite or NA"),
+        help_text=_("True if option manage stock, False if stock is "
+                    "infinite or NA"),
         default=False
     )
     stock = models.PositiveIntegerField(
@@ -574,7 +577,8 @@ class OptionProduct(BaseProduct):
     )
 
     is_room_option = models.BooleanField(
-        verbose_name=_('Determine if this option can be considered as a room option'),
+        verbose_name=_('Determine if this option can be considered as a '
+                       'room option'),
         default=False,
     )
 
@@ -583,10 +587,19 @@ class OptionProduct(BaseProduct):
         remaining_quantity = self.stock
         if self.manage_stock:
             from retirement.models import Reservation
-            refunded_order_lines = Reservation.objects.filter(is_active=False).values_list('order_line', flat=True)
-            ordered_quantity = OrderLineBaseProduct.objects.filter(option=self)\
-                .exclude(order_line__in=refunded_order_lines)\
-                .aggregate(sum=Sum('quantity'))['sum']
+            refunded_order_lines = Reservation.objects.filter(
+                is_active=False,
+            ).values_list(
+                'order_line',
+                flat=True,
+            )
+            ordered_quantity = OrderLineBaseProduct.objects.filter(
+                option=self,
+            ).exclude(
+                order_line__in=refunded_order_lines,
+            ).aggregate(
+                sum=Sum('quantity'),
+            )['sum']
             remaining_quantity -= (ordered_quantity if ordered_quantity else 0)
         return remaining_quantity
 
@@ -594,9 +607,11 @@ class OptionProduct(BaseProduct):
         """
         Check if we can get enough option
         :params quantity_required: quantity required for this stock
-        Return True if option has enough stock for the purchase, False otherwise
+        Return True if option has enough stock for the purchase,
+            False otherwise
         """
-        return not self.manage_stock or quantity_required <= self.remaining_quantity
+        is_enough = quantity_required <= self.remaining_quantity
+        return not self.manage_stock or is_enough
 
 
 class CustomPayment(models.Model):
