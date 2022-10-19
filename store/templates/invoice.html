@@ -477,6 +477,66 @@
           <![endif]-->
         </td>
       </tr>
+          {%for option in item.options%}
+            <tr class="margin-left:20px;">
+            <!-- dir=rtl is where the magic happens. This can be changed to dir=ltr to swap the alignment on wide while maintaining stack order on narrow. -->
+        <td dir="rtl" height="100%" valign="top" width="100%" style="background-color: #ffffff;">
+          <!--[if mso]>
+          <table align="center" role="presentation" border="0" cellspacing="0" cellpadding="0" width="660" style="width: 660px;">
+            <tr>
+              <td valign="top" width="660">
+          <![endif]-->
+          <table align="center" role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:660px;">
+            <tr>
+              <td align="center" valign="top" style="font-size:0;">
+                <!--[if mso]>
+                <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="660" style="width: 660px;">
+                  <tr>
+                    <td valign="top" width="220" style="width: 220px;">
+                <![endif]-->
+                <div style="display:inline-block; margin: 0 -2px; max-width: 200px; min-width:160px; vertical-align:top; width:100%;" class="stack-column">
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                    <tr>
+                      <td dir="ltr" style="padding: 0 10px 10px 10px;">
+                        <p class="center-on-narrow" style="width: 100%; max-width: 200px; height: auto; font-family: sans-serif; font-size: 15px; line-height: 15px; text-align: right;">
+                          {{option.price}}$ CAD
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                <!--[if mso]>
+                </td>
+                <td valign="top" width="440" style="width: 440px;">
+                <![endif]-->
+                <div style="display:inline-block; margin: 0 -2px; max-width:66.66%; min-width:320px; vertical-align:top;" class="stack-column">
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                    <tr>
+                      <td dir="ltr" style="font-family: sans-serif; font-size: 15px; line-height: 20px; padding: 10px 10px 0; text-align: left;" class="center-on-narrow">
+                        <p style="margin: 0 0 10px 0;">
+                          {{option.name}}
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                <!--[if mso]>
+                </td>
+                </tr>
+                </table>
+                <![endif]-->
+              </td>
+            </tr>
+          </table>
+          <!--[if mso]>
+          </td>
+          </tr>
+          </table>
+          <![endif]-->
+        </td>
+
+            </tr>
+          {% endfor %}
       {% endfor %}
       <!-- Command items : END -->
 
