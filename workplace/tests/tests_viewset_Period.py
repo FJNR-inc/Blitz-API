@@ -728,8 +728,8 @@ class PeriodTests(APITestCase):
         response = client.get(
             reverse('period-list'),
             {
-                'start_date_lte': '2100-01-02T00:00:00Z',
-                'end_date_gte': '2100-01-02T00:00:00Z',
+                'start_date__lte': '2100-01-02T00:00:00Z',
+                'end_date__gte': '2100-01-02T00:00:00Z',
             },
             format='json',
         )
