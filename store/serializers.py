@@ -947,9 +947,16 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 {
                     'price': orderline.content_object.price,
                     'name': "{0}: {1}".format(
-                        str(orderline.content_type),
+                        orderline.content_object.get_product_display_type,
                         orderline.content_object.name
                     ),
+                    'options': [
+                        {
+                            'price': option.price,
+                            'name': option.name,
+                        } for option in orderline.options.all()
+                    ]
+
                     # Removed details section because it was only used
                     # for retreats. Retreats instead have another
                     # unique email containing details of the event.
