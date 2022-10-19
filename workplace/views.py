@@ -116,7 +116,7 @@ class PeriodViewSet(ExportMixin, viewsets.ModelViewSet):
         else:
             queryset = Period.objects.filter(is_active=True)
 
-        return queryset  # self._filter_date_queryset(queryset)
+        return queryset
 
     def destroy(self, request, *args, **kwargs):
         """
