@@ -3657,7 +3657,7 @@ class OrderWithOptionsTests(APITestCase):
         self.retreat_type = RetreatTypeFactory()
         self.retreat = RetreatFactory(
             accessibility=True,
-            seats=100000,
+            seats=1000,
             is_active=True,
             has_shared_rooms=True,
             toilet_gendered=False,
