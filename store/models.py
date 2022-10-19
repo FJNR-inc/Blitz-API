@@ -401,6 +401,13 @@ class BaseProduct(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def get_product_display_type(self):
+        """
+        Return type of product to display, in email for example
+        """
+        return _('Item')
+
     def quantity_sold(self):
         return self.order_lines.count()
 
@@ -456,6 +463,10 @@ class Membership(BaseProduct):
         blank=True,
         null=True,
     )
+
+    @property
+    def get_product_display_type(self):
+        return _('Membership')
 
     # History is registered in translation.py
     # history = HistoricalRecords()
@@ -540,6 +551,10 @@ class Package(BaseProduct):
         null=True,
     )
 
+    @property
+    def get_product_display_type(self):
+        return _('Package')
+
     # History is registered in translation.py
     # history = HistoricalRecords()
 
@@ -581,6 +596,10 @@ class OptionProduct(BaseProduct):
                        'room option'),
         default=False,
     )
+
+    @property
+    def get_product_display_type(self):
+        return _('Option product')
 
     @property
     def remaining_quantity(self):
