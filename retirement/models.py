@@ -426,6 +426,10 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
     # History is registered in translation.py
     # history = HistoricalRecords()
 
+    @property
+    def get_product_display_type(self):
+        return _('Retreat')
+
     def get_number_of_tomatoes(self):
         if self.number_of_tomatoes:
             return self.number_of_tomatoes
