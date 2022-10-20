@@ -33,17 +33,12 @@ Ceci est un reçu pour votre achat. Merci d'en garder une copie.
 ------------------------------------------------------------
 
 {%for item in ITEM_LIST%}
-    {{item.price}}$ CAD
-    {{item.name}}
-{% if item.details %}
-    {{item.details}}
-{% endif %}
-{%for option in item.options%}
-    {{option.price}}$ CAD
-    {{option.name}}
-{% endfor %}
-{% endfor %}
-{% if COUPON %}
+
+{{item.price}}$ CAD
+{{item.name}} {% if item.details %}
+{{item.details}} {% endif %} {%for option in item.options%}
+{{option.price}}$ CAD
+{{option.name}} {% endfor %} {% endfor %} {% if COUPON %}
 
 -{{DISCOUNT}}$ CAD
 Coupon: {{COUPON.code}} {% endif %}
