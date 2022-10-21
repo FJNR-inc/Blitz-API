@@ -562,6 +562,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
             if self.request.user.is_staff:
                 ticket_return = request.data.get('ticket_return', False)
                 if ticket_return:
-                    user.tickets += 1
+                    # user.tickets can be None
+                    user.tickets = 1 + user.tickets if user.tickets else 1
                     user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
