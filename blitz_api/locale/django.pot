@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-30 10:12-0400\n"
+"POT-Creation-Date: 2022-10-25 15:01-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -226,6 +226,34 @@ msgstr ""
 msgid "Timezone"
 msgstr ""
 
+#: blitz_api/models.py:686
+msgid "Anonymous Chrono data"
+msgstr ""
+
+#: blitz_api/models.py:687
+msgid "Other"
+msgstr ""
+
+#: blitz_api/models.py:688
+msgid "Retreat sales"
+msgstr ""
+
+#: blitz_api/models.py:689
+msgid "Retreat participation"
+msgstr ""
+
+#: blitz_api/models.py:690
+msgid "Retreat options"
+msgstr ""
+
+#: blitz_api/models.py:691
+msgid "Retreat room distribution"
+msgstr ""
+
+#: blitz_api/models.py:707
+msgid "Author"
+msgstr ""
+
 #: blitz_api/serializers.py:32
 msgid "Invalid format."
 msgstr ""
@@ -236,12 +264,12 @@ msgstr ""
 msgid "This field is required."
 msgstr ""
 
-#: blitz_api/serializers.py:181 blitz_api/serializers.py:401
-#: blitz_api/serializers.py:546
+#: blitz_api/serializers.py:181 blitz_api/serializers.py:434
+#: blitz_api/serializers.py:579
 msgid "Email address"
 msgstr ""
 
-#: blitz_api/serializers.py:196 blitz_api/serializers.py:425
+#: blitz_api/serializers.py:196 blitz_api/serializers.py:458
 msgid "An account for the specified email address already exists."
 msgstr ""
 
@@ -269,32 +297,31 @@ msgstr ""
 msgid "Bad password"
 msgstr ""
 
-#: blitz_api/serializers.py:498
+#: blitz_api/serializers.py:531
 msgid "Username"
 msgstr ""
 
-#: blitz_api/serializers.py:500
+#: blitz_api/serializers.py:533
 msgid "Password"
 msgstr ""
 
-#: blitz_api/serializers.py:516
+#: blitz_api/serializers.py:549
 msgid "Your account is not activated. [code: not-activated]"
 msgstr ""
 
-#: blitz_api/serializers.py:535
+#: blitz_api/serializers.py:568
 msgid "Unable to log in with provided credentials."
 msgstr ""
 
-#: blitz_api/serializers.py:555
+#: blitz_api/serializers.py:588
 msgid "No account associated to this email address."
 msgstr ""
 
-#: blitz_api/serializers.py:602
+#: blitz_api/serializers.py:635
 msgid "Email already register to this newsletter"
 msgstr ""
 
-#: blitz_api/services.py:49 blitz_api/services.py:159
-#: blitz_api/services.py:205
+#: blitz_api/services.py:49 blitz_api/services.py:159 blitz_api/services.py:205
 msgid "Email service is disabled."
 msgstr ""
 
