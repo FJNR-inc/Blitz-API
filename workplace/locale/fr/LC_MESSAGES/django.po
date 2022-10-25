@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-10-25 15:01-0400\n"
-"PO-Revision-Date: 2022-03-25 23:32+0000\n"
-"Last-Translator: Mélanie Guérin <melanie.guerin@fjnr.ca>\n"
+"PO-Revision-Date: 2022-10-25 21:00+0000\n"
+"Last-Translator: Romain Fayolle <romain.fayolle@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
 "workplace/fr/>\n"
 "Language: fr\n"
@@ -117,10 +117,8 @@ msgid "Timeslot modified"
 msgstr "Bloc à l'espace modifié"
 
 #: workplace/models.py:216
-#, fuzzy
-#| msgid "User canceled"
 msgid "Admin canceled"
-msgstr "Annulation par l'utilisateur"
+msgstr "Annulation par l'administrateur"
 
 #: workplace/models.py:232
 msgid "Active"
