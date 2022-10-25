@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-08 15:53-0400\n"
-"PO-Revision-Date: 2022-03-25 23:32+0000\n"
-"Last-Translator: Mélanie Guérin <melanie.guerin@fjnr.ca>\n"
+"POT-Creation-Date: 2022-10-25 15:01-0400\n"
+"PO-Revision-Date: 2022-10-25 21:00+0000\n"
+"Last-Translator: Romain Fayolle <romain.fayolle@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
 "workplace/fr/>\n"
 "Language: fr\n"
@@ -84,7 +84,7 @@ msgstr "Date de fin"
 msgid "Activation"
 msgstr "Activation"
 
-#: workplace/models.py:154 workplace/models.py:227
+#: workplace/models.py:154 workplace/models.py:228
 msgid "Time slot"
 msgstr "Bloc à l'espace"
 
@@ -92,7 +92,7 @@ msgstr "Bloc à l'espace"
 msgid "Time slots"
 msgstr "Blocs à l'espace"
 
-#: workplace/models.py:175 workplace/models.py:221
+#: workplace/models.py:175 workplace/models.py:222
 msgid "User"
 msgstr "Utilisateur"
 
@@ -116,19 +116,23 @@ msgstr "Bloc à l'espace supprimé"
 msgid "Timeslot modified"
 msgstr "Bloc à l'espace modifié"
 
-#: workplace/models.py:231
+#: workplace/models.py:216
+msgid "Admin canceled"
+msgstr "Annulation par l'administrateur"
+
+#: workplace/models.py:232
 msgid "Active"
 msgstr "Actif"
 
-#: workplace/models.py:238
+#: workplace/models.py:239
 msgid "Cancelation reason"
 msgstr "Raison de l'annulation"
 
-#: workplace/models.py:243
+#: workplace/models.py:244
 msgid "Cancelation date"
 msgstr "Date de l'annulation"
 
-#: workplace/models.py:246
+#: workplace/models.py:247
 msgid "Present"
 msgstr "Présent"
 
@@ -280,7 +284,7 @@ msgstr ""
 msgid "Whether the reservation is active or not."
 msgstr "Si la réservation est active ou non."
 
-#: workplace/views.py:138
+#: workplace/views.py:147
 msgid ""
 "Trying to do a Period deletion that affects users without providing "
 "`force_delete` field set to True."
@@ -288,7 +292,7 @@ msgstr ""
 "Essayer de faire une suppression de période qui affecte les utilisateurs "
 "sans fournir le champ ''force_delete'' défini sur ''True''."
 
-#: workplace/views.py:349
+#: workplace/views.py:358
 msgid ""
 "Trying to do a TimeSlot deletion that affects users without providing "
 "`force_delete` field set to True."
