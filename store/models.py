@@ -185,7 +185,7 @@ class Order(models.Model):
                         quantity=quantity,
                         metadata=metadata
                     )
-                    order_line.cost += option.price
+                    order_line.cost += option.price * quantity
                 order_line.save()
 
 

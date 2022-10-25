@@ -941,30 +941,31 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             # Here, the 'details' key is used to provide details of the
             #  item to the email template.
             # As of now, only 'retreat' objects have the 'email_content'
-            #  key that is used here. There is surely a better way to
+            #  key that is used here. There is surely a better way
             #  to handle that logic that will be more generic.
             items = [
                 {
-                    'price': orderline.content_object.price,
+                    'price': order_line.content_object.price,
                     'name': "{0}: {1}".format(
-                        orderline.content_object.get_product_display_type,
-                        orderline.content_object.name
+                        order_line.content_object.get_product_display_type,
+                        order_line.content_object.name
                     ),
                     'options': [
                         {
-                            'price': option.price,
-                            'name': option.name,
-                        } for option in orderline.options.all()
+                            'price': opt.option.price * opt.quantity,
+                            'name': f'{opt.option.name} (x{opt.quantity})',
+                        } for opt in OrderLineBaseProduct.objects.filter(
+                            order_line=order_line)
                     ]
 
                     # Removed details section because it was only used
                     # for retreats. Retreats instead have another
                     # unique email containing details of the event.
                     # 'details':
-                    #    orderline.content_object.email_content if hasattr(
-                    #         orderline.content_object, 'email_content'
+                    #    order_line.content_object.email_content if hasattr(
+                    #         order_line.content_object, 'email_content'
                     #     ) else ""
-                } for orderline in orderlines
+                } for order_line in orderlines
             ]
 
             # Send order confirmation email

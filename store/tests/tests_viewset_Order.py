@@ -3791,6 +3791,10 @@ class OrderWithOptionsTests(APITestCase):
             ).remaining_quantity,
             self.options_with_stock_quantity - quantity
         )
+        order = Order.objects.get(id=response.data['id'])
+        estimated_cost = \
+            self.retreat.price + self.options_with_stock.price * quantity
+        self.assertEqual(order.total_cost, estimated_cost)
 
     @responses.activate
     def test_option_insufficient_stock(self):
