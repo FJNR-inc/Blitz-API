@@ -110,7 +110,7 @@ class RetreatFactory(DjangoModelFactory):
     seats = factory.fuzzy.FuzzyInteger(0)
     notification_interval = timedelta(hours=24)
     activity_language = factory.fuzzy.FuzzyChoice(Retreat.ACTIVITY_LANGUAGE)
-    price = factory.fuzzy.FuzzyDecimal(0, 9999, 2)
+    price = factory.fuzzy.FuzzyDecimal(0, 1000, 2)
     min_day_refund = factory.fuzzy.FuzzyInteger(0)
     refund_rate = factory.fuzzy.FuzzyInteger(0)
     min_day_exchange = factory.fuzzy.FuzzyInteger(0)
