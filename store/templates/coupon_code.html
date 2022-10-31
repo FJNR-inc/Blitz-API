@@ -124,6 +124,13 @@
               </div>
             </div>
             {% endfor %}
+            {%for item in COUPON.applicable_retreat_types.all%}
+            <div class="email__content__summary__item">
+              <div class="email__content__summary__item__name">
+                Type de retraite: {{item.name}}
+              </div>
+            </div>
+            {% endfor %}
             {%for item in COUPON.applicable_packages.all%}
             <div class="email__content__summary__item">
               <div class="email__content__summary__item__name">
