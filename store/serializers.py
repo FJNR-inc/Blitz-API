@@ -695,6 +695,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     )
                     coupon.applicable_retreats.set(
                         membership_coupon.applicable_retreats.all())
+                    coupon.applicable_retreat_types.set(
+                        membership_coupon.applicable_retreat_types.all())
                     coupon.applicable_timeslots.set(
                         membership_coupon.applicable_timeslots.all())
                     coupon.applicable_packages.set(
@@ -1140,11 +1142,22 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
     def to_representation(self, instance):
         data = super(CouponSerializer, self).to_representation(instance)
         from workplace.serializers import TimeSlotSerializer
-        from retirement.serializers import RetreatSerializer
+        from retirement.serializers import (
+            RetreatSerializer,
+            RetreatTypeSerializer,
+        )
         action = self.context['view'].action
         if action == 'retrieve' or action == 'list':
             data['applicable_retreats'] = RetreatSerializer(
                 instance.applicable_retreats,
+                many=True,
+                context={
+                    'request': self.context['request'],
+                    'view': self.context['view'],
+                },
+            ).data
+            data['applicable_retreat_types'] = RetreatTypeSerializer(
+                instance.applicable_retreat_types,
                 many=True,
                 context={
                     'request': self.context['request'],
@@ -1184,6 +1197,10 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
             'applicable_retreats': {
                 'required': False,
                 'view_name': 'retreat:retreat-detail',
+            },
+            'applicable_retreat_types': {
+                'required': False,
+                'view_name': 'retreat:retreattype-detail',
             },
             'applicable_timeslots': {
                 'required': False,

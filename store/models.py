@@ -769,6 +769,13 @@ class AbstractCoupon(SafeDeleteModel):
         blank=True,
     )
 
+    applicable_retreat_types = models.ManyToManyField(
+        'retirement.RetreatType',
+        related_name="applicable_%(class)ss",
+        verbose_name=_("Applicable retreat types"),
+        blank=True,
+    )
+
     applicable_timeslots = models.ManyToManyField(
         'workplace.TimeSlot',
         related_name="applicable_%(class)ss",

@@ -61,6 +61,7 @@ class CouponTests(CustomAPITestCase):
         'applicable_memberships',
         'applicable_packages',
         'applicable_retreats',
+        'applicable_retreat_types',
         'applicable_timeslots',
         'users',
         'is_applicable_to_physical_retreat',
@@ -214,6 +215,7 @@ class CouponTests(CustomAPITestCase):
             "details": "Any package for clients",
             "owner": "http://testserver/users/" + str(self.user.id),
             "applicable_retreats": [],
+            "applicable_retreat_types": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -278,6 +280,7 @@ class CouponTests(CustomAPITestCase):
             "details": "Any package for clients",
             "owner": "http://testserver/users/" + str(self.user.id),
             "applicable_retreats": [],
+            "applicable_retreat_types": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -340,6 +343,7 @@ class CouponTests(CustomAPITestCase):
             "details": "Any package for clients",
             "owner": "http://testserver/users/" + str(self.user.id),
             "applicable_retreats": [],
+            "applicable_retreat_types": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -958,6 +962,7 @@ class CouponTests(CustomAPITestCase):
             "details": "Any package for clients (updated max_use)",
             "owner": "http://testserver/users/" + str(self.user.id),
             "applicable_retreats": [],
+            "applicable_retreat_types": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -1018,6 +1023,7 @@ class CouponTests(CustomAPITestCase):
             "details": "Any package for clients (updated max_use)",
             "owner": "http://testserver/users/" + str(self.user.id),
             "applicable_retreats": [],
+            "applicable_retreat_types": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -1091,6 +1097,9 @@ class CouponTests(CustomAPITestCase):
         self.coupon.applicable_retreats.set([
             self.retreat,
         ])
+        self.coupon.applicable_retreat_types.set([
+            self.retreat.type,
+        ])
         self.coupon.applicable_timeslots.set([
             self.time_slot,
         ])
@@ -1113,6 +1122,7 @@ class CouponTests(CustomAPITestCase):
             self.check_attributes(item)
 
         self.coupon.applicable_retreats.set([])
+        self.coupon.applicable_retreat_types.set([])
         self.coupon.applicable_timeslots.set([])
         self.coupon.applicable_packages.set([])
         self.coupon.applicable_memberships.set([])
@@ -1150,6 +1160,7 @@ class CouponTests(CustomAPITestCase):
                 "details": "Any package for clients",
                 "owner": "http://testserver/users/" + str(self.user.id),
                 "applicable_retreats": [],
+                "applicable_retreat_types": [],
                 "applicable_timeslots": [],
                 "applicable_packages": [],
                 "applicable_memberships": [],
@@ -1170,6 +1181,7 @@ class CouponTests(CustomAPITestCase):
                 "details": "Any package for clients",
                 "owner": "http://testserver/users/" + str(self.admin.id),
                 "applicable_retreats": [],
+                "applicable_retreat_types": [],
                 "applicable_timeslots": [],
                 "applicable_packages": [],
                 "applicable_memberships": [],
@@ -1294,6 +1306,7 @@ class CouponTests(CustomAPITestCase):
             "details": "Any package for clients",
             "owner": "http://testserver/users/" + str(self.user.id),
             "applicable_retreats": [],
+            "applicable_retreat_types": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],

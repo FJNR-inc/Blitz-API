@@ -16,7 +16,9 @@ Vous avez été sélectionné pour recevoir un code promotionnel. Vous pourrez a
 
 Tous les {{item.name|lower}}s {% endfor %} {%for item in COUPON.applicable_retreats.all%}
 
-Retraite: {{item.name}} {% endfor %} {%for item in COUPON.applicable_packages.all%}
+Retraite: {{item.name}} {% endfor %} {%for item in COUPON.applicable_retreat_types.all%}
+
+Type de retraite: {{item.name}} {% endfor %} {%for item in COUPON.applicable_packages.all%}
 
 Bloc prépayé: {{item.name}} {% endfor %} {%for item in COUPON.applicable_timeslots.all%}
 
