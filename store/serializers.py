@@ -1142,6 +1142,7 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
     def to_representation(self, instance):
         data = super(CouponSerializer, self).to_representation(instance)
         from workplace.serializers import TimeSlotSerializer
+        from blitz_api.serializers import OrganizationSerializer
         from retirement.serializers import (
             RetreatSerializer,
             RetreatTypeSerializer,
@@ -1188,6 +1189,14 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
                     'view': self.context['view'],
                 },
             ).data
+            if instance.organization:
+                data['organization'] = OrganizationSerializer(
+                    instance.organization,
+                    context={
+                        'request': self.context['request'],
+                        'view': self.context['view'],
+                    },
+                ).data
         return data
 
     class Meta:
