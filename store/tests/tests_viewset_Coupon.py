@@ -65,6 +65,7 @@ class CouponTests(CustomAPITestCase):
         'applicable_retreat_types',
         'applicable_timeslots',
         'users',
+        'usages',
         'is_applicable_to_physical_retreat',
         'is_applicable_to_virtual_retreat',
     ]
@@ -1172,6 +1173,7 @@ class CouponTests(CustomAPITestCase):
                 "applicable_packages": [],
                 "applicable_memberships": [],
                 "users": [],
+                "usages": [],
                 "is_applicable_to_physical_retreat": False,
                 "is_applicable_to_virtual_retreat": False
             }, {
@@ -1194,6 +1196,7 @@ class CouponTests(CustomAPITestCase):
                 "applicable_packages": [],
                 "applicable_memberships": [],
                 "users": [],
+                "usages": [],
                 "is_applicable_to_physical_retreat": False,
                 "is_applicable_to_virtual_retreat": False
             }]
@@ -1320,6 +1323,7 @@ class CouponTests(CustomAPITestCase):
             "applicable_packages": [],
             "applicable_memberships": [],
             "users": [],
+            "usages": [],
             "is_applicable_to_physical_retreat": False,
             "is_applicable_to_virtual_retreat": False
         }

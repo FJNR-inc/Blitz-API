@@ -1142,13 +1142,42 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
     def to_representation(self, instance):
         data = super(CouponSerializer, self).to_representation(instance)
         from workplace.serializers import TimeSlotSerializer
-        from blitz_api.serializers import OrganizationSerializer
+        from blitz_api.serializers import (
+            OrganizationSerializer,
+            ReservationUserSerializer,
+        )
         from retirement.serializers import (
             RetreatSerializer,
             RetreatTypeSerializer,
         )
         action = self.context['view'].action
         if action == 'retrieve' or action == 'list':
+
+            usages = list()
+            for line in OrderLine.objects.filter(coupon=instance):
+                usages.append(
+                    {
+                        'date': line.order.transaction_date,
+                        'user': ReservationUserSerializer(
+                            line.order.user,
+                            context={
+                                'request': self.context['request'],
+                                'view': self.context['view'],
+                            },
+                        ),
+                        'amount_used': line.coupon_real_value,
+                        'user_university': OrganizationSerializer(
+                            line.order.user.university,
+                            context={
+                                'request': self.context['request'],
+                                'view': self.context['view'],
+                            },
+                        ),
+                        'product_name': line.content_object.name,
+                    }
+                )
+
+            data['usages'] = usages
             data['applicable_retreats'] = RetreatSerializer(
                 instance.applicable_retreats,
                 many=True,
