@@ -1,7 +1,7 @@
 pycodestyle==2.8.0
 coveralls==3.2.0
 responses==0.15.0
-awscli==1.21.7
+awscli==1.27.3
 six==1.16.0
 
 # Please consider moving this line to the requirements.txt as soon as it will be fixed
