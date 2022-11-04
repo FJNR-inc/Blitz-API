@@ -467,7 +467,12 @@ class CouponViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.CouponSerializer
     queryset = Coupon.objects.all()
     permission_classes = (IsAuthenticated, permissions.IsAdminOrReadOnly)
-    filter_fields = '__all__'
+    filter_fields = {
+        'start_time': ['exact', 'gte', 'lte'],
+        'end_time': ['exact',  'gte', 'lte'],
+        'code': ['exact'],
+        'organization': ['exact', 'isnull'],
+    }
     search_fields = ('code',)
 
     export_resource = CouponResource()
