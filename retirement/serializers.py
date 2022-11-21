@@ -961,6 +961,17 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
             return obj
         return self.context['request'].user
 
+    def to_representation(self, instance):
+        is_staff = self.context['request'].user.is_staff
+
+        if is_staff:
+            from blitz_api.serializers import ReservationUserSerializer
+            self.fields['user'] = ReservationUserSerializer()
+
+        data = super(WaitQueueSerializer, self).to_representation(instance)
+
+        return data
+
     class Meta:
         model = WaitQueue
         fields = '__all__'

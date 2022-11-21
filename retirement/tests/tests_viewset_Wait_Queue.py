@@ -143,7 +143,18 @@ class WaitQueueTests(APITestCase):
             'list_size': 2,
             'retreat': 'http://testserver/retreat/retreats/' +
                        str(self.retreat.id),
-            'user': ''.join(['http://testserver/users/', str(self.user.id)]),
+            'user': {
+                'id': self.user.id,
+                'email': self.user.email,
+                'first_name': self.user.first_name,
+                'last_name': self.user.last_name,
+                'personnal_restrictions': self.user.personnal_restrictions,
+                'phone': self.user.phone,
+                'url': 'http://testserver' + reverse(
+                    'user-detail',
+                    args=[self.user.id],
+                ),
+            },
             'used': False,
         }
 
@@ -471,7 +482,18 @@ class WaitQueueTests(APITestCase):
             'url':
                 'http://testserver/retreat/wait_queues/' +
                 str(self.wait_queue_subscription.id),
-            'user': ''.join(['http://testserver/users/', str(self.user2.id)]),
+            'user': {
+                'id': self.user2.id,
+                'email': self.user2.email,
+                'first_name': self.user2.first_name,
+                'last_name': self.user2.last_name,
+                'personnal_restrictions': self.user2.personnal_restrictions,
+                'phone': self.user2.phone,
+                'url': 'http://testserver' + reverse(
+                    'user-detail',
+                    args=[self.user2.id],
+                ),
+            },
             'created_at': json.loads(response.content)['created_at'],
             'used': False,
         }
