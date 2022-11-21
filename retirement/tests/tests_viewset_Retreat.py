@@ -96,6 +96,9 @@ class RetreatTests(CustomAPITestCase):
         'hide_from_client_admin_panel',
         'require_purchase_room',
         'available_on_retreat_types',
+        'is_specific_to_community',
+        'community_description',
+        'community_name',
     ]
 
     @classmethod
@@ -952,6 +955,67 @@ class RetreatTests(CustomAPITestCase):
         ]
         content = json.loads(response.content)
         self.check_attributes(content, attributes)
+
+    def test_edit_community_info(self):
+        """
+        Ensure we can update community info of a retreat.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': self.retreat.name,
+            'is_specific_to_community': True,
+            'community_description': 'Lorem ipsum communities',
+            'community_name': 'My new community',
+        }
+
+        response = self.client.patch(
+            reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat.id},
+            ),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        attributes = self.ATTRIBUTES + [
+            'state_province_fr',
+            'old_id',
+            'details_en',
+            'details_fr',
+            'address_line2_en',
+            'name_en',
+            'name_fr',
+            'state_province_en',
+            'country_fr',
+            'country_en',
+            'city_en',
+            'address_line2_fr',
+            'address_line1_fr',
+            'city_fr',
+            'address_line1_en',
+        ]
+        content = json.loads(response.content)
+        self.check_attributes(content, attributes)
+
+        self.assertEqual(
+            content['is_specific_to_community'],
+            data['is_specific_to_community'],
+        )
+        self.assertEqual(
+            content['community_description'],
+            data['community_description'],
+        )
+        self.assertEqual(
+            content['community_name'],
+            data['community_name'],
+        )
 
     def test_delete(self):
         """

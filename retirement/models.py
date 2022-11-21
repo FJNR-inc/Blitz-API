@@ -423,6 +423,22 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         blank=True,
     )
 
+    # Allow to create event for a specific community
+    is_specific_to_community = models.BooleanField(
+        default=False,
+    )
+
+    community_name = models.CharField(
+        max_length=300,
+        null=True,
+        blank=True,
+    )
+
+    community_description = models.TextField(
+        null=True,
+        blank=True,
+    )
+
     # History is registered in translation.py
     # history = HistoricalRecords()
 
