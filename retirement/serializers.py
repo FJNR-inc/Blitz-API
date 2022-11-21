@@ -950,6 +950,7 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     created_at = serializers.ReadOnlyField()
     list_size = serializers.SerializerMethodField()
+    notified = serializers.SerializerMethodField()
 
     def validate_user(self, obj):
         """
@@ -960,6 +961,17 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
         if self.context['request'].user.is_staff:
             return obj
         return self.context['request'].user
+
+    def to_representation(self, instance):
+        is_staff = self.context['request'].user.is_staff
+
+        if is_staff:
+            from blitz_api.serializers import ReservationUserSerializer
+            self.fields['user'] = ReservationUserSerializer()
+
+        data = super(WaitQueueSerializer, self).to_representation(instance)
+
+        return data
 
     class Meta:
         model = WaitQueue
@@ -975,6 +987,13 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_list_size(self, obj):
         return WaitQueue.objects.filter(retreat=obj.retreat).count()
+
+    def get_notified(self, obj):
+        return WaitQueuePlaceReserved.objects.filter(
+            user=obj.user,
+            wait_queue_place__retreat=obj.retreat,
+            notified=True,
+        ).exists()
 
 
 class WaitQueuePlaceSerializer(serializers.HyperlinkedModelSerializer):
