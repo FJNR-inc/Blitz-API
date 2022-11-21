@@ -97,6 +97,7 @@ class WaitQueueTests(APITestCase):
 
         content = {
             'list_size': 2,
+            'notified': False,
             'retreat': 'http://testserver/retreat/retreats/' +
                        str(self.retreat.id),
             'user': ''.join(['http://testserver/users/', str(self.user.id)]),
@@ -141,8 +142,10 @@ class WaitQueueTests(APITestCase):
 
         content = {
             'list_size': 2,
-            'retreat': 'http://testserver/retreat/retreats/' +
-                       str(self.retreat.id),
+            'notified': False,
+            'retreat': 'http://testserver/retreat/retreats/' + str(
+                self.retreat.id
+            ),
             'user': {
                 'id': self.user.id,
                 'email': self.user.email,
@@ -373,6 +376,7 @@ class WaitQueueTests(APITestCase):
                 'created_at': response_data['results'][0]['created_at'],
                 'id': self.wait_queue_subscription.id,
                 'list_size': 1,
+                'notified': False,
                 'retreat':
                     'http://testserver/retreat/retreats/' +
                     str(self.retreat.id),
@@ -422,6 +426,7 @@ class WaitQueueTests(APITestCase):
         content = {
             'id': self.wait_queue_subscription.id,
             'list_size': 1,
+            'notified': False,
             'retreat':
                 'http://testserver/retreat/retreats/' +
                 str(self.retreat.id),
@@ -476,12 +481,13 @@ class WaitQueueTests(APITestCase):
         content = {
             'id': self.wait_queue_subscription.id,
             'list_size': 1,
-            'retreat':
-                'http://testserver/retreat/retreats/' +
-                str(self.retreat.id),
-            'url':
-                'http://testserver/retreat/wait_queues/' +
-                str(self.wait_queue_subscription.id),
+            'notified': False,
+            'retreat': 'http://testserver/retreat/retreats/' + str(
+                self.retreat.id
+            ),
+            'url': 'http://testserver/retreat/wait_queues/' + str(
+                self.wait_queue_subscription.id
+            ),
             'user': {
                 'id': self.user2.id,
                 'email': self.user2.email,

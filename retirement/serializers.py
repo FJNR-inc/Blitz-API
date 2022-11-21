@@ -950,6 +950,7 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     created_at = serializers.ReadOnlyField()
     list_size = serializers.SerializerMethodField()
+    notified = serializers.SerializerMethodField()
 
     def validate_user(self, obj):
         """
@@ -986,6 +987,13 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_list_size(self, obj):
         return WaitQueue.objects.filter(retreat=obj.retreat).count()
+
+    def get_notified(self, obj):
+        return WaitQueuePlaceReserved.objects.filter(
+            user=obj.user,
+            wait_queue_place__retreat=obj.retreat,
+            notified=True,
+        ).exists()
 
 
 class WaitQueuePlaceSerializer(serializers.HyperlinkedModelSerializer):
