@@ -387,7 +387,7 @@ def send_deleted_retreat_email(retreat, users_emails, deletion_message):
         'MESSAGE': deletion_message,
     }
 
-    response_send_mail = send_email_from_template_id(
+    response_send_mail = send_templated_email(
         users_emails,
         context,
         'RETREAT_DELETED'

@@ -1251,11 +1251,11 @@ class Reservation(SafeDeleteModel):
             EmailLog.add(user.email, 'refund', response_send_mail)
         except Exception as err:
             additional_data = {
-                'title': "Confirmation de votre nouvelle adresse courriel",
+                'title': "Confirmation de remboursement",
                 'default_from': settings.DEFAULT_FROM_EMAIL,
                 'user_email': user.email,
                 'merge_data': merge_data,
-                'template': 'notify_user_of_change_email'
+                'template': 'refund.html'
             }
             Log.error(
                 source='SENDING_BLUE_TEMPLATE',
