@@ -78,6 +78,7 @@ from .serializers import (
     RetreatDateSerializer,
     BatchRetreatSerializer,
     RetreatUsageLogSerializer,
+    BatchActivateRetreatSerializer,
 )
 from .services import (
     send_retreat_reminder_email,
@@ -323,6 +324,54 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
 
         serializer = self.get_serializer(retreat)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, permission_classes=[IsAdminUser], methods=['post'])
+    def batch_activate(self, request):
+        """
+        That custom action allows an admin to activate
+        a list of retreat and to run all the automations related.
+        """
+        serializer = BatchActivateRetreatSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        retreat_ids = serializer.validated_data.get('retreats')
+
+        # check if all the retreats exist
+        list_of_retreat_not_existing = []
+        for retreat_id in retreat_ids:
+            try:
+                retreat = Retreat.objects.get(pk=retreat_id)
+            except Retreat.DoesNotExist:
+                list_of_retreat_not_existing.append(retreat_id)
+
+        if len(list_of_retreat_not_existing):
+            return Response(
+                {
+                    'retreat_ids': [
+                        _('These retreats does not exist: ') +
+                        str(list_of_retreat_not_existing)
+                    ],
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Activation of all the retreats, we use an atomic transaction to
+        # make the call idempotent in case of error
+        with transaction.atomic():
+            for retreat_id in retreat_ids:
+                try:
+                    retreat = Retreat.objects.get(pk=retreat_id)
+                    retreat.activate()
+                except ValueError as error:
+                    return Response(
+                        {
+                            'retreat': retreat_id,
+                            'non_field_errors': [str(error)],
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+        return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, permission_classes=[])
     def execute_automatic_email(self, request, pk=None):
