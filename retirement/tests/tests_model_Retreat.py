@@ -19,6 +19,7 @@ from retirement.models import (
     Retreat,
     RetreatDate,
     RetreatType,
+    Reservation,
 )
 from store.models import (
     OptionProduct
@@ -682,3 +683,28 @@ class RetreatTests(APITestCase):
         for user in distribution:
             room_set.add(user['room_number'])
         self.assertEqual(len(room_set), 9)
+
+    def test_get_participants_emails(self):
+        user = UserFactory(email='email@1')
+        user2 = UserFactory(email='email@2')
+        user3 = UserFactory(email='email@3')
+
+        Reservation.objects.create(
+            user=user,
+            retreat=self.retreat,
+            is_active=True,
+        )
+        Reservation.objects.create(
+            user=user2,
+            retreat=self.retreat,
+            is_active=True,
+        )
+        Reservation.objects.create(
+            user=user3,
+            retreat=self.retreat,
+            is_active=False,
+        )
+        emails = self.retreat.get_participants_emails()
+        self.assertEqual(2, len(emails))
+        self.assertTrue(user.email in emails)
+        self.assertTrue(user2.email in emails)
