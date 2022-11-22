@@ -31,7 +31,6 @@ from retirement.models import (
     RetreatDate,
     Reservation,
 )
-
 User = get_user_model()
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
