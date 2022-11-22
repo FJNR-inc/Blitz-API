@@ -971,10 +971,22 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         otherwise regular refund will be done.
         """
         active_reservations = self.reservations.filter(is_active=True)
-        for reservation in active_reservations:
-            reservation.process_refund(
-                Reservation.CANCELATION_REASON_RETREAT_DELETED,
-                force_refund)
+        refund_data = []
+
+        # Process the refund and gather data to be sent by email
+        with transaction.atomic():
+            for reservation in active_reservations:
+                refund_data.append(
+                    reservation.process_refund(
+                        Reservation.CANCELATION_REASON_RETREAT_DELETED,
+                        force_refund)
+                )
+
+        # Send emails to each participant having a refund
+        with transaction.atomic():
+            for data in refund_data:
+                if data:
+                    Reservation.send_refund_confirmation_email(data)
 
     def custom_delete(self, deletion_message=None, force_refund=False):
         """
@@ -987,11 +999,11 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         self.hide_from_client_admin_panel = True
         if self.total_reservations > 0:
             from .services import send_deleted_retreat_email
+            self.cancel_participants_reservation(force_refund)
             send_deleted_retreat_email(
                 self,
                 self.get_participants_emails(),
                 deletion_message)
-            self.cancel_participants_reservation(force_refund)
         self.save()
 
 
@@ -1211,8 +1223,17 @@ class Reservation(SafeDeleteModel):
         )
         return refund
 
-    def send_refund_confirmation_email(self, amount, retreat, order, user,
-                                       total_amount, amount_tax):
+    @staticmethod
+    def send_refund_confirmation_email(email_dict):
+        """
+        :params email_dict: contains all data necessary for email sending
+        """
+        amount = email_dict['amount']
+        retreat = email_dict['retreat']
+        order = email_dict['order']
+        user = email_dict['user']
+        total_amount = email_dict['total_amount']
+        amount_tax = email_dict['amount_tax']
         # Here the price takes the applied coupon into account, if
         # applicable.
         old_retreat = {
@@ -1360,17 +1381,18 @@ class Reservation(SafeDeleteModel):
                         retreat.add_wait_queue_place(user)
                     retreat.save()
 
-        # Send an email if a refund has been issued
+        email_data = {}
         if reservation_active and \
                 self.cancelation_action == self.CANCELATION_ACTION_REFUND:
-            self.send_refund_confirmation_email(
-                amount=round(refund.amount - refund.amount * TAX_RATE, 2),
-                retreat=retreat,
-                order=order,
-                user=user,
-                total_amount=refund.amount,
-                amount_tax=round(refund.amount * TAX_RATE, 2),
-            )
+            email_data = {
+                'amount': round(refund.amount - refund.amount * TAX_RATE, 2),
+                'retreat': retreat,
+                'order': order,
+                'user': user,
+                'total_amount': refund.amount,
+                'amount_tax': round(refund.amount * TAX_RATE, 2),
+            }
+        return email_data
 
 
 class RetreatUsageLog(models.Model):

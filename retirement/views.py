@@ -620,7 +620,10 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         else:
             cancel_reason = Reservation.CANCELATION_REASON_USER_CANCELLED
 
-        instance.process_refund(cancel_reason, force_refund)
+        refund_data = instance.process_refund(cancel_reason, force_refund)
+        if refund_data:
+            Reservation.send_refund_confirmation_email(refund_data)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
