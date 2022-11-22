@@ -98,6 +98,9 @@ class RetreatTests(CustomAPITestCase):
         'hide_from_client_admin_panel',
         'require_purchase_room',
         'available_on_retreat_types',
+        'is_specific_to_community',
+        'community_description',
+        'community_name',
     ]
 
     @classmethod
