@@ -1294,6 +1294,170 @@ class RetreatTests(CustomAPITestCase):
             self.retreat.reservations.filter(is_active=True).count()
         )
 
+    def test_batch_activate_retreat_invalid_ids(self):
+        """
+        Ensure we can activate multiple retreat with one call.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        retreat = Retreat.objects.create(
+            name="mega retreat",
+            details="This is a description of the mega retreat.",
+            seats=400,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+            price=199,
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            activity_language='FR',
+            accessibility=True,
+            form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
+            type=self.retreatType,
+        )
+
+        # Two IDs does not exist in this data
+        data = {
+            'retreats': [997, 998, retreat.id],
+        }
+
+        response = self.client.post(
+            reverse('retreat:retreat-batch-activate'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.assertEqual(
+            response.json(),
+            {
+                'retreat_ids': [
+                    'These retreats does not exist: [997, 998]'
+                ]
+            }
+        )
+
+    def test_batch_activate_retreat_error_on_activation(self):
+        """
+        Ensure we can activate multiple retreat with one call.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        retreat = Retreat.objects.create(
+            name="mega retreat",
+            details="This is a description of the mega retreat.",
+            seats=400,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+            price=199,
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            activity_language='FR',
+            accessibility=True,
+            form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
+            type=self.retreatType,
+        )
+
+        # Two IDs does not exist in this data
+        data = {
+            'retreats': [retreat.id],
+        }
+
+        response = self.client.post(
+            reverse('retreat:retreat-batch-activate'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.assertEqual(
+            response.json(),
+            {
+                "retreat": retreat.id,
+                "non_field_errors": [
+                    "Retreat need to have a start time before activate it"
+                ]
+            }
+        )
+
+    def test_batch_activate_retreat(self):
+        """
+        Ensure we can activate multiple retreat with one call.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        retreat = Retreat.objects.create(
+            name="mega retreat",
+            details="This is a description of the mega retreat.",
+            seats=400,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+            price=199,
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            activity_language='FR',
+            accessibility=True,
+            form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
+            type=self.retreatType,
+        )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=retreat,
+        )
+
+        # Two IDs does not exist in this data
+        data = {
+            'retreats': [retreat.id],
+        }
+
+        response = self.client.post(
+            reverse('retreat:retreat-batch-activate'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.assertEqual(
+            response.content,
+            b'',
+        )
+
     def test_reminder_email_too_early(self):
         """
         Ensure we can't send emails too early. Prevents spamming by anonymous

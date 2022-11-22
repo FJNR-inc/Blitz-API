@@ -317,6 +317,12 @@ class BatchRetreatSerializer(RetreatSerializer):
         return attrs
 
 
+class BatchActivateRetreatSerializer(serializers.Serializer):
+    retreats = serializers.ListField(
+        child=serializers.IntegerField(),
+    )
+
+
 class PictureSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
 
