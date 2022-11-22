@@ -208,12 +208,16 @@ class TimeSlot(SafeDeleteModel):
 
 class Reservation(SafeDeleteModel):
     """Represents a user registration to a TimeSlot"""
+    CANCELATION_REASON_USER_CANCELLED = 'U'
+    CANCELATION_REASON_TIMESLOT_DELETED = 'TD'
+    CANCELATION_REASON_TIMESLOT_MODIFIED = 'TM'
+    CANCELATION_REASON_ADMIN_CANCELLED = 'A'
 
     CANCELATION_REASON = (
-        ('U', _("User canceled")),
-        ('TD', _("Timeslot deleted")),
-        ('TM', _("Timeslot modified")),
-        ('A', _("Admin canceled")),
+        (CANCELATION_REASON_USER_CANCELLED, _("User canceled")),
+        (CANCELATION_REASON_TIMESLOT_DELETED, _("Timeslot deleted")),
+        (CANCELATION_REASON_TIMESLOT_MODIFIED, _("Timeslot modified")),
+        (CANCELATION_REASON_ADMIN_CANCELLED, _("Admin canceled")),
     )
 
     user = models.ForeignKey(

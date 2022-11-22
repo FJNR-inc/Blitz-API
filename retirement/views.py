@@ -616,9 +616,9 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         if self.request.user.is_staff:
             force_refund = request.data.get('force_refund', False)
         if self.request.user.id != user.id:
-            cancel_reason = 'A'
+            cancel_reason = Reservation.CANCELATION_REASON_ADMIN_CANCELLED
         else:
-            cancel_reason = 'U'
+            cancel_reason = Reservation.CANCELATION_REASON_USER_CANCELLED
 
         instance.process_refund(cancel_reason, force_refund)
         return Response(status=status.HTTP_204_NO_CONTENT)

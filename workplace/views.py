@@ -531,9 +531,11 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
             instance.is_active = False
             instance.cancelation_date = timezone.now()
             if self.request.user.id != user.id:
-                instance.cancelation_reason = 'A'
+                instance.cancelation_reason = \
+                    Reservation.CANCELATION_REASON_ADMIN_CANCELLED
             else:
-                instance.cancelation_reason = 'U'
+                instance.cancelation_reason = \
+                    Reservation.CANCELATION_REASON_USER_CANCELLED
             instance.save()
             if self.request.user.is_staff:
                 ticket_return = request.data.get('ticket_return', False)

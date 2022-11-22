@@ -972,7 +972,9 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         """
         active_reservations = self.reservations.filter(is_active=True)
         for reservation in active_reservations:
-            reservation.process_refund('RD', force_refund)
+            reservation.process_refund(
+                Reservation.CANCELATION_REASON_RETREAT_DELETED,
+                force_refund)
 
     def custom_delete(self, deletion_message=None, force_refund=False):
         """
@@ -1056,18 +1058,26 @@ class Picture(models.Model):
 
 class Reservation(SafeDeleteModel):
     """Represents a user registration to a Retreat"""
+    CANCELATION_REASON_USER_CANCELLED = 'U'
+    CANCELATION_REASON_RETREAT_DELETED = 'RD'
+    CANCELATION_REASON_RETREAT_MODIFIED = 'RM'
+    CANCELATION_REASON_ADMIN_CANCELLED = 'A'
+
+    CANCELATION_ACTION_REFUND = 'R'
+    CANCELATION_ACTION_EXCHANGE = 'E'
+    CANCELATION_ACTION_NONE = 'N'
 
     CANCELATION_REASON = (
-        ('U', _("User canceled")),
-        ('RD', _("Retreat deleted")),
-        ('RM', _("Retreat modified")),
-        ('A', _("Admin canceled")),
+        (CANCELATION_REASON_USER_CANCELLED, _("User canceled")),
+        (CANCELATION_REASON_RETREAT_DELETED, _("Retreat deleted")),
+        (CANCELATION_REASON_RETREAT_MODIFIED, _("Retreat modified")),
+        (CANCELATION_REASON_ADMIN_CANCELLED, _("Admin canceled")),
     )
 
     CANCELATION_ACTION = (
-        ('R', _("Refund")),
-        ('E', _("Exchange")),
-        ('N', _("None")),
+        (CANCELATION_ACTION_REFUND, _("Refund")),
+        (CANCELATION_ACTION_EXCHANGE, _("Exchange")),
+        (CANCELATION_ACTION_NONE, _("None")),
     )
 
     user = models.ForeignKey(
@@ -1077,10 +1087,10 @@ class Reservation(SafeDeleteModel):
         related_name='retreat_reservations',
     )
     REFUND_REASON = {
-        'U': "Reservation canceled",
-        'RD': "Retreat deleted",
-        'RM': "Retreat modified",
-        'A': "Reservation canceled",
+        CANCELATION_REASON_USER_CANCELLED: "Reservation canceled",
+        CANCELATION_REASON_RETREAT_DELETED: "Retreat deleted",
+        CANCELATION_REASON_RETREAT_MODIFIED: "Retreat modified",
+        CANCELATION_REASON_ADMIN_CANCELLED: "Reservation canceled",
     }
     retreat = models.ForeignKey(
         Retreat,
@@ -1334,9 +1344,9 @@ class Reservation(SafeDeleteModel):
                                 'detail': err.detail
                             }
                         )
-                    self.cancelation_action = 'R'
+                    self.cancelation_action = self.CANCELATION_ACTION_REFUND
                 else:
-                    self.cancelation_action = 'N'
+                    self.cancelation_action = self.CANCELATION_ACTION_NONE
                 self.is_active = False
 
                 self.cancelation_reason = cancel_reason
@@ -1344,14 +1354,15 @@ class Reservation(SafeDeleteModel):
                 self.save()
 
                 # free seat unless retreat is deleted
-                if cancel_reason != 'RD':
+                if cancel_reason != self.CANCELATION_REASON_RETREAT_DELETED:
                     free_seats = retreat.places_remaining
                     if retreat.reserved_seats or free_seats == 1:
                         retreat.add_wait_queue_place(user)
                     retreat.save()
 
         # Send an email if a refund has been issued
-        if reservation_active and self.cancelation_action == 'R':
+        if reservation_active and \
+                self.cancelation_action == self.CANCELATION_ACTION_REFUND:
             self.send_refund_confirmation_email(
                 amount=round(refund.amount - refund.amount * TAX_RATE, 2),
                 retreat=retreat,

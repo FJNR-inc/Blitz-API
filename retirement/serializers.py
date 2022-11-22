@@ -492,8 +492,10 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             instance = Reservation.objects.get(id=instance_pk)
 
             canceled_reservation.is_active = False
-            canceled_reservation.cancelation_reason = 'U'
-            canceled_reservation.cancelation_action = 'E'
+            canceled_reservation.cancelation_reason = \
+                Reservation.CANCELATION_REASON_USER_CANCELLED
+            canceled_reservation.cancelation_action = \
+                Reservation.CANCELATION_ACTION_EXCHANGE
             canceled_reservation.cancelation_date = timezone.now()
             canceled_reservation.save()
 
