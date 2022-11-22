@@ -222,6 +222,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         deletion_message = request.data.get('deletion_message', None)
+        force_refund = request.data.get('force_refund', False)
         if instance.total_reservations > 0 and not deletion_message:
             error = {
                 'deletion_message': _("There is at least one participant to "
@@ -230,7 +231,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             }
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
         if instance.is_active:
-            instance.custom_delete(deletion_message)
+            instance.custom_delete(deletion_message, force_refund)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @transaction.atomic()

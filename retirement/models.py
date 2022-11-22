@@ -944,6 +944,44 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
         return sorted(retreat_room_distribution, key=itemgetter('room_number'))
 
+    def get_participants_emails(self):
+        """
+        Return a list of participant emails
+        """
+        participant_emails = set()
+        active_reservations = self.reservations.filter(is_active=True)
+        for reservation in active_reservations:
+            participant_emails.add(reservation.user.email)
+        return list(participant_emails)
+
+    def cancel_participants_reservation(self, force_refund):
+        """
+        Cancel all participants' reservation
+        :params force_refund: True if we want to force refund for participants,
+        otherwise regular refund will be done.
+        """
+        active_reservations = self.reservations.filter(is_active=True)
+        for reservation in active_reservations:
+            reservation.process_refund('RD', force_refund)
+
+    def custom_delete(self, deletion_message=None, force_refund=False):
+        """
+        Deleting a retreat sends an email to all registered participants
+        set the retreat to inactive and hide it from the admin panel.
+        The object itself is not destroyed.
+        A refund will be made if applicable to all participants
+        """
+        self.is_active = False
+        self.hide_from_client_admin_panel = True
+        if self.total_reservations > 0:
+            from .services import send_deleted_retreat_email
+            send_deleted_retreat_email(
+                self,
+                self.get_participants_emails(),
+                deletion_message)
+            self.cancel_participants_reservation(force_refund)
+        self.save()
+
 
 class RetreatDate(models.Model):
 
