@@ -7,19 +7,27 @@ from operator import itemgetter
 
 import requests
 from django.conf import settings
-from django.core.mail import mail_admins, send_mail
+from django.core.mail import mail_admins
+from django.core.mail import send_mail as django_send_mail
+from django.template.loader import render_to_string
 from django.utils import timezone
+
+from rest_framework import serializers as rest_framework_serializers
 
 from blitz_api.services import send_mail as send_templated_email
 from blitz_api.cron_manager_api import CronManager
 from blitz_api.models import Address
 from django.contrib.auth import get_user_model
-from django.db import models
+from django.db import models, transaction
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
 
+from log_management.models import (
+    Log,
+    EmailLog,
+)
 from store.models import (
     Membership,
     OrderLine,
@@ -30,6 +38,8 @@ from store.models import (
     Refund,
 )
 from store.services import refund_amount
+from store.exceptions import PaymentAPIError
+from store.services import PAYSAFE_EXCEPTION
 
 User = get_user_model()
 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
@@ -1066,6 +1076,12 @@ class Reservation(SafeDeleteModel):
         verbose_name=_("User"),
         related_name='retreat_reservations',
     )
+    REFUND_REASON = {
+        'U': "Reservation canceled",
+        'RD': "Retreat deleted",
+        'RM': "Retreat modified",
+        'A': "Reservation canceled",
+    }
     retreat = models.ForeignKey(
         Retreat,
         on_delete=models.CASCADE,
@@ -1184,6 +1200,166 @@ class Reservation(SafeDeleteModel):
             refund_id=refund_res_content['id'],
         )
         return refund
+
+    def send_refund_confirmation_email(self, amount, retreat, order, user,
+                                       total_amount, amount_tax):
+        # Here the price takes the applied coupon into account, if
+        # applicable.
+        old_retreat = {
+            'price': (amount * retreat.refund_rate) / 100,
+            'name': "{0}: {1}".format(
+                _("Retreat"),
+                retreat.name
+            )
+        }
+
+        # Send order confirmation email
+        merge_data = {
+            'DATETIME': timezone.localtime().strftime("%x %X"),
+            'ORDER_ID': order.id,
+            'CUSTOMER_NAME': user.first_name + " " + user.last_name,
+            'CUSTOMER_EMAIL': user.email,
+            'CUSTOMER_NUMBER': user.id,
+            'TYPE': "Remboursement",
+            'OLD_RETREAT': old_retreat,
+            'COST': total_amount,
+            'TAX': amount_tax,
+        }
+
+        plain_msg = render_to_string("refund.txt", merge_data)
+        msg_html = render_to_string("refund.html", merge_data)
+
+        try:
+            response_send_mail = django_send_mail(
+                "Confirmation de remboursement",
+                plain_msg,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                html_message=msg_html,
+            )
+
+            EmailLog.add(user.email, 'refund', response_send_mail)
+        except Exception as err:
+            additional_data = {
+                'title': "Confirmation de votre nouvelle adresse courriel",
+                'default_from': settings.DEFAULT_FROM_EMAIL,
+                'user_email': user.email,
+                'merge_data': merge_data,
+                'template': 'notify_user_of_change_email'
+            }
+            Log.error(
+                source='SENDING_BLUE_TEMPLATE',
+                message=err,
+                additional_data=json.dumps(additional_data)
+            )
+            raise
+
+    def process_refund(self, cancel_reason, force_refund):
+        """
+        User will be refund the retreat's "refund_rate" if we're at least
+        "min_day_refund" days before the event.
+
+        By canceling 'min_day_refund' days or more before the event, the user
+         will be refunded 'refund_rate'% of the price paid.
+        The user will receive an email confirming the refund or inviting the
+         user to contact the support if his payment information are no longer
+         valid.
+        If the user cancels less than 'min_day_refund' days before the event,
+         no refund is made unless forced by admin.
+
+        Taxes are refunded proportionally to refund_rate.
+        """
+        retreat = self.retreat
+        user = self.user
+        reservation_active = self.is_active
+        order_line = self.order_line
+        if order_line:
+            order = order_line.order
+            refundable = self.refundable
+        else:
+            order = None
+            refundable = False
+        respects_minimum_days = (
+                (retreat.start_time - timezone.now()) >=
+                timedelta(days=retreat.min_day_refund))
+
+        # In order to process a refund we need to be in one of those
+        # two cases:
+        #
+        #  1 - We respect the date limit to be refund and the retreat is
+        #  refundable
+        #
+        #  2 - An admin want to force a refund and the user paid for
+        #  his reservation
+        #
+        # In all case, only paid reservation (amount > 0) can be refunded
+        if self.get_refund_value() > 0:
+            process_refund = (respects_minimum_days and refundable) or \
+                             force_refund
+        else:
+            process_refund = False
+
+        with transaction.atomic():
+            # No need to check for previous refunds because a refunded
+            # reservation is automatically canceled, thus not active.
+            if reservation_active:
+                if order_line and order_line.quantity > 1:
+                    raise rest_framework_serializers.ValidationError({
+                        'non_field_errors': [_(
+                            "The order containing this reservation has a "
+                            "quantity bigger than 1. Please contact the "
+                            "support team."
+                        )]
+                    })
+                if process_refund:
+                    try:
+                        refund = self.make_refund(
+                            self.REFUND_REASON[cancel_reason])
+                    except PaymentAPIError as err:
+                        if str(err) == PAYSAFE_EXCEPTION['3406']:
+                            raise rest_framework_serializers.ValidationError({
+                                'non_field_errors': [_(
+                                    "The order has not been charged yet. Try "
+                                    "again later."
+                                )],
+                                'detail': err.detail
+                            })
+                        raise rest_framework_serializers.ValidationError(
+                            {
+                                'message': str(err),
+                                'non_field_errors': [_(
+                                    "An error occured with the payment system."
+                                    " Please try again later."
+                                )],
+                                'detail': err.detail
+                            }
+                        )
+                    self.cancelation_action = 'R'
+                else:
+                    self.cancelation_action = 'N'
+                self.is_active = False
+
+                self.cancelation_reason = cancel_reason
+                self.cancelation_date = timezone.now()
+                self.save()
+
+                # free seat unless retreat is deleted
+                if cancel_reason != 'RD':
+                    free_seats = retreat.places_remaining
+                    if retreat.reserved_seats or free_seats == 1:
+                        retreat.add_wait_queue_place(user)
+                    retreat.save()
+
+        # Send an email if a refund has been issued
+        if reservation_active and self.cancelation_action == 'R':
+            self.send_refund_confirmation_email(
+                amount=round(refund.amount - refund.amount * TAX_RATE, 2),
+                retreat=retreat,
+                order=order,
+                user=user,
+                total_amount=refund.amount,
+                amount_tax=round(refund.amount * TAX_RATE, 2),
+            )
 
 
 class RetreatUsageLog(models.Model):
