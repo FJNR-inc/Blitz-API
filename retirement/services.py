@@ -374,3 +374,22 @@ def send_automatic_email(user, retreat, email):
         email.template_id
     )
     return response_send_mail
+
+
+def send_deleted_retreat_email(retreat, users_emails, deletion_message):
+    """
+    This function sends an automatic email to notify all registered users
+    of a retreat that it has been deleted
+    """
+
+    context = {
+        'RETREAT_NAME': retreat.name_fr,
+        'MESSAGE': deletion_message,
+    }
+
+    response_send_mail = send_templated_email(
+        users_emails,
+        context,
+        'RETREAT_DELETED'
+    )
+    return response_send_mail

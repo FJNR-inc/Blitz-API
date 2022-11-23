@@ -936,7 +936,10 @@ class ReservationTests(APITestCase):
         self.reservation.refresh_from_db()
 
         self.assertFalse(self.reservation.is_active)
-        self.assertEqual(self.reservation.cancelation_reason, 'U')
+        self.assertEqual(
+            self.reservation.cancelation_reason,
+            Reservation.CANCELATION_REASON_USER_CANCELLED
+        )
         self.assertEqual(self.reservation.cancelation_date, FIXED_TIME)
 
         self.reservation.is_active = True
@@ -966,7 +969,10 @@ class ReservationTests(APITestCase):
         self.reservation.refresh_from_db()
 
         self.assertFalse(self.reservation.is_active)
-        self.assertEqual(self.reservation.cancelation_reason, 'A')
+        self.assertEqual(
+            self.reservation.cancelation_reason,
+            Reservation.CANCELATION_REASON_ADMIN_CANCELLED
+        )
         self.assertEqual(self.reservation.cancelation_date, FIXED_TIME)
 
         self.reservation.is_active = True
@@ -1019,7 +1025,10 @@ class ReservationTests(APITestCase):
         self.reservation.refresh_from_db()
 
         self.assertFalse(self.reservation.is_active)
-        self.assertEqual(self.reservation.cancelation_reason, 'U')
+        self.assertEqual(
+            self.reservation.cancelation_reason,
+            Reservation.CANCELATION_REASON_USER_CANCELLED
+        )
         self.assertEqual(self.reservation.cancelation_date, FIXED_TIME)
 
         self.reservation.is_active = True

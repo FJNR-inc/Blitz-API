@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 from datetime import (
     datetime,
     timedelta,
@@ -28,8 +29,8 @@ from retirement.models import (
     Retreat,
     RetreatType,
     RetreatDate,
+    Reservation,
 )
-
 User = get_user_model()
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
@@ -1017,9 +1018,10 @@ class RetreatTests(CustomAPITestCase):
             data['community_name'],
         )
 
-    def test_delete(self):
+    def test_delete_without_participants(self):
         """
         Ensure we can delete a retreat (setting is_active to false).
+        without participants
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -1038,6 +1040,85 @@ class RetreatTests(CustomAPITestCase):
 
         self.retreat.refresh_from_db()
         self.assertFalse(self.retreat.is_active)
+        self.assertTrue(self.retreat.hide_from_client_admin_panel)
+
+        self.retreat.is_active = True
+
+    def test_delete_with_participants_no_message(self):
+        """
+        Ensure we can't delete a retreat that has participants
+        without a message.
+        """
+        self.client.force_authenticate(user=self.admin)
+        user = UserFactory()
+        Reservation.objects.create(
+            user=user,
+            retreat=self.retreat,
+            is_active=True,
+        )
+
+        response = self.client.delete(
+            reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat.id},
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+    @patch('retirement.models.Retreat.cancel_participants_reservation')
+    @patch('retirement.services.send_deleted_retreat_email')
+    def test_delete_with_participants(self, mock_email, mock_cancel):
+        """
+        Ensure we can delete a retreat that has participants
+        """
+        self.client.force_authenticate(user=self.admin)
+        deletion_message = 'No more fun.'
+
+        user = UserFactory()
+        user2 = UserFactory()
+
+        Reservation.objects.create(
+            user=user,
+            retreat=self.retreat,
+            is_active=True,
+        )
+        Reservation.objects.create(
+            user=user2,
+            retreat=self.retreat,
+            is_active=True,
+        )
+
+        response = self.client.delete(
+            reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat.id},
+            ),
+            {
+                'deletion_message': deletion_message
+            }
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content,
+        )
+
+        mock_email.assert_called_once_with(
+            self.retreat,
+            self.retreat.get_participants_emails(),
+            deletion_message
+        )
+        mock_cancel.assert_called_once_with(False)
+
+        self.retreat.refresh_from_db()
+        self.assertFalse(self.retreat.is_active)
+        self.assertTrue(self.retreat.hide_from_client_admin_panel)
 
         self.retreat.is_active = True
 
