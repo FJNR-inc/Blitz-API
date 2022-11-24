@@ -680,7 +680,6 @@ class ExportMedia(models.Model):
     EXPORT_RETREAT_SALES = 'RETREAT SALES'
     EXPORT_RETREAT_PARTICIPATION = 'RETREAT PARTICIPATION'
     EXPORT_RETREAT_OPTIONS = 'RETREAT OPTIONS'
-    EXPORT_RETREAT_ROOM_DISTRIBUTION = 'RETREAT ROOM DISTRIBUTION'
 
     EXPORT_CHOICES = (
         (EXPORT_ANONYMOUS_CHRONO_DATA, _('Anonymous Chrono data')),
@@ -688,7 +687,6 @@ class ExportMedia(models.Model):
         (EXPORT_RETREAT_SALES, _('Retreat sales')),
         (EXPORT_RETREAT_PARTICIPATION, _('Retreat participation')),
         (EXPORT_RETREAT_OPTIONS, _('Retreat options')),
-        (EXPORT_RETREAT_ROOM_DISTRIBUTION, _('Retreat room distribution')),
     )
 
     file = models.FileField(
