@@ -35,7 +35,7 @@ from .resources import (
 
 from .exports import (
     generate_retreat_sales,
-    generate_retreat_room_distribution
+    generate_retreat_participation
 )
 
 User = get_user_model()
@@ -125,13 +125,13 @@ def export_retreat_sales(self, request, queryset):
 export_retreat_sales.short_description = 'export_retreat_sales'
 
 
-def export_retreat_room_distribution(self, request, queryset):
+def export_retreat_participation(self, request, queryset):
     for retreat in queryset:
-        generate_retreat_room_distribution.delay(request.user.id, retreat.id)
+        generate_retreat_participation.delay(request.user.id, retreat.id)
 
 
-export_retreat_room_distribution.short_description = \
-    'export_retreat_room_distribution'
+export_retreat_participation.short_description = \
+    'export_retreat_participation'
 
 
 class RetreatAdmin(SimpleHistoryAdmin,
@@ -169,7 +169,7 @@ class RetreatAdmin(SimpleHistoryAdmin,
         make_reservation_not_refundable,
         make_reservation_refundable,
         export_retreat_sales,
-        export_retreat_room_distribution
+        export_retreat_participation
     ]
 
 
