@@ -1,4 +1,3 @@
-import json
 from datetime import datetime, timedelta
 import locale
 import pytz
@@ -18,9 +17,7 @@ from django_filters import (
 from blitz_api.mixins import ExportMixin
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail as django_send_mail
 from django.db import transaction
-from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
@@ -29,7 +26,6 @@ from rest_framework import (
     status,
     viewsets,
 )
-from rest_framework import serializers as rest_framework_serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import (
     IsAdminUser,
@@ -39,13 +35,8 @@ from rest_framework.response import Response
 
 from blitz_api.models import ExportMedia
 from blitz_api.serializers import ExportMediaSerializer
-from log_management.models import (
-    Log,
-    EmailLog,
-)
-from store.exceptions import PaymentAPIError
+
 from store.models import OrderLineBaseProduct
-from store.services import PAYSAFE_EXCEPTION
 
 from . import (
     permissions,
