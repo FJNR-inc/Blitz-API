@@ -60,7 +60,6 @@ from .resources import (
     ReservationResource,
     RetreatResource,
     WaitQueueResource,
-    RetreatReservationResource,
     OptionProductResource,
 )
 from .serializers import (
