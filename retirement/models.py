@@ -793,7 +793,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                         room_number += 1
                         retreat_room_distribution[value['id']] = \
                             self._set_participant_room(value, room_number)
-                        retreat_room_distribution[value['id']] = \
+                        roommate_id = friend_pool[value['share_with']]['id']
+                        retreat_room_distribution[roommate_id] = \
                             self._set_participant_room(
                                 friend_pool[value['share_with']],
                                 room_number)
@@ -812,7 +813,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                         room_number += 1
                         retreat_room_distribution[value['id']] = \
                             self._set_participant_room(value, room_number)
-                        retreat_room_distribution[value['id']] = \
+                        roommate_id = room_pool[current_man_room]['id']
+                        retreat_room_distribution[roommate_id] = \
                             self._set_participant_room(
                                 room_pool[current_man_room],
                                 room_number)
@@ -824,7 +826,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                         room_number += 1
                         retreat_room_distribution[value['id']] = \
                             self._set_participant_room(value, room_number)
-                        retreat_room_distribution[value['id']] = \
+                        roommate_id = room_pool[current_woman_room]['id']
+                        retreat_room_distribution[roommate_id] = \
                             self._set_participant_room(
                                 room_pool[current_woman_room],
                                 room_number)
@@ -836,7 +839,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                         room_number += 1
                         retreat_room_distribution[value['id']] = \
                             self._set_participant_room(value, room_number)
-                        retreat_room_distribution[value['id']] = \
+                        roommate_id = room_pool[current_non_binary_room]['id']
+                        retreat_room_distribution[roommate_id] = \
                             self._set_participant_room(
                                 room_pool[current_non_binary_room],
                                 room_number)
@@ -851,7 +855,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 room_number += 1
                 retreat_room_distribution[value['id']] = \
                     self._set_participant_room(value, room_number)
-                retreat_room_distribution[value['id']] = \
+                roommate_id = room_pool[current_man_room]['id']
+                retreat_room_distribution[roommate_id] = \
                     self._set_participant_room(
                         room_pool[current_man_room],
                         room_number)
@@ -860,7 +865,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 room_number += 1
                 retreat_room_distribution[value['id']] = \
                     self._set_participant_room(value, room_number)
-                retreat_room_distribution[value['id']] = \
+                roommate_id = room_pool[current_woman_room]['id']
+                retreat_room_distribution[roommate_id] = \
                     self._set_participant_room(
                         room_pool[current_woman_room],
                         room_number)
@@ -869,7 +875,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 room_number += 1
                 retreat_room_distribution[value['id']] = \
                     self._set_participant_room(value, room_number)
-                retreat_room_distribution[value['id']] = \
+                roommate_id = room_pool[current_non_binary_room]['id']
+                retreat_room_distribution[roommate_id] = \
                     self._set_participant_room(
                         room_pool[current_non_binary_room],
                         room_number)
@@ -878,9 +885,10 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 room_number += 1
                 retreat_room_distribution[value['id']] = \
                     self._set_participant_room(value, room_number)
-                retreat_room_distribution[value['id']] = \
+                roommate_id = room_pool[current_mixed_room]['id']
+                retreat_room_distribution[roommate_id] = \
                     self._set_participant_room(
-                        room_pool[current_mixed_room],
+                        mixed_pool[current_mixed_room],
                         room_number)
                 current_mixed_room = None
             else:
@@ -889,25 +897,29 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         # Handling unpaired participants
         if current_mixed_room:
             room_number += 1
-            retreat_room_distribution[value['id']] = \
+            roommate_id = mixed_pool[current_mixed_room]['id']
+            retreat_room_distribution[roommate_id] = \
                 self._set_participant_room(
-                    room_pool[current_mixed_room],
+                    mixed_pool[current_mixed_room],
                     room_number)
         else:
             if current_man_room and \
                     current_woman_room and \
                     current_non_binary_room:
                 room_number += 1
-                retreat_room_distribution[value['id']] = \
+                roommate_id = room_pool[current_man_room]['id']
+                retreat_room_distribution[roommate_id] = \
                     self._set_participant_room(
                         room_pool[current_man_room],
                         room_number)
-                retreat_room_distribution[value['id']] = \
+                roommate_id = room_pool[current_woman_room]['id']
+                retreat_room_distribution[roommate_id] = \
                     self._set_participant_room(
                         room_pool[current_woman_room],
                         room_number)
                 room_number += 1
-                retreat_room_distribution[value['id']] = \
+                roommate_id = room_pool[current_non_binary_room]['id']
+                retreat_room_distribution[roommate_id] = \
                     self._set_participant_room(
                         room_pool[current_non_binary_room],
                         room_number)
@@ -916,21 +928,23 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                     current_non_binary_room:
                 room_number += 1
                 if current_man_room:
-                    retreat_room_distribution[value['id']] = \
+                    roommate_id = room_pool[current_man_room]['id']
+                    retreat_room_distribution[roommate_id] = \
                         self._set_participant_room(
                             room_pool[current_man_room],
                             room_number)
                 if current_woman_room:
-                    retreat_room_distribution[value['id']] = \
+                    roommate_id = room_pool[current_woman_room]['id']
+                    retreat_room_distribution[roommate_id] = \
                         self._set_participant_room(
                             room_pool[current_woman_room],
                             room_number)
                 if current_non_binary_room:
-                    retreat_room_distribution[value['id']] = \
+                    roommate_id = room_pool[current_non_binary_room]['id']
+                    retreat_room_distribution[roommate_id] = \
                         self._set_participant_room(
                             room_pool[current_non_binary_room],
                             room_number)
-
         return retreat_room_distribution
 
     def get_participants_emails(self):
