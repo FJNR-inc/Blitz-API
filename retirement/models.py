@@ -721,7 +721,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         """
         Generate room distribution for a retreat, matching people with their
         friends or their preferred gender.
-        Return a list of dict with data and room number for each participant
+        Return a dict of dict with data and room number for each participant
+        with participant id as key
         """
         active_reservations = self.reservations.filter(is_active=True)
         room_pool = {}
@@ -732,13 +733,14 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         current_man_room = None
         current_woman_room = None
         current_non_binary_room = None
-        current_mixte_room = None
+        current_mixed_room = None
 
-        retreat_room_distribution = []
+        retreat_room_distribution = {}
         room_number = 0
 
         for reservation in active_reservations:
             participant_data = {
+                'id': reservation.user.id,
                 'first_name': reservation.user.first_name,
                 'last_name': reservation.user.last_name,
                 'email': reservation.user.email,
@@ -779,12 +781,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         for key, value in single_pool.items():
             if not value['placed']:
                 room_number += 1
-                retreat_room_distribution.append(
-                    self._set_participant_room(
-                        value,
-                        room_number,
-                    )
-                )
+                retreat_room_distribution[value['id']] = \
+                    self._set_participant_room(value, room_number)
 
         # Handling friend pool
         for key, value in friend_pool.items():
@@ -793,18 +791,12 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 if is_in_friend_pool and value['share_with'] != key:
                     if friend_pool[value['share_with']]['share_with'] == key:
                         room_number += 1
-                        retreat_room_distribution.append(
-                            self._set_participant_room(
-                                value,
-                                room_number,
-                            )
-                        )
-                        retreat_room_distribution.append(
+                        retreat_room_distribution[value['id']] = \
+                            self._set_participant_room(value, room_number)
+                        retreat_room_distribution[value['id']] = \
                             self._set_participant_room(
                                 friend_pool[value['share_with']],
-                                room_number,
-                            )
-                        )
+                                room_number)
                         continue
                 # Pairing not found, putting in other pool
                 if value['gender_preference'] == 'mixte':
@@ -818,54 +810,36 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 if value['gender_preference'] == 'man':
                     if current_man_room:
                         room_number += 1
-                        retreat_room_distribution.append(
-                            self._set_participant_room(
-                                value,
-                                room_number,
-                            )
-                        )
-                        retreat_room_distribution.append(
+                        retreat_room_distribution[value['id']] = \
+                            self._set_participant_room(value, room_number)
+                        retreat_room_distribution[value['id']] = \
                             self._set_participant_room(
                                 room_pool[current_man_room],
-                                room_number,
-                            )
-                        )
+                                room_number)
                         current_man_room = None
                     else:
                         current_man_room = key
                 elif value['gender_preference'] == 'woman':
                     if current_woman_room:
                         room_number += 1
-                        retreat_room_distribution.append(
-                            self._set_participant_room(
-                                value,
-                                room_number,
-                            )
-                        )
-                        retreat_room_distribution.append(
+                        retreat_room_distribution[value['id']] = \
+                            self._set_participant_room(value, room_number)
+                        retreat_room_distribution[value['id']] = \
                             self._set_participant_room(
                                 room_pool[current_woman_room],
-                                room_number,
-                            )
-                        )
+                                room_number)
                         current_woman_room = None
                     else:
                         current_woman_room = key
                 elif value['gender_preference'] == 'non-binary':
                     if current_non_binary_room:
                         room_number += 1
-                        retreat_room_distribution.append(
-                            self._set_participant_room(
-                                value,
-                                room_number,
-                            )
-                        )
-                        retreat_room_distribution.append(
+                        retreat_room_distribution[value['id']] = \
+                            self._set_participant_room(value, room_number)
+                        retreat_room_distribution[value['id']] = \
                             self._set_participant_room(
                                 room_pool[current_non_binary_room],
-                                room_number,
-                            )
-                        )
+                                room_number)
                         current_non_binary_room = None
                     else:
                         current_non_binary_room = key
@@ -875,91 +849,89 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
             # fill the rooms or create mixte room
             if current_man_room:
                 room_number += 1
-                retreat_room_distribution.append(self._set_participant_room(
-                    value, room_number))
-                retreat_room_distribution.append(self._set_participant_room(
-                    room_pool[current_man_room], room_number))
+                retreat_room_distribution[value['id']] = \
+                    self._set_participant_room(value, room_number)
+                retreat_room_distribution[value['id']] = \
+                    self._set_participant_room(
+                        room_pool[current_man_room],
+                        room_number)
                 current_man_room = None
             elif current_woman_room:
                 room_number += 1
-                retreat_room_distribution.append(self._set_participant_room(
-                    value, room_number))
-                retreat_room_distribution.append(self._set_participant_room(
-                    room_pool[current_woman_room], room_number))
+                retreat_room_distribution[value['id']] = \
+                    self._set_participant_room(value, room_number)
+                retreat_room_distribution[value['id']] = \
+                    self._set_participant_room(
+                        room_pool[current_woman_room],
+                        room_number)
                 current_woman_room = None
             elif current_non_binary_room:
                 room_number += 1
-                retreat_room_distribution.append(self._set_participant_room(
-                    value, room_number))
-                retreat_room_distribution.append(self._set_participant_room(
-                    room_pool[current_non_binary_room], room_number))
+                retreat_room_distribution[value['id']] = \
+                    self._set_participant_room(value, room_number)
+                retreat_room_distribution[value['id']] = \
+                    self._set_participant_room(
+                        room_pool[current_non_binary_room],
+                        room_number)
                 current_non_binary_room = None
-            elif current_mixte_room:
+            elif current_mixed_room:
                 room_number += 1
-                retreat_room_distribution.append(self._set_participant_room(
-                    value, room_number))
-                retreat_room_distribution.append(self._set_participant_room(
-                    mixed_pool[current_mixte_room], room_number))
-                current_mixte_room = None
+                retreat_room_distribution[value['id']] = \
+                    self._set_participant_room(value, room_number)
+                retreat_room_distribution[value['id']] = \
+                    self._set_participant_room(
+                        room_pool[current_mixed_room],
+                        room_number)
+                current_mixed_room = None
             else:
-                current_mixte_room = key
+                current_mixed_room = key
 
         # Handling unpaired participants
-        if current_mixte_room:
+        if current_mixed_room:
             room_number += 1
-            retreat_room_distribution.append(self._set_participant_room(
-                mixed_pool[current_mixte_room], room_number))
+            retreat_room_distribution[value['id']] = \
+                self._set_participant_room(
+                    room_pool[current_mixed_room],
+                    room_number)
         else:
             if current_man_room and \
                     current_woman_room and \
                     current_non_binary_room:
                 room_number += 1
-                retreat_room_distribution.append(
+                retreat_room_distribution[value['id']] = \
                     self._set_participant_room(
                         room_pool[current_man_room],
-                        room_number,
-                    )
-                )
-                retreat_room_distribution.append(
+                        room_number)
+                retreat_room_distribution[value['id']] = \
                     self._set_participant_room(
                         room_pool[current_woman_room],
-                        room_number,
-                    )
-                )
+                        room_number)
                 room_number += 1
-                retreat_room_distribution.append(
+                retreat_room_distribution[value['id']] = \
                     self._set_participant_room(
                         room_pool[current_non_binary_room],
-                        room_number,
-                    )
-                )
+                        room_number)
             elif current_man_room or \
                     current_woman_room or \
                     current_non_binary_room:
                 room_number += 1
                 if current_man_room:
-                    retreat_room_distribution.append(
+                    retreat_room_distribution[value['id']] = \
                         self._set_participant_room(
                             room_pool[current_man_room],
-                            room_number,
-                        )
-                    )
+                            room_number)
                 if current_woman_room:
-                    retreat_room_distribution.append(
+                    retreat_room_distribution[value['id']] = \
                         self._set_participant_room(
                             room_pool[current_woman_room],
-                            room_number,
-                        )
-                    )
+                            room_number)
                 if current_non_binary_room:
-                    retreat_room_distribution.append(
+                    retreat_room_distribution[value['id']] = \
                         self._set_participant_room(
                             room_pool[current_non_binary_room],
-                            room_number,
-                        )
-                    )
+                            room_number)
 
-        return sorted(retreat_room_distribution, key=itemgetter('room_number'))
+        return retreat_room_distribution
 
     def get_participants_emails(self):
         """
