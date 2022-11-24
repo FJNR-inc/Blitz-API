@@ -518,6 +518,7 @@ class RetreatTests(APITestCase):
         distribution = self.retreat.get_retreat_room_distribution()
         expected_distribution = [
             {
+                'id': user_16.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '16@test.ca',
@@ -528,6 +529,7 @@ class RetreatTests(APITestCase):
                 'placed': True,
             },
             {
+                'id': user_17.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '17@test.ca',
@@ -538,6 +540,7 @@ class RetreatTests(APITestCase):
                 'placed': True,
             },
             {
+                'id': user_1.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '1@test.ca',
@@ -548,6 +551,7 @@ class RetreatTests(APITestCase):
                 'placed': True,
             },
             {
+                'id': user_14.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '14@test.ca',
@@ -558,6 +562,7 @@ class RetreatTests(APITestCase):
                 'placed': True,
             },
             {
+                'id': user_2.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '2@test.ca',
@@ -568,6 +573,7 @@ class RetreatTests(APITestCase):
                 'placed': True,
             },
             {
+                'id': user_11.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '11@test.ca',
@@ -578,6 +584,7 @@ class RetreatTests(APITestCase):
                 'placed': True,
             },
             {
+                'id': user_6.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '6@test.ca',
@@ -588,6 +595,7 @@ class RetreatTests(APITestCase):
                 'placed': True,
             },
             {
+                'id': user_3.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '3@test.ca',
@@ -597,6 +605,7 @@ class RetreatTests(APITestCase):
                 'room_number': 5,
                 'placed': True},
             {
+                'id': user_7.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '7@test.ca',
@@ -607,6 +616,7 @@ class RetreatTests(APITestCase):
                 'placed': True,
             },
             {
+                'id': user_5.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '5@test.ca',
@@ -617,6 +627,7 @@ class RetreatTests(APITestCase):
                 'placed': True,
             },
             {
+                'id': user_9.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '9@test.ca',
@@ -627,6 +638,7 @@ class RetreatTests(APITestCase):
                 'placed': True,
             },
             {
+                'id': user_8.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '8@test.ca',
@@ -637,6 +649,7 @@ class RetreatTests(APITestCase):
                 'placed': True,
             },
             {
+                'id': user_15.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '15@test.ca',
@@ -647,6 +660,7 @@ class RetreatTests(APITestCase):
                 'placed': True,
             },
             {
+                'id': user_10.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '10@test.ca',
@@ -657,6 +671,7 @@ class RetreatTests(APITestCase):
                 'placed': True,
             },
             {
+                'id': user_13.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '13@test.ca',
@@ -667,6 +682,7 @@ class RetreatTests(APITestCase):
                 'placed': True,
             },
             {
+                'id': user_4.id,
                 'first_name': 'x',
                 'last_name': 'y',
                 'email': '4@test.ca',
@@ -678,10 +694,10 @@ class RetreatTests(APITestCase):
             }
         ]
         self.assertEqual(len(distribution), 16)
-        self.assertEqual(distribution, expected_distribution)
         room_set = set()
-        for user in distribution:
-            room_set.add(user['room_number'])
+        for key, value in distribution.items():
+            self.assertTrue(value in expected_distribution)
+            room_set.add(value['room_number'])
         self.assertEqual(len(room_set), 9)
 
     def test_get_participants_emails(self):

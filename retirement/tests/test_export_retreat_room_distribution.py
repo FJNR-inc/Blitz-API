@@ -11,7 +11,7 @@ from retirement.models import (
     RetreatDate,
     Retreat
 )
-from retirement.exports import generate_retreat_room_distribution
+from retirement.exports import generate_retreat_participation
 from blitz_api.models import ExportMedia
 from blitz_api.factories import AdminFactory
 
@@ -131,11 +131,11 @@ class TestExportAnonymousChronoDataTask(TestCase):
                 'placed': True,
             }
         ]
-        generate_retreat_room_distribution(self.admin.id, self.retreat.id)
+        generate_retreat_participation(self.admin.id, self.retreat.id)
         self.assertEqual(
             ExportMedia.objects.all().count(),
             1)
         export = ExportMedia.objects.all().first()
         self.assertEqual(
             export.type,
-            ExportMedia.EXPORT_RETREAT_ROOM_DISTRIBUTION)
+            ExportMedia.EXPORT_RETREAT_PARTICIPATION)
