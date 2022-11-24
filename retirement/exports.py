@@ -130,4 +130,3 @@ def generate_retreat_participation(
     new_export.send_confirmation_email()
 
     return ExportMediaSerializer(new_export)
-
