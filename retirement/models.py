@@ -503,6 +503,13 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
         return seat_remaining if seat_remaining > 0 else 0
 
+    @property
+    def has_room_option(self):
+        for opt in self.options:
+            if opt.is_room_option:
+                return True
+        return False
+
     def has_places_remaining(self, selected_invitation=None):
         seat_remaining = self.places_remaining
 
