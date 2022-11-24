@@ -76,6 +76,9 @@ from .services import (
     send_post_retreat_email,
     send_automatic_email,
 )
+from .exports import (
+    generate_retreat_participation,
+)
 
 User = get_user_model()
 
@@ -489,30 +492,11 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     def export_participation(self, request, pk=None):
 
         retreat: Retreat = self.get_object()
-        # Order queryset by ascending id, thus by descending age too
-        queryset = Reservation.objects.filter(retreat=retreat)
-        # Build dataset using paginated queryset
-        dataset = RetreatReservationResource().export(queryset)
-
-        date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
-            .strftime("%Y%m%d-%H%M%S")
-        filename = f'export-participation-{retreat.name}{date_file}.xls'
-
-        new_exprt = ExportMedia.objects.create(
-            type=ExportMedia.EXPORT_RETREAT_PARTICIPATION,
-        )
-        content = ContentFile(dataset.xls)
-        new_exprt.file.save(filename, content)
-
-        export_url = ExportMediaSerializer(
-            new_exprt,
-            context={'request': request}
-        ).data.get('file')
-
+        export = generate_retreat_participation(request.user.id, retreat.id)
         response = Response(
             status=status.HTTP_200_OK,
             data={
-                'file_url': export_url
+                'file_url': export.data.get('file')
             }
         )
 
