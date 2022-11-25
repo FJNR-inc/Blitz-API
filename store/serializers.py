@@ -478,18 +478,22 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
     def to_representation(self, instance: OrderLine):
         data = super(OrderLineSerializer, self).to_representation(instance)
 
+        data['name'] = instance.content_object.name
+
         data['options'] = []
         options = instance.options.all()
         if options:
             option: BaseProduct
             for option in options:
                 option_id = option.id
-                option_quantity = option.orderlinebaseproduct_set.\
-                    get(order_line_id=instance.id).quantity
+                option_data = option.orderlinebaseproduct_set.\
+                    get(order_line_id=instance.id)
 
                 option_data = {
                     'id': option_id,
-                    'quantity': option_quantity
+                    'name': option_data.option.name,
+                    'quantity': option_data.quantity,
+                    'price': option_data.option.price
                 }
                 data['options'].append(option_data)
 
