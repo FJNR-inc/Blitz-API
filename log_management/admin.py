@@ -73,6 +73,7 @@ class ActionLogAdmin(admin.ModelAdmin):
     )
     date_hierarchy = 'created'
 
+
 admin.site.register(Log, LogAdmin)
 admin.site.register(EmailLog, EmailLogAdmin)
 admin.site.register(ActionLog, ActionLogAdmin)

@@ -101,6 +101,7 @@ class PackageTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         response_content = json.loads(response.content)
@@ -307,6 +308,7 @@ class PackageTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(
@@ -349,6 +351,7 @@ class PackageTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(
@@ -440,12 +443,47 @@ class PackageTests(APITestCase):
                 'available_on_products': [],
                 'options': [],
                 'picture': None,
+                'available_on_retreat_types': [],
             }]
         }
 
         self.assertEqual(data, content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_admin_search_name(self):
+        """
+        Ensure we can list all packages as an admin with a search on name.
+        """
+        self.client.force_authenticate(user=self.admin)
+        package1 = Package.objects.create(
+            name="Romain test",
+            details="100 reservations package",
+            available=True,
+            price=400,
+            reservations=100,
+        )
+        package2 = Package.objects.create(
+            name="Romain test2",
+            details="100 reservations package",
+            available=True,
+            price=400,
+            reservations=100,
+        )
+
+        response = self.client.get(
+            reverse('package-list'),
+            {
+                'search': 'Romain'
+            },
+            format='json',
+        )
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(content['results']), 2)
+        self.assertEqual(content['results'][0]['name'], package1.name)
+        self.assertEqual(content['results'][1]['name'], package2.name)
 
     def test_list_as_admin(self):
         """
@@ -480,6 +518,7 @@ class PackageTests(APITestCase):
                 'available_on_products': [],
                 'options': [],
                 'picture': None,
+                'available_on_retreat_types': [],
             }, {
                 'available': False,
                 'details': 'todo',
@@ -495,6 +534,7 @@ class PackageTests(APITestCase):
                 'available_on_products': [],
                 'options': [],
                 'picture': None,
+                'available_on_retreat_types': [],
             }]
         }
 
@@ -527,6 +567,7 @@ class PackageTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -559,6 +600,7 @@ class PackageTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(

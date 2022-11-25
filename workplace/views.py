@@ -95,7 +95,13 @@ class PeriodViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.PeriodSerializer
     queryset = Period.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
-    filterset_fields = '__all__'
+    filterset_fields = {
+        'name': ['exact'],
+        'workplace': ['exact'],
+        'is_active': ['exact'],
+        'start_date': ['exact', 'gte', 'lte'],
+        'end_date': ['exact', 'gte', 'lte'],
+    }
     ordering = ('name',)
 
     export_resource = PeriodResource()
@@ -106,8 +112,11 @@ class PeriodViewSet(ExportMixin, viewsets.ModelViewSet):
         the currently authenticated user is an admin (is_staff).
         """
         if self.request.user.is_staff:
-            return Period.objects.all()
-        return Period.objects.filter(is_active=True)
+            queryset = Period.objects.all()
+        else:
+            queryset = Period.objects.filter(is_active=True)
+
+        return queryset
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -513,11 +522,25 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         empty response as if it was deleted, but will instead modify specific
         fields to keep a track of events. Subsequent delete request won't do
         anything, but will return a success.
+        An admin can also delete a reservation, but will have the choice to
+        give back the reservation ticket to the user
         """
         instance = self.get_object()
+        user = instance.user
         if instance.is_active:
             instance.is_active = False
-            instance.cancelation_reason = 'U'
             instance.cancelation_date = timezone.now()
+            if self.request.user.id != user.id:
+                instance.cancelation_reason = \
+                    Reservation.CANCELATION_REASON_ADMIN_CANCELLED
+            else:
+                instance.cancelation_reason = \
+                    Reservation.CANCELATION_REASON_USER_CANCELLED
             instance.save()
+            if self.request.user.is_staff:
+                ticket_return = request.data.get('ticket_return', False)
+                if ticket_return:
+                    # user.tickets can be None
+                    user.tickets = 1 + user.tickets if user.tickets else 1
+                    user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)

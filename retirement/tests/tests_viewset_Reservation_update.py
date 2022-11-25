@@ -288,8 +288,14 @@ class ReservationTests(APITestCase):
         canceled_reservation = Reservation.objects.filter(is_active=False)[0]
 
         self.assertTrue(canceled_reservation)
-        self.assertEqual(canceled_reservation.cancelation_action, 'E')
-        self.assertEqual(canceled_reservation.cancelation_reason, 'U')
+        self.assertEqual(
+            canceled_reservation.cancelation_action,
+            Reservation.CANCELATION_ACTION_EXCHANGE
+        )
+        self.assertEqual(
+            canceled_reservation.cancelation_reason,
+            Reservation.CANCELATION_REASON_USER_CANCELLED
+        )
         self.assertEqual(canceled_reservation.cancelation_date, FIXED_TIME)
         self.assertEqual(canceled_reservation.retreat, self.retreat)
         self.assertEqual(canceled_reservation.order_line, self.order_line)
@@ -749,8 +755,14 @@ class ReservationTests(APITestCase):
         canceled_reservation = Reservation.objects.filter(is_active=False)[0]
 
         self.assertTrue(canceled_reservation)
-        self.assertEqual(canceled_reservation.cancelation_action, 'E')
-        self.assertEqual(canceled_reservation.cancelation_reason, 'U')
+        self.assertEqual(
+            canceled_reservation.cancelation_action,
+            Reservation.CANCELATION_ACTION_EXCHANGE
+        )
+        self.assertEqual(
+            canceled_reservation.cancelation_reason,
+            Reservation.CANCELATION_REASON_USER_CANCELLED
+        )
         self.assertEqual(canceled_reservation.cancelation_date, FIXED_TIME)
         self.assertEqual(canceled_reservation.retreat, self.retreat)
         self.assertEqual(canceled_reservation.order_line, self.order_line)
@@ -889,8 +901,14 @@ class ReservationTests(APITestCase):
         canceled_reservation = Reservation.objects.filter(is_active=False)[0]
 
         self.assertTrue(canceled_reservation)
-        self.assertEqual(canceled_reservation.cancelation_action, 'E')
-        self.assertEqual(canceled_reservation.cancelation_reason, 'U')
+        self.assertEqual(
+            canceled_reservation.cancelation_action,
+            Reservation.CANCELATION_ACTION_EXCHANGE
+        )
+        self.assertEqual(
+            canceled_reservation.cancelation_reason,
+            Reservation.CANCELATION_REASON_USER_CANCELLED
+        )
         self.assertEqual(canceled_reservation.cancelation_date, FIXED_TIME)
         self.assertEqual(canceled_reservation.retreat, self.retreat)
         self.assertEqual(canceled_reservation.order_line, self.order_line)
@@ -988,8 +1006,14 @@ class ReservationTests(APITestCase):
         canceled_reservation = Reservation.objects.filter(is_active=False)[0]
 
         self.assertTrue(canceled_reservation)
-        self.assertEqual(canceled_reservation.cancelation_action, 'E')
-        self.assertEqual(canceled_reservation.cancelation_reason, 'U')
+        self.assertEqual(
+            canceled_reservation.cancelation_action,
+            Reservation.CANCELATION_ACTION_EXCHANGE
+        )
+        self.assertEqual(
+            canceled_reservation.cancelation_reason,
+            Reservation.CANCELATION_REASON_USER_CANCELLED
+        )
         self.assertEqual(canceled_reservation.cancelation_date, FIXED_TIME)
         self.assertEqual(canceled_reservation.retreat, self.retreat)
         self.assertEqual(canceled_reservation.order_line, self.order_line)

@@ -560,6 +560,9 @@ def validate_coupon_for_order(coupon, order):
         | Q(content_type__model='retreat',
             object_id__in=coupon.applicable_retreats.all().
             values_list('id', flat=True))
+        | Q(content_type__model='retreattype',
+            object_id__in=coupon.applicable_retreat_types.all().
+            values_list('id', flat=True))
         | Q(content_type__model='retreat',
             object_id__in=list_physical_retreat_id_applicable.
             values_list('id', flat=True))

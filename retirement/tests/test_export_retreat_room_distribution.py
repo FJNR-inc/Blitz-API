@@ -61,23 +61,75 @@ class TestExportAnonymousChronoDataTask(TestCase):
 
     @mock.patch('retirement.models.Retreat.get_retreat_room_distribution')
     @mock.patch('blitz_api.models.ExportMedia.send_confirmation_email')
-    def test_export_retreat_room_distribution(self, mock_email, mock_room_distribution):
+    def test_export_retreat_room_distribution(
+            self,
+            mock_email,
+            mock_room_distribution
+    ):
         """
         """
         mock_email.return_value = None
         mock_room_distribution.return_value = [
-            {'first_name': 'Joshua', 'last_name': 'Berry', 'email': '16@test.ca', 'room_option': 'single',
-             'gender_preference': 'NA', 'share_with': 'NA', 'room_number': 1, 'placed': True},
-            {'first_name': 'Sarah', 'last_name': 'Hancock', 'email': '17@test.ca', 'room_option': 'single',
-             'gender_preference': 'NA', 'share_with': 'NA', 'room_number': 2, 'placed': True},
-            {'first_name': 'Lisa', 'last_name': 'Wright', 'email': '1@test.ca', 'room_option': 'shared',
-             'gender_preference': 'mixte', 'share_with': '14@test.ca', 'room_number': 3, 'placed': True},
-            {'first_name': 'Matthew', 'last_name': 'Ross', 'email': '14@test.ca', 'room_option': 'shared',
-             'gender_preference': 'woman', 'share_with': '1@test.ca', 'room_number': 3, 'placed': True},
-            {'first_name': 'Robert', 'last_name': 'Haas', 'email': '2@test.ca', 'room_option': 'shared',
-             'gender_preference': 'man', 'share_with': '11@test.ca', 'room_number': 4, 'placed': True},
-            {'first_name': 'Justin', 'last_name': 'Martin', 'email': '11@test.ca', 'room_option': 'shared',
-             'gender_preference': 'woman', 'share_with': '2@test.ca', 'room_number': 4, 'placed': True}
+            {
+                'first_name': 'Joshua',
+                'last_name': 'Berry',
+                'email': '16@test.ca',
+                'room_option': 'single',
+                'gender_preference': 'NA',
+                'share_with': 'NA',
+                'room_number': 1,
+                'placed': True,
+            },
+            {
+                'first_name': 'Sarah',
+                'last_name': 'Hancock',
+                'email': '17@test.ca',
+                'room_option': 'single',
+                'gender_preference': 'NA',
+                'share_with': 'NA',
+                'room_number': 2,
+                'placed': True,
+            },
+            {
+                'first_name': 'Lisa',
+                'last_name': 'Wright',
+                'email': '1@test.ca',
+                'room_option': 'shared',
+                'gender_preference': 'mixte',
+                'share_with': '14@test.ca',
+                'room_number': 3,
+                'placed': True,
+            },
+            {
+                'first_name': 'Matthew',
+                'last_name': 'Ross',
+                'email': '14@test.ca',
+                'room_option': 'shared',
+                'gender_preference': 'woman',
+                'share_with': '1@test.ca',
+                'room_number': 3,
+                'placed': True,
+            },
+            {
+                'first_name': 'Robert',
+                'last_name': 'Haas',
+                'email': '2@test.ca',
+                'room_option': 'shared',
+                'gender_preference': 'man',
+                'share_with': '11@test.ca',
+                'room_number': 4,
+                'placed': True,
+            },
+            {
+                'first_name': 'Justin',
+                'last_name': 'Martin',
+                'email': '11@test.ca',
+                'room_option': 'shared',
+                'gender_preference': 'woman',
+                'share_with': '2@test.ca',
+                'room_number': 4,
+                'placed': True,
+            }
         ]
         generate_retreat_room_distribution(self.admin.id, self.retreat.id)
         self.assertEqual(

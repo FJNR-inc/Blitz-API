@@ -366,7 +366,12 @@ ANYMAIL = {
             'EXPORT_DONE',
             default='67',
             cast=int
-        )
+        ),
+        'RETREAT_DELETED': config(
+            'RETREAT_DELETED',
+            default='68',
+            cast=int
+        ),
     },
 }
 EMAIL_BACKEND = config('EMAIL_BACKEND',

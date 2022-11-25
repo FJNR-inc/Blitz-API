@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-08 15:53-0400\n"
+"POT-Creation-Date: 2022-10-25 15:01-0400\n"
 "PO-Revision-Date: 2022-03-25 23:32+0000\n"
 "Last-Translator: Mélanie Guérin <melanie.guerin@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
@@ -19,74 +19,74 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
 "X-Generator: Weblate 4.9.1\n"
 
-#: log_management/models.py:16 log_management/models.py:132
+#: log_management/models.py:17 log_management/models.py:133
 msgid "Source"
 msgstr "Source"
 
-#: log_management/models.py:21
+#: log_management/models.py:22
 msgid "Level"
 msgstr "Niveau"
 
-#: log_management/models.py:25
+#: log_management/models.py:26
 msgid "Message"
 msgstr "Message"
 
-#: log_management/models.py:32
+#: log_management/models.py:33
 msgid "Error Code"
 msgstr "Code erreur"
 
-#: log_management/models.py:38 log_management/models.py:141
+#: log_management/models.py:39 log_management/models.py:142
 msgid "Additional data"
 msgstr "Donnée supplémentaire"
 
-#: log_management/models.py:44
+#: log_management/models.py:45
 msgid "TraceBack"
 msgstr "TraceBack"
 
-#: log_management/models.py:54
+#: log_management/models.py:55
 msgid "Log"
 msgstr "Log"
 
-#: log_management/models.py:55
+#: log_management/models.py:56
 msgid "Logs"
 msgstr "Logs"
 
-#: log_management/models.py:81
+#: log_management/models.py:82
 msgid "User email"
 msgstr "Courriel de l'utilisateur"
 
-#: log_management/models.py:86
+#: log_management/models.py:87
 msgid "Type email"
 msgstr "Type de courriel"
 
-#: log_management/models.py:90
+#: log_management/models.py:91
 msgid "Number email sent"
 msgstr "Nombre de courriel envoyé"
 
-#: log_management/models.py:99
+#: log_management/models.py:100
 msgid "Email Log"
 msgstr "Log de courriel"
 
-#: log_management/models.py:100
+#: log_management/models.py:101
 msgid "Email Logs"
 msgstr "Logs de courriel"
 
-#: log_management/models.py:119
+#: log_management/models.py:120
 msgid "User"
 msgstr "Utilisateur"
 
-#: log_management/models.py:126
+#: log_management/models.py:127
 msgid "Session key"
 msgstr "Clé de session"
 
-#: log_management/models.py:137
+#: log_management/models.py:138
 msgid "Action"
 msgstr "Action"
 
-#: log_management/models.py:152
+#: log_management/models.py:153
 msgid "Action Log"
 msgstr "Log des actions"
 
-#: log_management/models.py:153
+#: log_management/models.py:154
 msgid "Action Logs"
 msgstr "Los des actions"

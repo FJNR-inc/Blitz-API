@@ -97,6 +97,7 @@ class MembershipViewSet(ExportMixin, viewsets.ModelViewSet):
         'price': ['exact', 'gte', 'lte'],
     }
     ordering = ('name', 'price')
+    search_fields = ('name',)
 
     export_resource = MembershipResource()
 
@@ -142,6 +143,7 @@ class PackageViewSet(ExportMixin, viewsets.ModelViewSet):
         'price': ['exact', 'gte', 'lte'],
     }
     ordering = ('name', 'price')
+    search_fields = ('name',)
 
     export_resource = PackageResource()
 
@@ -178,6 +180,10 @@ class OptionProductViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.OptionProductSerializer
     queryset = OptionProduct.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
+    search_fields = ('name',)
+    filter_fields = {
+        'available': ['exact'],
+    }
 
     def get_queryset(self):
         """
@@ -461,7 +467,13 @@ class CouponViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.CouponSerializer
     queryset = Coupon.objects.all()
     permission_classes = (IsAuthenticated, permissions.IsAdminOrReadOnly)
-    filter_fields = '__all__'
+    filter_fields = {
+        'start_time': ['exact', 'gte', 'lte'],
+        'end_time': ['exact',  'gte', 'lte'],
+        'code': ['exact'],
+        'organization': ['exact', 'isnull'],
+    }
+    search_fields = ('code',)
 
     export_resource = CouponResource()
 

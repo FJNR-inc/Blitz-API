@@ -84,6 +84,7 @@ class MembershipTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(
@@ -258,6 +259,7 @@ class MembershipTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(
@@ -351,6 +353,7 @@ class MembershipTests(APITestCase):
                 'available_on_products': [],
                 'options': [],
                 'picture': None,
+                'available_on_retreat_types': [],
             }]
         }
 
@@ -393,6 +396,7 @@ class MembershipTests(APITestCase):
                 'available_on_products': [],
                 'options': [],
                 'picture': None,
+                'available_on_retreat_types': [],
             }, {
                 'available': False,
                 'id': self.membership_unavailable.id,
@@ -408,6 +412,7 @@ class MembershipTests(APITestCase):
                 'available_on_products': [],
                 'options': [],
                 'picture': None,
+                'available_on_retreat_types': [],
             }]
         }
 
@@ -441,6 +446,7 @@ class MembershipTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -474,6 +480,7 @@ class MembershipTests(APITestCase):
             'available_on_products': [],
             'options': [],
             'picture': None,
+            'available_on_retreat_types': [],
         }
 
         self.assertEqual(
@@ -501,3 +508,39 @@ class MembershipTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_list_search_name_admin(self):
+        """
+        Ensure we can list all memberships as an admin with a search on name.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        membership1 = Membership.objects.create(
+            name="Romain test",
+            details="1-Year student membership",
+            price=50,
+            available=True,
+            duration=timedelta(days=365),
+        )
+
+        membership2 = Membership.objects.create(
+            name="Romain Test 2",
+            details="1-Year student membership",
+            price=50,
+            available=True,
+            duration=timedelta(days=365),
+        )
+
+        response = self.client.get(
+            reverse('membership-list'),
+            {
+                'search': 'Romain'
+            },
+            format='json',
+        )
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(content['results']), 2)
+        self.assertEqual(content['results'][0]['name'], membership1.name)
+        self.assertEqual(content['results'][1]['name'], membership2.name)

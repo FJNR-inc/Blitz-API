@@ -1319,6 +1319,42 @@ class TimeSlotTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_list_filter_by_date(self):
+        """
+        Ensure we can list all timeslots filtered by date.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        time_slot1 = TimeSlot.objects.create(
+            name="future timeslot1",
+            period=self.period,
+            price=3,
+            start_time=LOCAL_TIMEZONE.localize(datetime(3000, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(3000, 1, 15, 12)),
+        )
+        time_slot2 = TimeSlot.objects.create(
+            name="future timeslot2",
+            period=self.period,
+            price=3,
+            start_time=LOCAL_TIMEZONE.localize(datetime(3000, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(3000, 1, 15, 12)),
+        )
+
+        response = self.client.get(
+            reverse('timeslot-list'),
+            {'start_time__gte': '3000-01-01T04:00:00Z'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.content)
+
+        data = json.loads(response.content)
+        self.assertEqual(data['count'], 2)
+
+        self.assertEqual(data['results'][0]['id'], time_slot1.id)
+        self.assertEqual(data['results'][1]['id'], time_slot2.id)
+
     def test_read(self):
         """
         Ensure we can read a timeslot as an unauthenticated user if it is

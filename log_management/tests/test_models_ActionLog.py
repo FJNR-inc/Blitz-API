@@ -12,8 +12,8 @@ class ActionLogModelTests(TestCase):
 
     def test_anonymize_data(self):
         """
-        test the anonymization of data, make sure the uuid is different for all users and always the same for
-        same user. Same for session key.
+        test the anonymization of data, make sure the uuid is different for
+        all users and always the same for same user. Same for session key.
         """
         user_1 = UserFactory()
         user_2 = UserFactory()

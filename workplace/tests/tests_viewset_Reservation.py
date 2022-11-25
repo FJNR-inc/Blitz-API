@@ -936,7 +936,10 @@ class ReservationTests(APITestCase):
         self.reservation.refresh_from_db()
 
         self.assertFalse(self.reservation.is_active)
-        self.assertEqual(self.reservation.cancelation_reason, 'U')
+        self.assertEqual(
+            self.reservation.cancelation_reason,
+            Reservation.CANCELATION_REASON_USER_CANCELLED
+        )
         self.assertEqual(self.reservation.cancelation_date, FIXED_TIME)
 
         self.reservation.is_active = True
@@ -945,7 +948,8 @@ class ReservationTests(APITestCase):
 
     def test_delete_as_admin(self):
         """
-        Ensure that an admin can delete any reservations.
+        Ensure that an admin can delete any reservations. Here we don't
+        refund the ticket
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -965,12 +969,17 @@ class ReservationTests(APITestCase):
         self.reservation.refresh_from_db()
 
         self.assertFalse(self.reservation.is_active)
-        self.assertEqual(self.reservation.cancelation_reason, 'U')
+        self.assertEqual(
+            self.reservation.cancelation_reason,
+            Reservation.CANCELATION_REASON_ADMIN_CANCELLED
+        )
         self.assertEqual(self.reservation.cancelation_date, FIXED_TIME)
 
         self.reservation.is_active = True
         self.reservation.cancelation_date = None
         self.reservation.cancelation_reason = None
+
+        self.user.ticket = 0
 
     def test_delete_not_owner(self):
         """
@@ -1016,9 +1025,99 @@ class ReservationTests(APITestCase):
         self.reservation.refresh_from_db()
 
         self.assertFalse(self.reservation.is_active)
-        self.assertEqual(self.reservation.cancelation_reason, 'U')
+        self.assertEqual(
+            self.reservation.cancelation_reason,
+            Reservation.CANCELATION_REASON_USER_CANCELLED
+        )
         self.assertEqual(self.reservation.cancelation_date, FIXED_TIME)
 
         self.reservation.is_active = True
         self.reservation.cancelation_date = None
         self.reservation.cancelation_reason = None
+
+    def test_delete_admin_ticket_return(self):
+        """
+        Ensure that an admin can delete a reservation and return the ticket
+        to the user.
+        """
+        self.client.force_authenticate(user=self.admin)
+        user1 = UserFactory(tickets=1)
+        reservation1 = Reservation.objects.create(
+            user=user1,
+            timeslot=self.time_slot_active,
+            is_active=True,
+        )
+        self.assertEqual(user1.tickets, 1)
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        with mock.patch(
+                'workplace.views.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'reservation-detail',
+                    args=[reservation1.id]),
+                data={'ticket_return': True}
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        modified_user = User.objects.get(id=user1.id)  # reload user
+        self.assertEqual(modified_user.tickets, 2)
+
+    def test_delete_admin_own_ticket_return(self):
+        """
+        Ensure that an admin can delete its own reservation and return the
+        ticket to himself.
+        """
+        self.client.force_authenticate(user=self.admin)
+        admin1 = AdminFactory(tickets=1)
+        reservation1 = Reservation.objects.create(
+            user=admin1,
+            timeslot=self.time_slot_active,
+            is_active=True,
+        )
+        self.assertEqual(admin1.tickets, 1)
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        with mock.patch(
+                'workplace.views.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'reservation-detail',
+                    args=[reservation1.id]),
+                data={'ticket_return': True}
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        modified_admin = User.objects.get(id=admin1.id)  # reload user
+        self.assertEqual(modified_admin.tickets, 2)
+
+    def test_delete_admin_ticket_return_null(self):
+        """
+        Ensure that an admin can delete a reservation and return the ticket
+        to the user even if the value of user ticket is null
+        """
+        self.client.force_authenticate(user=self.admin)
+        user = UserFactory(first_name="Test", tickets=None)
+        reservation = Reservation.objects.create(
+            user=user,
+            timeslot=self.time_slot_active,
+            is_active=True,
+        )
+        self.assertEqual(user.tickets, None)
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        with mock.patch(
+                'workplace.views.timezone.now', return_value=FIXED_TIME):
+            response = self.client.delete(
+                reverse(
+                    'reservation-detail',
+                    args=[reservation.id]),
+                data={'ticket_return': True}
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        modified_user = User.objects.get(id=user.id)  # reload user
+        self.assertEqual(modified_user.tickets, 1)

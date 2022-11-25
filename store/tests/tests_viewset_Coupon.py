@@ -19,6 +19,7 @@ from django.contrib.contenttypes.models import ContentType
 from blitz_api.factories import (
     UserFactory,
     AdminFactory,
+    CouponFactory,
 )
 from blitz_api.testing_tools import CustomAPITestCase
 from workplace.models import (
@@ -56,12 +57,15 @@ class CouponTests(CustomAPITestCase):
         'max_use_per_user',
         'details',
         'owner',
+        'organization',
         'applicable_product_types',
         'applicable_memberships',
         'applicable_packages',
         'applicable_retreats',
+        'applicable_retreat_types',
         'applicable_timeslots',
         'users',
+        'usages',
         'is_applicable_to_physical_retreat',
         'is_applicable_to_virtual_retreat',
     ]
@@ -212,7 +216,9 @@ class CouponTests(CustomAPITestCase):
             "max_use_per_user": 2,
             "details": "Any package for clients",
             "owner": "http://testserver/users/" + str(self.user.id),
+            "organization": None,
             "applicable_retreats": [],
+            "applicable_retreat_types": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -276,7 +282,9 @@ class CouponTests(CustomAPITestCase):
             "max_use_per_user": 2,
             "details": "Any package for clients",
             "owner": "http://testserver/users/" + str(self.user.id),
+            "organization": None,
             "applicable_retreats": [],
+            "applicable_retreat_types": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -338,7 +346,9 @@ class CouponTests(CustomAPITestCase):
             "max_use_per_user": 2,
             "details": "Any package for clients",
             "owner": "http://testserver/users/" + str(self.user.id),
+            "organization": None,
             "applicable_retreats": [],
+            "applicable_retreat_types": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -956,7 +966,9 @@ class CouponTests(CustomAPITestCase):
             "max_use_per_user": 20,
             "details": "Any package for clients (updated max_use)",
             "owner": "http://testserver/users/" + str(self.user.id),
+            "organization": None,
             "applicable_retreats": [],
+            "applicable_retreat_types": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -1016,7 +1028,9 @@ class CouponTests(CustomAPITestCase):
             "max_use_per_user": 20,
             "details": "Any package for clients (updated max_use)",
             "owner": "http://testserver/users/" + str(self.user.id),
+            "organization": None,
             "applicable_retreats": [],
+            "applicable_retreat_types": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
@@ -1090,6 +1104,9 @@ class CouponTests(CustomAPITestCase):
         self.coupon.applicable_retreats.set([
             self.retreat,
         ])
+        self.coupon.applicable_retreat_types.set([
+            self.retreat.type,
+        ])
         self.coupon.applicable_timeslots.set([
             self.time_slot,
         ])
@@ -1112,6 +1129,7 @@ class CouponTests(CustomAPITestCase):
             self.check_attributes(item)
 
         self.coupon.applicable_retreats.set([])
+        self.coupon.applicable_retreat_types.set([])
         self.coupon.applicable_timeslots.set([])
         self.coupon.applicable_packages.set([])
         self.coupon.applicable_memberships.set([])
@@ -1148,11 +1166,14 @@ class CouponTests(CustomAPITestCase):
                 "max_use_per_user": 2,
                 "details": "Any package for clients",
                 "owner": "http://testserver/users/" + str(self.user.id),
+                "organization": None,
                 "applicable_retreats": [],
+                "applicable_retreat_types": [],
                 "applicable_timeslots": [],
                 "applicable_packages": [],
                 "applicable_memberships": [],
                 "users": [],
+                "usages": [],
                 "is_applicable_to_physical_retreat": False,
                 "is_applicable_to_virtual_retreat": False
             }, {
@@ -1168,11 +1189,14 @@ class CouponTests(CustomAPITestCase):
                 "max_use_per_user": 2,
                 "details": "Any package for clients",
                 "owner": "http://testserver/users/" + str(self.admin.id),
+                "organization": None,
                 "applicable_retreats": [],
+                "applicable_retreat_types": [],
                 "applicable_timeslots": [],
                 "applicable_packages": [],
                 "applicable_memberships": [],
                 "users": [],
+                "usages": [],
                 "is_applicable_to_physical_retreat": False,
                 "is_applicable_to_virtual_retreat": False
             }]
@@ -1181,6 +1205,42 @@ class CouponTests(CustomAPITestCase):
         self.assertEqual(data, content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_search_by_code(self):
+        """
+        Ensure we can list all coupons matching a search.
+        """
+        self.client.force_authenticate(user=self.admin)
+        c1 = CouponFactory(code='my search Rom', owner=self.user)
+        c2 = CouponFactory(code='my search Rom2', owner=self.user)
+        c3 = CouponFactory(code='completely different', owner=self.user)
+        c4 = CouponFactory(code='another different code', owner=self.user)
+
+        response = self.client.get(
+            reverse('coupon-list'),
+            {
+                'search': 'Rom'
+            },
+            format='json',
+        )
+
+        data = json.loads(response.content)
+        coupon_ids = [coupon['id'] for coupon in data['results']]
+        self.assertEqual(len(data['results']), 2)
+        self.assertTrue(c1.id in coupon_ids)
+        self.assertTrue(c2.id in coupon_ids)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse('coupon-list'),
+            {
+                'search': 'owopwehpweihwpei'
+            },
+            format='json',
+        )
+
+        data = json.loads(response.content)
+        self.assertEqual(len(data['results']), 0)
 
     def test_read(self):
         """
@@ -1256,11 +1316,14 @@ class CouponTests(CustomAPITestCase):
             "max_use_per_user": 2,
             "details": "Any package for clients",
             "owner": "http://testserver/users/" + str(self.user.id),
+            "organization": None,
             "applicable_retreats": [],
+            "applicable_retreat_types": [],
             "applicable_timeslots": [],
             "applicable_packages": [],
             "applicable_memberships": [],
             "users": [],
+            "usages": [],
             "is_applicable_to_physical_retreat": False,
             "is_applicable_to_virtual_retreat": False
         }

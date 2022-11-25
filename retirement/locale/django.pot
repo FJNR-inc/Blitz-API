@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-17 11:13-0400\n"
+"POT-Creation-Date: 2022-10-25 15:01-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: retirement/admin.py:268
+#: retirement/admin.py:284
 msgid "Wait Queue places reserved"
 msgstr ""
 
@@ -25,439 +25,443 @@ msgstr ""
 msgid "Unknown timezone"
 msgstr ""
 
-#: retirement/models.py:38
+#: retirement/models.py:41
 msgid "Type of retreat"
 msgstr ""
 
-#: retirement/models.py:39
+#: retirement/models.py:42
 msgid "Types of retreat"
 msgstr ""
 
-#: retirement/models.py:43 retirement/models.py:701 retirement/models.py:977
+#: retirement/models.py:46 retirement/models.py:963 retirement/models.py:1239
 msgid "Name"
 msgstr ""
 
-#: retirement/models.py:49
+#: retirement/models.py:52
 msgid "Minute before displaying the link"
 msgstr ""
 
-#: retirement/models.py:53 retirement/models.py:413
+#: retirement/models.py:56 retirement/models.py:421
 msgid "Number of tomatoes"
 msgstr ""
 
-#: retirement/models.py:57 retirement/models.py:364
+#: retirement/models.py:60 retirement/models.py:372
 msgid "Description"
 msgstr ""
 
-#: retirement/models.py:61
+#: retirement/models.py:64
 msgid "Short description"
 msgstr ""
 
-#: retirement/models.py:65
+#: retirement/models.py:68
 msgid "Description of duration"
 msgstr ""
 
-#: retirement/models.py:69
+#: retirement/models.py:72
 msgid "Cancellation policies"
 msgstr ""
 
-#: retirement/models.py:73
+#: retirement/models.py:76
 msgid "icon"
 msgstr ""
 
-#: retirement/models.py:80
+#: retirement/models.py:83
 msgid "Is virtual"
 msgstr ""
 
-#: retirement/models.py:85
+#: retirement/models.py:88
 msgid "Index for display"
 msgstr ""
 
-#: retirement/models.py:90
+#: retirement/models.py:93
 msgid "Know more link"
 msgstr ""
 
-#: retirement/models.py:96
+#: retirement/models.py:99
 msgid "Template ID for welcome message"
 msgstr ""
 
-#: retirement/models.py:103
+#: retirement/models.py:106
 msgid "Context for welcome message"
 msgstr ""
 
-#: retirement/models.py:110
+#: retirement/models.py:113
 msgid "Is visible"
 msgstr ""
 
-#: retirement/models.py:132
+#: retirement/models.py:135
 msgid "Before start"
 msgstr ""
 
-#: retirement/models.py:133
+#: retirement/models.py:136
 msgid "After end"
 msgstr ""
 
-#: retirement/models.py:137
+#: retirement/models.py:140
 msgid "Automatic email"
 msgstr ""
 
-#: retirement/models.py:138
+#: retirement/models.py:141
 msgid "Automatic emails"
 msgstr ""
 
-#: retirement/models.py:141
+#: retirement/models.py:144
 msgid "Time delta in minutes"
 msgstr ""
 
-#: retirement/models.py:145
+#: retirement/models.py:148
 msgid "Time base"
 msgstr ""
 
-#: retirement/models.py:151
+#: retirement/models.py:154
 msgid "Template ID"
 msgstr ""
 
-#: retirement/models.py:156
+#: retirement/models.py:159
 msgid "Context"
 msgstr ""
 
-#: retirement/models.py:175
+#: retirement/models.py:178
 msgid "English"
 msgstr ""
 
-#: retirement/models.py:176
+#: retirement/models.py:179
 msgid "French"
 msgstr ""
 
-#: retirement/models.py:177
+#: retirement/models.py:180
 msgid "Bilingual"
 msgstr ""
 
-#: retirement/models.py:181
+#: retirement/models.py:184
 msgid "Double occupation"
 msgstr ""
 
-#: retirement/models.py:182
+#: retirement/models.py:185
 msgid "Single occupation"
 msgstr ""
 
-#: retirement/models.py:183
+#: retirement/models.py:186
 msgid "Single and double occupation"
 msgstr ""
 
-#: retirement/models.py:187 retirement/models.py:680 retirement/models.py:710
-#: retirement/models.py:756 retirement/models.py:953 retirement/models.py:990
-#: retirement/models.py:1046 retirement/serializers.py:1039
-#: retirement/views.py:720
+#: retirement/models.py:190 retirement/models.py:431 retirement/models.py:942
+#: retirement/models.py:972 retirement/models.py:1018 retirement/models.py:1215
+#: retirement/models.py:1252 retirement/models.py:1308
+#: retirement/serializers.py:1001 retirement/views.py:729
 msgid "Retreat"
 msgstr ""
 
-#: retirement/models.py:188
+#: retirement/models.py:191
 msgid "Retreats"
 msgstr ""
 
-#: retirement/models.py:204
+#: retirement/models.py:207
 msgid "Id before migrate to base product"
 msgstr ""
 
-#: retirement/models.py:210
+#: retirement/models.py:213
 msgid "Seats"
 msgstr ""
 
-#: retirement/models.py:221
+#: retirement/models.py:224
 msgid "gendered toilet"
 msgstr ""
 
-#: retirement/models.py:226
+#: retirement/models.py:229
 msgid "Time between two reserved place notifications."
 msgstr ""
 
-#: retirement/models.py:236
+#: retirement/models.py:239
 msgid "Activity language"
 msgstr ""
 
-#: retirement/models.py:246
+#: retirement/models.py:249
 msgid "Videoconference tool"
 msgstr ""
 
-#: retirement/models.py:253
+#: retirement/models.py:256
 msgid "Videoconference link"
 msgstr ""
 
-#: retirement/models.py:263
+#: retirement/models.py:266
 msgid "Room Type"
 msgstr ""
 
-#: retirement/models.py:267
+#: retirement/models.py:270
 msgid "Minimum days before the event for refund"
 msgstr ""
 
-#: retirement/models.py:273
+#: retirement/models.py:276
 msgid "Refund rate"
 msgstr ""
 
-#: retirement/models.py:279
+#: retirement/models.py:282
 msgid "Minimum days before the event for exchange"
 msgstr ""
 
-#: retirement/models.py:288 retirement/models.py:750 retirement/models.py:946
-#: retirement/models.py:1130
+#: retirement/models.py:291 retirement/models.py:1012 retirement/models.py:1208
+#: retirement/models.py:1392
 msgid "User"
 msgstr ""
 
-#: retirement/models.py:295
+#: retirement/models.py:298
 msgid "Memberships"
 msgstr ""
 
-#: retirement/models.py:300 retirement/models.py:759
+#: retirement/models.py:303 retirement/models.py:1021
 msgid "Active"
 msgstr ""
 
-#: retirement/models.py:305
+#: retirement/models.py:308
 msgid "Email content"
 msgstr ""
 
-#: retirement/models.py:314
+#: retirement/models.py:317
 msgid "Accessibility"
 msgstr ""
 
-#: retirement/models.py:320
+#: retirement/models.py:323
 msgid "Form URL"
 msgstr ""
 
-#: retirement/models.py:326
+#: retirement/models.py:329
 msgid "Carpool URL"
 msgstr ""
 
-#: retirement/models.py:332
+#: retirement/models.py:335
 msgid "Review URL"
 msgstr ""
 
-#: retirement/models.py:341
+#: retirement/models.py:344
+msgid "Requires purchase of room option"
+msgstr ""
+
+#: retirement/models.py:349
 msgid "Hidden"
 msgstr ""
 
-#: retirement/models.py:348
+#: retirement/models.py:356
 msgid "Google maps URL"
 msgstr ""
 
-#: retirement/models.py:352
+#: retirement/models.py:360
 msgid "Accessibility Detail"
 msgstr ""
 
-#: retirement/models.py:360
+#: retirement/models.py:368
 msgid "Sub Title"
 msgstr ""
 
-#: retirement/models.py:370
+#: retirement/models.py:378
 msgid "animator"
 msgstr ""
 
-#: retirement/models.py:377
+#: retirement/models.py:385
 msgid "Food vege"
 msgstr ""
 
-#: retirement/models.py:382
+#: retirement/models.py:390
 msgid "Food vegan"
 msgstr ""
 
-#: retirement/models.py:387
+#: retirement/models.py:395
 msgid "Food allergen_free"
 msgstr ""
 
-#: retirement/models.py:392
+#: retirement/models.py:400
 msgid "Food gluten free"
 msgstr ""
 
-#: retirement/models.py:406
+#: retirement/models.py:414
 msgid "Hide from client admin panel"
 msgstr ""
 
-#: retirement/models.py:622
+#: retirement/models.py:634
 msgid "Retreat need to have a start time before activate it"
 msgstr ""
 
-#: retirement/models.py:627
+#: retirement/models.py:639
 msgid "Retreat need to have a end time before activate it"
 msgstr ""
 
-#: retirement/models.py:632
+#: retirement/models.py:644
 msgid "Retreat need to have at least one seat available"
 msgstr ""
 
-#: retirement/models.py:637
+#: retirement/models.py:649
 msgid "Retreat need to have a minimum day refund policy"
 msgstr ""
 
-#: retirement/models.py:642
+#: retirement/models.py:654
 msgid "Retreat need to have a minimum day exchange policy"
 msgstr ""
 
-#: retirement/models.py:647
+#: retirement/models.py:659
 msgid "Retreat need to have a refund rate policy"
 msgstr ""
 
-#: retirement/models.py:673
+#: retirement/models.py:935
 msgid "Retreat date"
 msgstr ""
 
-#: retirement/models.py:674
+#: retirement/models.py:936
 msgid "Retreat dates"
 msgstr ""
 
-#: retirement/models.py:685
+#: retirement/models.py:947
 msgid "Start time"
 msgstr ""
 
-#: retirement/models.py:689
+#: retirement/models.py:951
 msgid "End time"
 msgstr ""
 
-#: retirement/models.py:697
+#: retirement/models.py:959
 msgid "Picture"
 msgstr ""
 
-#: retirement/models.py:698
+#: retirement/models.py:960
 msgid "Pictures"
 msgstr ""
 
-#: retirement/models.py:714
+#: retirement/models.py:976
 msgid "picture"
 msgstr ""
 
-#: retirement/models.py:735
+#: retirement/models.py:997
 msgid "User canceled"
 msgstr ""
 
-#: retirement/models.py:736
+#: retirement/models.py:998
 msgid "Retreat deleted"
 msgstr ""
 
-#: retirement/models.py:737
+#: retirement/models.py:999
 msgid "Retreat modified"
 msgstr ""
 
-#: retirement/models.py:738
+#: retirement/models.py:1000
 msgid "Admin canceled"
 msgstr ""
 
-#: retirement/models.py:742
+#: retirement/models.py:1004
 msgid "Refund"
 msgstr ""
 
-#: retirement/models.py:743
+#: retirement/models.py:1005
 msgid "Exchange"
 msgstr ""
 
-#: retirement/models.py:744
+#: retirement/models.py:1006
 msgid "None"
 msgstr ""
 
-#: retirement/models.py:765
+#: retirement/models.py:1027
 msgid "Cancelation reason"
 msgstr ""
 
-#: retirement/models.py:772
+#: retirement/models.py:1034
 msgid "Cancelation action"
 msgstr ""
 
-#: retirement/models.py:777
+#: retirement/models.py:1039
 msgid "Cancelation date"
 msgstr ""
 
-#: retirement/models.py:780
+#: retirement/models.py:1042
 msgid "Present"
 msgstr ""
 
-#: retirement/models.py:786
+#: retirement/models.py:1048
 msgid "Order line"
 msgstr ""
 
-#: retirement/models.py:792
+#: retirement/models.py:1054
 msgid "Refundable"
 msgstr ""
 
-#: retirement/models.py:796
+#: retirement/models.py:1058
 msgid "Exchangeable"
 msgstr ""
 
-#: retirement/models.py:808
+#: retirement/models.py:1070
 msgid "Invitation"
 msgstr ""
 
-#: retirement/models.py:815
+#: retirement/models.py:1077
 msgid "Post event notification send"
 msgstr ""
 
-#: retirement/models.py:820
+#: retirement/models.py:1082
 msgid "Pre event notification send"
 msgstr ""
 
-#: retirement/models.py:881
+#: retirement/models.py:1143
 msgid "Reservation"
 msgstr ""
 
-#: retirement/models.py:886
+#: retirement/models.py:1148
 msgid "Datetime"
 msgstr ""
 
-#: retirement/models.py:908
+#: retirement/models.py:1170
 msgid "Sent date"
 msgstr ""
 
-#: retirement/models.py:925
+#: retirement/models.py:1187
 msgid "Automatic email log"
 msgstr ""
 
-#: retirement/models.py:926
+#: retirement/models.py:1188
 msgid "Automatic email logs"
 msgstr ""
 
-#: retirement/models.py:939
+#: retirement/models.py:1201
 msgid "Waiting queue"
 msgstr ""
 
-#: retirement/models.py:940
+#: retirement/models.py:1202
 msgid "Waiting queues"
 msgstr ""
 
-#: retirement/models.py:958 retirement/models.py:1149
+#: retirement/models.py:1220 retirement/models.py:1411
 msgid "Used"
 msgstr ""
 
-#: retirement/models.py:972
+#: retirement/models.py:1234
 msgid "Key"
 msgstr ""
 
-#: retirement/models.py:984
+#: retirement/models.py:1246
 msgid "Number of places"
 msgstr ""
 
-#: retirement/models.py:997
+#: retirement/models.py:1259
 msgid "Coupon"
 msgstr ""
 
-#: retirement/models.py:1004
+#: retirement/models.py:1266
 msgid "Should reserve seat"
 msgstr ""
 
-#: retirement/models.py:1050 retirement/models.py:1140
+#: retirement/models.py:1312 retirement/models.py:1402
 msgid "Create"
 msgstr ""
 
-#: retirement/models.py:1056
+#: retirement/models.py:1318
 msgid "Cancel by"
 msgstr ""
 
-#: retirement/models.py:1061
+#: retirement/models.py:1323
 msgid "Available"
 msgstr ""
 
-#: retirement/models.py:1136
+#: retirement/models.py:1398
 msgid "Wait Queue Place"
 msgstr ""
 
-#: retirement/models.py:1144
+#: retirement/models.py:1406
 msgid "Notified"
 msgstr ""
 
@@ -469,115 +473,115 @@ msgstr ""
 msgid "Name of the retreat type."
 msgstr ""
 
-#: retirement/serializers.py:173
+#: retirement/serializers.py:171
 msgid "Timezone of the workplace."
 msgstr ""
 
-#: retirement/serializers.py:215
+#: retirement/serializers.py:213
 msgid "Refund rate must be between 0 and 100 (%)."
 msgstr ""
 
-#: retirement/serializers.py:302
+#: retirement/serializers.py:264
 msgid "Description of the retreat."
 msgstr ""
 
-#: retirement/serializers.py:305
+#: retirement/serializers.py:267
 msgid "Name of the retreat."
 msgstr ""
 
-#: retirement/serializers.py:310
+#: retirement/serializers.py:272
 msgid "Number of available seats."
 msgstr ""
 
-#: retirement/serializers.py:338
+#: retirement/serializers.py:300
 msgid "Duplicated weekdays are not authorized."
 msgstr ""
 
-#: retirement/serializers.py:348
+#: retirement/serializers.py:310
 msgid "End time must be later than start time."
 msgstr ""
 
-#: retirement/serializers.py:351
+#: retirement/serializers.py:313
 msgid "Start time must be earlier than end time."
 msgstr ""
 
-#: retirement/serializers.py:372 retirement/serializers.py:970
-#: retirement/serializers.py:974
+#: retirement/serializers.py:334 retirement/serializers.py:932
+#: retirement/serializers.py:936
 msgid "Retreat represented by the picture."
 msgstr ""
 
-#: retirement/serializers.py:379
+#: retirement/serializers.py:341
 msgid "Name of the picture."
 msgstr ""
 
-#: retirement/serializers.py:382
+#: retirement/serializers.py:344
 msgid "File to upload."
 msgstr ""
 
-#: retirement/serializers.py:429
+#: retirement/serializers.py:391
 msgid ""
 "Only is_present and retreat can be updated. To change other fields, delete "
 "this reservation and create a new one."
 msgstr ""
 
-#: retirement/serializers.py:462 retirement/serializers.py:670
+#: retirement/serializers.py:424 retirement/serializers.py:632
 msgid ""
 "This reservation overlaps with another active reservations for this user."
 msgstr ""
 
-#: retirement/serializers.py:480
+#: retirement/serializers.py:442
 msgid ""
 "This retreat doesn't have available places. Please check number of seats "
 "available and reserved seats."
 msgstr ""
 
-#: retirement/serializers.py:492
+#: retirement/serializers.py:454
 msgid ""
 "This reservation is not exchangeable. Please contact us to make any changes "
 "to this reservation."
 msgstr ""
 
-#: retirement/serializers.py:517
+#: retirement/serializers.py:479
 msgid "This reservation has already been canceled."
 msgstr ""
 
-#: retirement/serializers.py:560
+#: retirement/serializers.py:522
 msgid "There are no places left in the requested retreat."
 msgstr ""
 
-#: retirement/serializers.py:572 retirement/views.py:653
+#: retirement/serializers.py:534 retirement/views.py:662
 msgid ""
 "The order containing this reservation has a quantity bigger than 1. Please "
 "contact the support team."
 msgstr ""
 
-#: retirement/serializers.py:596
+#: retirement/serializers.py:558
 msgid ""
 "The new retreat is more expensive than the current one. Provide a "
 "payment_token or single_use_token to charge the balance."
 msgstr ""
 
-#: retirement/serializers.py:617
+#: retirement/serializers.py:579
 msgid "That retreat is already assigned to this object."
 msgstr ""
 
-#: retirement/serializers.py:624
+#: retirement/serializers.py:586
 msgid "Maximum exchange date exceeded."
 msgstr ""
 
-#: retirement/serializers.py:711 retirement/serializers.py:793
-#: retirement/views.py:665
+#: retirement/serializers.py:673 retirement/serializers.py:755
+#: retirement/views.py:674
 msgid "The order has not been charged yet. Try again later."
 msgstr ""
 
-#: retirement/serializers.py:841
+#: retirement/serializers.py:803
 msgid "Échange"
 msgstr ""
 
-#: retirement/serializers.py:979
+#: retirement/serializers.py:941
 msgid "Whether the reservation is active or not."
 msgstr ""
 
-#: retirement/views.py:674
+#: retirement/views.py:683
 msgid "An error occured with the payment system. Please try again later."
 msgstr ""

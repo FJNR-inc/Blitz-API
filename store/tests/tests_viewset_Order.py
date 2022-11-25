@@ -3657,7 +3657,7 @@ class OrderWithOptionsTests(APITestCase):
         self.retreat_type = RetreatTypeFactory()
         self.retreat = RetreatFactory(
             accessibility=True,
-            seats=100000,
+            seats=1000,
             is_active=True,
             has_shared_rooms=True,
             toilet_gendered=False,
@@ -3721,11 +3721,19 @@ class OrderWithOptionsTests(APITestCase):
                 format='json',
             )
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
 
-        order_line = OrderLine.objects.get(pk=response.data['order_lines'][0]['id'])
-        orderline_base = OrderLineBaseProduct.objects.get(order_line=order_line,
-                                                          option=self.options_without_stock)
+        order_line = OrderLine.objects.get(
+            pk=response.data['order_lines'][0]['id'],
+        )
+        orderline_base = OrderLineBaseProduct.objects.get(
+            order_line=order_line,
+            option=self.options_without_stock,
+        )
         self.assertEqual(orderline_base.quantity, quantity)
 
     @responses.activate
@@ -3763,14 +3771,30 @@ class OrderWithOptionsTests(APITestCase):
                 format='json',
             )
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
 
-        order_line = OrderLine.objects.get(pk=response.data['order_lines'][0]['id'])
-        orderline_base = OrderLineBaseProduct.objects.get(order_line=order_line,
-                                                          option=self.options_with_stock)
+        order_line = OrderLine.objects.get(
+            pk=response.data['order_lines'][0]['id'],
+        )
+        orderline_base = OrderLineBaseProduct.objects.get(
+            order_line=order_line,
+            option=self.options_with_stock,
+        )
         self.assertEqual(orderline_base.quantity, quantity)
-        self.assertEqual(OptionProduct.objects.get(id=self.options_with_stock.id).remaining_quantity,
-                         self.options_with_stock_quantity - quantity)
+        self.assertEqual(
+            OptionProduct.objects.get(
+                id=self.options_with_stock.id,
+            ).remaining_quantity,
+            self.options_with_stock_quantity - quantity
+        )
+        order = Order.objects.get(id=response.data['id'])
+        estimated_cost = \
+            self.retreat.price + self.options_with_stock.price * quantity
+        self.assertEqual(order.total_cost, estimated_cost)
 
     @responses.activate
     def test_option_insufficient_stock(self):
@@ -3807,7 +3831,11 @@ class OrderWithOptionsTests(APITestCase):
                 format='json',
             )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.content)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
 
     @responses.activate
     def test_option_with_metadata(self):
@@ -3855,11 +3883,19 @@ class OrderWithOptionsTests(APITestCase):
                 format='json',
             )
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
 
-        order_line = OrderLine.objects.get(pk=response.data['order_lines'][0]['id'])
-        orderline_base = OrderLineBaseProduct.objects.get(order_line=order_line,
-                                                          option=self.options_without_stock)
+        order_line = OrderLine.objects.get(
+            pk=response.data['order_lines'][0]['id'],
+        )
+        orderline_base = OrderLineBaseProduct.objects.get(
+            order_line=order_line,
+            option=self.options_without_stock,
+        )
         self.assertEqual(orderline_base.metadata, metadata_dict)
 
     @responses.activate
@@ -3997,7 +4033,6 @@ class OrderWithOptionsTests(APITestCase):
             response.content,
         )
 
-
     @responses.activate
     def test_refund(self):
         """
@@ -4033,14 +4068,26 @@ class OrderWithOptionsTests(APITestCase):
                 format='json',
             )
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
 
-        order_line = OrderLine.objects.get(pk=response.data['order_lines'][0]['id'])
-        orderline_base = OrderLineBaseProduct.objects.get(order_line=order_line,
-                                                          option=self.options_with_stock)
+        order_line = OrderLine.objects.get(
+            pk=response.data['order_lines'][0]['id'],
+        )
+        orderline_base = OrderLineBaseProduct.objects.get(
+            order_line=order_line,
+            option=self.options_with_stock,
+        )
         self.assertEqual(orderline_base.quantity, quantity)
-        self.assertEqual(OptionProduct.objects.get(id=self.options_with_stock.id).remaining_quantity,
-                         self.options_with_stock_quantity - quantity)
+        self.assertEqual(
+            OptionProduct.objects.get(
+                id=self.options_with_stock.id,
+            ).remaining_quantity,
+            self.options_with_stock_quantity - quantity
+        )
 
         reservation = Reservation.objects.create(
             user=self.admin,
@@ -4069,5 +4116,9 @@ class OrderWithOptionsTests(APITestCase):
             status.HTTP_204_NO_CONTENT,
             response.content
         )
-        self.assertEqual(OptionProduct.objects.get(id=self.options_with_stock.id).remaining_quantity,
-                         self.options_with_stock_quantity)
+        self.assertEqual(
+            OptionProduct.objects.get(
+                id=self.options_with_stock.id
+            ).remaining_quantity,
+            self.options_with_stock_quantity
+        )

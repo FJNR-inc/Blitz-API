@@ -166,8 +166,6 @@ class RetreatSerializer(BaseProductSerializer):
     total_reservations = serializers.ReadOnlyField()
     is_active = serializers.BooleanField(read_only=True)
     reserved_seats = serializers.ReadOnlyField()
-    reservations = serializers.SerializerMethodField()
-    reservations_canceled = serializers.SerializerMethodField()
     timezone = TimezoneField(
         required=True,
         help_text=_("Timezone of the workplace."),
@@ -221,38 +219,6 @@ class RetreatSerializer(BaseProductSerializer):
         picture_urls = [picture.picture.url for picture in obj.pictures.all()]
         return [request.build_absolute_uri(url) for url in picture_urls]
 
-    def get_reservations(self, obj):
-        reservation_ids = Reservation.objects.filter(
-            is_active=True,
-            retreat=obj,
-        ).values_list(
-            'id',
-            flat=True,
-        )
-        return [
-            reverse(
-                'retreat:reservation-detail',
-                args=[id],
-                request=self.context['request'],
-            ) for id in reservation_ids
-        ]
-
-    def get_reservations_canceled(self, obj):
-        reservation_ids = Reservation.objects.filter(
-            is_active=False,
-            retreat=obj,
-        ).values_list(
-            'id',
-            flat=True,
-        )
-        return [
-            reverse(
-                'retreat:reservation-detail',
-                args=[id],
-                request=self.context['request'],
-            ) for id in reservation_ids
-        ]
-
     def validate(self, attr):
         err = {}
 
@@ -273,11 +239,7 @@ class RetreatSerializer(BaseProductSerializer):
 
     def to_representation(self, instance):
         is_staff = self.context['request'].user.is_staff
-        if self.context['view'].action == 'retrieve' and is_staff:
-            from blitz_api.serializers import UserSerializer
-            self.fields['users'] = UserSerializer(many=True)
         data = super(RetreatSerializer, self).to_representation(instance)
-
         # We don't need orderlines for retreat in this serializer
         if data.get("order_lines") is not None:
             data.pop("order_lines")
@@ -296,7 +258,7 @@ class RetreatSerializer(BaseProductSerializer):
 
     class Meta:
         model = Retreat
-        exclude = ('deleted',)
+        exclude = ('deleted', 'users')
         extra_kwargs = {
             'details': {
                 'help_text': _("Description of the retreat.")
@@ -353,6 +315,12 @@ class BatchRetreatSerializer(RetreatSerializer):
             })
 
         return attrs
+
+
+class BatchActivateRetreatSerializer(serializers.Serializer):
+    retreats = serializers.ListField(
+        child=serializers.IntegerField(),
+    )
 
 
 class PictureSerializer(serializers.HyperlinkedModelSerializer):
@@ -530,8 +498,10 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             instance = Reservation.objects.get(id=instance_pk)
 
             canceled_reservation.is_active = False
-            canceled_reservation.cancelation_reason = 'U'
-            canceled_reservation.cancelation_action = 'E'
+            canceled_reservation.cancelation_reason = \
+                Reservation.CANCELATION_REASON_USER_CANCELLED
+            canceled_reservation.cancelation_action = \
+                Reservation.CANCELATION_ACTION_EXCHANGE
             canceled_reservation.cancelation_date = timezone.now()
             canceled_reservation.save()
 
@@ -952,8 +922,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
     def to_representation(self, instance):
         is_staff = self.context['request'].user.is_staff
         if is_staff:
-            from blitz_api.serializers import UserSerializer
-            self.fields['user_details'] = UserSerializer(
+            from blitz_api.serializers import ReservationUserSerializer
+            self.fields['user_details'] = ReservationUserSerializer(
                 source='user'
             )
         data = super(ReservationSerializer, self).to_representation(instance)
@@ -988,6 +958,7 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     created_at = serializers.ReadOnlyField()
     list_size = serializers.SerializerMethodField()
+    notified = serializers.SerializerMethodField()
 
     def validate_user(self, obj):
         """
@@ -998,6 +969,17 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
         if self.context['request'].user.is_staff:
             return obj
         return self.context['request'].user
+
+    def to_representation(self, instance):
+        is_staff = self.context['request'].user.is_staff
+
+        if is_staff:
+            from blitz_api.serializers import ReservationUserSerializer
+            self.fields['user'] = ReservationUserSerializer()
+
+        data = super(WaitQueueSerializer, self).to_representation(instance)
+
+        return data
 
     class Meta:
         model = WaitQueue
@@ -1013,6 +995,13 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_list_size(self, obj):
         return WaitQueue.objects.filter(retreat=obj.retreat).count()
+
+    def get_notified(self, obj):
+        return WaitQueuePlaceReserved.objects.filter(
+            user=obj.user,
+            wait_queue_place__retreat=obj.retreat,
+            notified=True,
+        ).exists()
 
 
 class WaitQueuePlaceSerializer(serializers.HyperlinkedModelSerializer):

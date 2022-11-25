@@ -21,7 +21,8 @@ from store.models import (
     Order,
     OrderLine,
     OptionProduct,
-    OrderLineBaseProduct
+    OrderLineBaseProduct,
+    Coupon,
 )
 from faker import Faker
 
@@ -109,7 +110,7 @@ class RetreatFactory(DjangoModelFactory):
     seats = factory.fuzzy.FuzzyInteger(0)
     notification_interval = timedelta(hours=24)
     activity_language = factory.fuzzy.FuzzyChoice(Retreat.ACTIVITY_LANGUAGE)
-    price = factory.fuzzy.FuzzyDecimal(0, 9999, 2)
+    price = factory.fuzzy.FuzzyDecimal(0, 1000, 2)
     min_day_refund = factory.fuzzy.FuzzyInteger(0)
     refund_rate = factory.fuzzy.FuzzyInteger(0)
     min_day_exchange = factory.fuzzy.FuzzyInteger(0)
@@ -171,3 +172,13 @@ class OrderLineBaseProductFactory(DjangoModelFactory):
         model = OrderLineBaseProduct
 
     quantity = 1
+
+
+class CouponFactory(DjangoModelFactory):
+    class Meta:
+        model = Coupon
+
+    start_time = "2019-01-06T15:11:05-05:00"
+    end_time = "2020-01-06T15:11:06-05:00"
+    max_use = 100
+    max_use_per_user = 2

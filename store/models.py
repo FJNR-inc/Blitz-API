@@ -6,6 +6,7 @@ from decimal import Decimal
 from blitz_api.services import send_email_from_template_id
 from babel.dates import format_date
 import pytz
+from itertools import chain
 
 from django.db import models
 from django.db.models import Sum
@@ -21,7 +22,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.template.loader import render_to_string
 from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
-from blitz_api.models import AcademicLevel
+from blitz_api.models import AcademicLevel, Organization
 from model_utils.managers import InheritanceManager
 from log_management.models import Log, EmailLog
 
@@ -184,7 +185,7 @@ class Order(models.Model):
                         quantity=quantity,
                         metadata=metadata
                     )
-                    order_line.cost += option.price
+                    order_line.cost += option.price * quantity
                 order_line.save()
 
 
@@ -389,8 +390,23 @@ class BaseProduct(models.Model):
         blank=True,
     )
 
+    available_on_retreat_types = models.ManyToManyField(
+        "retirement.RetreatType",
+        verbose_name=_("Applicable retreat types"),
+        related_name='option_retreat_types',
+        blank=True,
+        symmetrical=False
+    )
+
     def __str__(self):
         return self.name
+
+    @property
+    def get_product_display_type(self):
+        """
+        Return type of product to display, in email for example
+        """
+        return _('Item')
 
     def quantity_sold(self):
         return self.order_lines.count()
@@ -398,14 +414,18 @@ class BaseProduct(models.Model):
     @property
     def options(self):
 
-        options_product_from_content_type = ContentType.objects. \
+        product_types_options = ContentType.objects. \
             get_for_model(self) \
             .products.exclude(id=self.id).select_subclasses()
-
-        if options_product_from_content_type.count() > 0:
-            return options_product_from_content_type
-        else:
-            return self.option_products.all().select_subclasses()
+        products_options = self.option_products.all().select_subclasses()
+        options = chain(product_types_options, products_options)
+        if self.__class__.__name__ == 'Retreat':
+            retreat_type = self.type
+            retreat_type_options = OptionProduct.objects.filter(
+                available_on_retreat_types=retreat_type,
+            )
+            options = chain(options, retreat_type_options)
+        return list(options)
 
 
 class Membership(BaseProduct):
@@ -443,6 +463,10 @@ class Membership(BaseProduct):
         blank=True,
         null=True,
     )
+
+    @property
+    def get_product_display_type(self):
+        return _('Membership')
 
     # History is registered in translation.py
     # history = HistoricalRecords()
@@ -527,6 +551,10 @@ class Package(BaseProduct):
         null=True,
     )
 
+    @property
+    def get_product_display_type(self):
+        return _('Package')
+
     # History is registered in translation.py
     # history = HistoricalRecords()
 
@@ -547,7 +575,8 @@ class OptionProduct(BaseProduct):
     )
     manage_stock = models.BooleanField(
         verbose_name=_("Manage stock"),
-        help_text=_("True if option manage stock, False if stock is infinite or NA"),
+        help_text=_("True if option manage stock, False if stock is "
+                    "infinite or NA"),
         default=False
     )
     stock = models.PositiveIntegerField(
@@ -563,19 +592,33 @@ class OptionProduct(BaseProduct):
     )
 
     is_room_option = models.BooleanField(
-        verbose_name=_('Determine if this option can be considered as a room option'),
+        verbose_name=_('Determine if this option can be considered as a '
+                       'room option'),
         default=False,
     )
+
+    @property
+    def get_product_display_type(self):
+        return _('Option product')
 
     @property
     def remaining_quantity(self):
         remaining_quantity = self.stock
         if self.manage_stock:
             from retirement.models import Reservation
-            refunded_order_lines = Reservation.objects.filter(is_active=False).values_list('order_line', flat=True)
-            ordered_quantity = OrderLineBaseProduct.objects.filter(option=self)\
-                .exclude(order_line__in=refunded_order_lines)\
-                .aggregate(sum=Sum('quantity'))['sum']
+            refunded_order_lines = Reservation.objects.filter(
+                is_active=False,
+            ).values_list(
+                'order_line',
+                flat=True,
+            )
+            ordered_quantity = OrderLineBaseProduct.objects.filter(
+                option=self,
+            ).exclude(
+                order_line__in=refunded_order_lines,
+            ).aggregate(
+                sum=Sum('quantity'),
+            )['sum']
             remaining_quantity -= (ordered_quantity if ordered_quantity else 0)
         return remaining_quantity
 
@@ -583,9 +626,11 @@ class OptionProduct(BaseProduct):
         """
         Check if we can get enough option
         :params quantity_required: quantity required for this stock
-        Return True if option has enough stock for the purchase, False otherwise
+        Return True if option has enough stock for the purchase,
+            False otherwise
         """
-        return not self.manage_stock or quantity_required <= self.remaining_quantity
+        is_enough = quantity_required <= self.remaining_quantity
+        return not self.manage_stock or is_enough
 
 
 class CustomPayment(models.Model):
@@ -724,6 +769,13 @@ class AbstractCoupon(SafeDeleteModel):
         blank=True,
     )
 
+    applicable_retreat_types = models.ManyToManyField(
+        'retirement.RetreatType',
+        related_name="applicable_%(class)ss",
+        verbose_name=_("Applicable retreat types"),
+        blank=True,
+    )
+
     applicable_timeslots = models.ManyToManyField(
         'workplace.TimeSlot',
         related_name="applicable_%(class)ss",
@@ -789,6 +841,15 @@ class Coupon(AbstractCoupon):
         on_delete=models.CASCADE,
         verbose_name=_("User"),
         related_name='coupons',
+    )
+
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        verbose_name=_("Organization"),
+        related_name='coupons',
+        blank=True,
+        null=True,
     )
 
     users = models.ManyToManyField(

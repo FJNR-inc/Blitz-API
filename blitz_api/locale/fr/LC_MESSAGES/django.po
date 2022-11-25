@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-30 10:12-0400\n"
-"PO-Revision-Date: 2022-08-30 14:24+0000\n"
-"Last-Translator: Noel Rignon <noel.rignon@fjnr.ca>\n"
+"POT-Creation-Date: 2022-10-25 15:01-0400\n"
+"PO-Revision-Date: 2022-10-25 21:00+0000\n"
+"Last-Translator: Romain Fayolle <romain.fayolle@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
 "blitz_api/fr/>\n"
 "Language: fr\n"
@@ -228,6 +228,34 @@ msgstr "Longitude"
 msgid "Timezone"
 msgstr "Fuseau horaire"
 
+#: blitz_api/models.py:686
+msgid "Anonymous Chrono data"
+msgstr "Données Chrono anonymes"
+
+#: blitz_api/models.py:687
+msgid "Other"
+msgstr "Autre"
+
+#: blitz_api/models.py:688
+msgid "Retreat sales"
+msgstr "Ventes de retraite"
+
+#: blitz_api/models.py:689
+msgid "Retreat participation"
+msgstr "Participation à la retraite"
+
+#: blitz_api/models.py:690
+msgid "Retreat options"
+msgstr "Options de retraite"
+
+#: blitz_api/models.py:691
+msgid "Retreat room distribution"
+msgstr "Répartition des chambres de la retraite"
+
+#: blitz_api/models.py:707
+msgid "Author"
+msgstr "Auteur"
+
 #: blitz_api/serializers.py:32
 msgid "Invalid format."
 msgstr "Format invalide."
@@ -238,12 +266,12 @@ msgstr "Format invalide."
 msgid "This field is required."
 msgstr "Ce champ est requis."
 
-#: blitz_api/serializers.py:181 blitz_api/serializers.py:401
-#: blitz_api/serializers.py:546
+#: blitz_api/serializers.py:181 blitz_api/serializers.py:434
+#: blitz_api/serializers.py:579
 msgid "Email address"
 msgstr "Adresse e-mail"
 
-#: blitz_api/serializers.py:196 blitz_api/serializers.py:425
+#: blitz_api/serializers.py:196 blitz_api/serializers.py:458
 msgid "An account for the specified email address already exists."
 msgstr "Un compte pour l'adresse e-mail spécifiée existe déjà."
 
@@ -272,27 +300,27 @@ msgstr "Un compte avec la même adresse e-mail existe déjà."
 msgid "Bad password"
 msgstr "Mauvais mot de passe"
 
-#: blitz_api/serializers.py:498
+#: blitz_api/serializers.py:531
 msgid "Username"
 msgstr "Nom d'utilisateur"
 
-#: blitz_api/serializers.py:500
+#: blitz_api/serializers.py:533
 msgid "Password"
 msgstr "Mot de passe"
 
-#: blitz_api/serializers.py:516
+#: blitz_api/serializers.py:549
 msgid "Your account is not activated. [code: not-activated]"
 msgstr "Votre compte n'est pas activé. [code: not-activated]"
 
-#: blitz_api/serializers.py:535
+#: blitz_api/serializers.py:568
 msgid "Unable to log in with provided credentials."
 msgstr "Impossible de se connecter avec les identifiants fournis."
 
-#: blitz_api/serializers.py:555
+#: blitz_api/serializers.py:588
 msgid "No account associated to this email address."
 msgstr "Aucun compte associé à cette adresse e-mail."
 
-#: blitz_api/serializers.py:602
+#: blitz_api/serializers.py:635
 msgid "Email already register to this newsletter"
 msgstr "Cet e-mail est déjà inscrit à cette newsletter"
 

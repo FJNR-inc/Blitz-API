@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 from datetime import (
     datetime,
     timedelta,
@@ -28,8 +29,8 @@ from retirement.models import (
     Retreat,
     RetreatType,
     RetreatDate,
+    Reservation,
 )
-
 User = get_user_model()
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
@@ -67,10 +68,7 @@ class RetreatTests(CustomAPITestCase):
         'min_day_exchange',
         'min_day_refund',
         'refund_rate',
-        'reservations',
-        'reservations_canceled',
         'total_reservations',
-        'users',
         'accessibility',
         'form_url',
         'carpool_url',
@@ -98,6 +96,10 @@ class RetreatTests(CustomAPITestCase):
         'display_start_time',
         'hide_from_client_admin_panel',
         'require_purchase_room',
+        'available_on_retreat_types',
+        'is_specific_to_community',
+        'community_description',
+        'community_name',
     ]
 
     @classmethod
@@ -955,9 +957,71 @@ class RetreatTests(CustomAPITestCase):
         content = json.loads(response.content)
         self.check_attributes(content, attributes)
 
-    def test_delete(self):
+    def test_edit_community_info(self):
+        """
+        Ensure we can update community info of a retreat.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'name': self.retreat.name,
+            'is_specific_to_community': True,
+            'community_description': 'Lorem ipsum communities',
+            'community_name': 'My new community',
+        }
+
+        response = self.client.patch(
+            reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat.id},
+            ),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        attributes = self.ATTRIBUTES + [
+            'state_province_fr',
+            'old_id',
+            'details_en',
+            'details_fr',
+            'address_line2_en',
+            'name_en',
+            'name_fr',
+            'state_province_en',
+            'country_fr',
+            'country_en',
+            'city_en',
+            'address_line2_fr',
+            'address_line1_fr',
+            'city_fr',
+            'address_line1_en',
+        ]
+        content = json.loads(response.content)
+        self.check_attributes(content, attributes)
+
+        self.assertEqual(
+            content['is_specific_to_community'],
+            data['is_specific_to_community'],
+        )
+        self.assertEqual(
+            content['community_description'],
+            data['community_description'],
+        )
+        self.assertEqual(
+            content['community_name'],
+            data['community_name'],
+        )
+
+    def test_delete_without_participants(self):
         """
         Ensure we can delete a retreat (setting is_active to false).
+        without participants
         """
         self.client.force_authenticate(user=self.admin)
 
@@ -976,6 +1040,85 @@ class RetreatTests(CustomAPITestCase):
 
         self.retreat.refresh_from_db()
         self.assertFalse(self.retreat.is_active)
+        self.assertTrue(self.retreat.hide_from_client_admin_panel)
+
+        self.retreat.is_active = True
+
+    def test_delete_with_participants_no_message(self):
+        """
+        Ensure we can't delete a retreat that has participants
+        without a message.
+        """
+        self.client.force_authenticate(user=self.admin)
+        user = UserFactory()
+        Reservation.objects.create(
+            user=user,
+            retreat=self.retreat,
+            is_active=True,
+        )
+
+        response = self.client.delete(
+            reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat.id},
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+    @patch('retirement.models.Retreat.cancel_participants_reservation')
+    @patch('retirement.services.send_deleted_retreat_email')
+    def test_delete_with_participants(self, mock_email, mock_cancel):
+        """
+        Ensure we can delete a retreat that has participants
+        """
+        self.client.force_authenticate(user=self.admin)
+        deletion_message = 'No more fun.'
+
+        user = UserFactory()
+        user2 = UserFactory()
+
+        Reservation.objects.create(
+            user=user,
+            retreat=self.retreat,
+            is_active=True,
+        )
+        Reservation.objects.create(
+            user=user2,
+            retreat=self.retreat,
+            is_active=True,
+        )
+
+        response = self.client.delete(
+            reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat.id},
+            ),
+            {
+                'deletion_message': deletion_message
+            }
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+            response.content,
+        )
+
+        mock_email.assert_called_once_with(
+            self.retreat,
+            self.retreat.get_participants_emails(),
+            deletion_message
+        )
+        mock_cancel.assert_called_once_with(False)
+
+        self.retreat.refresh_from_db()
+        self.assertFalse(self.retreat.is_active)
+        self.assertTrue(self.retreat.hide_from_client_admin_panel)
 
         self.retreat.is_active = True
 
@@ -996,6 +1139,7 @@ class RetreatTests(CustomAPITestCase):
         content = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(content['results']), 1)
 
         for item in content['results']:
             self.check_attributes(item)
@@ -1163,7 +1307,6 @@ class RetreatTests(CustomAPITestCase):
             status.HTTP_200_OK,
             response.content
         )
-
         attributes = self.ATTRIBUTES + [
             'state_province_fr',
             'old_id',
@@ -1230,6 +1373,170 @@ class RetreatTests(CustomAPITestCase):
         self.assertEqual(
             len(mail.outbox),
             self.retreat.reservations.filter(is_active=True).count()
+        )
+
+    def test_batch_activate_retreat_invalid_ids(self):
+        """
+        Ensure we can activate multiple retreat with one call.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        retreat = Retreat.objects.create(
+            name="mega retreat",
+            details="This is a description of the mega retreat.",
+            seats=400,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+            price=199,
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            activity_language='FR',
+            accessibility=True,
+            form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
+            type=self.retreatType,
+        )
+
+        # Two IDs does not exist in this data
+        data = {
+            'retreats': [997, 998, retreat.id],
+        }
+
+        response = self.client.post(
+            reverse('retreat:retreat-batch-activate'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.assertEqual(
+            response.json(),
+            {
+                'retreat_ids': [
+                    'These retreats does not exist: [997, 998]'
+                ]
+            }
+        )
+
+    def test_batch_activate_retreat_error_on_activation(self):
+        """
+        Ensure we can activate multiple retreat with one call.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        retreat = Retreat.objects.create(
+            name="mega retreat",
+            details="This is a description of the mega retreat.",
+            seats=400,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+            price=199,
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            activity_language='FR',
+            accessibility=True,
+            form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
+            type=self.retreatType,
+        )
+
+        # Two IDs does not exist in this data
+        data = {
+            'retreats': [retreat.id],
+        }
+
+        response = self.client.post(
+            reverse('retreat:retreat-batch-activate'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.assertEqual(
+            response.json(),
+            {
+                "retreat": retreat.id,
+                "non_field_errors": [
+                    "Retreat need to have a start time before activate it"
+                ]
+            }
+        )
+
+    def test_batch_activate_retreat(self):
+        """
+        Ensure we can activate multiple retreat with one call.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        retreat = Retreat.objects.create(
+            name="mega retreat",
+            details="This is a description of the mega retreat.",
+            seats=400,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+            price=199,
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            activity_language='FR',
+            accessibility=True,
+            form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
+            type=self.retreatType,
+        )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=retreat,
+        )
+
+        # Two IDs does not exist in this data
+        data = {
+            'retreats': [retreat.id],
+        }
+
+        response = self.client.post(
+            reverse('retreat:retreat-batch-activate'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.assertEqual(
+            response.content,
+            b'',
         )
 
     def test_reminder_email_too_early(self):
@@ -1550,3 +1857,273 @@ class RetreatTests(CustomAPITestCase):
             results[0].get('id'),
             retreat_2.id
         )
+
+    def test_list_by_date_interval(self):
+        """
+        Ensure we can filter by end date and start date of retreats
+        """
+        Retreat.objects.all().delete()
+
+        retreat_1 = Retreat.objects.create(
+            name="retreat_started",
+            price=199,
+            type=self.retreatType,
+            seats=2,
+            min_day_refund=2,
+            min_day_exchange=2,
+            refund_rate=20,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2099, 1, 3),
+            ),
+        )
+        RetreatDate.objects.create(
+            start_time='2099-01-03T00:00:00Z',
+            end_time='2099-04-01T00:00:00Z',
+            retreat=retreat_1,
+        )
+        RetreatDate.objects.create(
+            start_time='2099-04-01T00:00:00Z',
+            end_time='2099-04-20T00:00:00Z',
+            retreat=retreat_1,
+        )
+        RetreatDate.objects.create(
+            start_time='2099-05-01T00:00:00Z',
+            end_time='2099-06-01T00:00:00Z',
+            retreat=retreat_1,
+        )
+        retreat_1.activate()
+
+        retreat_2 = Retreat.objects.create(
+            name="retreat_started",
+            price=199,
+            type=self.retreatType,
+            seats=2,
+            min_day_refund=2,
+            min_day_exchange=2,
+            refund_rate=20,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2099, 1, 1),
+            ),
+        )
+        RetreatDate.objects.create(
+            start_time='2099-01-01T00:00:00Z',
+            end_time='2099-02-01T00:00:00Z',
+            retreat=retreat_2,
+        )
+        RetreatDate.objects.create(
+            start_time='2099-03-23T00:00:00Z',
+            end_time='2099-04-20T00:00:00Z',
+            retreat=retreat_2,
+        )
+        RetreatDate.objects.create(
+            start_time='2099-05-20T00:00:00Z',
+            end_time='2099-06-01T00:00:00Z',
+            retreat=retreat_2,
+        )
+        retreat_2.activate()
+
+        retreat_3 = Retreat.objects.create(
+            name="retreat_started",
+            price=199,
+            type=self.retreatType,
+            seats=2,
+            min_day_refund=2,
+            min_day_exchange=2,
+            refund_rate=20,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2099, 1, 2),
+            ),
+        )
+        RetreatDate.objects.create(
+            start_time='2099-01-02T00:00:00Z',
+            end_time='2099-06-01T00:00:00Z',
+            retreat=retreat_3,
+        )
+        retreat_3.activate()
+
+        retreat_4 = Retreat.objects.create(
+            name="retreat_started",
+            price=199,
+            type=self.retreatType,
+            seats=2,
+            min_day_refund=2,
+            min_day_exchange=2,
+            refund_rate=20,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2099, 1, 1),
+            ),
+        )
+        RetreatDate.objects.create(
+            start_time='2099-01-04T00:00:00Z',
+            end_time='2099-01-05T00:00:00Z',
+            retreat=retreat_4,
+        )
+        RetreatDate.objects.create(
+            start_time='2099-01-03T00:00:00Z',
+            end_time='2099-01-04T00:00:00Z',
+            retreat=retreat_4,
+        )
+        retreat_4.activate()
+
+        retreat_5 = Retreat.objects.create(
+            name="retreat_started",
+            price=199,
+            type=self.retreatType,
+            seats=2,
+            min_day_refund=2,
+            min_day_exchange=2,
+            refund_rate=20,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2099, 6, 1),
+            ),
+        )
+        RetreatDate.objects.create(
+            start_time='2099-06-01T00:00:00Z',
+            end_time='2099-06-02T00:00:00Z',
+            retreat=retreat_5,
+        )
+        RetreatDate.objects.create(
+            start_time='2099-06-03T00:00:00Z',
+            end_time='2099-06-04T00:00:00Z',
+            retreat=retreat_5,
+        )
+        retreat_5.activate()
+
+        retreat_6 = Retreat.objects.create(
+            name="retreat_started",
+            price=199,
+            type=self.retreatType,
+            seats=2,
+            min_day_refund=2,
+            min_day_exchange=2,
+            refund_rate=20,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2099, 3, 10),
+            ),
+        )
+        RetreatDate.objects.create(
+            start_time='2099-03-10T00:00:00Z',
+            end_time='2099-03-11T00:00:00Z',
+            retreat=retreat_6,
+        )
+        RetreatDate.objects.create(
+            start_time='2099-04-03T00:00:00Z',
+            end_time='2099-04-04T00:00:00Z',
+            retreat=retreat_6,
+        )
+        retreat_6.activate()
+
+        retreat_7 = Retreat.objects.create(
+            name="retreat_started",
+            price=199,
+            type=self.retreatType,
+            seats=2,
+            min_day_refund=2,
+            min_day_exchange=2,
+            refund_rate=20,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2099, 2, 10),
+            ),
+        )
+        RetreatDate.objects.create(
+            start_time='2099-02-10T00:00:00Z',
+            end_time='2099-03-11T00:00:00Z',
+            retreat=retreat_7,
+        )
+        RetreatDate.objects.create(
+            start_time='2099-04-03T00:00:00Z',
+            end_time='2099-04-04T00:00:00Z',
+            retreat=retreat_7,
+        )
+        retreat_7.activate()
+
+        retreat_8 = Retreat.objects.create(
+            name="retreat_started",
+            price=199,
+            type=self.retreatType,
+            seats=2,
+            min_day_refund=2,
+            min_day_exchange=2,
+            refund_rate=20,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2099, 3, 11),
+            ),
+        )
+        RetreatDate.objects.create(
+            start_time='2099-03-11T00:00:00Z',
+            end_time='2099-03-12T00:00:00Z',
+            retreat=retreat_8,
+        )
+        RetreatDate.objects.create(
+            start_time='2099-06-03T00:00:00Z',
+            end_time='2099-06-04T00:00:00Z',
+            retreat=retreat_8,
+        )
+        retreat_8.activate()
+
+        # Interval
+        response = self.client.get(
+            reverse('retreat:retreat-list'),
+            {
+                'ordering': '-display_start_time',
+                'finish_after': '2099-03-01T00:00:00Z',
+                'start_before': '2099-05-01T00:00:00Z',
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        content = response.json()
+        results = content.get('results')
+        id_results = [x['id'] for x in results]
+        self.assertEqual(len(results), 6)
+        self.assertTrue(retreat_1.id in id_results)
+        self.assertTrue(retreat_2.id in id_results)
+        self.assertTrue(retreat_3.id in id_results)
+        self.assertTrue(retreat_6.id in id_results)
+        self.assertTrue(retreat_7.id in id_results)
+        self.assertTrue(retreat_8.id in id_results)
+
+        self.assertEqual(results[5].get('id'), retreat_2.id)
+        self.assertEqual(results[4].get('id'), retreat_3.id)
+        self.assertEqual(results[3].get('id'), retreat_1.id)
+        self.assertEqual(results[2].get('id'), retreat_7.id)
+        self.assertEqual(results[1].get('id'), retreat_6.id)
+        self.assertEqual(results[0].get('id'), retreat_8.id)
+
+        # Hide past retreat
+        response = self.client.get(
+            reverse('retreat:retreat-list'),
+            {
+                'ordering': '-display_start_time',
+                'finish_after': '2099-05-01T00:00:00Z',
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        content = response.json()
+        results = content.get('results')
+        self.assertEqual(len(results), 5)
+        id_results = [x['id'] for x in results]
+        self.assertTrue(retreat_1.id in id_results)
+        self.assertTrue(retreat_2.id in id_results)
+        self.assertTrue(retreat_3.id in id_results)
+        self.assertTrue(retreat_5.id in id_results)
+        self.assertTrue(retreat_8.id in id_results)
+
+        self.assertEqual(results[4].get('id'), retreat_2.id)
+        self.assertEqual(results[3].get('id'), retreat_3.id)
+        self.assertEqual(results[2].get('id'), retreat_1.id)
+        self.assertEqual(results[1].get('id'), retreat_8.id)
+        self.assertEqual(results[0].get('id'), retreat_5.id)

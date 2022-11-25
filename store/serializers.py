@@ -34,7 +34,10 @@ from retirement.services import send_retreat_confirmation_email
 from workplace.models import Reservation
 from retirement.models import Reservation as RetreatReservation, \
     RetreatInvitation
-from retirement.models import Retreat
+from retirement.models import (
+    Retreat,
+    RetreatType
+)
 
 from .exceptions import PaymentAPIError
 from .models import (Package, Membership, Order, OrderLine, BaseProduct,
@@ -108,6 +111,21 @@ class OrderLineBaseProductSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class SimpleBaseProductSerializer(serializers.HyperlinkedModelSerializer):
+    """BaseProduct serializer with basic information"""
+    id = serializers.ReadOnlyField()
+    name = serializers.CharField()
+    product_type = serializers.SerializerMethodField()
+
+    def get_product_type(self, obj):
+        return BaseProduct.objects.get_subclass(id=obj.id).\
+            __class__.__name__.lower()
+
+    class Meta:
+        model = BaseProduct
+        fields = ['id', 'name', 'product_type']
+
+
 class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
 
@@ -149,13 +167,23 @@ class BaseProductSerializer(serializers.HyperlinkedModelSerializer):
         required=False
     )
 
+    available_on_retreat_types = serializers.PrimaryKeyRelatedField(
+        queryset=RetreatType.objects.all(),
+        many=True,
+        required=False
+    )
+
     def to_representation(self, instance):
         user = self.context['request'].user
         self.fields['options'] = BaseProductManagerSerializer(many=True)
         data = super(BaseProductSerializer, self).to_representation(instance)
         if not user.is_staff:
             data = remove_translation_fields(data)
-
+        products = BaseProduct.objects.filter(
+            pk__in=data['available_on_products'])
+        data['available_on_products'] = SimpleBaseProductSerializer(
+            products,
+            many=True).data
         return data
 
     def run_validation(self, data=empty):
@@ -252,6 +280,7 @@ class PackageSerializer(BaseProductSerializer):
 
 class OptionProductSerializer(BaseProductSerializer):
     remaining_quantity = serializers.ReadOnlyField()
+
     class Meta:
         model = OptionProduct
         fields = '__all__'
@@ -666,6 +695,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     )
                     coupon.applicable_retreats.set(
                         membership_coupon.applicable_retreats.all())
+                    coupon.applicable_retreat_types.set(
+                        membership_coupon.applicable_retreat_types.all())
                     coupon.applicable_timeslots.set(
                         membership_coupon.applicable_timeslots.all())
                     coupon.applicable_packages.set(
@@ -716,9 +747,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     if reservations.filter(user=user):
                         raise serializers.ValidationError({
                             'non_field_errors': [_(
-                                "You already are registered to this timeslot: "
-                                "{0}.".format(str(timeslot))
-                            )]
+                                "You already are registered "
+                                "to this timeslot: ") + str(timeslot) + "."
+                            ]
                         })
                     if (timeslot.period.workplace and
                             timeslot.period.workplace.seats - reserved > 0):
@@ -801,7 +832,6 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                                     "requested retreat."
                                 )]
                             })
-
 
                     invitation = retreat_orderline.get_invitation()
                     if retreat.can_order_the_retreat(user, invitation):
@@ -913,23 +943,31 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             # Here, the 'details' key is used to provide details of the
             #  item to the email template.
             # As of now, only 'retreat' objects have the 'email_content'
-            #  key that is used here. There is surely a better way to
+            #  key that is used here. There is surely a better way
             #  to handle that logic that will be more generic.
             items = [
                 {
-                    'price': orderline.content_object.price,
+                    'price': order_line.content_object.price,
                     'name': "{0}: {1}".format(
-                        str(orderline.content_type),
-                        orderline.content_object.name
+                        order_line.content_object.get_product_display_type,
+                        order_line.content_object.name
                     ),
+                    'options': [
+                        {
+                            'price': opt.option.price * opt.quantity,
+                            'name': f'{opt.option.name} (x{opt.quantity})',
+                        } for opt in OrderLineBaseProduct.objects.filter(
+                            order_line=order_line)
+                    ]
+
                     # Removed details section because it was only used
                     # for retreats. Retreats instead have another
                     # unique email containing details of the event.
                     # 'details':
-                    #    orderline.content_object.email_content if hasattr(
-                    #         orderline.content_object, 'email_content'
+                    #    order_line.content_object.email_content if hasattr(
+                    #         order_line.content_object, 'email_content'
                     #     ) else ""
-                } for orderline in orderlines
+                } for order_line in orderlines
             ]
 
             # Send order confirmation email
@@ -1104,11 +1142,52 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
     def to_representation(self, instance):
         data = super(CouponSerializer, self).to_representation(instance)
         from workplace.serializers import TimeSlotSerializer
-        from retirement.serializers import RetreatSerializer
+        from blitz_api.serializers import (
+            OrganizationSerializer,
+            ReservationUserSerializer,
+        )
+        from retirement.serializers import (
+            RetreatSerializer,
+            RetreatTypeSerializer,
+        )
         action = self.context['view'].action
         if action == 'retrieve' or action == 'list':
+
+            usages = list()
+            for line in OrderLine.objects.filter(coupon=instance):
+                usages.append(
+                    {
+                        'date': line.order.transaction_date,
+                        'user': ReservationUserSerializer(
+                            line.order.user,
+                            context={
+                                'request': self.context['request'],
+                                'view': self.context['view'],
+                            },
+                        ).data,
+                        'amount_used': line.coupon_real_value,
+                        'user_university': OrganizationSerializer(
+                            line.order.user.university,
+                            context={
+                                'request': self.context['request'],
+                                'view': self.context['view'],
+                            },
+                        ).data,
+                        'product_name': line.content_object.name,
+                    }
+                )
+
+            data['usages'] = usages
             data['applicable_retreats'] = RetreatSerializer(
                 instance.applicable_retreats,
+                many=True,
+                context={
+                    'request': self.context['request'],
+                    'view': self.context['view'],
+                },
+            ).data
+            data['applicable_retreat_types'] = RetreatTypeSerializer(
+                instance.applicable_retreat_types,
                 many=True,
                 context={
                     'request': self.context['request'],
@@ -1139,6 +1218,14 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
                     'view': self.context['view'],
                 },
             ).data
+            if instance.organization:
+                data['organization'] = OrganizationSerializer(
+                    instance.organization,
+                    context={
+                        'request': self.context['request'],
+                        'view': self.context['view'],
+                    },
+                ).data
         return data
 
     class Meta:
@@ -1148,6 +1235,10 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
             'applicable_retreats': {
                 'required': False,
                 'view_name': 'retreat:retreat-detail',
+            },
+            'applicable_retreat_types': {
+                'required': False,
+                'view_name': 'retreat:retreattype-detail',
             },
             'applicable_timeslots': {
                 'required': False,

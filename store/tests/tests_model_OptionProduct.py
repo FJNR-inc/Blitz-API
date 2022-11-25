@@ -1,10 +1,16 @@
 import pytz
+from rest_framework import status
+from rest_framework.reverse import reverse
 from django.utils import timezone
 from django.conf import settings
 from datetime import datetime
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.test import APITestCase
-from blitz_api.factories import UserFactory
+
+from blitz_api.factories import (
+    UserFactory,
+    AdminFactory
+)
 from retirement.models import Retreat, RetreatDate, RetreatType
 from store.models import Order, OptionProduct, Package
 
@@ -15,6 +21,8 @@ class OptionProductTests(APITestCase):
 
     def setUp(self):
         self.user = UserFactory()
+        self.admin = AdminFactory()
+
         self.retreatType = RetreatType.objects.create(
             name="Type 1",
             minutes_before_display_link=10,
@@ -117,3 +125,26 @@ class OptionProductTests(APITestCase):
     def test_options_package(self):
         self.assertIn(self.options_1, list(self.package.options))
         self.assertIn(self.retreat_option, list(self.package.options))
+
+    def test_option_product_with_retreat_type(self):
+        self.client.force_authenticate(user=self.admin)
+        data = {
+            'available': True,
+            'available_on_retreat_types': [self.retreatType.id],
+            'price': 10,
+            'max_quantity': 10
+        }
+        response = self.client.post(
+            reverse('optionproduct-list'),
+            data,
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content
+        )
+        self.assertEqual(
+            response.data["available_on_retreat_types"],
+            [self.retreatType.id]
+        )

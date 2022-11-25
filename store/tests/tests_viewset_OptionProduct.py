@@ -16,6 +16,8 @@ from rest_framework.test import (
 from blitz_api.factories import (
     UserFactory,
     AdminFactory,
+    RetreatFactory,
+    OptionProductFactory,
 )
 from retirement.models import (
     Retreat,
@@ -202,11 +204,22 @@ class OrderTests(APITestCase):
                          response.content)
 
         for key, value in data.items():
-            self.assertEqual(
-                response_content.get(key),
-                value,
-                f'Field tested: {key}'
-            )
+            if key == 'available_on_products':
+                self.assertEqual(
+                    response_content.get(key),
+                    [{
+                        'id': self.retreat.id,
+                        'name': self.retreat.name,
+                        'product_type': self.retreat.__class__.__name__.lower()
+                    }],
+                    f'Field tested: {key}'
+                )
+            else:
+                self.assertEqual(
+                    response_content.get(key),
+                    value,
+                    f'Field tested: {key}'
+                )
 
         self.assertIsNotNone(
             OptionProduct.objects.get(id=response_content.get('id'))
@@ -262,3 +275,144 @@ class OrderTests(APITestCase):
         self.options_1.refresh_from_db()
 
         self.assertFalse(self.options_1.available)
+
+    def test_option_retreat_type(self):
+        """
+        Test that when we have an option product linked to a retreat type,
+        then all retreat created with this type also have this option product.
+        """
+        self.client.force_authenticate(user=self.admin)
+        retreatType1 = RetreatType.objects.create(
+            name="New retreat type",
+            minutes_before_display_link=10,
+            number_of_tomatoes=4,
+        )
+        data = {
+            'name': "retreat type option",
+            'details': "retreat type option",
+            'available_on_retreat_types': [retreatType1.id],
+            'available': True,
+            'price': '50.00',
+            'max_quantity': 10,
+        }
+        response = self.client.post(
+            reverse('optionproduct-list'),
+            data,
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED,
+                         response.content)
+        content = json.loads(response.content)
+        option_id = content['id']
+
+        retreat1 = RetreatFactory(
+            name='retreat1',
+            seats=400,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
+            type=retreatType1)
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=retreat1,
+        )
+        retreat1.activate()
+        retreat2 = RetreatFactory(
+            name='retreat2',
+            seats=400,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
+            type=retreatType1)
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=retreat2,
+        )
+        retreat2.activate()
+        response = self.client.get(
+            reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': retreat1.id},
+            ),
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+        content = json.loads(response.content)
+        self.assertEqual(content.get('options')[0].get('id'),
+                         option_id,
+                         content)
+        response = self.client.get(
+            reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': retreat2.id},
+            ),
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+        content = json.loads(response.content)
+        self.assertEqual(content.get('options')[0].get('id'),
+                         option_id,
+                         content)
+
+    def test_search_by_name_and_active(self):
+
+        self.client.force_authenticate(user=self.admin)
+        option_1 = OptionProductFactory(name='specific_name_1')
+        option_2 = OptionProductFactory(name='specific_name_2',
+                                        available=False)
+        OptionProductFactory(name='random')
+        response = self.client.get(
+            reverse('optionproduct-list'),
+            {
+                'search': 'specific'
+            },
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code, status.HTTP_200_OK
+        )
+        content = json.loads(response.content)
+
+        self.assertEqual(len(content['results']), 2)
+        self.assertEqual(content['results'][0]['id'], option_1.id)
+        self.assertEqual(content['results'][1]['id'], option_2.id)
+
+        response = self.client.get(
+            reverse('optionproduct-list'),
+            {
+                'search': 'specific',
+                'available': 'true',
+            },
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code, status.HTTP_200_OK
+        )
+        content = json.loads(response.content)
+
+        self.assertEqual(len(content['results']), 1)
+        self.assertEqual(content['results'][0]['id'], option_1.id)
+
+        response = self.client.get(
+            reverse('optionproduct-list'),
+            {
+                'search': 'specific',
+                'available': 'false',
+            },
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code, status.HTTP_200_OK
+        )
+        content = json.loads(response.content)
+
+        self.assertEqual(len(content['results']), 1)
+        self.assertEqual(content['results'][0]['id'], option_2.id)
