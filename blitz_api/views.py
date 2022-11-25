@@ -31,6 +31,9 @@ from .models import (
 from .resources import (AcademicFieldResource, AcademicLevelResource,
                         OrganizationResource, UserResource)
 from . import serializers, permissions, services
+from store.permissions import IsOwner
+from store.models import Order
+from store.serializers import OrderHistorySerializer
 
 User = get_user_model()
 
@@ -83,6 +86,8 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
     def get_serializer_class(self):
         if (self.action == 'update') | (self.action == 'partial_update'):
             return serializers.UserUpdateSerializer
+        elif self.action == 'order_history':
+            return OrderHistorySerializer
         return serializers.UserSerializer
 
     def get_queryset(self):
@@ -226,6 +231,16 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
             return Response(content, status=status.HTTP_403_FORBIDDEN)
 
         return Response(status=status.HTTP_200_OK)
+
+    @action(detail=True, permission_classes=[IsAdminUser, IsOwner])
+    def order_history(self, request, pk=None):
+        user = self.get_object()
+        orders = Order.objects.filter(user=user)
+        response = self.get_serializer(orders, many=True).data
+        return Response(
+            status=status.HTTP_200_OK,
+            data=response
+        )
 
 
 class UsersActivation(APIView):
