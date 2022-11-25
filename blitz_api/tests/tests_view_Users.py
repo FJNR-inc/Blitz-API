@@ -1,6 +1,7 @@
 import json
+import pytz
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 from unittest import mock
 
 from dateutil.relativedelta import relativedelta
@@ -9,20 +10,40 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.core import mail
 from django.urls import reverse
 from django.test.utils import override_settings
+from django.conf import settings
 
 from ..factories import UserFactory, AdminFactory
 from ..models import (ActionToken, Organization, Domain,
                       AcademicField, AcademicLevel)
 from ..services import remove_translation_fields
-from store.models import Membership
+from store.models import (
+    Membership,
+    Order,
+    OrderLine,
+    OrderLineBaseProduct,
+    OptionProduct,
+    Coupon,
+)
+from retirement.models import (
+    Retreat,
+    RetreatType,
+)
+from blitz_api import testing_tools
+from ..testing_tools import CustomAPITestCase
+
+LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 User = get_user_model()
 
 
-class UsersTests(APITestCase):
+class UsersTests(CustomAPITestCase):
+    ORDER_ATTRIBUTES = testing_tools.ORDER_HISTORY_ATTRIBUTES
+    ORDERLINE_ATTRIBUTES = testing_tools.ORDERLINE_ATTRIBUTES
+    OPTION_ATTRIBUTES = testing_tools.OPTION_ATTRIBUTES
 
     @classmethod
     def setUpClass(cls):
@@ -54,6 +75,101 @@ class UsersTests(APITestCase):
         self.admin = AdminFactory()
         self.admin.set_password('Test123!')
         self.admin.save()
+
+        self.retreat_content_type = ContentType.objects.get_for_model(Retreat)
+        self.membership_type = ContentType.objects.get_for_model(Membership)
+        self.coupon = Coupon.objects.create(
+            value=13,
+            code="ABCDEFGH",
+            start_time="2019-01-06T15:11:05-05:00",
+            end_time="2030-01-06T15:11:06-05:00",
+            max_use=100,
+            max_use_per_user=2,
+            details="Any package for clients",
+            owner=self.user,
+        )
+        self.retreatType = RetreatType.objects.create(
+            name="Type 1",
+            minutes_before_display_link=10,
+            number_of_tomatoes=4,
+        )
+        self.retreat = Retreat.objects.create(
+            name="mega_retreat",
+            seats=400,
+            price=199,
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            accessibility=True,
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
+            type=self.retreatType,
+        )
+        self.options_1: OptionProduct = OptionProduct.objects.create(
+            name="options_1",
+            details="options_1",
+            available=True,
+            price=50.00,
+            max_quantity=10,
+        )
+        self.options_1.available_on_products.add(self.retreat)
+        self.options_2: OptionProduct = OptionProduct.objects.create(
+            name="options_2",
+            details="options_2",
+            available=True,
+            price=150.00,
+            max_quantity=10,
+        )
+        self.options_2.available_on_products.add(self.retreat)
+        self.order = Order.objects.create(
+            user=self.user,
+            transaction_date=timezone.now(),
+            authorization_id=1,
+            settlement_id=1,
+        )
+        self.order_line = OrderLine.objects.create(
+            order=self.order,
+            quantity=1,
+            content_type=self.retreat_content_type,
+            object_id=self.retreat.id,
+            cost=self.retreat.price
+        )
+        OrderLineBaseProduct.objects.create(
+            order_line=self.order_line,
+            option=self.options_1,
+            quantity=3
+        )
+        OrderLineBaseProduct.objects.create(
+            order_line=self.order_line,
+            option=self.options_2,
+            quantity=2
+        )
+        self.order_line_2 = OrderLine.objects.create(
+            order=self.order,
+            quantity=1,
+            content_type=self.membership_type,
+            object_id=self.membership.id,
+            cost=self.membership.price,
+            coupon=self.coupon
+        )
+
+        self.order2 = Order.objects.create(
+            user=self.user,
+            transaction_date=timezone.now(),
+            authorization_id=1,
+            settlement_id=1,
+        )
+        self.order_line = OrderLine.objects.create(
+            order=self.order2,
+            quantity=1,
+            content_type=self.membership_type,
+            object_id=self.membership.id,
+            cost=self.membership.price,
+        )
 
     def test_create_new_student_user(self):
         """
@@ -738,3 +854,77 @@ class UsersTests(APITestCase):
         )
 
         self.assertEqual(len(mail.outbox), 1)
+
+    def test_user_order_history(self):
+        """
+        Ensure user can get own order history
+        """
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            reverse(
+                'user-order-history',
+                kwargs={'pk': self.user.id},
+            ),
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+        content = json.loads(response.content)
+        self.assertEqual(len(content), 2)
+        self.check_attributes(content[0], self.ORDER_ATTRIBUTES)
+        self.check_attributes(
+            content[0]['order_lines'][0], self.ORDERLINE_ATTRIBUTES)
+        self.check_attributes(
+            content[0]['order_lines'][0]['options'][0], self.OPTION_ATTRIBUTES
+        )
+
+    def test_admin_order_history(self):
+        """
+        Ensure admin can get a user order history
+        """
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(
+            reverse(
+                'user-order-history',
+                kwargs={'pk': self.user.id},
+            ),
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+        content = json.loads(response.content)
+        self.assertEqual(len(content), 2)
+        self.check_attributes(content[0], self.ORDER_ATTRIBUTES)
+        self.check_attributes(
+            content[0]['order_lines'][0], self.ORDERLINE_ATTRIBUTES)
+        self.check_attributes(
+            content[0]['order_lines'][0]['options'][0], self.OPTION_ATTRIBUTES
+        )
+
+    def test_no_owner_order_history(self):
+        """
+        Ensure we can get a user order history
+        """
+        user_2 = UserFactory()
+        self.client.force_authenticate(user=user_2)
+        response = self.client.get(
+            reverse(
+                'user-order-history',
+                kwargs={'pk': self.user.id},
+            ),
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+            response.content
+        )
+

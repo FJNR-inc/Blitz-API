@@ -1,5 +1,5 @@
 from datetime import timedelta
-import decimal
+from decimal import Decimal
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -44,7 +44,7 @@ class OrderTests(APITestCase):
             authorization_id=1,
             settlement_id=1,
         )
-        TimeSlot.objects.create(
+        cls.ts = TimeSlot.objects.create(
             name="random_time_slot",
             period=cls.period,
             price=3,
@@ -53,9 +53,17 @@ class OrderTests(APITestCase):
         )
         OrderLine.objects.create(
             order=cls.order,
-            quantity=999,
+            quantity=1,
             content_type=cls.package_type,
-            object_id=1,
+            object_id=cls.package.id,
+            cost=cls.package.price,
+        )
+        OrderLine.objects.create(
+            order=cls.order,
+            quantity=1,
+            content_type=cls.package_type,
+            object_id=cls.package.id,
+            cost=cls.package.price,
         )
         OrderLine.objects.create(
             order=cls.order,
@@ -77,10 +85,15 @@ class OrderTests(APITestCase):
 
         self.assertEqual(str(order), '1')
 
-    # def test_properties(self):
-    #     """
-    #     Ensure that the property methods returns a valid value.
-    #     """
-    #     total_cost = decimal.Decimal(str(999 * 400 + 999 * 400 * TAX), 2)
-    #     self.assertEqual(self.order.total_ticket, 2 * 3)
-    #     self.assertEqual(self.order.total_cost, total_cost)
+    def test_total_cost(self):
+        """
+        Ensure that the property methods returns a valid value.
+        """
+        expected_total_cost = 2 * self.package.price
+        self.assertEqual(self.order.total_cost, expected_total_cost)
+
+        tax = (expected_total_cost * Decimal(repr(TAX))).\
+            quantize(Decimal('0.01'))
+        expected_total_cost_tax = tax + expected_total_cost
+        self.assertEqual(
+            self.order.total_cost_with_taxes, expected_total_cost_tax * 100)

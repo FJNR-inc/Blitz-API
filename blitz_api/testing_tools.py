@@ -1,5 +1,47 @@
 from rest_framework.test import APITestCase
 
+ORDER_ATTRIBUTES = [
+    'id',
+    'transaction_date',
+    'authorization_id',
+    'settlement_id',
+    'reference_number',
+    'order_lines',
+    'url',
+    'user',
+]
+
+ORDER_HISTORY_ATTRIBUTES = [
+    'id',
+    'user',
+    'transaction_date',
+    'total_cost',
+    'total_cost_with_taxes',
+    'order_lines',
+]
+
+ORDERLINE_ATTRIBUTES = [
+    'id',
+    'url',
+    'content_type',
+    'coupon_real_value',
+    'cost',
+    'coupon',
+    'object_id',
+    'quantity',
+    'metadata',
+    'order',
+    'name',
+    'options'
+]
+
+OPTION_ATTRIBUTES = [
+    'id',
+    'price',
+    'quantity',
+    'name',
+]
+
 
 class CustomAPITestCase(APITestCase):
     ATTRIBUTES = []
