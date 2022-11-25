@@ -1033,6 +1033,27 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         }
 
 
+class OrderHistorySerializer(serializers.ModelSerializer):
+    """
+    Used to display a user order history
+    """
+    total_cost = serializers.ReadOnlyField()
+    total_cost_with_taxes = serializers.ReadOnlyField()
+    order_lines = OrderLineSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = ['id', 'user', 'transaction_date', 'total_cost',
+                  'total_cost_with_taxes', 'order_lines']
+
+    def to_representation(self, instance):
+        data = super(OrderHistorySerializer, self).to_representation(instance)
+        # TTC is in cents after serialization
+        data['total_cost_with_taxes'] = round(
+            data['total_cost_with_taxes']/100, 2)
+        return data
+
+
 class CouponSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     applicable_product_types = serializers.SlugRelatedField(
