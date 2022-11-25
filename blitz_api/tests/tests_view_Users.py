@@ -927,4 +927,3 @@ class UsersTests(CustomAPITestCase):
             status.HTTP_403_FORBIDDEN,
             response.content
         )
-

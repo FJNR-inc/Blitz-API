@@ -99,6 +99,7 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 class OrderTests(CustomAPITestCase):
     ORDER_ATTRIBUTES = testing_tools.ORDER_ATTRIBUTES
     ORDERLINE_ATTRIBUTES = testing_tools.ORDERLINE_ATTRIBUTES
+
     def setUp(self):
         self.retreat_content_type = ContentType.objects.get_for_model(Retreat)
         self.client = APIClient()
