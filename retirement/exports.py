@@ -76,6 +76,7 @@ def generate_retreat_participation(
     room_export = retreat.has_room_option
     rooms_data = {}
     to_reorder_lines = []
+    no_room_lines = []
     header = [
         'Nom', 'Prénom', 'Email', 'Statut', "Date d'inscription",
         'Restrictions personnelles', 'Ville', 'Téléphone', 'Genre',
@@ -108,14 +109,18 @@ def generate_retreat_participation(
             line_array[10] = rooms_data[user_id]['gender_preference']
             line_array[11] = rooms_data[user_id]['share_with']
             line_array[12] = rooms_data[user_id]['room_number']
-            to_reorder_lines.append(line_array)
+            if line_array[12] == 'NA':
+                no_room_lines.append(line_array)
+            else:
+                to_reorder_lines.append(line_array)
         else:
             writer.writerow(line_array)  # No ordering if no room
     if room_export:
-        # We need to export in room order
+        # We need to export in room order. User without data are added last
         for ordered_data in sorted(to_reorder_lines, key=lambda x: x[13]):
             writer.writerow(ordered_data)
-
+        for no_room_user_data in no_room_lines:
+            writer.writerow(no_room_user_data)
     date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
         .strftime("%Y%m%d-%H%M%S")
     filename = f'export-participation-{retreat.name}_{date_file}.csv'
