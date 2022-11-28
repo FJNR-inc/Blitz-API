@@ -1,4 +1,3 @@
-import json
 from datetime import datetime, timedelta
 import locale
 import pytz
@@ -18,9 +17,7 @@ from django_filters import (
 from blitz_api.mixins import ExportMixin
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail as django_send_mail
 from django.db import transaction
-from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
@@ -29,7 +26,6 @@ from rest_framework import (
     status,
     viewsets,
 )
-from rest_framework import serializers as rest_framework_serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import (
     IsAdminUser,
@@ -39,13 +35,8 @@ from rest_framework.response import Response
 
 from blitz_api.models import ExportMedia
 from blitz_api.serializers import ExportMediaSerializer
-from log_management.models import (
-    Log,
-    EmailLog,
-)
-from store.exceptions import PaymentAPIError
+
 from store.models import OrderLineBaseProduct
-from store.services import PAYSAFE_EXCEPTION
 
 from . import (
     permissions,
@@ -69,7 +60,6 @@ from .resources import (
     ReservationResource,
     RetreatResource,
     WaitQueueResource,
-    RetreatReservationResource,
     OptionProductResource,
 )
 from .serializers import (
@@ -84,6 +74,9 @@ from .services import (
     send_retreat_reminder_email,
     send_post_retreat_email,
     send_automatic_email,
+)
+from .exports import (
+    generate_retreat_participation,
 )
 
 User = get_user_model()
@@ -498,30 +491,11 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     def export_participation(self, request, pk=None):
 
         retreat: Retreat = self.get_object()
-        # Order queryset by ascending id, thus by descending age too
-        queryset = Reservation.objects.filter(retreat=retreat)
-        # Build dataset using paginated queryset
-        dataset = RetreatReservationResource().export(queryset)
-
-        date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
-            .strftime("%Y%m%d-%H%M%S")
-        filename = f'export-participation-{retreat.name}{date_file}.xls'
-
-        new_exprt = ExportMedia.objects.create(
-            type=ExportMedia.EXPORT_RETREAT_PARTICIPATION,
-        )
-        content = ContentFile(dataset.xls)
-        new_exprt.file.save(filename, content)
-
-        export_url = ExportMediaSerializer(
-            new_exprt,
-            context={'request': request}
-        ).data.get('file')
-
+        export = generate_retreat_participation(request.user.id, retreat.id)
         response = Response(
             status=status.HTTP_200_OK,
             data={
-                'file_url': export_url
+                'file_url': export.data.get('file')
             }
         )
 
