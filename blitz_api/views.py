@@ -232,7 +232,7 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
 
         return Response(status=status.HTTP_200_OK)
 
-    @action(detail=True, permission_classes=[IsAdminUser, IsOwner])
+    @action(detail=True, permission_classes=[IsOwner])
     def order_history(self, request, pk=None):
         user = self.get_object()
         orders = Order.objects.filter(user=user)
