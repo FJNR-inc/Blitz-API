@@ -36,6 +36,7 @@ from store.models import (
     OptionProduct,
     Coupon,
     Refund,
+    CouponUser,
 )
 from store.services import refund_amount
 from store.exceptions import PaymentAPIError
@@ -1373,6 +1374,16 @@ class Reservation(SafeDeleteModel):
                 self.cancelation_reason = cancel_reason
                 self.cancelation_date = timezone.now()
                 self.save()
+
+                # Rollback the coupon number of use if the reservation
+                # was done with a coupon
+                if order_line and order_line.coupon:
+                    coupon_user = CouponUser.objects.get(
+                        user=user,
+                        coupon=order_line.coupon,
+                    )
+                    coupon_user.uses = coupon_user.uses - 1
+                    coupon_user.save()
 
                 # free seat unless retreat is deleted
                 if cancel_reason != self.CANCELATION_REASON_RETREAT_DELETED:
