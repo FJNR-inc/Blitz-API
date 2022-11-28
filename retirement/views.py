@@ -494,7 +494,8 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     def export_participation(self, request, pk=None):
 
         retreat: Retreat = self.get_object()
-        export = generate_retreat_participation(request.user.id, retreat.id)
+        export = generate_retreat_participation.delay(
+            request.user.id, retreat.id)
         response = Response(
             status=status.HTTP_200_OK,
             data={

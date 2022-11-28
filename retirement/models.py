@@ -751,14 +751,21 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 'placed': False
             }
             room_options = OptionProduct.objects.filter(is_room_option=True)
-            participant_order_detail = OrderLineBaseProduct.objects.get(
-                order_line=reservation.order_line,
-                option__in=room_options
-            )
+            try:
+                participant_order_detail = OrderLineBaseProduct.objects.get(
+                    order_line=reservation.order_line,
+                    option__in=room_options
+                )
+            except OrderLineBaseProduct.DoesNotExist:
+                # User has no options for the retreat
+                participant_data['room_option'] = 'NA'
+                participant_data['room_number'] = 'NA'
+                retreat_room_distribution[reservation.user.id] = \
+                    participant_data
+                continue
             current_option = OptionProduct.objects.get(
                 id=participant_order_detail.option_id,
             )
-
             if current_option.type == OptionProduct.METADATA_SHARED_ROOM:
                 participant_data['gender_preference'] = \
                     participant_order_detail.metadata[
