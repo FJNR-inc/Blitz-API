@@ -515,6 +515,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     authorization_id = serializers.ReadOnlyField()
     settlement_id = serializers.ReadOnlyField()
+    total_cost = serializers.ReadOnlyField()
+    total_cost_with_taxes = serializers.ReadOnlyField()
     order_lines = OrderLineSerializerNoOrder(many=True)
     payment_token = serializers.CharField(
         write_only=True,
@@ -1022,7 +1024,11 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ['id', 'user', 'transaction_date', 'authorization_id',
+                  'settlement_id', 'reference_number', 'url', 'total_cost',
+                  'total_cost_with_taxes', 'order_lines', 'payment_token',
+                  'coupon', 'target_user', 'bypass_payment',
+                  'single_use_token']
         extra_kwargs = {
             'transaction_date': {
                 'read_only': True,
@@ -1032,22 +1038,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             },
         }
 
-
-class OrderHistorySerializer(serializers.ModelSerializer):
-    """
-    Used to display a user order history
-    """
-    total_cost = serializers.ReadOnlyField()
-    total_cost_with_taxes = serializers.ReadOnlyField()
-    order_lines = OrderLineSerializer(many=True)
-
-    class Meta:
-        model = Order
-        fields = ['id', 'user', 'transaction_date', 'total_cost',
-                  'total_cost_with_taxes', 'order_lines']
-
     def to_representation(self, instance):
-        data = super(OrderHistorySerializer, self).to_representation(instance)
+        data = super(OrderSerializer, self).to_representation(instance)
         # TTC is in cents after serialization
         data['total_cost_with_taxes'] = round(
             data['total_cost_with_taxes']/100, 2)
