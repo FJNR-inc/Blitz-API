@@ -742,3 +742,108 @@ class UsersTests(CustomAPITestCase):
         )
 
         self.assertEqual(len(mail.outbox), 1)
+
+    def test_credit_ticket_as_admin(self):
+        """
+        Ensure admin can credit tickets to a user
+        """
+        user = UserFactory()
+        self.assertEqual(user.tickets, 1)
+        nb_tickets_to_add = 5
+        data = {
+            'nb_tickets': nb_tickets_to_add,
+        }
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(
+            reverse(
+                'user-credit-tickets',
+                kwargs={'pk': user.id},
+            ),
+            data,
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(
+            User.objects.get(pk=user.id).tickets,
+            1 + nb_tickets_to_add
+        )
+
+    def test_credit_ticket_as_user(self):
+        """
+        Ensure user can't credit tickets to a user
+        """
+        user = UserFactory()
+        self.assertEqual(user.tickets, 1)
+        nb_tickets_to_add = 5
+        data = {
+            'nb_tickets': nb_tickets_to_add,
+        }
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            reverse(
+                'user-credit-tickets',
+                kwargs={'pk': user.id},
+            ),
+            data,
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_credit_ticket_not_int(self):
+        """
+        Ensure admin can't credit invalid tickets to a user
+        """
+        user = UserFactory()
+        self.assertEqual(user.tickets, 1)
+        nb_tickets_to_add = 'this is not an int'
+        data = {
+            'nb_tickets': nb_tickets_to_add,
+        }
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(
+            reverse(
+                'user-credit-tickets',
+                kwargs={'pk': user.id},
+            ),
+            data,
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    def test_credit_ticket_negative_int(self):
+        """
+        Ensure admin can't credit negative tickets to a user
+        """
+        user = UserFactory()
+        self.assertEqual(user.tickets, 1)
+        nb_tickets_to_add = -5
+        data = {
+            'nb_tickets': nb_tickets_to_add,
+        }
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(
+            reverse(
+                'user-credit-tickets',
+                kwargs={'pk': user.id},
+            ),
+            data,
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
