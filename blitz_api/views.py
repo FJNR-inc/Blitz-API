@@ -1,19 +1,13 @@
-import base64
-import json
-
 import pytz
-
-from datetime import datetime
 
 from django.contrib.auth import get_user_model, password_validation
 from django.conf import settings
-from django.core.files.base import ContentFile
 from django.utils import timezone
-from django.http import Http404, HttpResponse
+from django.http import Http404
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from rest_framework import status, viewsets, mixins, filters, generics
+from rest_framework import status, viewsets, mixins, generics
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -23,7 +17,6 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 
 from blitz_api.mixins import ExportMixin
-from log_management.models import EmailLog
 from .models import (
     TemporaryToken, ActionToken, Domain, Organization, AcademicLevel,
     AcademicField,
@@ -31,9 +24,6 @@ from .models import (
 from .resources import (AcademicFieldResource, AcademicLevelResource,
                         OrganizationResource, UserResource)
 from . import serializers, permissions, services
-from store.permissions import IsOwner
-from store.models import Order
-from store.serializers import OrderHistorySerializer
 
 User = get_user_model()
 
@@ -86,8 +76,6 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
     def get_serializer_class(self):
         if (self.action == 'update') | (self.action == 'partial_update'):
             return serializers.UserUpdateSerializer
-        elif self.action == 'order_history':
-            return OrderHistorySerializer
         return serializers.UserSerializer
 
     def get_queryset(self):
@@ -231,16 +219,6 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
             return Response(content, status=status.HTTP_403_FORBIDDEN)
 
         return Response(status=status.HTTP_200_OK)
-
-    @action(detail=True, permission_classes=[IsOwner])
-    def order_history(self, request, pk=None):
-        user = self.get_object()
-        orders = Order.objects.filter(user=user)
-        response = self.get_serializer(orders, many=True).data
-        return Response(
-            status=status.HTTP_200_OK,
-            data=response
-        )
 
 
 class UsersActivation(APIView):
