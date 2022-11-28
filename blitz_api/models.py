@@ -411,6 +411,10 @@ class User(AbstractUser):
             return True
         return False
 
+    def credit_tickets(self, nb_tickets: int):
+        self.tickets += nb_tickets
+        self.save()
+
 
 class TemporaryToken(Token):
     """Subclass of Token to add an expiration time."""
