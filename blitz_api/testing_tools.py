@@ -7,17 +7,10 @@ ORDER_ATTRIBUTES = [
     'settlement_id',
     'reference_number',
     'order_lines',
-    'url',
-    'user',
-]
-
-ORDER_HISTORY_ATTRIBUTES = [
-    'id',
-    'user',
-    'transaction_date',
     'total_cost',
     'total_cost_with_taxes',
-    'order_lines',
+    'url',
+    'user',
 ]
 
 ORDERLINE_ATTRIBUTES = [
