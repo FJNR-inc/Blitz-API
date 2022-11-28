@@ -266,6 +266,9 @@ class OrderViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.OrderSerializer
     queryset = Order.objects.all()
     permission_classes = (permissions.IsAdminOrCreateReadOnly, IsAuthenticated)
+    filterset_fields = [
+        'user',
+    ]
 
     export_resource = OrderResource()
 

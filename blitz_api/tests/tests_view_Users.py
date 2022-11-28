@@ -6,7 +6,7 @@ from unittest import mock
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.test import APIClient, APITestCase
+from rest_framework.test import APIClient
 
 from django.contrib.auth import get_user_model
 from django.core import mail
@@ -17,12 +17,16 @@ from ..factories import UserFactory, AdminFactory
 from ..models import (ActionToken, Organization, Domain,
                       AcademicField, AcademicLevel)
 from ..services import remove_translation_fields
-from store.models import Membership
+from store.models import (
+    Membership,
+)
+
+from ..testing_tools import CustomAPITestCase
 
 User = get_user_model()
 
 
-class UsersTests(APITestCase):
+class UsersTests(CustomAPITestCase):
 
     @classmethod
     def setUpClass(cls):

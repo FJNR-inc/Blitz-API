@@ -14,11 +14,14 @@ from blitz_api.factories import UserFactory, AdminFactory
 from blitz_api.models import AcademicLevel
 
 from ..models import Membership, Order, OrderLine, Package
+from blitz_api import testing_tools
+from blitz_api.testing_tools import CustomAPITestCase
 
 User = get_user_model()
 
 
-class OrderLineTests(APITestCase):
+class OrderLineTests(CustomAPITestCase):
+    ORDERLINE_ATTRIBUTES = testing_tools.ORDERLINE_ATTRIBUTES
 
     @classmethod
     def setUpClass(cls):
@@ -104,24 +107,11 @@ class OrderLineTests(APITestCase):
             data,
         )
 
-        content = {
-            'content_type': 'package',
-            'object_id': self.package.id,
-            'order': f'http://testserver/orders/{self.order.id}',
-            'quantity': 2,
-            'coupon': None,
-            'coupon_real_value': 0.0,
-            'cost': 2 * self.package.price,
-            'metadata': None,
-            'options': []
-        }
-
-        response_content = json.loads(response.content)
-
-        del response_content['id']
-        del response_content['url']
-
-        self.assertEqual(response_content, content)
+        content = json.loads(response.content)
+        self.assertEqual(content['quantity'], 2)
+        self.assertEqual(content['content_type'], 'package')
+        self.assertEqual(content['object_id'], self.package.id)
+        self.check_attributes(content, self.ORDERLINE_ATTRIBUTES)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -206,23 +196,11 @@ class OrderLineTests(APITestCase):
 
         self.user.membership = None
 
-        content = {
-            'content_type': 'package',
-            'object_id': self.package.id,
-            'order': f'http://testserver/orders/{self.order.id}',
-            'quantity': 2,
-            'coupon': None,
-            'coupon_real_value': 0,
-            'cost': 2.0 * self.package.price,
-            'metadata': None,
-            'options': []
-        }
-
-        response_content = json.loads(response.content)
-        del response_content['id']
-        del response_content['url']
-
-        self.assertEqual(response_content, content)
+        content = json.loads(response.content)
+        self.assertEqual(content['quantity'], 2)
+        self.assertEqual(content['content_type'], 'package')
+        self.assertEqual(content['object_id'], self.package.id)
+        self.check_attributes(content, self.ORDERLINE_ATTRIBUTES)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -244,23 +222,11 @@ class OrderLineTests(APITestCase):
             data,
         )
 
-        content = {
-            'content_type': 'membership',
-            'coupon': None,
-            'coupon_real_value': 0.0,
-            'object_id': self.membership.id,
-            'order': f'http://testserver/orders/{self.order.id}',
-            'quantity': 1,
-            'cost': self.membership.price,
-            'metadata': None,
-            'options': []
-        }
-
-        response_content = json.loads(response.content)
-        del response_content['id']
-        del response_content['url']
-
-        self.assertEqual(response_content, content)
+        content = json.loads(response.content)
+        self.assertEqual(content['quantity'], 1)
+        self.assertEqual(content['content_type'], 'membership')
+        self.assertEqual(content['object_id'], self.membership.id)
+        self.check_attributes(content, self.ORDERLINE_ATTRIBUTES)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -376,21 +342,10 @@ class OrderLineTests(APITestCase):
             format='json',
         )
 
-        content = {
-            'content_type': 'package',
-            'id': self.order_line.id,
-            'object_id': self.package.id,
-            'order': f'http://testserver/orders/{self.order.id}',
-            'quantity': 99,
-            'coupon': None,
-            'coupon_real_value': 0.0,
-            'cost': 99 * self.package.price,
-            'url': f'http://testserver/order_lines/{self.order_line.id}',
-            'metadata': None,
-            'options': [],
-        }
-
-        self.assertEqual(json.loads(response.content), content)
+        content = json.loads(response.content)
+        self.assertEqual(content['quantity'], 99)
+        self.assertEqual(content['content_type'], 'package')
+        self.assertEqual(content['object_id'], self.package.id)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -414,26 +369,13 @@ class OrderLineTests(APITestCase):
             data,
             format='json',
         )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         self.user.membership = None
 
-        content = {
-            'content_type': 'package',
-            'id': self.order_line.id,
-            'object_id': self.package.id,
-            'order': f'http://testserver/orders/{self.order.id}',
-            'quantity': 9,
-            'coupon': None,
-            'coupon_real_value': 0.0,
-            'cost': 9 * self.package.price,
-            'url': f'http://testserver/order_lines/{self.order_line.id}',
-            'metadata': None,
-            'options': [],
-        }
-
-        self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        content = json.loads(response.content)
+        self.assertEqual(content['quantity'], 9)
+        self.assertEqual(content['cost'], 9 * self.package.price)
 
     def test_delete(self):
         """
@@ -478,28 +420,9 @@ class OrderLineTests(APITestCase):
             format='json',
         )
 
-        data = json.loads(response.content)
-
-        content = {
-            'count': 1,
-            'next': None,
-            'previous': None,
-            'results': [{
-                'content_type': 'package',
-                'id': self.order_line.id,
-                'object_id': self.package.id,
-                'order': f'http://testserver/orders/{self.order.id}',
-                'quantity': 1,
-                'coupon': None,
-                'coupon_real_value': 0.0,
-                'cost': self.package.price,
-                'options': [],
-                'url': f'http://testserver/order_lines/{self.order_line.id}',
-                'metadata': None,
-            }]
-        }
-
-        self.assertEqual(data, content)
+        content = json.loads(response.content)
+        self.assertEqual(content['count'], 1)
+        self.check_attributes(content['results'][0], self.ORDERLINE_ATTRIBUTES)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -514,41 +437,10 @@ class OrderLineTests(APITestCase):
             format='json',
         )
 
-        data = json.loads(response.content)
-
-        content = {
-            'count': 2,
-            'next': None,
-            'previous': None,
-            'results': [{
-                'content_type': 'package',
-                'id': self.order_line.id,
-                'object_id': self.package.id,
-                'order': f'http://testserver/orders/{self.order.id}',
-                'quantity': 1,
-                'coupon': None,
-                'coupon_real_value': 0.0,
-                'cost': self.package.price,
-                'url': f'http://testserver/order_lines/{self.order_line.id}',
-                'metadata': None,
-                'options': [],
-            }, {
-                'content_type': 'package',
-                'id': self.order_line_admin.id,
-                'object_id': self.package.id,
-                'order': f'http://testserver/orders/{self.order_admin.id}',
-                'quantity': 99,
-                'coupon': None,
-                'coupon_real_value': 0.0,
-                'cost': 99 * self.package.price,
-                'metadata': None,
-                'options': [],
-                'url':
-                    f'http://testserver/order_lines/{self.order_line_admin.id}'
-            }]
-        }
-
-        self.assertEqual(data, content)
+        content = json.loads(response.content)
+        self.assertEqual(content['count'], 2)
+        self.check_attributes(content['results'][0], self.ORDERLINE_ATTRIBUTES)
+        self.check_attributes(content['results'][1], self.ORDERLINE_ATTRIBUTES)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -583,21 +475,8 @@ class OrderLineTests(APITestCase):
             ),
         )
 
-        content = {
-            'content_type': 'package',
-            'id': self.order_line.id,
-            'object_id': self.package.id,
-            'order': f'http://testserver/orders/{self.order.id}',
-            'quantity': 1,
-            'coupon': None,
-            'coupon_real_value': 0.0,
-            'cost': self.package.price,
-            'url': f'http://testserver/order_lines/{self.order_line.id}',
-            'metadata': None,
-            'options': [],
-        }
-
-        self.assertEqual(json.loads(response.content), content)
+        content = json.loads(response.content)
+        self.check_attributes(content, self.ORDERLINE_ATTRIBUTES)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -633,21 +512,8 @@ class OrderLineTests(APITestCase):
             ),
         )
 
-        content = {
-            'content_type': 'package',
-            'id': self.order_line.id,
-            'object_id': self.package.id,
-            'order': f'http://testserver/orders/{self.order.id}',
-            'quantity': 1,
-            'coupon': None,
-            'coupon_real_value': 0.0,
-            'cost': self.package.price,
-            'url': f'http://testserver/order_lines/{self.order_line.id}',
-            'metadata': None,
-            'options': [],
-        }
-
-        self.assertEqual(json.loads(response.content), content)
+        content = json.loads(response.content)
+        self.check_attributes(content, self.ORDERLINE_ATTRIBUTES)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

@@ -478,18 +478,22 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
     def to_representation(self, instance: OrderLine):
         data = super(OrderLineSerializer, self).to_representation(instance)
 
+        data['name'] = instance.content_object.name
+
         data['options'] = []
         options = instance.options.all()
         if options:
             option: BaseProduct
             for option in options:
                 option_id = option.id
-                option_quantity = option.orderlinebaseproduct_set.\
-                    get(order_line_id=instance.id).quantity
+                option_data = option.orderlinebaseproduct_set.\
+                    get(order_line_id=instance.id)
 
                 option_data = {
                     'id': option_id,
-                    'quantity': option_quantity
+                    'name': option_data.option.name,
+                    'quantity': option_data.quantity,
+                    'price': option_data.option.price
                 }
                 data['options'].append(option_data)
 
@@ -511,6 +515,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     authorization_id = serializers.ReadOnlyField()
     settlement_id = serializers.ReadOnlyField()
+    total_cost = serializers.ReadOnlyField()
+    total_cost_with_taxes = serializers.ReadOnlyField()
     order_lines = OrderLineSerializerNoOrder(many=True)
     payment_token = serializers.CharField(
         write_only=True,
@@ -1018,7 +1024,11 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ['id', 'user', 'transaction_date', 'authorization_id',
+                  'settlement_id', 'reference_number', 'url', 'total_cost',
+                  'total_cost_with_taxes', 'order_lines', 'payment_token',
+                  'coupon', 'target_user', 'bypass_payment',
+                  'single_use_token']
         extra_kwargs = {
             'transaction_date': {
                 'read_only': True,
@@ -1027,6 +1037,13 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 'read_only': True,
             },
         }
+
+    def to_representation(self, instance):
+        data = super(OrderSerializer, self).to_representation(instance)
+        # TTC is in cents after serialization
+        data['total_cost_with_taxes'] = round(
+            data['total_cost_with_taxes']/100, 2)
+        return data
 
 
 class CouponSerializer(serializers.HyperlinkedModelSerializer):

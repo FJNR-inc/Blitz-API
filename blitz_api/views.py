@@ -1,19 +1,13 @@
-import base64
-import json
-
 import pytz
-
-from datetime import datetime
 
 from django.contrib.auth import get_user_model, password_validation
 from django.conf import settings
-from django.core.files.base import ContentFile
 from django.utils import timezone
-from django.http import Http404, HttpResponse
+from django.http import Http404
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from rest_framework import status, viewsets, mixins, filters, generics
+from rest_framework import status, viewsets, mixins, generics
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -23,7 +17,6 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 
 from blitz_api.mixins import ExportMixin
-from log_management.models import EmailLog
 from .models import (
     TemporaryToken, ActionToken, Domain, Organization, AcademicLevel,
     AcademicField,
