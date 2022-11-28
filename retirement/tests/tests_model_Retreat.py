@@ -178,6 +178,11 @@ class RetreatTests(APITestCase):
             last_name='y',
             email='17@test.ca',
         )
+        user_18 = UserFactory(
+            first_name='x',
+            last_name='y',
+            email='18@test.ca',
+        )
 
         order_1 = OrderFactory(user=user_1)
         order_2 = OrderFactory(user=user_2)
@@ -196,6 +201,7 @@ class RetreatTests(APITestCase):
         order_15 = OrderFactory(user=user_15)
         order_16 = OrderFactory(user=user_16)
         order_17 = OrderFactory(user=user_17)
+        order_18 = OrderFactory(user=user_18)
 
         order_line_1 = OrderLineFactory(
             content_type=self.retreat_type,
@@ -281,6 +287,11 @@ class RetreatTests(APITestCase):
             content_type=self.retreat_type,
             object_id=self.retreat.id,
             order=order_17,
+        )
+        order_line_18 = OrderLineFactory(
+            content_type=self.retreat_type,
+            object_id=self.retreat.id,
+            order=order_18,
         )
 
         reservation_1 = ReservationFactory(
@@ -368,6 +379,11 @@ class RetreatTests(APITestCase):
             user=user_17,
             retreat=self.retreat,
             order_line=order_line_17,
+        )
+        reservation_18 = ReservationFactory(
+            user=user_18,
+            retreat=self.retreat,
+            order_line=order_line_18,
         )
 
         metadata_1 = {
@@ -691,14 +707,26 @@ class RetreatTests(APITestCase):
                 'share_with': '4@test.ca',
                 'room_number': 9,
                 'placed': True,
+            },
+            {
+                'id': user_18.id,
+                'first_name': 'x',
+                'last_name': 'y',
+                'email': '18@test.ca',
+                'room_option': 'NA',
+                'gender_preference': 'NA',
+                'share_with': 'NA',
+                'room_number': 'NA',
+                'placed': False,
             }
         ]
-        self.assertEqual(len(distribution), 16)
+        self.assertEqual(len(distribution), 17)
         room_set = set()
         for key, value in distribution.items():
             self.assertTrue(value in expected_distribution)
             room_set.add(value['room_number'])
-        self.assertEqual(len(room_set), 9)
+        self.assertEqual(len(room_set), 10)
+        self.assertTrue('NA' in room_set)
 
     def test_get_participants_emails(self):
         user = UserFactory(email='email@1')
