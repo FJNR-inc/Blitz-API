@@ -220,6 +220,22 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
 
         return Response(status=status.HTTP_200_OK)
 
+    @action(methods=['post'], detail=True, permission_classes=[IsAdminUser])
+    def credit_tickets(self, request, pk=None):
+        """
+        Allow an admin to credit tickets to a user
+        """
+        user = self.get_object()
+        nb_tickets = request.data.get('nb_tickets', None)
+        if not isinstance(nb_tickets, int) or nb_tickets < 1:
+            error = {
+                'nb_tickets': _("nb_tickets must be a positive integer.")}
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+
+        user.credit_tickets(nb_tickets)
+
+        return Response(status=status.HTTP_200_OK)
+
 
 class UsersActivation(APIView):
     """
