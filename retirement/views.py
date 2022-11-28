@@ -226,6 +226,9 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
         if instance.is_active:
             instance.custom_delete(deletion_message, force_refund)
+        elif not instance.hide_from_client_admin_panel:
+            instance.hide_from_client_admin_panel = True
+            instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @transaction.atomic()
