@@ -9,7 +9,6 @@ from datetime import (
 from rest_framework import status
 from rest_framework.test import (
     APIClient,
-    APITestCase,
 )
 
 from django.conf import settings
@@ -372,6 +371,8 @@ class OrderTests(CustomAPITestCase):
 
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
 
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['url']
@@ -717,6 +718,8 @@ class OrderTests(CustomAPITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
@@ -786,6 +789,8 @@ class OrderTests(CustomAPITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
         del response_data['transaction_date']
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
@@ -855,6 +860,8 @@ class OrderTests(CustomAPITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
         del response_data['transaction_date']
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
@@ -969,6 +976,8 @@ class OrderTests(CustomAPITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
@@ -1527,6 +1536,8 @@ class OrderTests(CustomAPITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
@@ -1863,6 +1874,8 @@ class OrderTests(CustomAPITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
@@ -1951,6 +1964,8 @@ class OrderTests(CustomAPITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
@@ -2216,6 +2231,8 @@ class OrderTests(CustomAPITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
 
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
@@ -2314,6 +2331,8 @@ class OrderTests(CustomAPITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
 
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
@@ -2611,6 +2630,8 @@ class OrderTests(CustomAPITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
 
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
@@ -2838,6 +2859,8 @@ class OrderTests(CustomAPITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
 
         del response_data['order_lines'][0]['id']
         del response_data['order_lines'][0]['url']
@@ -2948,6 +2971,8 @@ class OrderTests(CustomAPITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
 
         del response_data['order_lines'][0]['id']
         del response_data['order_lines'][0]['url']
@@ -3051,6 +3076,46 @@ class OrderTests(CustomAPITestCase):
 
         response = self.client.get(
             reverse('order-list'),
+            format='json',
+        )
+        content = json.loads(response.content)
+        self.assertEqual(content['count'], 1)
+        content = content['results']
+        self.check_attributes(content[0], self.ORDER_ATTRIBUTES)
+        self.check_attributes(
+            content[0]['order_lines'][0], self.ORDERLINE_ATTRIBUTES)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_not_owner(self):
+        """
+        Ensure we can't list other user orders as an authenticated user.
+        """
+        user = UserFactory()
+        self.client.force_authenticate(user=user)
+
+        response = self.client.get(
+            reverse('order-list'),
+            {
+                'user': self.user.id,
+            },
+            format='json',
+        )
+        content = json.loads(response.content)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(content['count'], 0)
+
+    def test_list_user_admin(self):
+        """
+        Ensure we can list a user orders as an admin.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.get(
+            reverse('order-list'),
+            {
+                'user': self.user.id,
+            },
             format='json',
         )
         content = json.loads(response.content)
