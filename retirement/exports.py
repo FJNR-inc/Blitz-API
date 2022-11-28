@@ -11,7 +11,6 @@ from django.utils import timezone
 from django.conf import settings
 
 from blitz_api.models import ExportMedia
-from blitz_api.serializers import ExportMediaSerializer
 from retirement.models import Retreat
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
@@ -134,4 +133,4 @@ def generate_retreat_participation(
         ContentFile(output_stream.getvalue().encode()))
     new_export.send_confirmation_email()
 
-    return ExportMediaSerializer(new_export)
+    return new_export
