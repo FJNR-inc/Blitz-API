@@ -186,6 +186,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
                 is_active=True,
                 hidden=False
             )
+        queryset = queryset.filter(hide_from_client_admin_panel=False)
 
         queryset = queryset.annotate(
             max_end_date=Max('retreat_dates__end_time'),
