@@ -663,54 +663,55 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
             days=self.min_day_refund)
 
     def activate(self):
-        if not self.start_time:
-            raise ValueError(
-                _("Retreat need to have a start time before activate it")
-            )
+        if not self.is_active:
+            if not self.start_time:
+                raise ValueError(
+                    _("Retreat need to have a start time before activate it")
+                )
 
-        if not self.end_time:
-            raise ValueError(
-                _("Retreat need to have a end time before activate it")
-            )
+            if not self.end_time:
+                raise ValueError(
+                    _("Retreat need to have a end time before activate it")
+                )
 
-        if self.seats <= 0:
-            raise ValueError(
-                _("Retreat need to have at least one seat available")
-            )
+            if self.seats <= 0:
+                raise ValueError(
+                    _("Retreat need to have at least one seat available")
+                )
 
-        if self.min_day_refund is None:
-            raise ValueError(
-                _("Retreat need to have a minimum day refund policy")
-            )
+            if self.min_day_refund is None:
+                raise ValueError(
+                    _("Retreat need to have a minimum day refund policy")
+                )
 
-        if self.min_day_exchange is None:
-            raise ValueError(
-                _("Retreat need to have a minimum day exchange policy")
-            )
+            if self.min_day_exchange is None:
+                raise ValueError(
+                    _("Retreat need to have a minimum day exchange policy")
+                )
 
-        if self.refund_rate is None:
-            raise ValueError(
-                _("Retreat need to have a refund rate policy")
-            )
+            if self.refund_rate is None:
+                raise ValueError(
+                    _("Retreat need to have a refund rate policy")
+                )
 
-        cron_manager = CronManager()
+            cron_manager = CronManager()
 
-        for email in self.type.automatic_emails.all():
-            if email.time_base == AutomaticEmail.TIME_BASE_BEFORE_START:
-                execution_date = self.start_time
-            else:
-                execution_date = self.end_time
+            for email in self.type.automatic_emails.all():
+                if email.time_base == AutomaticEmail.TIME_BASE_BEFORE_START:
+                    execution_date = self.start_time
+                else:
+                    execution_date = self.end_time
 
-            execution_date += timedelta(minutes=email.minutes_delta)
+                execution_date += timedelta(minutes=email.minutes_delta)
 
-            cron_manager.create_email_task(
-                self,
-                email,
-                execution_date
-            )
+                cron_manager.create_email_task(
+                    self,
+                    email,
+                    execution_date
+                )
 
-        self.is_active = True
-        self.save()
+            self.is_active = True
+            self.save()
 
     @staticmethod
     def _set_participant_room(participant_data, room_number):
