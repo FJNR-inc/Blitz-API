@@ -496,10 +496,14 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         retreat: Retreat = self.get_object()
         export = generate_retreat_participation.delay(
             request.user.id, retreat.id)
+        export_url = ExportMediaSerializer(
+            export,
+            context={'request': request}
+        ).data.get('file')
         response = Response(
             status=status.HTTP_200_OK,
             data={
-                'file_url': export.data.get('file')
+                'file_url': export_url
             }
         )
 
