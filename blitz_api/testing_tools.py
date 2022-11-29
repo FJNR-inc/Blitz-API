@@ -35,6 +35,27 @@ OPTION_ATTRIBUTES = [
     'name',
 ]
 
+RETREAT_TYPE_ATTRIBUTES = [
+    'id',
+    'name',
+    'url',
+    'number_of_tomatoes',
+    'is_virtual',
+    'is_visible',
+    'name_fr',
+    'name_en',
+    'minutes_before_display_link',
+    'description',
+    'short_description',
+    'duration_description',
+    'cancellation_policies',
+    'icon',
+    'index_ordering',
+    'know_more_link',
+    'template_id_for_welcome_message',
+    'context_for_welcome_message',
+]
+
 
 class CustomAPITestCase(APITestCase):
     ATTRIBUTES = []
