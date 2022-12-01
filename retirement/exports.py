@@ -95,7 +95,8 @@ def generate_retreat_participation(
         line_array[0] = reservation.user.last_name
         line_array[1] = reservation.user.first_name
         line_array[2] = reservation.user.email
-        line_array[3] = reservation.user.membership.name
+        if reservation.user.membership:
+            line_array[3] = reservation.user.membership.name
         line_array[4] = reservation.order_line.order.transaction_date
         line_array[5] = reservation.user.personnal_restrictions
         line_array[6] = reservation.user.city
