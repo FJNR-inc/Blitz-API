@@ -495,20 +495,8 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     def export_participation(self, request, pk=None):
 
         retreat: Retreat = self.get_object()
-        export = generate_retreat_participation.delay(
-            request.user.id, retreat.id)
-        export_url = ExportMediaSerializer(
-            export,
-            context={'request': request}
-        ).data.get('file')
-        response = Response(
-            status=status.HTTP_200_OK,
-            data={
-                'file_url': export_url
-            }
-        )
-
-        return response
+        generate_retreat_participation.delay(request.user.id, retreat.id)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, permission_classes=[IsAdminUser])
     def export_options(self, request, pk=None):
