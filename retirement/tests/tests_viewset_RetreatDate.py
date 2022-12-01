@@ -489,3 +489,46 @@ class RetreatDateTests(CustomAPITestCase):
         self.assertEqual(self.task_after, task_after)
         self.assertNotEqual(self.task_before, task_before)
 
+    @patch('retirement.models.Retreat.cancel_participants_reservation')
+    @patch('retirement.services.send_updated_retreat_email')
+    def test_delete_all_retreat_as_admin(self, mock_email, mock_cancel):
+        """
+        Test that deleting all dates is not possible
+        """
+        self.client.force_authenticate(user=self.admin)
+        user = UserFactory()
+        Reservation.objects.create(
+            user=user,
+            retreat=self.retreat,
+            is_active=True,
+        )
+        reason_message = 'blabla'
+        data = {
+            'reason_message': reason_message,
+        }
+        self.client.delete(
+            reverse(
+                'retreat:retreatdate-detail',
+                kwargs={'pk': self.rd1.id},
+            ),
+            data,
+            format='json',
+        )
+        self.client.delete(
+            reverse(
+                'retreat:retreatdate-detail',
+                kwargs={'pk': self.rd2.id},
+            ),
+            data,
+            format='json',
+        )
+        response = self.client.delete(
+            reverse(
+                'retreat:retreatdate-detail',
+                kwargs={'pk': self.rd3.id},
+            ),
+            data,
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
