@@ -3,7 +3,6 @@ import os
 import json
 import traceback
 from datetime import timedelta
-from operator import itemgetter
 
 import requests
 from django.conf import settings
