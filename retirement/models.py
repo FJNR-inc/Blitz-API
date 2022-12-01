@@ -990,6 +990,23 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
             participant_emails.add(reservation.user.email)
         return list(participant_emails)
 
+    def process_impacted_users(self, reason, reason_message, force_refund):
+        """
+        Notify and potentially refund user for a reason happening on retreat:
+        Retreat cancelled, deleted ...
+        If a date changes or is deleted, users must be notified and refunded so
+        they can book again the retreat if they want
+        """
+        if self.total_reservations > 0:
+            from .services import send_updated_retreat_email
+            self.cancel_participants_reservation(force_refund)
+            send_updated_retreat_email(
+                self,
+                self.get_participants_emails(),
+                reason_message,
+                reason,
+            )
+
     def cancel_participants_reservation(self, force_refund):
         """
         Cancel all participants' reservation
@@ -1023,13 +1040,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         """
         self.is_active = False
         self.hide_from_client_admin_panel = True
-        if self.total_reservations > 0:
-            from .services import send_deleted_retreat_email
-            self.cancel_participants_reservation(force_refund)
-            send_deleted_retreat_email(
-                self,
-                self.get_participants_emails(),
-                deletion_message)
+        self.process_impacted_users('deletion', deletion_message, force_refund)
         self.save()
 
 
