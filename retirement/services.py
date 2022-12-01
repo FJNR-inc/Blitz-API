@@ -376,20 +376,25 @@ def send_automatic_email(user, retreat, email):
     return response_send_mail
 
 
-def send_deleted_retreat_email(retreat, users_emails, deletion_message):
+def send_updated_retreat_email(retreat, reason, users_emails, reason_message):
     """
     This function sends an automatic email to notify all registered users
-    of a retreat that it has been deleted
+    of a retreat that it has been updated. For example dates have changed or
+    retreat is deleted
     """
+    reason_template = {
+        'deletion': 'RETREAT_DELETED',
+        'update': 'RETREAT_UPDATED',
+    }
 
     context = {
         'RETREAT_NAME': retreat.name_fr,
-        'MESSAGE': deletion_message,
+        'MESSAGE': reason_message,
     }
 
     response_send_mail = send_templated_email(
         users_emails,
         context,
-        'RETREAT_DELETED'
+        reason_template[reason]
     )
     return response_send_mail
