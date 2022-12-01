@@ -3,7 +3,6 @@ import os
 import json
 import traceback
 from datetime import timedelta
-from operator import itemgetter
 
 import requests
 from django.conf import settings
@@ -16,6 +15,7 @@ from rest_framework import serializers as rest_framework_serializers
 
 from blitz_api.services import send_mail as send_templated_email
 from blitz_api.cron_manager_api import CronManager
+from cron_manager.models import Task
 from blitz_api.models import Address
 from django.contrib.auth import get_user_model
 from django.db import models, transaction
@@ -662,6 +662,43 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         return self.start_time - timedelta(
             days=self.min_day_refund)
 
+    def set_automatic_email(self):
+        """
+        Create task for automatic email.
+        """
+        cron_manager = CronManager()
+        for email in self.type.automatic_emails.all():
+            if email.time_base == AutomaticEmail.TIME_BASE_BEFORE_START:
+                execution_date = self.start_time
+            elif email.time_base == AutomaticEmail.TIME_BASE_AFTER_END:
+                execution_date = self.end_time
+            else:
+                raise AttributeError(_("Time based not supported."))
+
+            if execution_date:
+                try:
+                    task_url = cron_manager.get_retreat_target_url(self, email)
+                    task = Task.objects.get(url=task_url, active=True)
+                    real_task_time = execution_date + timedelta(
+                        minutes=email.minutes_delta)
+                    if task.execution_datetime == real_task_time:
+                        # Task exists and date is correct
+                        create_task = False
+                    else:
+                        # Task exists and date has changed
+                        create_task = True
+                        task.active = False
+                        task.save()
+                except Task.DoesNotExist:
+                    create_task = True
+                if create_task:
+                    execution_date += timedelta(minutes=email.minutes_delta)
+                    cron_manager.create_email_task(
+                        self,
+                        email,
+                        execution_date
+                    )
+
     def activate(self):
         if not self.is_active:
             if not self.start_time:
@@ -694,21 +731,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                     _("Retreat need to have a refund rate policy")
                 )
 
-            cron_manager = CronManager()
-
-            for email in self.type.automatic_emails.all():
-                if email.time_base == AutomaticEmail.TIME_BASE_BEFORE_START:
-                    execution_date = self.start_time
-                else:
-                    execution_date = self.end_time
-
-                execution_date += timedelta(minutes=email.minutes_delta)
-
-                cron_manager.create_email_task(
-                    self,
-                    email,
-                    execution_date
-                )
+            self.set_automatic_email()
 
             self.is_active = True
             self.save()
@@ -966,6 +989,23 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
             participant_emails.add(reservation.user.email)
         return list(participant_emails)
 
+    def process_impacted_users(self, reason, reason_message, force_refund):
+        """
+        Notify and potentially refund user for a reason happening on retreat:
+        Retreat cancelled, deleted ...
+        If a date changes or is deleted, users must be notified and refunded so
+        they can book again the retreat if they want
+        """
+        if self.total_reservations > 0:
+            from .services import send_updated_retreat_email
+            self.cancel_participants_reservation(force_refund)
+            send_updated_retreat_email(
+                self,
+                self.get_participants_emails(),
+                reason_message,
+                reason,
+            )
+
     def cancel_participants_reservation(self, force_refund):
         """
         Cancel all participants' reservation
@@ -999,13 +1039,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         """
         self.is_active = False
         self.hide_from_client_admin_panel = True
-        if self.total_reservations > 0:
-            from .services import send_deleted_retreat_email
-            self.cancel_participants_reservation(force_refund)
-            send_deleted_retreat_email(
-                self,
-                self.get_participants_emails(),
-                deletion_message)
+        self.process_impacted_users('deletion', deletion_message, force_refund)
         self.save()
 
 

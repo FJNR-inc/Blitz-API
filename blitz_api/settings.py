@@ -372,6 +372,11 @@ ANYMAIL = {
             default='68',
             cast=int
         ),
+        'RETREAT_UPDATED': config(
+            'RETREAT_UPDATED',
+            default='69',
+            cast=int
+        ),
     },
 }
 EMAIL_BACKEND = config('EMAIL_BACKEND',

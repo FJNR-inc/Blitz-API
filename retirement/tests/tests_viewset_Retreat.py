@@ -1071,7 +1071,7 @@ class RetreatTests(CustomAPITestCase):
         )
 
     @patch('retirement.models.Retreat.cancel_participants_reservation')
-    @patch('retirement.services.send_deleted_retreat_email')
+    @patch('retirement.services.send_updated_retreat_email')
     def test_delete_with_participants(self, mock_email, mock_cancel):
         """
         Ensure we can delete a retreat that has participants
@@ -1112,7 +1112,8 @@ class RetreatTests(CustomAPITestCase):
         mock_email.assert_called_once_with(
             self.retreat,
             self.retreat.get_participants_emails(),
-            deletion_message
+            deletion_message,
+            'deletion'
         )
         mock_cancel.assert_called_once_with(False)
 

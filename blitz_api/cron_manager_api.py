@@ -1,9 +1,5 @@
-import json
-import traceback
 from django.utils import timezone
 
-import requests
-from django.core.mail import mail_admins
 from django.urls import reverse
 
 from blitz_api import settings
@@ -33,17 +29,24 @@ class CronManager:
 
         self.create_task(data)
 
+    def get_retreat_target_url(self, retreat, email):
+        """
+        :param retreat: The Retreat associate with this email
+        :param email: The AutomaticEmail we want to schedule
+        :return: url for the task
+        """
+        return self.url_to_call + reverse(
+            'retreat:retreat-detail',
+            args=[retreat.id]
+        ) + "/execute_automatic_email/?email=" + str(email.id)
+
     def create_email_task(self, retreat, email, execution_date):
         """
-
         :param retreat: The Retreat associate with this email
         :param email: The AutomaticEmail we want to schedule
         :return: None
         """
-        target_url = self.url_to_call + reverse(
-            'retreat:retreat-detail',
-            args=[retreat.id]
-        ) + "/execute_automatic_email/?email=" + str(email.id)
+        target_url = self.get_retreat_target_url(retreat, email)
 
         description = "Automatic email #" + str(email.id) + \
                       " for retreat #" + str(retreat.id)

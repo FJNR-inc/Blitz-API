@@ -773,6 +773,59 @@ class RetreatDateViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminOrReadOnly]
     filter_fields = '__all__'
 
+    def update(self, request, *args, **kwargs):
+        retreat_date: RetreatDate = self.get_object()
+        reason_message = request.data.get('reason_message', None)
+        force_refund = request.data.get('force_refund', False)
+        if retreat_date.retreat.total_reservations > 0 and \
+                not reason_message:
+            error = {
+                'reason_message': _("There is at least one participant to "
+                                    "this retreat. Please provide a "
+                                    "deletion message.")
+            }
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        if not retreat_date.retreat.is_active:
+            return super(
+                RetreatDateViewSet, self).update(request, *args, **kwargs)
+        else:
+            retreat = retreat_date.retreat
+            response = super(RetreatDateViewSet, self).\
+                update(request, *args, **kwargs)
+            retreat.set_automatic_email()  # Recalculate retreat auto-email
+            retreat.process_impacted_users(
+                'update', reason_message, force_refund)
+            return response
+
+    def destroy(self, request, *args, **kwargs):
+        retreat_date: RetreatDate = self.get_object()
+        reason_message = request.data.get('reason_message', None)
+        force_refund = request.data.get('force_refund', False)
+        if retreat_date.retreat.total_reservations > 0 and \
+                not reason_message:
+            error = {
+                'reason_message': _("There is at least one participant to "
+                                    "this retreat. Please provide a "
+                                    "deletion message.")
+            }
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        if not retreat_date.retreat.is_active:
+            return super(
+                RetreatDateViewSet, self).destroy(request, *args, **kwargs)
+        else:
+            retreat = retreat_date.retreat
+            if RetreatDate.objects.filter(retreat=retreat).count() <= 1:
+                msg = _("Active retreat needs to have at least 1 date.")
+                return Response(
+                    {'date_count_error': msg},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            super(RetreatDateViewSet, self).destroy(request, *args, **kwargs)
+            retreat.set_automatic_email()  # Recalculate retreat auto-email
+            retreat.process_impacted_users(
+                'update', reason_message, force_refund)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class RetreatTypeViewSet(viewsets.ModelViewSet):
     serializer_class = RetreatTypeSerializer
