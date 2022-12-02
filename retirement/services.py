@@ -376,7 +376,7 @@ def send_automatic_email(user, retreat, email):
     return response_send_mail
 
 
-def send_updated_retreat_email(retreat, reason, users_emails, reason_message):
+def send_updated_retreat_email(retreat, users_emails, reason, reason_message):
     """
     This function sends an automatic email to notify all registered users
     of a retreat that it has been updated. For example dates have changed or

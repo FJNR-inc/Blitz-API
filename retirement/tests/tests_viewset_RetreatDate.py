@@ -205,8 +205,8 @@ class RetreatDateTests(CustomAPITestCase):
         mock_email.assert_called_once_with(
             self.retreat,
             self.retreat.get_participants_emails(),
+            'update',
             reason_message,
-            'update'
         )
         mock_cancel.assert_called_once_with(False)
 
@@ -255,8 +255,8 @@ class RetreatDateTests(CustomAPITestCase):
         mock_email.assert_called_once_with(
             self.retreat,
             self.retreat.get_participants_emails(),
+            'update',
             reason_message,
-            'update'
         )
         mock_cancel.assert_called_once_with(False)
 
@@ -305,8 +305,8 @@ class RetreatDateTests(CustomAPITestCase):
         mock_email.assert_called_once_with(
             self.retreat,
             self.retreat.get_participants_emails(),
+            'update',
             reason_message,
-            'update'
         )
         mock_cancel.assert_called_once_with(False)
 
@@ -375,8 +375,8 @@ class RetreatDateTests(CustomAPITestCase):
         mock_email.assert_called_once_with(
             self.retreat,
             self.retreat.get_participants_emails(),
+            'update',
             reason_message,
-            'update'
         )
         mock_cancel.assert_called_once_with(False)
 
@@ -423,8 +423,8 @@ class RetreatDateTests(CustomAPITestCase):
         mock_email.assert_called_once_with(
             self.retreat,
             self.retreat.get_participants_emails(),
+            'update',
             reason_message,
-            'update'
         )
         mock_cancel.assert_called_once_with(False)
 
@@ -471,8 +471,8 @@ class RetreatDateTests(CustomAPITestCase):
         mock_email.assert_called_once_with(
             self.retreat,
             self.retreat.get_participants_emails(),
+            'update',
             reason_message,
-            'update'
         )
         mock_cancel.assert_called_once_with(False)
 

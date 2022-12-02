@@ -1002,8 +1002,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
             send_updated_retreat_email(
                 self,
                 self.get_participants_emails(),
-                reason_message,
                 reason,
+                reason_message,
             )
 
     def cancel_participants_reservation(self, force_refund):
