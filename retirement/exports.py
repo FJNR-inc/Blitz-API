@@ -95,21 +95,24 @@ def generate_retreat_participation(
         line_array[0] = reservation.user.last_name
         line_array[1] = reservation.user.first_name
         line_array[2] = reservation.user.email
-        if reservation.user.membership:
-            line_array[3] = reservation.user.membership.name
-        line_array[4] = reservation.order_line.order.transaction_date
-        line_array[5] = reservation.user.personnal_restrictions
-        line_array[6] = reservation.user.city
-        line_array[7] = reservation.user.phone
-        line_array[8] = reservation.user.gender
+        # Error using celery: celery tries to access something in membership
+        # meaning the following line always raise AttributeError: 'NoneType'
+        # object has no attribute 'name'
+        # if reservation.user.membership:
+        #     line_array[3] = reservation.user.membership.name
+        line_array[3] = reservation.order_line.order.transaction_date
+        line_array[4] = reservation.user.personnal_restrictions
+        line_array[5] = reservation.user.city
+        line_array[6] = reservation.user.phone
+        line_array[7] = reservation.user.gender
 
         if room_export:
             user_id = reservation.user.id
-            line_array[9] = rooms_data[user_id]['room_option']
-            line_array[10] = rooms_data[user_id]['gender_preference']
-            line_array[11] = rooms_data[user_id]['share_with']
-            line_array[12] = rooms_data[user_id]['room_number']
-            if line_array[12] == 'NA':
+            line_array[8] = rooms_data[user_id]['room_option']
+            line_array[9] = rooms_data[user_id]['gender_preference']
+            line_array[10] = rooms_data[user_id]['share_with']
+            line_array[11] = rooms_data[user_id]['room_number']
+            if line_array[11] == 'NA':
                 no_room_lines.append(line_array)
             else:
                 to_reorder_lines.append(line_array)
