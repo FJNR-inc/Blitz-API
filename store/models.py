@@ -615,7 +615,8 @@ class OptionProduct(BaseProduct):
             ordered_quantity = OrderLineBaseProduct.objects.filter(
                 option=self,
             ).exclude(
-                order_line__in=refunded_order_lines,
+                order_line__in=[
+                    x for x in refunded_order_lines if x is not None],
             ).aggregate(
                 sum=Sum('quantity'),
             )['sum']
