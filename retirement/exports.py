@@ -120,7 +120,7 @@ def generate_retreat_participation(
             writer.writerow(line_array)  # No ordering if no room
     if room_export:
         # We need to export in room order. User without data are added last
-        for ordered_data in sorted(to_reorder_lines, key=lambda x: x[13]):
+        for ordered_data in sorted(to_reorder_lines, key=lambda x: x[11]):
             writer.writerow(ordered_data)
         for no_room_user_data in no_room_lines:
             writer.writerow(no_room_user_data)
