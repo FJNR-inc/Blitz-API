@@ -77,7 +77,7 @@ def generate_retreat_participation(
     to_reorder_lines = []
     no_room_lines = []
     header = [
-        'Nom', 'Prénom', 'Email', 'Statut', "Date d'inscription",
+        'Nom', 'Prénom', 'Email', "Date d'inscription",
         'Restrictions personnelles', 'Ville', 'Téléphone', 'Genre',
     ]
     if room_export:
@@ -136,5 +136,3 @@ def generate_retreat_participation(
         filename,
         ContentFile(output_stream.getvalue().encode()))
     new_export.send_confirmation_email()
-
-    return new_export
