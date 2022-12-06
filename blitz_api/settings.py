@@ -364,7 +364,7 @@ ANYMAIL = {
         ),
         'EXPORT_DONE': config(
             'EXPORT_DONE',
-            default='67',
+            default='76',
             cast=int
         ),
         'RETREAT_DELETED': config(
