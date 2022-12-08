@@ -175,6 +175,7 @@ class Order(models.Model):
             options = orderline_data.pop('options', None)
             order_line: OrderLine = OrderLine.objects.create(
                 order=self, **orderline_data)
+            order_line.total_cost = order_line.cost
 
             if options:
                 for opt in options:
