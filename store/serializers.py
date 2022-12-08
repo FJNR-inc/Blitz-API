@@ -412,6 +412,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
     )
     coupon_real_value = serializers.ReadOnlyField()
     cost = serializers.ReadOnlyField()
+    total_cost = serializers.ReadOnlyField()
     coupon = serializers.SlugRelatedField(
         slug_field='code',
         allow_null=True,

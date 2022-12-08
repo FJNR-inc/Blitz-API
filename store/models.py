@@ -286,6 +286,7 @@ class OrderLine(models.Model):
 
     def applying_coupon_value(self, coupon_value):
         self.cost = self.cost - coupon_value
+        self.total_cost = self.total_cost - coupon_value
         self.coupon_real_value = coupon_value
         self.save()
 
