@@ -1049,6 +1049,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         # TTC is in cents after serialization
         data['total_cost_with_taxes'] = round(
             data['total_cost_with_taxes']/100, 2)
+        data['taxes'] = data['total_cost_with_taxes'] - data['total_cost']
         return data
 
 
