@@ -1221,7 +1221,7 @@ class Reservation(SafeDeleteModel):
             return 0
 
         # First get net pay: total cost
-        refund_value = float(self.order_line.cost)
+        refund_value = float(self.order_line.total_cost)
         # Add the tax rate, so we have the real value pay by the user
         refund_value *= TAX_RATE + 1.0
 

@@ -82,7 +82,7 @@ class Order(models.Model):
             models.Q(content_type__model='retreat')
         )
         for orderline in orderlines:
-            cost += orderline.cost
+            cost += orderline.total_cost
         return cost
 
     @property
@@ -190,8 +190,8 @@ class Order(models.Model):
                         quantity=quantity,
                         metadata=metadata
                     )
-                    order_line.cost += option.price * quantity
-                order_line.save()
+                    order_line.total_cost += option.price * quantity
+            order_line.save()
 
 
 class OrderLine(models.Model):
