@@ -227,7 +227,8 @@ class ReservationTests(CustomAPITestCase):
             quantity=1,
             content_type=self.retreat_content_type,
             object_id=self.retreat.id,
-            cost=self.retreat.price
+            cost=self.retreat.price,
+            total_cost=self.retreat.price,
         )
         self.reservation = Reservation.objects.create(
             user=self.user,

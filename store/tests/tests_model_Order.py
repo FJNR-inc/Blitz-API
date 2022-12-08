@@ -57,6 +57,7 @@ class OrderTests(APITestCase):
             content_type=cls.package_type,
             object_id=cls.package.id,
             cost=cls.package.price,
+            total_cost=cls.package.price,
         )
         OrderLine.objects.create(
             order=cls.order,
@@ -64,6 +65,7 @@ class OrderTests(APITestCase):
             content_type=cls.package_type,
             object_id=cls.package.id,
             cost=cls.package.price,
+            total_cost=cls.package.price,
         )
         OrderLine.objects.create(
             order=cls.order,

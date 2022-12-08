@@ -373,6 +373,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['taxes']
         del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
@@ -409,6 +410,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'total_cost': 50.0,
                 'metadata': None,
                 'options': []
             }, {
@@ -418,6 +420,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': "ABCD1234",
                 'coupon_real_value': 10.0,
                 'cost': 2 * self.package.price - 10,
+                'total_cost': 2 * self.package.price - 10,
                 'metadata': None,
                 'options': []
             }, {
@@ -427,6 +430,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'total_cost': 0.0,
                 'metadata': None,
                 'options': []
             }, {
@@ -437,7 +441,8 @@ class OrderTests(CustomAPITestCase):
                 'coupon_real_value': 0.0,
                 'metadata':
                     json.dumps({'invitation_id': self.invitation.id}),
-                'cost': 199.0 + self.options.price,
+                'cost': 199.0,
+                'total_cost': 199.0 + self.options.price,
                 'options': [{
                     'id': self.options.id,
                     'quantity': 1,
@@ -721,6 +726,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['taxes']
         del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
@@ -736,6 +742,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'total_cost': 0.0,
                 'metadata': None,
                 'options': []
             }],
@@ -795,6 +802,8 @@ class OrderTests(CustomAPITestCase):
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
         del response_data['transaction_date']
+        del response_data['taxes']
+
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
@@ -808,6 +817,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'total_cost': 0.0,
                 'metadata': None,
                 'options': []
             }],
@@ -867,6 +877,8 @@ class OrderTests(CustomAPITestCase):
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
         del response_data['transaction_date']
+        del response_data['taxes']
+
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
@@ -880,6 +892,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'total_cost': 0.0,
                 'metadata': None,
                 'options': []
             }],
@@ -983,6 +996,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['taxes']
         del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
@@ -998,6 +1012,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'total_cost': 0.0,
                 'metadata': None,
                 'options': []
             }],
@@ -1545,6 +1560,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['taxes']
         del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
@@ -1560,6 +1576,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
+                'total_cost': 199.0,
                 'metadata': None,
                 'options': []
             }],
@@ -1885,6 +1902,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['taxes']
         del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
@@ -1906,6 +1924,7 @@ class OrderTests(CustomAPITestCase):
                     'coupon': None,
                     'coupon_real_value': 0.0,
                     'cost': 199.0,
+                    'total_cost': 199.0,
                     'metadata': None,
                     'options': []
                 },
@@ -1915,6 +1934,7 @@ class OrderTests(CustomAPITestCase):
                     'coupon': None,
                     'coupon_real_value': 0.0,
                     'cost': 50.0,
+                    'total_cost': 50.0,
                     'metadata': None,
                     'options': []
                 }
@@ -1977,6 +1997,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['taxes']
         del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
@@ -1992,6 +2013,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
+                'total_cost': 199.0,
                 'metadata': None,
                 'options': []
             }],
@@ -2246,6 +2268,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['taxes']
         del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
@@ -2267,6 +2290,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
+                'total_cost': 2 * self.package.price,
                 'metadata': None,
                 'options': []
             }, {
@@ -2275,6 +2299,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'total_cost': 0.0,
                 'metadata': None,
                 'options': []
             }],
@@ -2347,6 +2372,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['taxes']
         del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
@@ -2368,6 +2394,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'total_cost': 50.0,
                 'metadata': None,
                 'options': []
             }, {
@@ -2376,6 +2403,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
+                'total_cost': 2 * self.package.price,
                 'metadata': None,
                 'options': []
             }],
@@ -2647,6 +2675,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['taxes']
         del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
@@ -2669,6 +2698,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'total_cost': 50.0,
                 'metadata': None,
                 'options': []
             }, {
@@ -2677,6 +2707,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
+                'total_cost': 2 * self.package.price,
                 'metadata': None,
                 'options': []
             }],
@@ -2877,6 +2908,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['taxes']
         del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['id']
@@ -2892,6 +2924,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'total_cost': 50.0,
                 'metadata': None,
                 'options': []
             }],
@@ -2990,6 +3023,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['taxes']
         del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['id']
@@ -3005,6 +3039,7 @@ class OrderTests(CustomAPITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'total_cost': 50.0,
                 'metadata': None,
                 'options': []
             }],
@@ -3138,43 +3173,6 @@ class OrderTests(CustomAPITestCase):
         )
         content = json.loads(response.content)
         self.assertEqual(content['count'], 1)
-        content = content['results']
-        self.check_attributes(content[0], self.ORDER_ATTRIBUTES)
-        self.check_attributes(
-            content[0]['order_lines'][0], self.ORDERLINE_ATTRIBUTES)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_list_user_admin_only_user_made(self):
-        """
-        Ensure we can list a user orders as an admin filtering out
-        orders made by admin.
-        """
-        self.client.force_authenticate(user=self.admin)
-        OrderFactory(user=self.user, is_made_by_admin=True)
-        OrderFactory(user=self.user, is_made_by_admin=True)
-
-        response = self.client.get(
-            reverse('order-list'),
-            {
-                'user': self.user.id,
-            },
-            format='json',
-        )
-        content = json.loads(response.content)
-        self.assertEqual(content['count'], 3)
-
-        response = self.client.get(
-            reverse('order-list'),
-            {
-                'user': self.user.id,
-                'is_made_by_admin': False,
-            },
-            format='json',
-        )
-        content = json.loads(response.content)
-        self.assertEqual(content['count'], 1)
-
         content = content['results']
         self.check_attributes(content[0], self.ORDER_ATTRIBUTES)
         self.check_attributes(
