@@ -250,6 +250,13 @@ class OrderLine(models.Model):
         default=0,
     )
 
+    total_cost = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        verbose_name=_("Orderline total cost"),
+        default=0,
+    )
+
     options = models.ManyToManyField(
         'BaseProduct',
         verbose_name=_("Options"),
