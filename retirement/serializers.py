@@ -651,6 +651,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         authorization_id=1,
                         settlement_id=1,
                     )
+                    # order line cost to calculate
                     new_order_line = OrderLine.objects.create(
                         order=order,
                         quantity=1,
