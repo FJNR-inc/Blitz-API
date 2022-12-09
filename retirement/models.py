@@ -1391,6 +1391,14 @@ class Reservation(SafeDeleteModel):
                                 )],
                                 'detail': err.detail
                             })
+                        if str(err) == PAYSAFE_EXCEPTION['3404']:
+                            raise rest_framework_serializers.ValidationError({
+                                'non_field_errors': [_(
+                                    "The order has already been refunded by "
+                                    "Paysafe."
+                                )],
+                                'detail': err.detail
+                            })
                         raise rest_framework_serializers.ValidationError(
                             {
                                 'message': str(err),
