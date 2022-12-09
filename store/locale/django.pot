@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-25 15:01-0400\n"
+"POT-Creation-Date: 2022-12-09 10:16-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,8 +21,8 @@ msgstr ""
 msgid "Orderlines"
 msgstr ""
 
-#: store/admin.py:184 store/models.py:44 store/models.py:645
-#: store/models.py:713 store/models.py:835 store/models.py:887
+#: store/admin.py:184 store/models.py:44 store/models.py:646
+#: store/models.py:714 store/models.py:843 store/models.py:904
 msgid "User"
 msgstr ""
 
@@ -42,19 +42,19 @@ msgstr ""
 msgid "Orders"
 msgstr ""
 
-#: store/models.py:49 store/models.py:668
+#: store/models.py:49 store/models.py:669
 msgid "Transaction date"
 msgstr ""
 
-#: store/models.py:53 store/models.py:672
+#: store/models.py:53 store/models.py:673
 msgid "Authorization ID"
 msgstr ""
 
-#: store/models.py:58 store/models.py:677
+#: store/models.py:58 store/models.py:678
 msgid "Settlement ID"
 msgstr ""
 
-#: store/models.py:63 store/models.py:682
+#: store/models.py:63 store/models.py:683
 msgid "Reference number"
 msgstr ""
 
@@ -110,8 +110,8 @@ msgstr ""
 msgid "Amount"
 msgstr ""
 
-#: store/models.py:327 store/models.py:370 store/models.py:661
-#: store/models.py:759
+#: store/models.py:327 store/models.py:370 store/models.py:662
+#: store/models.py:760
 msgid "Details"
 msgstr ""
 
@@ -123,7 +123,7 @@ msgstr ""
 msgid "Refund ID"
 msgstr ""
 
-#: store/models.py:354 store/models.py:650 store/models.py:706
+#: store/models.py:354 store/models.py:651 store/models.py:707
 msgid "Name"
 msgstr ""
 
@@ -131,7 +131,7 @@ msgstr ""
 msgid "Available"
 msgstr ""
 
-#: store/models.py:366 store/models.py:657
+#: store/models.py:366 store/models.py:658
 msgid "Price"
 msgstr ""
 
@@ -143,7 +143,7 @@ msgstr ""
 msgid "Applicable product types"
 msgstr ""
 
-#: store/models.py:395
+#: store/models.py:395 store/models.py:776
 msgid "Applicable retreat types"
 msgstr ""
 
@@ -219,83 +219,87 @@ msgstr ""
 msgid "Option product"
 msgstr ""
 
-#: store/models.py:689
+#: store/models.py:690
 msgid "Custom payment"
 msgstr ""
 
-#: store/models.py:690
+#: store/models.py:691
 msgid "Custom payments"
 msgstr ""
 
-#: store/models.py:702
+#: store/models.py:703
 msgid "Payment profile"
 msgstr ""
 
-#: store/models.py:703
+#: store/models.py:704
 msgid "Payment profiles"
 msgstr ""
 
-#: store/models.py:718
+#: store/models.py:719
 msgid "External profile ID"
 msgstr ""
 
-#: store/models.py:723
+#: store/models.py:724
 msgid "External profile url"
 msgstr ""
 
-#: store/models.py:742
+#: store/models.py:743
 msgid "Value"
 msgstr ""
 
-#: store/models.py:749
+#: store/models.py:750
 msgid "Percentage off"
 msgstr ""
 
-#: store/models.py:768
+#: store/models.py:769
 msgid "Applicable retreats"
 msgstr ""
 
-#: store/models.py:775
+#: store/models.py:783
 msgid "Applicable timeslots"
 msgstr ""
 
-#: store/models.py:782
+#: store/models.py:790
 msgid "Applicable packages"
 msgstr ""
 
-#: store/models.py:789
+#: store/models.py:797
 msgid "Applicable memberships"
 msgstr ""
 
-#: store/models.py:803
+#: store/models.py:811
 msgid "Applicable to virtual retreat"
 msgstr ""
 
-#: store/models.py:808
+#: store/models.py:816
 msgid "Applicable to physical retreat"
 msgstr ""
 
-#: store/models.py:821
+#: store/models.py:829
 msgid "Start time"
 msgstr ""
 
-#: store/models.py:823
+#: store/models.py:831
 msgid "End time"
 msgstr ""
 
-#: store/models.py:826
+#: store/models.py:834
 msgid "Code"
 msgstr ""
 
-#: store/models.py:842
+#: store/models.py:850
+msgid "Organization"
+msgstr ""
+
+#: store/models.py:859
 msgid "Users"
 msgstr ""
 
-#: store/models.py:870
+#: store/models.py:887
 msgid "Limit date"
 msgstr ""
 
-#: store/models.py:893
+#: store/models.py:910
 msgid "Coupon"
 msgstr ""
 
@@ -324,74 +328,74 @@ msgid ""
 "User does not have the required academic_level to order this membership."
 msgstr ""
 
-#: store/serializers.py:565
+#: store/serializers.py:571
 msgid "You don't have the permission to create an order for another user."
 msgstr ""
 
-#: store/serializers.py:575
+#: store/serializers.py:581
 msgid "You don't have the permission to bypass the payment"
 msgstr ""
 
-#: store/serializers.py:655
+#: store/serializers.py:661
 msgid "You already have an active membership."
 msgstr ""
 
-#: store/serializers.py:720
+#: store/serializers.py:728
 msgid "User does not have the required membership to order this package."
 msgstr ""
 
-#: store/serializers.py:741
+#: store/serializers.py:749
 msgid "You don't have enough tickets to make this reservation."
 msgstr ""
 
-#: store/serializers.py:748
+#: store/serializers.py:756
 msgid "You already are registered to this timeslot: "
 msgstr ""
 
-#: store/serializers.py:769
+#: store/serializers.py:777
 msgid "There are no places left in the requested timeslot."
 msgstr ""
 
-#: store/serializers.py:778
+#: store/serializers.py:786
 msgid ""
 "Incomplete user profile. 'phone' and 'city' field must be filled in the user "
 "profile to book a retreat."
 msgstr ""
 
-#: store/serializers.py:794
+#: store/serializers.py:802
 msgid "User does not have the required membership to order this retreat."
 msgstr ""
 
-#: store/serializers.py:807
+#: store/serializers.py:815
 #, python-brace-format
 msgid "You already are registered to this retreat: {0}."
 msgstr ""
 
-#: store/serializers.py:829
+#: store/serializers.py:837
 msgid "You need a room option for this requested retreat."
 msgstr ""
 
-#: store/serializers.py:861
+#: store/serializers.py:869
 msgid "There are no places left in the requested retreat."
 msgstr ""
 
-#: store/serializers.py:906
+#: store/serializers.py:914
 msgid "A payment_token or single_use_token is required to create an order."
 msgstr ""
 
-#: store/serializers.py:1069 store/serializers.py:1126
+#: store/serializers.py:1088 store/serializers.py:1145
 msgid ""
 "You can't set a discount value (value) and a discount percentage "
 "(percent_off) at the same time."
 msgstr ""
 
-#: store/serializers.py:1079 store/serializers.py:1133
+#: store/serializers.py:1098 store/serializers.py:1152
 msgid ""
 "You need to set a value discount (value) or a discount percentage "
 "(percent_off) for this coupon."
 msgstr ""
 
-#: store/serializers.py:1103
+#: store/serializers.py:1122
 msgid "Can't generate new unique codes. Delete old coupons."
 msgstr ""
 
@@ -484,14 +488,14 @@ msgstr ""
 msgid "Maximum number of uses exceeded for this coupon."
 msgstr ""
 
-#: store/services.py:574
+#: store/services.py:577
 msgid "This coupon does not apply to any product."
 msgstr ""
 
-#: store/views.py:293 store/views.py:496
+#: store/views.py:296 store/views.py:504
 msgid "This field is required."
 msgstr ""
 
-#: store/views.py:488
+#: store/views.py:496
 msgid "Email address"
 msgstr ""
