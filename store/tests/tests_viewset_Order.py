@@ -373,6 +373,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['url']
@@ -720,6 +721,8 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['is_made_by_admin']
+
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
@@ -812,6 +815,7 @@ class OrderTests(CustomAPITestCase):
             'authorization_id': '0',
             'settlement_id': '0',
             'reference_number': '0',
+            'is_made_by_admin': False,
         }
 
         self.assertEqual(response_data, content)
@@ -883,6 +887,7 @@ class OrderTests(CustomAPITestCase):
             'authorization_id': '0',
             'settlement_id': '0',
             'reference_number': '0',
+            'is_made_by_admin': True,
         }
 
         self.assertEqual(response_data, content)
@@ -978,6 +983,8 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['is_made_by_admin']
+
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
@@ -1538,6 +1545,8 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['is_made_by_admin']
+
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
@@ -1876,6 +1885,8 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['is_made_by_admin']
+
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
@@ -1966,6 +1977,8 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['is_made_by_admin']
+
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
@@ -2233,6 +2246,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
@@ -2333,6 +2347,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
@@ -2632,6 +2647,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
@@ -2861,6 +2877,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['id']
         del response_data['order_lines'][0]['url']
@@ -2973,6 +2990,7 @@ class OrderTests(CustomAPITestCase):
         del response_data['id']
         del response_data['total_cost_with_taxes']
         del response_data['total_cost']
+        del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['id']
         del response_data['order_lines'][0]['url']
@@ -3120,6 +3138,43 @@ class OrderTests(CustomAPITestCase):
         )
         content = json.loads(response.content)
         self.assertEqual(content['count'], 1)
+        content = content['results']
+        self.check_attributes(content[0], self.ORDER_ATTRIBUTES)
+        self.check_attributes(
+            content[0]['order_lines'][0], self.ORDERLINE_ATTRIBUTES)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_user_admin_only_user_made(self):
+        """
+        Ensure we can list a user orders as an admin filtering out
+        orders made by admin.
+        """
+        self.client.force_authenticate(user=self.admin)
+        OrderFactory(user=self.user, is_made_by_admin=True)
+        OrderFactory(user=self.user, is_made_by_admin=True)
+
+        response = self.client.get(
+            reverse('order-list'),
+            {
+                'user': self.user.id,
+            },
+            format='json',
+        )
+        content = json.loads(response.content)
+        self.assertEqual(content['count'], 3)
+
+        response = self.client.get(
+            reverse('order-list'),
+            {
+                'user': self.user.id,
+                'is_made_by_admin': False,
+            },
+            format='json',
+        )
+        content = json.loads(response.content)
+        self.assertEqual(content['count'], 1)
+
         content = content['results']
         self.check_attributes(content[0], self.ORDER_ATTRIBUTES)
         self.check_attributes(
