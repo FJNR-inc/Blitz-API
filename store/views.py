@@ -268,6 +268,7 @@ class OrderViewSet(ExportMixin, viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminOrCreateReadOnly, IsAuthenticated)
     filterset_fields = [
         'user',
+        'is_made_by_admin',
     ]
 
     export_resource = OrderResource()
