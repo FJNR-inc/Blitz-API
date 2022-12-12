@@ -517,6 +517,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     settlement_id = serializers.ReadOnlyField()
     total_cost = serializers.ReadOnlyField()
     total_cost_with_taxes = serializers.ReadOnlyField()
+    is_made_by_admin = serializers.ReadOnlyField()
     order_lines = OrderLineSerializerNoOrder(many=True)
     payment_token = serializers.CharField(
         write_only=True,
@@ -621,6 +622,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         with transaction.atomic():
             coupon = validated_data.pop('coupon', None)
             order = Order.objects.create(**validated_data)
+            if is_staff and bypass_payment:
+                order.is_made_by_admin = True
+                order.save()
             charge_response = None
 
             order.add_line_from_data(orderlines_data)
@@ -1028,7 +1032,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                   'settlement_id', 'reference_number', 'url', 'total_cost',
                   'total_cost_with_taxes', 'order_lines', 'payment_token',
                   'coupon', 'target_user', 'bypass_payment',
-                  'single_use_token']
+                  'single_use_token', 'is_made_by_admin']
         extra_kwargs = {
             'transaction_date': {
                 'read_only': True,
