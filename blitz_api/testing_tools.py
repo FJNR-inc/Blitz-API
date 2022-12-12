@@ -11,6 +11,7 @@ ORDER_ATTRIBUTES = [
     'total_cost_with_taxes',
     'url',
     'user',
+    'is_made_by_admin',
 ]
 
 ORDERLINE_ATTRIBUTES = [
