@@ -66,6 +66,11 @@ class Order(models.Model):
         blank=True,
     )
 
+    is_made_by_admin = models.BooleanField(
+        verbose_name=_("Is made by admin"),
+        default=False
+    )
+
     history = HistoricalRecords()
 
     @property
@@ -257,6 +262,10 @@ class OrderLine(models.Model):
         blank=True,
         null=True,
     )
+
+    @property
+    def is_made_by_admin(self):
+        return self.order.is_made_by_admin
 
     history = HistoricalRecords()
 
