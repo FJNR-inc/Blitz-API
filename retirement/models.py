@@ -1217,7 +1217,7 @@ class Reservation(SafeDeleteModel):
         return str(self.user)
 
     def get_refund_value(self, total_refund=False):
-        if self.order_line is None:
+        if self.order_line is None or self.order_line.is_made_by_admin:
             return 0
 
         # First get net pay: total cost
