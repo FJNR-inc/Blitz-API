@@ -519,6 +519,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     total_cost_with_taxes = serializers.ReadOnlyField()
     is_made_by_admin = serializers.ReadOnlyField()
     order_lines = OrderLineSerializerNoOrder(many=True)
+    is_made_by_admin = serializers.ReadOnlyField()
     payment_token = serializers.CharField(
         write_only=True,
         required=False,
