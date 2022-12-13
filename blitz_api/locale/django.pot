@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-25 15:01-0400\n"
+"POT-Creation-Date: 2022-12-09 10:16-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,7 +21,7 @@ msgstr ""
 msgid "Extra fields"
 msgstr ""
 
-#: blitz_api/admin.py:95 blitz_api/models.py:551
+#: blitz_api/admin.py:95 blitz_api/models.py:555
 msgid "Domains"
 msgstr ""
 
@@ -69,11 +69,11 @@ msgstr ""
 msgid "Other number"
 msgstr ""
 
-#: blitz_api/models.py:65 blitz_api/models.py:584
+#: blitz_api/models.py:65 blitz_api/models.py:588
 msgid "Academic level"
 msgstr ""
 
-#: blitz_api/models.py:72 blitz_api/models.py:603
+#: blitz_api/models.py:72 blitz_api/models.py:607
 msgid "Academic field"
 msgstr ""
 
@@ -121,7 +121,7 @@ msgstr ""
 msgid "Number of free virtual retreat"
 msgstr ""
 
-#: blitz_api/models.py:141 blitz_api/models.py:640
+#: blitz_api/models.py:141 blitz_api/models.py:644
 msgid "City"
 msgstr ""
 
@@ -137,120 +137,116 @@ msgstr ""
 msgid "Last acceptation of the terms and conditions"
 msgstr ""
 
-#: blitz_api/models.py:419
+#: blitz_api/models.py:423
 msgid "Temporary token"
 msgstr ""
 
-#: blitz_api/models.py:420
+#: blitz_api/models.py:424
 msgid "Temporary tokens"
 msgstr ""
 
-#: blitz_api/models.py:423
+#: blitz_api/models.py:427
 msgid "Expiration date"
 msgstr ""
 
-#: blitz_api/models.py:457
+#: blitz_api/models.py:461
 msgid "Account activation"
 msgstr ""
 
-#: blitz_api/models.py:458
+#: blitz_api/models.py:462
 msgid "Password change"
 msgstr ""
 
-#: blitz_api/models.py:459
+#: blitz_api/models.py:463
 msgid "Email change"
 msgstr ""
 
-#: blitz_api/models.py:531
+#: blitz_api/models.py:535
 msgid "Organization"
 msgstr ""
 
-#: blitz_api/models.py:532
+#: blitz_api/models.py:536
 msgid "Organizations"
 msgstr ""
 
-#: blitz_api/models.py:535 blitz_api/models.py:557 blitz_api/models.py:588
-#: blitz_api/models.py:607
+#: blitz_api/models.py:539 blitz_api/models.py:561 blitz_api/models.py:592
+#: blitz_api/models.py:611
 msgid "Name"
 msgstr ""
 
-#: blitz_api/models.py:550
+#: blitz_api/models.py:554
 msgid "Domain"
 msgstr ""
 
-#: blitz_api/models.py:562
+#: blitz_api/models.py:566
 msgid "Email example"
 msgstr ""
 
-#: blitz_api/models.py:585
+#: blitz_api/models.py:589
 msgid "Academic levels"
 msgstr ""
 
-#: blitz_api/models.py:604
+#: blitz_api/models.py:608
 msgid "Academic fields"
 msgstr ""
 
-#: blitz_api/models.py:623
+#: blitz_api/models.py:627
 msgid "Place name"
 msgstr ""
 
-#: blitz_api/models.py:629
+#: blitz_api/models.py:633
 msgid "Country"
 msgstr ""
 
-#: blitz_api/models.py:635
+#: blitz_api/models.py:639
 msgid "State/Province"
 msgstr ""
 
-#: blitz_api/models.py:644
+#: blitz_api/models.py:648
 msgid "Address line 1"
 msgstr ""
 
-#: blitz_api/models.py:650
+#: blitz_api/models.py:654
 msgid "Address line 2"
 msgstr ""
 
-#: blitz_api/models.py:654
+#: blitz_api/models.py:658
 msgid "Postal code"
 msgstr ""
 
-#: blitz_api/models.py:659
+#: blitz_api/models.py:663
 msgid "Latitude"
 msgstr ""
 
-#: blitz_api/models.py:664
+#: blitz_api/models.py:668
 msgid "Longitude"
 msgstr ""
 
-#: blitz_api/models.py:670
+#: blitz_api/models.py:674
 msgid "Timezone"
 msgstr ""
 
-#: blitz_api/models.py:686
+#: blitz_api/models.py:689
 msgid "Anonymous Chrono data"
 msgstr ""
 
-#: blitz_api/models.py:687
+#: blitz_api/models.py:690
 msgid "Other"
 msgstr ""
 
-#: blitz_api/models.py:688
+#: blitz_api/models.py:691
 msgid "Retreat sales"
 msgstr ""
 
-#: blitz_api/models.py:689
+#: blitz_api/models.py:692
 msgid "Retreat participation"
 msgstr ""
 
-#: blitz_api/models.py:690
+#: blitz_api/models.py:693
 msgid "Retreat options"
 msgstr ""
 
-#: blitz_api/models.py:691
-msgid "Retreat room distribution"
-msgstr ""
-
-#: blitz_api/models.py:707
+#: blitz_api/models.py:709
 msgid "Author"
 msgstr ""
 
@@ -330,15 +326,19 @@ msgstr ""
 msgid "One of the two fields %(field)s must be completed."
 msgstr ""
 
-#: blitz_api/views.py:203
+#: blitz_api/views.py:196
 msgid "This email is not linked to any account"
 msgstr ""
 
-#: blitz_api/views.py:223
+#: blitz_api/views.py:216
 msgid "You can't accept the terms for others peoples."
 msgstr ""
 
-#: blitz_api/views.py:421
+#: blitz_api/views.py:232
+msgid "nb_tickets must be a positive integer."
+msgstr ""
+
+#: blitz_api/views.py:430
 msgid ""
 "Your token has been created but no email has been sent. Please contact the "
 "administration."

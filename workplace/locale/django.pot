@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-25 15:01-0400\n"
+"POT-Creation-Date: 2022-12-09 10:16-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -82,7 +82,7 @@ msgstr ""
 msgid "Activation"
 msgstr ""
 
-#: workplace/models.py:154 workplace/models.py:228
+#: workplace/models.py:154 workplace/models.py:232
 msgid "Time slot"
 msgstr ""
 
@@ -90,7 +90,7 @@ msgstr ""
 msgid "Time slots"
 msgstr ""
 
-#: workplace/models.py:175 workplace/models.py:222
+#: workplace/models.py:175 workplace/models.py:226
 msgid "User"
 msgstr ""
 
@@ -102,35 +102,35 @@ msgstr ""
 msgid "End time"
 msgstr ""
 
-#: workplace/models.py:213
+#: workplace/models.py:217
 msgid "User canceled"
 msgstr ""
 
-#: workplace/models.py:214
+#: workplace/models.py:218
 msgid "Timeslot deleted"
 msgstr ""
 
-#: workplace/models.py:215
+#: workplace/models.py:219
 msgid "Timeslot modified"
 msgstr ""
 
-#: workplace/models.py:216
+#: workplace/models.py:220
 msgid "Admin canceled"
 msgstr ""
 
-#: workplace/models.py:232
+#: workplace/models.py:236
 msgid "Active"
 msgstr ""
 
-#: workplace/models.py:239
+#: workplace/models.py:243
 msgid "Cancelation reason"
 msgstr ""
 
-#: workplace/models.py:244
+#: workplace/models.py:248
 msgid "Cancelation date"
 msgstr ""
 
-#: workplace/models.py:247
+#: workplace/models.py:251
 msgid "Present"
 msgstr ""
 
