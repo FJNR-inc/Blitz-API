@@ -156,6 +156,9 @@ class AutomaticEmailSerializer(serializers.HyperlinkedModelSerializer):
             'url': {
                 'view_name': 'retreat:automaticemail-detail',
             },
+            'retreat_type': {
+                'view_name': 'retreat:retreattype-detail',
+            },
         }
 
 

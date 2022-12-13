@@ -57,6 +57,16 @@ RETREAT_TYPE_ATTRIBUTES = [
     'context_for_welcome_message',
 ]
 
+AUTOMATIC_EMAIL_ATTRIBUTES = [
+    'id',
+    'url',
+    'minutes_delta',
+    'time_base',
+    'template_id',
+    'context',
+    'retreat_type',
+]
+
 
 class CustomAPITestCase(APITestCase):
     ATTRIBUTES = []
