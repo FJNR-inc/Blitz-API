@@ -1172,6 +1172,7 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
 
             usages = list()
             for line in OrderLine.objects.filter(coupon=instance):
+                is_refunded = Refund.objects.filter(orderline=line).exists()
                 usages.append(
                     {
                         'date': line.order.transaction_date,
@@ -1191,6 +1192,7 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
                             },
                         ).data,
                         'product_name': line.content_object.name,
+                        'orderline_refunded': is_refunded,
                     }
                 )
 
