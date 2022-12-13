@@ -233,3 +233,67 @@ class ReservationTests(APITestCase):
         refund_value = reservation.get_refund_value()
 
         self.assertEqual(refund_value, round(80 * (TAX_RATE + 1.0), 2))
+
+    def test_refund_value_made_by_admin(self):
+        """
+        Test that a reservation linked to an order made by an admin
+        has a refund of 0
+        """
+        retreat = Retreat.objects.create(
+            name="mega_retreat",
+            details="This is a description of the mega retreat.",
+            seats=400,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+            price=100,
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=100,
+            accessibility=True,
+            form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
+            has_shared_rooms=True,
+            toilet_gendered=False,
+            room_type=Retreat.SINGLE_OCCUPATION,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
+            type=self.retreatType,
+        )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=retreat,
+        )
+        retreat.activate()
+
+        order = Order.objects.create(
+            user=self.user,
+            transaction_date=timezone.now(),
+            authorization_id=1,
+            settlement_id=1,
+            is_made_by_admin=True,
+        )
+
+        order_line = OrderLine.objects.create(
+            order=order,
+            quantity=999,
+            content_type=self.retreat_type,
+            object_id=1,
+            cost=80,
+            coupon_real_value=20,
+        )
+
+        reservation = Reservation.objects.create(
+            user=self.user,
+            retreat=retreat,
+            order_line=order_line,
+            is_active=True,
+        )
+
+        refund_value = reservation.get_refund_value()
+
+        self.assertEqual(refund_value, 0)

@@ -790,11 +790,12 @@ class RetreatDateViewSet(viewsets.ModelViewSet):
                 RetreatDateViewSet, self).update(request, *args, **kwargs)
         else:
             retreat = retreat_date.retreat
-            response = super(RetreatDateViewSet, self).\
-                update(request, *args, **kwargs)
-            retreat.set_automatic_email()  # Recalculate retreat auto-email
-            retreat.process_impacted_users(
-                'update', reason_message, force_refund)
+            with transaction.atomic():
+                response = super(RetreatDateViewSet, self).\
+                    update(request, *args, **kwargs)
+                retreat.set_automatic_email()  # Recalculate retreat auto-email
+                retreat.process_impacted_users(
+                    'update', reason_message, force_refund)
             return response
 
     def destroy(self, request, *args, **kwargs):
@@ -820,10 +821,12 @@ class RetreatDateViewSet(viewsets.ModelViewSet):
                     {'date_count_error': msg},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            super(RetreatDateViewSet, self).destroy(request, *args, **kwargs)
-            retreat.set_automatic_email()  # Recalculate retreat auto-email
-            retreat.process_impacted_users(
-                'update', reason_message, force_refund)
+            with transaction.atomic():
+                super(RetreatDateViewSet, self).destroy(
+                    request, *args, **kwargs)
+                retreat.set_automatic_email()  # Recalculate retreat auto-email
+                retreat.process_impacted_users(
+                    'update', reason_message, force_refund)
             return Response(status=status.HTTP_204_NO_CONTENT)
 
 
