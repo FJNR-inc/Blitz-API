@@ -412,6 +412,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
     )
     coupon_real_value = serializers.ReadOnlyField()
     cost = serializers.ReadOnlyField()
+    total_cost = serializers.ReadOnlyField()
     coupon = serializers.SlugRelatedField(
         slug_field='code',
         allow_null=True,
@@ -1048,6 +1049,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         # TTC is in cents after serialization
         data['total_cost_with_taxes'] = round(
             data['total_cost_with_taxes']/100, 2)
+        data['taxes'] = data['total_cost_with_taxes'] - data['total_cost']
         return data
 
 

@@ -582,7 +582,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         current_retreat.price -
                         validated_data['retreat'].price
                     )
-                    real_cost = order_line.cost
+                    real_cost = order_line.total_cost
                     amount = min(price_diff, real_cost)
                 if current_retreat == validated_data['retreat']:
                     raise serializers.ValidationError({
@@ -651,6 +651,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         authorization_id=1,
                         settlement_id=1,
                     )
+                    # order line cost to calculate
                     new_order_line = OrderLine.objects.create(
                         order=order,
                         quantity=1,
@@ -806,18 +807,18 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 'TYPE': "Achat",
                 'ITEM_LIST': items,
                 'TAX': round(
-                    (new_order_line.cost - current_retreat.price) *
+                    (new_order_line.total_cost - current_retreat.price) *
                     Decimal(TAX_RATE),
                     2,
                 ),
                 'DISCOUNT': current_retreat.price,
                 'COUPON': {'code': _("Échange")},
                 'SUBTOTAL': round(
-                    new_order_line.cost - current_retreat.price,
+                    new_order_line.total_cost - current_retreat.price,
                     2
                 ),
                 'COST': round(
-                    (new_order_line.cost - current_retreat.price) *
+                    (new_order_line.total_cost - current_retreat.price) *
                     Decimal(TAX_RATE + 1),
                     2
                 ),

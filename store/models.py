@@ -82,7 +82,7 @@ class Order(models.Model):
             models.Q(content_type__model='retreat')
         )
         for orderline in orderlines:
-            cost += orderline.cost
+            cost += orderline.total_cost
         return cost
 
     @property
@@ -175,6 +175,7 @@ class Order(models.Model):
             options = orderline_data.pop('options', None)
             order_line: OrderLine = OrderLine.objects.create(
                 order=self, **orderline_data)
+            order_line.total_cost = order_line.cost
 
             if options:
                 for opt in options:
@@ -190,8 +191,8 @@ class Order(models.Model):
                         quantity=quantity,
                         metadata=metadata
                     )
-                    order_line.cost += option.price * quantity
-                order_line.save()
+                    order_line.total_cost += option.price * quantity
+            order_line.save()
 
 
 class OrderLine(models.Model):
@@ -250,6 +251,13 @@ class OrderLine(models.Model):
         default=0,
     )
 
+    total_cost = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        verbose_name=_("Orderline total cost"),
+        default=0,
+    )
+
     options = models.ManyToManyField(
         'BaseProduct',
         verbose_name=_("Options"),
@@ -278,6 +286,7 @@ class OrderLine(models.Model):
 
     def applying_coupon_value(self, coupon_value):
         self.cost = self.cost - coupon_value
+        self.total_cost = self.total_cost - coupon_value
         self.coupon_real_value = coupon_value
         self.save()
 

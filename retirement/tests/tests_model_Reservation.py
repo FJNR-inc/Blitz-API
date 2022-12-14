@@ -148,6 +148,7 @@ class ReservationTests(APITestCase):
             content_type=self.retreat_type,
             object_id=1,
             cost=80,
+            total_cost=80,
             coupon_real_value=20,
             coupon=coupon
         )
@@ -219,6 +220,7 @@ class ReservationTests(APITestCase):
             content_type=self.retreat_type,
             object_id=1,
             cost=80,
+            total_cost=80,
             coupon_real_value=20,
             coupon=coupon
         )
