@@ -529,6 +529,7 @@ class OrganizationViewSet(ExportMixin, viewsets.ModelViewSet):
     queryset = Organization.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
     ordering = ('name',)
+    search_fields = ('name',)
 
     export_resource = OrganizationResource()
 

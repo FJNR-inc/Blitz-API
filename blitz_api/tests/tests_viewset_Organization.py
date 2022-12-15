@@ -105,3 +105,30 @@ class OrganizationTests(APITestCase):
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_search_name(self):
+        """
+        Ensure we can list organizations as an unauthenticated user and search
+        by name
+        """
+        Organization.objects.create(name="test 1")
+        Organization.objects.create(name="test 2")
+        Organization.objects.create(name="unknown 1")
+        Organization.objects.create(name="unknown 2")
+
+        response = self.client.get(
+            reverse('organization-list'),
+            {
+                'search': 'test'
+            },
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(len(content['results']), 2)
