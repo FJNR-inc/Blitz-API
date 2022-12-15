@@ -277,10 +277,6 @@ class OrderLine(models.Model):
 
     history = HistoricalRecords()
 
-    @property
-    def is_made_by_admin(self):
-        return self.order.is_made_by_admin
-
     def __str__(self):
         return str(self.content_object) + ', qt:' + str(self.quantity)
 
