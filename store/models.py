@@ -271,14 +271,14 @@ class OrderLine(models.Model):
         null=True,
     )
 
-    @property
-    def is_made_by_admin(self):
-        return self.order.is_made_by_admin
-
     history = HistoricalRecords()
 
     def __str__(self):
         return str(self.content_object) + ', qt:' + str(self.quantity)
+
+    @property
+    def is_made_by_admin(self):
+        return self.order.is_made_by_admin
 
     def applying_coupon_value(self, coupon_value):
         self.cost = self.cost - coupon_value
