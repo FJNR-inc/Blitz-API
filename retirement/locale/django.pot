@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-09 10:16-0500\n"
+"POT-Creation-Date: 2023-01-06 16:47-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -149,7 +149,7 @@ msgstr ""
 #: retirement/models.py:1086 retirement/models.py:1146
 #: retirement/models.py:1278 retirement/models.py:1532
 #: retirement/models.py:1569 retirement/models.py:1625
-#: retirement/serializers.py:1028
+#: retirement/serializers.py:1052
 msgid "Retreat"
 msgstr ""
 
@@ -402,14 +402,14 @@ msgstr ""
 msgid "Pre event notification send"
 msgstr ""
 
-#: retirement/models.py:1376 retirement/serializers.py:542
+#: retirement/models.py:1376 retirement/serializers.py:553
 msgid ""
 "The order containing this reservation has a quantity bigger than 1. Please "
 "contact the support team."
 msgstr ""
 
-#: retirement/models.py:1389 retirement/serializers.py:681
-#: retirement/serializers.py:763
+#: retirement/models.py:1389 retirement/serializers.py:705
+#: retirement/serializers.py:787
 msgid "The order has not been charged yet. Try again later."
 msgstr ""
 
@@ -497,105 +497,107 @@ msgstr ""
 msgid "Name of the retreat type."
 msgstr ""
 
-#: retirement/serializers.py:171
+#: retirement/serializers.py:174
 msgid "Timezone of the workplace."
 msgstr ""
 
-#: retirement/serializers.py:213
+#: retirement/serializers.py:216
 msgid "Refund rate must be between 0 and 100 (%)."
 msgstr ""
 
-#: retirement/serializers.py:264
+#: retirement/serializers.py:267
 msgid "Description of the retreat."
 msgstr ""
 
-#: retirement/serializers.py:267
+#: retirement/serializers.py:270
 msgid "Name of the retreat."
 msgstr ""
 
-#: retirement/serializers.py:272
+#: retirement/serializers.py:275
 msgid "Number of available seats."
 msgstr ""
 
-#: retirement/serializers.py:300
+#: retirement/serializers.py:303
 msgid "Duplicated weekdays are not authorized."
 msgstr ""
 
-#: retirement/serializers.py:310
+#: retirement/serializers.py:313
 msgid "End time must be later than start time."
 msgstr ""
 
-#: retirement/serializers.py:313
+#: retirement/serializers.py:316
 msgid "Start time must be earlier than end time."
 msgstr ""
 
-#: retirement/serializers.py:340 retirement/serializers.py:940
-#: retirement/serializers.py:944
+#: retirement/serializers.py:343 retirement/serializers.py:964
+#: retirement/serializers.py:968
 msgid "Retreat represented by the picture."
 msgstr ""
 
-#: retirement/serializers.py:347
+#: retirement/serializers.py:350
 msgid "Name of the picture."
 msgstr ""
 
-#: retirement/serializers.py:350
+#: retirement/serializers.py:353
 msgid "File to upload."
 msgstr ""
 
-#: retirement/serializers.py:397
+#: retirement/serializers.py:400
 msgid ""
 "Only is_present and retreat can be updated. To change other fields, delete "
 "this reservation and create a new one."
 msgstr ""
 
-#: retirement/serializers.py:430 retirement/serializers.py:640
+#: retirement/serializers.py:433 retirement/serializers.py:663
 msgid ""
 "This reservation overlaps with another active reservations for this user."
 msgstr ""
 
-#: retirement/serializers.py:448
+#: retirement/serializers.py:451
 msgid ""
 "This retreat doesn't have available places. Please check number of seats "
 "available and reserved seats."
 msgstr ""
 
-#: retirement/serializers.py:460
+#: retirement/serializers.py:463
 msgid ""
 "This reservation is not exchangeable. Please contact us to make any changes "
 "to this reservation."
 msgstr ""
 
-#: retirement/serializers.py:485
+#: retirement/serializers.py:488
 msgid "This reservation has already been canceled."
 msgstr ""
 
-#: retirement/serializers.py:530
+#: retirement/serializers.py:531
+msgid "You can only exchange for a retreat without option."
+msgstr ""
+
+#: retirement/serializers.py:541
 msgid "There are no places left in the requested retreat."
 msgstr ""
 
-#: retirement/serializers.py:566
-msgid ""
-"The new retreat is more expensive than the current one. Provide a "
-"payment_token or single_use_token to charge the balance."
+#: retirement/serializers.py:584 retirement/serializers.py:603
+msgid "You can only exchange for a retreat with the same price."
 msgstr ""
 
-#: retirement/serializers.py:587
+#: retirement/serializers.py:610
 msgid "That retreat is already assigned to this object."
 msgstr ""
 
-#: retirement/serializers.py:594
+#: retirement/serializers.py:617
 msgid "Maximum exchange date exceeded."
 msgstr ""
 
-#: retirement/serializers.py:811
+#: retirement/serializers.py:835
 msgid "Échange"
 msgstr ""
 
-#: retirement/serializers.py:949
+#: retirement/serializers.py:973
 msgid "Whether the reservation is active or not."
 msgstr ""
 
-#: retirement/views.py:223 retirement/views.py:783 retirement/views.py:807
+#: retirement/views.py:223 retirement/views.py:783 retirement/views.py:808
 msgid ""
 "There is at least one participant to this retreat. Please provide a deletion "
 "message."
@@ -605,6 +607,6 @@ msgstr ""
 msgid "These retreats does not exist: "
 msgstr ""
 
-#: retirement/views.py:818
+#: retirement/views.py:819
 msgid "Active retreat needs to have at least 1 date."
 msgstr ""
