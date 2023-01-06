@@ -525,7 +525,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 new_retreat = instance.retreat
                 old_retreat = current_retreat
 
-                if new_retreat.options > 0:
+                if len(new_retreat.options) > 0:
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
                             "You can only exchange for a retreat without "
