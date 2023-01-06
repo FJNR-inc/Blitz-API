@@ -575,8 +575,8 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                     #     raise serializers.ValidationError({
                     #         'non_field_errors': [_(
                     #             "The new retreat is more expensive than "
-                    #             "the current one. Provide a payment_token or "
-                    #             "single_use_token to charge the balance."
+                    #             "the current one. Provide a payment_token or"
+                    #             " single_use_token to charge the balance."
                     #         )]
                     #     })
                     raise serializers.ValidationError({
