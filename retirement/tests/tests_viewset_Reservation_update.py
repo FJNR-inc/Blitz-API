@@ -16,9 +16,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth import get_user_model
 from django.test.utils import override_settings
 
-from unittest import mock
+from unittest import mock, skip
 
-from blitz_api.factories import UserFactory, AdminFactory
+from blitz_api.factories import UserFactory, AdminFactory, OptionProductFactory
 
 from store.models import Order, OrderLine, Refund
 from store.tests.paysafe_sample_responses import (
@@ -607,6 +607,7 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(response_data, content)
 
+    @skip
     def test_update_partial_more_expensive_retreat_missing_info(self):
         """
         Ensure we can't change retreat if the new one is more expensive and
@@ -654,6 +655,7 @@ class ReservationTests(APITestCase):
         self.retreat2.price = 199
         self.retreat2.save()
 
+    @skip
     @responses.activate
     @override_settings(
         LOCAL_SETTINGS={
@@ -789,6 +791,7 @@ class ReservationTests(APITestCase):
         self.retreat2.price = 199
         self.retreat2.save()
 
+    @skip
     @responses.activate
     @override_settings(
         LOCAL_SETTINGS={
@@ -935,6 +938,7 @@ class ReservationTests(APITestCase):
         self.retreat2.price = 199
         self.retreat2.save()
 
+    @skip
     @responses.activate
     @override_settings(
         LOCAL_SETTINGS={
@@ -1109,3 +1113,182 @@ class ReservationTests(APITestCase):
         self.assertEqual(response_data, content)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_cant_update_partial_less_expensive_retreat(self):
+        """
+        Ensure we can't change retreat if the new one is less expensive. A
+        refund will be issued.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.retreat2.price = 99
+        self.retreat2.save()
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/"
+            "settlements/1/refunds",
+            json=SAMPLE_REFUND_RESPONSE,
+            status=200
+        )
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        data = {
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat2.id},
+            ),
+        }
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.patch(
+                reverse(
+                    'retreat:reservation-detail',
+                    kwargs={'pk': self.reservation.id},
+                ),
+                data,
+                format='json',
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                "You can only exchange for a retreat with the "
+                "same price."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+    def test_cant_update_partial_more_expensive_retreat(self):
+        """
+        Ensure we can't change retreat if the new one is more expensive and
+        a payment_token or single_use_token is provided.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        self.retreat2.price = 999
+        self.retreat2.save()
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/"
+            "settlements/1/refunds",
+            json=SAMPLE_REFUND_RESPONSE,
+            status=200
+        )
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        data = {
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat2.id},
+            ),
+            'payment_token': "valid_token"
+        }
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.patch(
+                reverse(
+                    'retreat:reservation-detail',
+                    kwargs={'pk': self.reservation.id},
+                ),
+                data,
+                format='json',
+            )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                "You can only exchange for a retreat with the "
+                "same price."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
+
+    def test_cant_update_partial_option_retreat(self):
+        """
+        Ensure we can't change retreat if the new one has options
+        """
+        self.client.force_authenticate(user=self.user)
+
+        option = OptionProductFactory()
+        option.available_on_products.add(self.retreat2)
+        option.save()
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/auths/",
+            json=SAMPLE_PAYMENT_RESPONSE,
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            "http://example.com/cardpayments/v1/accounts/0123456789/"
+            "settlements/1/refunds",
+            json=SAMPLE_REFUND_RESPONSE,
+            status=200
+        )
+
+        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
+
+        data = {
+            'retreat': reverse(
+                'retreat:retreat-detail',
+                kwargs={'pk': self.retreat2.id},
+            ),
+            'payment_token': "valid_token"
+        }
+
+        with mock.patch(
+                'django.utils.timezone.now', return_value=FIXED_TIME):
+            response = self.client.patch(
+                reverse(
+                    'retreat:reservation-detail',
+                    kwargs={'pk': self.reservation.id},
+                ),
+                data,
+                format='json',
+            )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'non_field_errors': [
+                "You can only exchange for a retreat without "
+                "option."
+            ]
+        }
+
+        self.assertEqual(response_data, content)
