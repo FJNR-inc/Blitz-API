@@ -1,9 +1,6 @@
-import json
-
 from rest_framework import status
 from rest_framework.test import (
     APIClient,
-    APITestCase,
 )
 
 from django.urls import reverse
@@ -15,10 +12,6 @@ from blitz_api.factories import (
     AdminFactory,
 )
 from tomato.factories import TomatoFactory
-from tomato.models import (
-    Message,
-    Report,
-)
 
 User = get_user_model()
 
@@ -30,6 +23,7 @@ class ReportTests(CustomAPITestCase):
         'url',
         'user',
         'number_of_tomato',
+        'source',
         'created_at',
         'updated_at',
     ]
