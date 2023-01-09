@@ -1065,6 +1065,11 @@ class RetreatDate(models.Model):
         verbose_name=_("End time"),
     )
 
+    tomatoes_assigned = models.BooleanField(
+        verbose_name=_("Tomatoes assigned"),
+        default=False,
+    )
+
     @property
     def is_last_date(self):
         """
