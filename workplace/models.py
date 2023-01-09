@@ -205,6 +205,21 @@ class TimeSlot(SafeDeleteModel):
         else:
             return self.period.price
 
+    @property
+    def duration(self):
+        """
+        Return duration of timeslot in seconds
+        """
+        return int((self.end_time - self.start_time).total_seconds())
+
+    @property
+    def number_of_tomatoes(self):
+        """
+        Return the number of tomatoes obtained by attending this Timeslot
+        1 hour = 1 tomato, we don't count minutes.
+        """
+        return int(self.duration // 3600)
+
 
 class Reservation(SafeDeleteModel):
     """Represents a user registration to a TimeSlot"""
