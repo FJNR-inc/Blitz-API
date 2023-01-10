@@ -145,7 +145,6 @@ class Tomato(models.Model):
     source = models.CharField(
         max_length=255,
         choices=TOMATO_SOURCE_CHOICES,
-        default=TOMATO_SOURCE_MANUAL
     )
 
     content_type = models.ForeignKey(

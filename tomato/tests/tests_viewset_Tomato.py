@@ -49,6 +49,7 @@ class ReportTests(CustomAPITestCase):
 
         data = {
             'number_of_tomato': 12.5,
+            'source': Tomato.TOMATO_SOURCE_MANUAL
         }
 
         response = self.client.post(
@@ -73,6 +74,7 @@ class ReportTests(CustomAPITestCase):
 
         data = {
             'number_of_tomato': 12.5,
+            'source': Tomato.TOMATO_SOURCE_MANUAL
         }
 
         response = self.client.post(
