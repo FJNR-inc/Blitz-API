@@ -14,8 +14,8 @@ RUN source ~/ve/bin/activate \
     && pip install -r /requirements.txt \
     && pip install -r /requirements-dev.txt
 
-RUN pip install -r /requirements.txt \
-    && pip install -r /requirements-dev.txt
+RUN pip --timeout=1000 install -r /requirements.txt \
+    && pip --timeout=1000 install -r /requirements-dev.txt
 
 RUN mkdir -p /opt/project
 
