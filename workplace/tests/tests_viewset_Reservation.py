@@ -23,14 +23,13 @@ User = get_user_model()
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
-reservation_type = ContentType.objects.get_for_model(Reservation)
-
 
 class ReservationTests(APITestCase):
 
     @classmethod
     def setUpClass(cls):
         super(ReservationTests, cls).setUpClass()
+        cls.reservation_type = ContentType.objects.get_for_model(Reservation)
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()
@@ -477,7 +476,7 @@ class ReservationTests(APITestCase):
             Tomato.objects.filter(
                 user=self.reservation.user,
                 source=Tomato.TOMATO_SOURCE_TIMESLOT,
-                content_type=reservation_type,
+                content_type=self.reservation_type,
                 object_id=self.reservation.id,
                 number_of_tomato=self.reservation.timeslot.number_of_tomatoes
             ).exists())
@@ -508,7 +507,7 @@ class ReservationTests(APITestCase):
             Tomato.objects.filter(
                 user=self.reservation.user,
                 source=Tomato.TOMATO_SOURCE_TIMESLOT,
-                content_type=reservation_type,
+                content_type=self.reservation_type,
                 object_id=self.reservation.id,
                 number_of_tomato=self.reservation.timeslot.number_of_tomatoes
             ).exists())
@@ -532,7 +531,7 @@ class ReservationTests(APITestCase):
             Tomato.objects.filter(
                 user=self.reservation.user,
                 source=Tomato.TOMATO_SOURCE_TIMESLOT,
-                content_type=reservation_type,
+                content_type=self.reservation_type,
                 object_id=self.reservation.id,
                 number_of_tomato=self.reservation.timeslot.number_of_tomatoes
             ).exists())
@@ -586,7 +585,7 @@ class ReservationTests(APITestCase):
             Tomato.objects.filter(
                 user=self.reservation_volunteer.user,
                 source=Tomato.TOMATO_SOURCE_TIMESLOT,
-                content_type=reservation_type,
+                content_type=self.reservation_type,
                 object_id=self.reservation_volunteer.id,
                 number_of_tomato=self.reservation.timeslot.number_of_tomatoes
             ).exists())
@@ -645,7 +644,7 @@ class ReservationTests(APITestCase):
             Tomato.objects.filter(
                 user=reservation_admin.user,
                 source=Tomato.TOMATO_SOURCE_TIMESLOT,
-                content_type=reservation_type,
+                content_type=self.reservation_type,
                 object_id=reservation_admin.id,
                 number_of_tomato=self.reservation.timeslot.number_of_tomatoes
             ).exists())
@@ -686,7 +685,7 @@ class ReservationTests(APITestCase):
             Tomato.objects.filter(
                 user=reservation_admin.user,
                 source=Tomato.TOMATO_SOURCE_TIMESLOT,
-                content_type=reservation_type,
+                content_type=self.reservation_type,
                 object_id=reservation_admin.id,
                 number_of_tomato=self.reservation.timeslot.number_of_tomatoes
             ).exists())
@@ -729,7 +728,7 @@ class ReservationTests(APITestCase):
             Tomato.objects.filter(
                 user=self.reservation.user,
                 source=Tomato.TOMATO_SOURCE_TIMESLOT,
-                content_type=reservation_type,
+                content_type=self.reservation_type,
                 object_id=self.reservation.id,
                 number_of_tomato=self.reservation.timeslot.number_of_tomatoes
             ).exists())
@@ -770,7 +769,7 @@ class ReservationTests(APITestCase):
             Tomato.objects.filter(
                 user=reservation_admin.user,
                 source=Tomato.TOMATO_SOURCE_TIMESLOT,
-                content_type=reservation_type,
+                content_type=self.reservation_type,
                 object_id=reservation_admin.id,
                 number_of_tomato=self.reservation.timeslot.number_of_tomatoes
             ).exists())
@@ -846,7 +845,7 @@ class ReservationTests(APITestCase):
             Tomato.objects.filter(
                 user=self.reservation.user,
                 source=Tomato.TOMATO_SOURCE_TIMESLOT,
-                content_type=reservation_type,
+                content_type=self.reservation_type,
                 object_id=self.reservation.id,
                 number_of_tomato=self.reservation.timeslot.number_of_tomatoes
             ).exists())
