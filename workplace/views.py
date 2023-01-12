@@ -10,7 +10,6 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail as django_send_mail
 from django.db import transaction
 from django.db.models import F, Q
@@ -25,8 +24,6 @@ from log_management.models import Log, EmailLog
 from .models import Workplace, Picture, Period, TimeSlot, Reservation
 from .resources import (WorkplaceResource, PeriodResource, TimeSlotResource,
                         ReservationResource)
-from tomato.models import Tomato
-
 from . import serializers, permissions
 
 User = get_user_model()
@@ -509,33 +506,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         if self.action == "update":
             return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        response = super(ReservationViewSet, self)\
-            .update(request, *args, **kwargs)
-        if response.status_code == 200 and 'is_present' in request.data:
-            user = User.objects.get(pk=response.data['user_details']['id'])
-            reservation = Reservation.objects.get(pk=response.data['id'])
-            if request.data['is_present']:
-                # user presence set to True: Add tomato for the timeslot
-                Tomato.objects.create(
-                    user=user,
-                    number_of_tomato=reservation.timeslot.number_of_tomatoes,
-                    source=Tomato.TOMATO_SOURCE_TIMESLOT,
-                    content_object=reservation,
-                )
-            else:
-                # User presence set to False: remove tomato for timeslot
-                reservation_type = ContentType.objects.get_for_model(
-                    Reservation)
-                try:
-                    Tomato.objects.get(
-                        user=user,
-                        source=Tomato.TOMATO_SOURCE_TIMESLOT,
-                        content_type=reservation_type,
-                        object_id=reservation.id,
-                    ).delete()
-                except Tomato.DoesNotExist:
-                    pass
-        return response
+        return super(ReservationViewSet, self).update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         """

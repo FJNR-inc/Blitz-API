@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import format_html
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 
 from safedelete.models import SafeDeleteModel
 
@@ -271,3 +272,36 @@ class Reservation(SafeDeleteModel):
 
     def __str__(self):
         return str(self.user)
+
+    def update_tomatoes(self):
+        """
+        Credit tomatoes to user if he is present or remove them if updated
+        back to not present
+        """
+        from tomato.models import Tomato
+        if self.is_present:
+            # user presence set to True: Add tomato for the timeslot
+            Tomato.objects.create(
+                user=self.user,
+                number_of_tomato=self.timeslot.number_of_tomatoes,
+                source=Tomato.TOMATO_SOURCE_TIMESLOT,
+                content_object=self,
+            )
+        else:
+            # User presence set to False: remove tomato for timeslot if exists
+            reservation_type = ContentType.objects.get_for_model(
+                Reservation)
+            try:
+                Tomato.objects.get(
+                    user=self.user,
+                    source=Tomato.TOMATO_SOURCE_TIMESLOT,
+                    content_type=reservation_type,
+                    object_id=self.id,
+                ).delete()
+            except Tomato.DoesNotExist:
+                pass
+
+    def save(self, *args, **kwargs):
+        super(Reservation, self).save(*args, **kwargs)
+        self.update_tomatoes()
+
