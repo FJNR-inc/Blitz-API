@@ -562,23 +562,9 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 respects_minimum_days = (days_remaining >= days_exchange)
                 new_retreat_price = validated_data['retreat'].price
                 if current_retreat.price < new_retreat_price:
-                    # If the new retreat is more expensive, reapply the
-                    # coupon on the new orderline created. In other words, any
-                    # coupon used for the initial purchase is applied again
-                    # here.
-                    # need_transaction = True
-                    # amount = (
-                    #     validated_data['retreat'].price -
-                    #     order_line.coupon_real_value
-                    # )
-                    # if not (payment_token or single_use_token):
-                    #     raise serializers.ValidationError({
-                    #         'non_field_errors': [_(
-                    #             "The new retreat is more expensive than "
-                    #             "the current one. Provide a payment_token or"
-                    #             " single_use_token to charge the balance."
-                    #         )]
-                    #     })
+                    # code + test for this feature is available at
+                    # https://github.com/FJNR-inc/Blitz-API/commit/
+                    # f623cce85b5e4f76664a5a5bf2d225746454f32f
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
                             "You can only exchange for a retreat with the "
@@ -586,18 +572,9 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                         )]
                     })
                 if current_retreat.price > new_retreat_price:
-                    # If a coupon was applied for the purchase, check if the
-                    # real cost of the purchase was lower than the price
-                    # difference.
-                    # If so, refund the real cost of the purchase.
-                    # Else refund the difference between the 2 retreats.
-                    # need_refund = True
-                    # price_diff = (
-                    #     current_retreat.price -
-                    #     validated_data['retreat'].price
-                    # )
-                    # real_cost = order_line.total_cost
-                    # amount = min(price_diff, real_cost)
+                    # code + test for this feature is available at
+                    # https://github.com/FJNR-inc/Blitz-API/commit/
+                    # f623cce85b5e4f76664a5a5bf2d225746454f32f
                     raise serializers.ValidationError({
                         'non_field_errors': [_(
                             "You can only exchange for a retreat with the "
