@@ -304,4 +304,3 @@ class Reservation(SafeDeleteModel):
     def save(self, *args, **kwargs):
         super(Reservation, self).save(*args, **kwargs)
         self.update_tomatoes()
-
