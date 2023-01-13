@@ -273,24 +273,25 @@ class Reservation(SafeDeleteModel):
     def __str__(self):
         return str(self.user)
 
-    def update_tomatoes(self):
+    def credit_tomatoes(self):
         """
         Credit tomatoes to user if he is present or remove them if updated
         back to not present
         """
         from tomato.models import Tomato
+        reservation_type = ContentType.objects.get_for_model(
+            Reservation)
         if self.is_present:
             # user presence set to True: Add tomato for the timeslot
-            Tomato.objects.create(
+            t, created = Tomato.objects.get_or_create(
                 user=self.user,
                 number_of_tomato=self.timeslot.number_of_tomatoes,
                 source=Tomato.TOMATO_SOURCE_TIMESLOT,
-                content_object=self,
+                content_type=reservation_type,
+                object_id=self.id,
             )
         else:
             # User presence set to False: remove tomato for timeslot if exists
-            reservation_type = ContentType.objects.get_for_model(
-                Reservation)
             try:
                 Tomato.objects.get(
                     user=self.user,
@@ -302,5 +303,9 @@ class Reservation(SafeDeleteModel):
                 pass
 
     def save(self, *args, **kwargs):
+        old_presence = None
+        if self.pk:
+            old_presence = Reservation.objects.get(pk=self.id).is_present
         super(Reservation, self).save(*args, **kwargs)
-        self.update_tomatoes()
+        if self.pk and old_presence != self.is_present:
+            self.credit_tomatoes()
