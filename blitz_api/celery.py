@@ -6,6 +6,7 @@ https://docs.celeryproject.org/en/stable/django/first-steps-with-django.html
 from __future__ import absolute_import
 import os
 from celery import Celery
+from celery.schedules import crontab
 
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'blitz_api.settings')
@@ -17,7 +18,10 @@ app = Celery('blitz_api')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
 app.conf.beat_schedule = {
-    # Add some schedule tasks here if you need
+    'assign_retreat_tomatoes': {
+        'task': 'retirement.tasks.assign_retreat_tomatoes',
+        'schedule': crontab(minute=1, hour='*'),
+    },
 }
 
 app.autodiscover_tasks()

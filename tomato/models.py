@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 
 from blitz_api.services import send_mail
 
@@ -115,6 +117,18 @@ class Attendance(models.Model):
 
 
 class Tomato(models.Model):
+    TOMATO_SOURCE_RETREAT = 'RETREAT'
+    TOMATO_SOURCE_TIMESLOT = 'TIMESLOT'
+    TOMATO_SOURCE_CHRONO = 'CHRONO'
+    TOMATO_SOURCE_MANUAL = 'USER'
+
+    TOMATO_SOURCE_CHOICES = (
+        (TOMATO_SOURCE_RETREAT, _('Retreat')),
+        (TOMATO_SOURCE_TIMESLOT, _('Timeslot')),
+        (TOMATO_SOURCE_CHRONO, _('Chrono')),
+        (TOMATO_SOURCE_MANUAL, _('User')),
+    )
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -126,6 +140,28 @@ class Tomato(models.Model):
         max_digits=10,
         decimal_places=2,
         verbose_name=_("Number of tomato"),
+    )
+
+    source = models.CharField(
+        max_length=255,
+        choices=TOMATO_SOURCE_CHOICES,
+    )
+
+    content_type = models.ForeignKey(
+        ContentType,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+
+    object_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    content_object = GenericForeignKey(
+        'content_type',
+        'object_id'
     )
 
     updated_at = models.DateTimeField(

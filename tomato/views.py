@@ -1,5 +1,4 @@
 import asyncio
-from django.shortcuts import render
 from tomato.models import (
     Message,
     Attendance,
@@ -25,7 +24,6 @@ from rest_framework.permissions import (
 )
 from django.views.generic.base import TemplateView
 from asgiref.sync import sync_to_async
-import time
 import json
 from datetime import datetime, timedelta
 from django.db.models import Count
@@ -233,6 +231,11 @@ class ReportViewSet(viewsets.ModelViewSet):
 class TomatoViewSet(viewsets.ModelViewSet):
     serializer_class = TomatoSerializer
     queryset = Tomato.objects.all()
+    filter_fields = {
+        'user': ['exact'],
+        'source': ['exact'],
+        'created_at': ['gte', 'lte']
+    }
 
     def get_queryset(self):
         if self.request.user.is_staff:

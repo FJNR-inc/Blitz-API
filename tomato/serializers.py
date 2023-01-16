@@ -4,7 +4,6 @@ import decimal
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-
 from tomato.models import (
     Message,
     Attendance,
@@ -129,7 +128,8 @@ class TomatoSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Tomato
-        fields = '__all__'
+        fields = ['id', 'url', 'user', 'number_of_tomato', 'source',
+                  'created_at', 'updated_at']
 
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user

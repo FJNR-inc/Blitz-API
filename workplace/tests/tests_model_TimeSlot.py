@@ -82,3 +82,29 @@ class TimeSlotTests(APITestCase):
         )
 
         self.assertEqual(time_slot.billing_price, self.period.price)
+
+    def test_property_duration(self):
+        time_slot = TimeSlot.objects.create(
+            name="random_time_slot",
+            period=self.period,
+            price=3,
+            start_time=timezone.now(),
+            end_time=timezone.now() + timedelta(hours=4, minutes=47),
+        )
+        self.assertEqual(
+            time_slot.duration,
+            3600*4 + 60*47
+        )
+
+    def test_property_number_of_tomatoes(self):
+        time_slot = TimeSlot.objects.create(
+            name="random_time_slot",
+            period=self.period,
+            price=3,
+            start_time=timezone.now(),
+            end_time=timezone.now() + timedelta(hours=4, minutes=47),
+        )
+        self.assertEqual(
+            time_slot.number_of_tomatoes,
+            time_slot.duration // 3600
+        )

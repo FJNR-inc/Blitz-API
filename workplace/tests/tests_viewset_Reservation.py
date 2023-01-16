@@ -10,13 +10,14 @@ from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 
 from unittest import mock
 
 from blitz_api.factories import UserFactory, AdminFactory
-from blitz_api.services import remove_translation_fields
 
 from ..models import Period, TimeSlot, Workplace, Reservation
+from tomato.models import Tomato
 
 User = get_user_model()
 
@@ -28,6 +29,7 @@ class ReservationTests(APITestCase):
     @classmethod
     def setUpClass(cls):
         super(ReservationTests, cls).setUpClass()
+        cls.reservation_type = ContentType.objects.get_for_model(Reservation)
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()
@@ -469,6 +471,71 @@ class ReservationTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+        self.assertEqual(
+            True,
+            Tomato.objects.filter(
+                user=self.reservation.user,
+                source=Tomato.TOMATO_SOURCE_TIMESLOT,
+                content_type=self.reservation_type,
+                object_id=self.reservation.id,
+                number_of_tomato=self.reservation.timeslot.number_of_tomatoes
+            ).exists())
+
+    def test_update_partial_cancel(self):
+        """
+        Ensure tomatoes are deleted if we updated with is_present to False
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'is_present': True,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'reservation-detail',
+                args=[self.reservation.id]
+            ),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(
+            True,
+            Tomato.objects.filter(
+                user=self.reservation.user,
+                source=Tomato.TOMATO_SOURCE_TIMESLOT,
+                content_type=self.reservation_type,
+                object_id=self.reservation.id,
+                number_of_tomato=self.reservation.timeslot.number_of_tomatoes
+            ).exists())
+
+        data = {
+            'is_present': False,
+        }
+
+        response = self.client.patch(
+            reverse(
+                'reservation-detail',
+                args=[self.reservation.id]
+            ),
+            data,
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(
+            False,
+            Tomato.objects.filter(
+                user=self.reservation.user,
+                source=Tomato.TOMATO_SOURCE_TIMESLOT,
+                content_type=self.reservation_type,
+                object_id=self.reservation.id,
+                number_of_tomato=self.reservation.timeslot.number_of_tomatoes
+            ).exists())
+
     def test_update_partial_as_volunteer(self):
         """
         Ensure we can partially update a reservation (is_present field only)
@@ -513,6 +580,15 @@ class ReservationTests(APITestCase):
         }
 
         self.assertEqual(response_data, content)
+        self.assertEqual(
+            True,
+            Tomato.objects.filter(
+                user=self.reservation_volunteer.user,
+                source=Tomato.TOMATO_SOURCE_TIMESLOT,
+                content_type=self.reservation_type,
+                object_id=self.reservation_volunteer.id,
+                number_of_tomato=self.reservation.timeslot.number_of_tomatoes
+            ).exists())
 
     def test_update_partial_as_volunteer_not_owned(self):
         """
@@ -563,6 +639,15 @@ class ReservationTests(APITestCase):
         }
 
         self.assertEqual(response_data, content)
+        self.assertEqual(
+            True,
+            Tomato.objects.filter(
+                user=reservation_admin.user,
+                source=Tomato.TOMATO_SOURCE_TIMESLOT,
+                content_type=self.reservation_type,
+                object_id=reservation_admin.id,
+                number_of_tomato=self.reservation.timeslot.number_of_tomatoes
+            ).exists())
 
     def test_update_partial_as_volunteer_not_active(self):
         """
@@ -595,6 +680,15 @@ class ReservationTests(APITestCase):
             status.HTTP_404_NOT_FOUND,
             response.content
         )
+        self.assertEqual(
+            False,
+            Tomato.objects.filter(
+                user=reservation_admin.user,
+                source=Tomato.TOMATO_SOURCE_TIMESLOT,
+                content_type=self.reservation_type,
+                object_id=reservation_admin.id,
+                number_of_tomato=self.reservation.timeslot.number_of_tomatoes
+            ).exists())
 
     def test_update_partial_not_volunteer(self):
         """
@@ -629,6 +723,15 @@ class ReservationTests(APITestCase):
         )
 
         self.assertEqual(response_data, content)
+        self.assertEqual(
+            False,
+            Tomato.objects.filter(
+                user=self.reservation.user,
+                source=Tomato.TOMATO_SOURCE_TIMESLOT,
+                content_type=self.reservation_type,
+                object_id=self.reservation.id,
+                number_of_tomato=self.reservation.timeslot.number_of_tomatoes
+            ).exists())
 
     def test_update_partial_not_volunteer_not_owned(self):
         """
@@ -661,8 +764,17 @@ class ReservationTests(APITestCase):
             status.HTTP_404_NOT_FOUND,
             response.content
         )
+        self.assertEqual(
+            False,
+            Tomato.objects.filter(
+                user=reservation_admin.user,
+                source=Tomato.TOMATO_SOURCE_TIMESLOT,
+                content_type=self.reservation_type,
+                object_id=reservation_admin.id,
+                number_of_tomato=self.reservation.timeslot.number_of_tomatoes
+            ).exists())
 
-    def test_update_partial_without_is_pesent(self):
+    def test_update_partial_without_is_present(self):
         """
         Ensure we can't partially update a reservation (other fields).
         """
@@ -728,6 +840,15 @@ class ReservationTests(APITestCase):
         self.assertEqual(response_data, content)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            False,
+            Tomato.objects.filter(
+                user=self.reservation.user,
+                source=Tomato.TOMATO_SOURCE_TIMESLOT,
+                content_type=self.reservation_type,
+                object_id=self.reservation.id,
+                number_of_tomato=self.reservation.timeslot.number_of_tomatoes
+            ).exists())
 
     def test_list(self):
         """

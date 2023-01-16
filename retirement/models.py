@@ -1065,6 +1065,34 @@ class RetreatDate(models.Model):
         verbose_name=_("End time"),
     )
 
+    tomatoes_assigned = models.BooleanField(
+        verbose_name=_("Tomatoes assigned"),
+        default=False,
+    )
+
+    @property
+    def is_last_date(self):
+        """
+        Return True if the date is the last for this retreat
+        """
+        return self == RetreatDate.objects\
+            .filter(retreat=self.retreat)\
+            .latest('end_time')
+
+    @property
+    def number_of_tomatoes(self):
+        """
+        Return the number of tomatoes obtained by attending this date.
+        All dates worth the number of tomatoes of the retreat divided by the
+        number of date for this retreat. We only want positive integer so the
+        last date gets the modulo of the division.
+        """
+        nb_dates = RetreatDate.objects.filter(retreat=self.retreat).count()
+        number_of_tomato = self.retreat.number_of_tomatoes // nb_dates
+        if self.is_last_date:
+            number_of_tomato += self.retreat.number_of_tomatoes % nb_dates
+        return number_of_tomato
+
 
 class Picture(models.Model):
     """Represents pictures representing a retreat place"""
