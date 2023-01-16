@@ -10,9 +10,7 @@ def assign_retreat_tomatoes():
     """
     Assign tomatoes to all active users of a retreat if one of the date passed.
     """
-    from retirement.models import RetreatDate, Reservation
-    reservation_type = ContentType.objects.get_for_model(
-        Reservation)
+    from retirement.models import RetreatDate
     today = timezone.now()
     to_assign_dates = RetreatDate.objects.filter(
         end_time__lte=today,
@@ -25,12 +23,11 @@ def assign_retreat_tomatoes():
                 Q(is_active=True) | Q(cancelation_date__gte=date.end_time))
             for reservation in active_reservations:
                 from tomato.models import Tomato
-                Tomato.objects.get_or_create(
+                Tomato.objects.create(
                     user=reservation.user,
                     number_of_tomato=date.number_of_tomatoes,
                     source=Tomato.TOMATO_SOURCE_RETREAT,
-                    content_type=reservation_type,
-                    object_id=reservation.id,
+                    content_object=reservation,
                 )
             date.tomatoes_assigned = True
             date.save()
