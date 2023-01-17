@@ -273,7 +273,7 @@ class Reservation(SafeDeleteModel):
     def __str__(self):
         return str(self.user)
 
-    def credit_tomatoes(self):
+    def assign_tomatoes(self):
         """
         Credit tomatoes to user if he is present or remove them if updated
         back to not present
@@ -308,4 +308,4 @@ class Reservation(SafeDeleteModel):
             old_presence = Reservation.objects.get(pk=self.id).is_present
         super(Reservation, self).save(*args, **kwargs)
         if self.pk and old_presence != self.is_present:
-            self.credit_tomatoes()
+            self.assign_tomatoes()
