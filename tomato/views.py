@@ -275,4 +275,3 @@ class TomatoViewSet(viewsets.ModelViewSet):
                 Sum('number_of_tomato'))['number_of_tomato__sum'],
         }
         return Response(response_data, status=status.HTTP_200_OK)
-
