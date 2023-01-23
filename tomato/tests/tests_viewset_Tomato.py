@@ -400,3 +400,39 @@ class ReportTests(CustomAPITestCase):
 
         for item in result['results']:
             self.check_attributes(item)
+
+    def test_community_tomatoes(self):
+        """
+        Test we can get community tomatoes of current month without being
+        authenticated
+        """
+        today = timezone.now()
+        # Out of month tomatoes
+        last_month = today - timedelta(days=31)
+        Tomato.objects.create(user=self.user, number_of_tomato=5)
+        Tomato.objects.create(user=self.admin, number_of_tomato=4)
+        Tomato.objects.create(user=self.user, number_of_tomato=7)
+        Tomato.objects.all().update(created_at=last_month)
+
+        t1 = Tomato.objects.create(user=self.user, number_of_tomato=15)
+        t2 = Tomato.objects.create(user=self.admin, number_of_tomato=23)
+        t3 = Tomato.objects.create(user=self.user, number_of_tomato=45)
+        current_entries = [
+            t1.number_of_tomato, t2.number_of_tomato, t3.number_of_tomato]
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            reverse('tomato-community-tomatoes'),
+            format='json',
+        )
+        result = response.json()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(
+            result['community_tomato'],
+            sum(current_entries)
+        )

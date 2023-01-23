@@ -21,12 +21,13 @@ from tomato.serializers import (
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAdminUser,
+    AllowAny,
 )
 from django.views.generic.base import TemplateView
 from asgiref.sync import sync_to_async
 import json
 from datetime import datetime, timedelta
-from django.db.models import Count
+from django.db.models import Count, Sum
 
 
 class IndexView(TemplateView):
@@ -250,8 +251,27 @@ class TomatoViewSet(viewsets.ModelViewSet):
             permission_classes = [
                 IsAuthenticated,
             ]
+        elif self.action in ['community_tomatoes']:
+            permission_classes = [
+                AllowAny,
+            ]
         else:
             permission_classes = [
                 IsAdminUser,
             ]
         return [permission() for permission in permission_classes]
+
+    @action(detail=False, methods=["get"])
+    def community_tomatoes(self, request):
+        """
+        Return the total tomatoes done by all users in the current month.
+        Special action because call doesn't require to be authenticated
+        """
+        today = timezone.now()
+        start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        t = Tomato.objects.filter(created_at__gte=start, created_at__lte=today)
+        response_data = {
+            'community_tomato': t.aggregate(
+                Sum('number_of_tomato'))['number_of_tomato__sum'],
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
