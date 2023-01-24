@@ -273,15 +273,17 @@ class Reservation(SafeDeleteModel):
     def __str__(self):
         return str(self.user)
 
-    def assign_tomatoes(self):
+    def assign_tomatoes(self, force_assign=False):
         """
         Credit tomatoes to user if he is present or remove them if updated
         back to not present
+        :param force_assign: True if we want to assign tomato even if user is
+        not present
         """
         from tomato.models import Tomato
         reservation_type = ContentType.objects.get_for_model(
             Reservation)
-        if self.is_present:
+        if self.is_present or force_assign:
             # user presence set to True: Add tomato for the timeslot
             t, created = Tomato.objects.get_or_create(
                 user=self.user,
