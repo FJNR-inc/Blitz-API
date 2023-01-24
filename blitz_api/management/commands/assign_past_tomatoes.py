@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 
 from workplace.models import Reservation
+from retirement.tasks import assign_retreat_tomatoes
 
 
 class Command(BaseCommand):
@@ -19,7 +20,6 @@ class Command(BaseCommand):
         Assign all tomatoes for each past date of retreats to user with
         active reservation.
         """
-        from retirement.tasks import assign_retreat_tomatoes
         assign_retreat_tomatoes()
 
     @staticmethod
@@ -28,8 +28,8 @@ class Command(BaseCommand):
         Assign all tomatoes for each past timeslots to user with
         active reservation.
         """
-        for resa in Reservation.objects.filter(is_present=True):
-            resa.assign_tomatoes()
+        for reservation in Reservation.objects.filter(is_active=True):
+            reservation.assign_tomatoes(force_assign=True)
 
     def handle(self, *args, **options):
 
