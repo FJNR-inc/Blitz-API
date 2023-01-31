@@ -37,13 +37,14 @@ class Command(BaseCommand):
             'retreat': self.assign_tomatoes_past_retreat,
             'timeslot': self.assign_tomatoes_past_timeslot,
         }
-        source = options['source'].lower()
+        source_opt = options['source']
 
-        if source:
-            if source not in source_action:
-                self.stdout.write(self.style.ERROR(f'Invalid source {source}'))
+        if source_opt:
+            if source_opt.lower() not in source_action:
+                self.stdout.write(
+                    self.style.ERROR(f'Invalid source {source_opt}'))
             else:
-                source_action[source]()
+                source_action[source_opt.lower()]()
         else:
             for source, action in source_action.items():
                 action()
