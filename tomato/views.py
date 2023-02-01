@@ -235,7 +235,7 @@ class TomatoViewSet(viewsets.ModelViewSet):
     filter_fields = {
         'user': ['exact'],
         'source': ['exact'],
-        'created_at': ['gte', 'lte']
+        'acquisition_date': ['gte', 'lte']
     }
 
     def get_queryset(self):
@@ -269,7 +269,8 @@ class TomatoViewSet(viewsets.ModelViewSet):
         """
         today = timezone.now()
         start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        t = Tomato.objects.filter(created_at__gte=start, created_at__lte=today)
+        t = Tomato.objects.filter(
+            acquisition_date__gte=start, acquisition_date__lte=today)
         response_data = {
             'community_tomato': t.aggregate(
                 Sum('number_of_tomato'))['number_of_tomato__sum'],

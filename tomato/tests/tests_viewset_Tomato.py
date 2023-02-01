@@ -346,7 +346,7 @@ class ReportTests(CustomAPITestCase):
         for item in result['results']:
             self.check_attributes(item)
 
-    def test_filter_created_at_as_user(self):
+    def test_filter_acquisition_date_as_user(self):
         """
         Ensure we can filter by created_at as user
         """
@@ -364,24 +364,26 @@ class ReportTests(CustomAPITestCase):
         Tomato.objects.create(user=self.user, number_of_tomato=5)
         Tomato.objects.create(user=self.user, number_of_tomato=5)
         Tomato.objects.create(user=self.user, number_of_tomato=5)
-        Tomato.objects.all().update(created_at=next_month)
+        Tomato.objects.all().update(acquisition_date=next_month)
 
         x = Tomato.objects.create(user=self.user, number_of_tomato=5)
         y = Tomato.objects.create(user=self.user, number_of_tomato=5)
         Tomato.objects.filter(pk__in=[x.id, y.id]).update(
-            created_at=last_month)
+            acquisition_date=last_month)
 
         for item in range(1, 8):
             Tomato.objects.create(
-                user=self.user, created_at=today, number_of_tomato=5)
+                user=self.user, acquisition_date=today, number_of_tomato=5)
 
         self.client.force_authenticate(user=self.user)
 
         response = self.client.get(
             reverse('tomato-list'),
             {
-                'created_at__lte': last_day.strftime('%Y-%m-%d %H:%M:%S'),
-                'created_at__gte': first_day.strftime('%Y-%m-%d %H:%M:%S'),
+                'acquisition_date__lte': last_day.strftime(
+                    '%Y-%m-%d %H:%M:%S'),
+                'acquisition_date__gte': first_day.strftime(
+                    '%Y-%m-%d %H:%M:%S'),
             },
             format='json',
         )
@@ -412,7 +414,7 @@ class ReportTests(CustomAPITestCase):
         Tomato.objects.create(user=self.user, number_of_tomato=5)
         Tomato.objects.create(user=self.admin, number_of_tomato=4)
         Tomato.objects.create(user=self.user, number_of_tomato=7)
-        Tomato.objects.all().update(created_at=last_month)
+        Tomato.objects.all().update(acquisition_date=last_month)
 
         t1 = Tomato.objects.create(user=self.user, number_of_tomato=15)
         t2 = Tomato.objects.create(user=self.admin, number_of_tomato=23)

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -162,6 +164,11 @@ class Tomato(models.Model):
     content_object = GenericForeignKey(
         'content_type',
         'object_id'
+    )
+
+    acquisition_date = models.DateTimeField(
+        verbose_name=_("Acquisition date"),
+        default=datetime.now,
     )
 
     updated_at = models.DateTimeField(

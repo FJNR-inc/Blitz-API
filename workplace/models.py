@@ -291,6 +291,7 @@ class Reservation(SafeDeleteModel):
                 source=Tomato.TOMATO_SOURCE_TIMESLOT,
                 content_type=reservation_type,
                 object_id=self.id,
+                acquisition_date=self.timeslot.end_time,
             )
         else:
             # User presence set to False: remove tomato for timeslot if exists
@@ -300,6 +301,7 @@ class Reservation(SafeDeleteModel):
                     source=Tomato.TOMATO_SOURCE_TIMESLOT,
                     content_type=reservation_type,
                     object_id=self.id,
+                    acquisition_date=self.timeslot.end_time,
                 ).delete()
             except Tomato.DoesNotExist:
                 pass
