@@ -2,7 +2,6 @@ from celery import shared_task
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
-from django.contrib.contenttypes.models import ContentType
 
 
 @shared_task
@@ -28,6 +27,7 @@ def assign_retreat_tomatoes():
                     number_of_tomato=date.number_of_tomatoes,
                     source=Tomato.TOMATO_SOURCE_RETREAT,
                     content_object=reservation,
+                    acquisition_date=date.end_time,
                 )
             date.tomatoes_assigned = True
             date.save()
