@@ -1088,9 +1088,10 @@ class RetreatDate(models.Model):
         last date gets the modulo of the division.
         """
         nb_dates = RetreatDate.objects.filter(retreat=self.retreat).count()
-        number_of_tomato = self.retreat.number_of_tomatoes // nb_dates
+        number_of_tomato = self.retreat.get_number_of_tomatoes() // nb_dates
         if self.is_last_date:
-            number_of_tomato += self.retreat.number_of_tomatoes % nb_dates
+            number_of_tomato += \
+                self.retreat.get_number_of_tomatoes() % nb_dates
         return number_of_tomato
 
 
