@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-01-06 16:47-0500\n"
+"POT-Creation-Date: 2023-02-02 10:02-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,46 +17,67 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: tomato/models.py:14 tomato/models.py:35 tomato/models.py:121
+#: tomato/models.py:17 tomato/models.py:38 tomato/models.py:130
+#: tomato/models.py:136
 msgid "User"
 msgstr ""
 
-#: tomato/models.py:19 tomato/models.py:42
+#: tomato/models.py:22 tomato/models.py:45
 msgid "Message"
 msgstr ""
 
-#: tomato/models.py:24
+#: tomato/models.py:27
 msgid "Posted at"
 msgstr ""
 
-#: tomato/models.py:47 tomato/models.py:112 tomato/models.py:137
+#: tomato/models.py:50 tomato/models.py:115 tomato/models.py:179
 msgid "Created at"
 msgstr ""
 
-#: tomato/models.py:52
+#: tomato/models.py:55
 msgid "Reason"
 msgstr ""
 
-#: tomato/models.py:85
+#: tomato/models.py:88
 msgid "Random key"
 msgstr ""
 
-#: tomato/models.py:93
+#: tomato/models.py:96
 msgid "Longitude"
 msgstr ""
 
-#: tomato/models.py:101
+#: tomato/models.py:104
 msgid "Latitude"
 msgstr ""
 
-#: tomato/models.py:107 tomato/models.py:132
+#: tomato/models.py:110 tomato/models.py:174
 msgid "Updated at"
 msgstr ""
 
+#: tomato/models.py:127
+msgid "Retreat"
+msgstr ""
+
 #: tomato/models.py:128
+msgid "Timeslot"
+msgstr ""
+
+#: tomato/models.py:129
+msgid "Chrono"
+msgstr ""
+
+#: tomato/models.py:143
 msgid "Number of tomato"
 msgstr ""
 
-#: tomato/views.py:175 tomato/views.py:202
+#: tomato/models.py:169
+msgid "Acquisition date"
+msgstr ""
+
+#: tomato/serializers.py:145
+msgid "The date of acquisition of the tomatoes cannot be set in the future."
+msgstr ""
+
+#: tomato/views.py:174 tomato/views.py:201
 msgid "This key does not exist"
 msgstr ""
