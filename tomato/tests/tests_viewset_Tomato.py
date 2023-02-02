@@ -119,6 +119,36 @@ class ReportTests(CustomAPITestCase):
             }
         )
 
+    def test_create_in_future(self):
+        """
+        Ensure we can't log some tomatoes in the future.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            'number_of_tomato': 12.5,
+            'acquisition_date': timezone.now() + timedelta(days=30),
+            'source': Tomato.TOMATO_SOURCE_MANUAL
+        }
+
+        response = self.client.post(
+            reverse('tomato-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
+
+        self.assertEqual(
+            response.json(),
+            {'acquisition_date': [
+                'The date of acquisition of the tomatoes cannot be set '
+                'in the future.']}
+        )
+
     def test_list_as_user(self):
         """
         Ensure we can list tomatoes as a simple user.
