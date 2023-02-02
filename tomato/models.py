@@ -1,5 +1,4 @@
-from datetime import datetime
-
+from django.utils import timezone
 from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -168,7 +167,7 @@ class Tomato(models.Model):
 
     acquisition_date = models.DateTimeField(
         verbose_name=_("Acquisition date"),
-        default=datetime.now,
+        default=timezone.now,
     )
 
     updated_at = models.DateTimeField(

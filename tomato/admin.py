@@ -39,6 +39,7 @@ class TomatoAdmin(admin.ModelAdmin):
     list_display = (
         'user',
         'number_of_tomato',
+        'acquisition_date',
         'created_at',
         'updated_at',
     )
