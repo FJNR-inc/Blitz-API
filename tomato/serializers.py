@@ -129,7 +129,7 @@ class TomatoSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Tomato
         fields = ['id', 'url', 'user', 'number_of_tomato', 'source',
-                  'created_at', 'updated_at']
+                  'acquisition_date', 'created_at', 'updated_at']
 
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user
