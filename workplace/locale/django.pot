@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-01-06 16:47-0500\n"
+"POT-Creation-Date: 2023-02-02 10:02-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,116 +21,116 @@ msgstr ""
 msgid "Unknown timezone"
 msgstr ""
 
-#: workplace/models.py:19 workplace/models.py:67 workplace/models.py:110
+#: workplace/models.py:20 workplace/models.py:68 workplace/models.py:111
 msgid "Workplace"
 msgstr ""
 
-#: workplace/models.py:20
+#: workplace/models.py:21
 msgid "Workplaces"
 msgstr ""
 
-#: workplace/models.py:23 workplace/models.py:58 workplace/models.py:101
-#: workplace/models.py:158
+#: workplace/models.py:24 workplace/models.py:59 workplace/models.py:102
+#: workplace/models.py:159
 msgid "Name"
 msgstr ""
 
-#: workplace/models.py:28
+#: workplace/models.py:29
 msgid "Details"
 msgstr ""
 
-#: workplace/models.py:33
+#: workplace/models.py:34
 msgid "Seats"
 msgstr ""
 
-#: workplace/models.py:39
+#: workplace/models.py:40
 msgid "Volunteer"
 msgstr ""
 
-#: workplace/models.py:54
+#: workplace/models.py:55
 msgid "Picture"
 msgstr ""
 
-#: workplace/models.py:55
+#: workplace/models.py:56
 msgid "Pictures"
 msgstr ""
 
-#: workplace/models.py:72
+#: workplace/models.py:73
 msgid "picture"
 msgstr ""
 
-#: workplace/models.py:97 workplace/models.py:167
+#: workplace/models.py:98 workplace/models.py:168
 msgid "Period"
 msgstr ""
 
-#: workplace/models.py:98
+#: workplace/models.py:99
 msgid "Periods"
 msgstr ""
 
-#: workplace/models.py:117 workplace/models.py:182
+#: workplace/models.py:118 workplace/models.py:183
 msgid "Price"
 msgstr ""
 
-#: workplace/models.py:121
+#: workplace/models.py:122
 msgid "Start Date"
 msgstr ""
 
-#: workplace/models.py:126
+#: workplace/models.py:127
 msgid "End Date"
 msgstr ""
 
-#: workplace/models.py:131
+#: workplace/models.py:132
 msgid "Activation"
 msgstr ""
 
-#: workplace/models.py:154 workplace/models.py:232
+#: workplace/models.py:155 workplace/models.py:248
 msgid "Time slot"
 msgstr ""
 
-#: workplace/models.py:155
+#: workplace/models.py:156
 msgid "Time slots"
 msgstr ""
 
-#: workplace/models.py:175 workplace/models.py:226
+#: workplace/models.py:176 workplace/models.py:242
 msgid "User"
 msgstr ""
 
-#: workplace/models.py:188
+#: workplace/models.py:189
 msgid "Start time"
 msgstr ""
 
-#: workplace/models.py:192
+#: workplace/models.py:193
 msgid "End time"
 msgstr ""
 
-#: workplace/models.py:217
+#: workplace/models.py:233
 msgid "User canceled"
 msgstr ""
 
-#: workplace/models.py:218
+#: workplace/models.py:234
 msgid "Timeslot deleted"
 msgstr ""
 
-#: workplace/models.py:219
+#: workplace/models.py:235
 msgid "Timeslot modified"
 msgstr ""
 
-#: workplace/models.py:220
+#: workplace/models.py:236
 msgid "Admin canceled"
 msgstr ""
 
-#: workplace/models.py:236
+#: workplace/models.py:252
 msgid "Active"
 msgstr ""
 
-#: workplace/models.py:243
+#: workplace/models.py:259
 msgid "Cancelation reason"
 msgstr ""
 
-#: workplace/models.py:248
+#: workplace/models.py:264
 msgid "Cancelation date"
 msgstr ""
 
-#: workplace/models.py:251
+#: workplace/models.py:267
 msgid "Present"
 msgstr ""
 
@@ -266,13 +266,13 @@ msgstr ""
 msgid "Whether the reservation is active or not."
 msgstr ""
 
-#: workplace/views.py:147
+#: workplace/views.py:139
 msgid ""
 "Trying to do a Period deletion that affects users without providing "
 "`force_delete` field set to True."
 msgstr ""
 
-#: workplace/views.py:358
+#: workplace/views.py:350
 msgid ""
 "Trying to do a TimeSlot deletion that affects users without providing "
 "`force_delete` field set to True."
