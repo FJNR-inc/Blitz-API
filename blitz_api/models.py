@@ -62,11 +62,14 @@ class User(AbstractUser):
         'grass_lawn',
         'grass_tree_2',
         'grass_tree',
-        'grass',
     ]
+    TOMATO_MATRIX_CELLS_DEFAULT = 'grass'
+    TOMATO_MATRIX_CELLS_DEFAULT_FIELD = 'field_0'
     TOMATO_MATRIX_CELLS_BENCH = 'grass_thv'
 
     TOMATO_MATRIX_CELLS = [
+        *TOMATO_MATRIX_CELLS_DEFAULT,
+        *TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
         *TOMATO_MATRIX_CELLS_BENCH,
         *TOMATO_MATRIX_CELLS_DECORATION,
         *TOMATO_MATRIX_CELLS_ANIMAL,
@@ -74,39 +77,39 @@ class User(AbstractUser):
 
     TOMATO_MATRIX_BASE = [
         [
-            'grass',
-            'grass',
-            'grass',
-            'grass',
-            'grass',
+            TOMATO_MATRIX_CELLS_DEFAULT,
+            TOMATO_MATRIX_CELLS_DEFAULT,
+            TOMATO_MATRIX_CELLS_DEFAULT,
+            TOMATO_MATRIX_CELLS_DEFAULT,
+            TOMATO_MATRIX_CELLS_DEFAULT,
         ],
         [
-            'grass',
-            'field_0',
-            'field_0',
-            'field_0',
-            'field_0',
+            TOMATO_MATRIX_CELLS_DEFAULT,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
         ],
         [
-            'grass',
-            'field_0',
-            'field_0',
-            'field_0',
-            'field_0',
+            TOMATO_MATRIX_CELLS_DEFAULT,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
         ],
         [
-            'grass',
-            'field_0',
-            'field_0',
-            'field_0',
-            'field_0',
+            TOMATO_MATRIX_CELLS_DEFAULT,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
         ],
         [
-            'grass_thv',
-            'field_0',
-            'field_0',
-            'field_0',
-            'field_0',
+            TOMATO_MATRIX_CELLS_BENCH,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
+            TOMATO_MATRIX_CELLS_DEFAULT_FIELD,
         ],
     ]
 
@@ -505,8 +508,7 @@ class User(AbstractUser):
 
     def generate_tomato_field_matrix(self):
         """
-        Generate a matrix with common cells and random cells, based on visual
-        objects
+        Generate a matrix with personalised cells
         return the generated matrix as a list of list
         """
         matrix = self.TOMATO_MATRIX_BASE
