@@ -364,7 +364,48 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = User
-        fields = '__all__'
+        fields = [
+            'id',
+            'url',
+            'email',
+            'first_name',
+            'last_name',
+            'is_active',
+            'phone',
+            'other_phone',
+            'is_superuser',
+            'is_staff',
+            'university',
+            'last_login',
+            'date_joined',
+            'academic_level',
+            'academic_field',
+            'gender',
+            'language',
+            'birthdate',
+            'groups',
+            'user_permissions',
+            'tickets',
+            'membership',
+            'membership_end',
+            'city',
+            'personnal_restrictions',
+            'academic_program_code',
+            'faculty',
+            'student_number',
+            'volunteer_for_workplace',
+            'hide_newsletter',
+            'is_in_newsletter',
+            'number_of_free_virtual_retreat',
+            'membership_end_notification',
+            'get_number_of_past_tomatoes',
+            'get_number_of_future_tomatoes',
+            'new_password',
+            'username',
+            'last_acceptation_terms_and_conditions',
+            'password',
+            'tomato_field_matrix',
+        ]
         extra_kwargs = {
             'password': {'write_only': True},
             'new_password': {'write_only': True},
@@ -389,7 +430,8 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
             'groups',
             'user_permissions',
             'reservations',
-            'membership_end'
+            'membership_end',
+            'tomato_field_matrix',
         )
 
 
@@ -501,7 +543,46 @@ class UserSerializer(UserUpdateSerializer):
 
     class Meta:
         model = User
-        fields = '__all__'
+        fields = [
+            'id',
+            'url',
+            'email',
+            'first_name',
+            'last_name',
+            'is_active',
+            'phone',
+            'other_phone',
+            'is_superuser',
+            'is_staff',
+            'university',
+            'last_login',
+            'date_joined',
+            'academic_level',
+            'academic_field',
+            'gender',
+            'language',
+            'birthdate',
+            'groups',
+            'user_permissions',
+            'tickets',
+            'membership',
+            'membership_end',
+            'city',
+            'personnal_restrictions',
+            'academic_program_code',
+            'faculty',
+            'student_number',
+            'volunteer_for_workplace',
+            'hide_newsletter',
+            'is_in_newsletter',
+            'number_of_free_virtual_retreat',
+            'membership_end_notification',
+            'get_number_of_past_tomatoes',
+            'get_number_of_future_tomatoes',
+            'password',
+            'last_acceptation_terms_and_conditions',
+            'tomato_field_matrix',
+        ]
         extra_kwargs = {
             'password': {'write_only': True},
             'new_password': {'write_only': True},
@@ -521,6 +602,7 @@ class UserSerializer(UserUpdateSerializer):
             'membership_end',
             'membership_end_notification',
             'last_acceptation_terms_and_conditions',
+            'tomato_field_matrix',
         )
 
 
