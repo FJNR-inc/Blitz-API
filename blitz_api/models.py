@@ -2,6 +2,7 @@ import binascii
 import datetime
 import os
 import logging
+import random
 
 from django.conf import settings
 from django.db import models
@@ -38,6 +39,87 @@ class User(AbstractUser):
         (LANGUAGE_EN, _('English')),
         (LANGUAGE_FR, _('French')),
     )
+
+    TOMATO_MATRIX_NUMBER_OF_ANIMAL = 1
+    TOMATO_MATRIX_NUMBER_OF_DECORATION = 2
+
+    TOMATO_MATRIX_CELLS_ANIMAL = [
+        'grass_pig_2',
+        'grass_cow',
+        'grass_horse',
+        'grass_goat',
+        'grass_dog',
+        'grass_chicken',
+        'grass_pig',
+        'grass_sheep_2',
+        'grass_sheep',
+    ]
+    TOMATO_MATRIX_CELLS_DECORATION = [
+        'grass_well',
+        'grass_straw',
+        'grass_wood_2',
+        'grass_wood',
+        'grass_lawn',
+        'grass_tree_2',
+        'grass_tree',
+        'grass',
+    ]
+    TOMATO_MATRIX_CELLS_BENCH = 'grass_thv'
+
+    TOMATO_MATRIX_CELLS = [
+        *TOMATO_MATRIX_CELLS_BENCH,
+        *TOMATO_MATRIX_CELLS_DECORATION,
+        *TOMATO_MATRIX_CELLS_ANIMAL,
+    ]
+
+    TOMATO_MATRIX_BASE = [
+        [
+            'grass',
+            'grass',
+            'grass',
+            'grass',
+            'grass',
+        ],
+        [
+            'grass',
+            'field_0',
+            'field_0',
+            'field_0',
+            'field_0',
+        ],
+        [
+            'grass',
+            'field_0',
+            'field_0',
+            'field_0',
+            'field_0',
+        ],
+        [
+            'grass',
+            'field_0',
+            'field_0',
+            'field_0',
+            'field_0',
+        ],
+        [
+            'grass_thv',
+            'field_0',
+            'field_0',
+            'field_0',
+            'field_0',
+        ],
+    ]
+
+    TOMATO_MATRIX_RANDOM_CELLS = [
+        (0, 0),
+        (0, 1),
+        (0, 2),
+        (0, 3),
+        (0, 4),
+        (1, 0),
+        (2, 0),
+        (3, 0),
+    ]
 
     phone = models.CharField(
         verbose_name=_("Phone number"),
@@ -158,6 +240,12 @@ class User(AbstractUser):
         blank=True,
         null=True,
         verbose_name=_("Last acceptation of the terms and conditions"),
+    )
+
+    _tomato_field_matrix = models.TextField(
+        verbose_name=_("Tomato field matrix"),
+        blank=True,
+        null=True,
     )
 
     history = HistoricalRecords()
@@ -414,6 +502,58 @@ class User(AbstractUser):
     def credit_tickets(self, nb_tickets: int):
         self.tickets += nb_tickets
         self.save()
+
+    def generate_tomato_field_matrix(self):
+        """
+        Generate a matrix with common cells and random cells, based on visual
+        objects
+        return the generated matrix as a list of list
+        """
+        matrix = self.TOMATO_MATRIX_BASE
+
+        # Decide which cell should be personalised
+        total_number_of_personalisation = \
+            self.TOMATO_MATRIX_NUMBER_OF_DECORATION + \
+            self.TOMATO_MATRIX_NUMBER_OF_ANIMAL
+
+        cell_to_personalise = random.sample(
+            self.TOMATO_MATRIX_RANDOM_CELLS,
+            total_number_of_personalisation,
+        )
+
+        cell_count = 0
+
+        # Personalisation of animals
+        random_animals = random.sample(
+            self.TOMATO_MATRIX_CELLS_ANIMAL,
+            self.TOMATO_MATRIX_NUMBER_OF_ANIMAL,
+        )
+        for animal in random_animals:
+            cell = cell_to_personalise[cell_count]
+            matrix[cell[0]][cell[1]] = animal
+            cell_count += 1
+
+        # Personalisation of decorations
+        random_decorations = random.sample(
+            self.TOMATO_MATRIX_CELLS_DECORATION,
+            self.TOMATO_MATRIX_NUMBER_OF_DECORATION,
+        )
+        for decoration in random_decorations:
+            cell = cell_to_personalise[cell_count]
+            matrix[cell[0]][cell[1]] = decoration
+            cell_count += 1
+
+        return matrix
+
+    @property
+    def tomato_field_matrix(self):
+        if self._tomato_field_matrix:
+            return self._tomato_field_matrix
+        else:
+            matrix = self.generate_tomato_field_matrix()
+            self._tomato_field_matrix = matrix
+            self.save()
+            return matrix
 
 
 class TemporaryToken(Token):
