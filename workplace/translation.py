@@ -27,12 +27,6 @@ class PeriodTranslationOptions(TranslationOptions):
     fields = ('name', )
 
 
-@register(models.TimeSlot)
-class TimeSlotTranslationOptions(TranslationOptions):
-    fields = ('name', )
-
-
 simple_history.register(models.Workplace, inherit=True)
 simple_history.register(models.Picture, inherit=True)
 simple_history.register(models.Period, inherit=True)
-simple_history.register(models.TimeSlot, inherit=True)

@@ -195,14 +195,12 @@ class OrderTests(CustomAPITestCase):
             is_active=True,
         )
         self.time_slot = TimeSlot.objects.create(
-            name="morning_time_slot",
             period=self.period,
             price=1,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
         self.time_slot_no_seats = TimeSlot.objects.create(
-            name="no_place_left_timeslot",
             period=self.period_no_seats,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),

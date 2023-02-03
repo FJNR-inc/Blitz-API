@@ -244,7 +244,6 @@ class TimeSlotViewSet(ExportMixin, viewsets.ModelViewSet):
         'period__is_active': ['exact'],
         'period': ['exact'],
         'users': ['exact'],
-        'name': ['exact'],
         'price': ['exact', 'gte', 'lte'],
         'start_time': ['exact', 'gte', 'lte'],
         'end_time': ['exact', 'gte', 'lte'],

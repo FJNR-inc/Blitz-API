@@ -69,7 +69,6 @@ class TimeSlotTests(APITestCase):
             is_active=True,
         )
         self.time_slot = TimeSlot.objects.create(
-            name="morning_time_slot",
             period=self.period,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
@@ -86,7 +85,6 @@ class TimeSlotTests(APITestCase):
             is_active=True,
         )
         self.time_slot_active = TimeSlot.objects.create(
-            name="evening_time_slot_active",
             period=self.period_active,
             price=None,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 18)),
@@ -1326,14 +1324,12 @@ class TimeSlotTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         time_slot1 = TimeSlot.objects.create(
-            name="future timeslot1",
             period=self.period,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(3000, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(3000, 1, 15, 12)),
         )
         time_slot2 = TimeSlot.objects.create(
-            name="future timeslot2",
             period=self.period,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(3000, 1, 15, 8)),

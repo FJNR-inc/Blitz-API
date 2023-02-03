@@ -31,6 +31,14 @@ User = get_user_model()
 TAX_RATE = settings.LOCAL_SETTINGS['SELLING_TAX']
 
 
+class ProductDisplayMixin:
+    """
+    Mixin used for display information
+    """
+    def get_product_display_name(self):
+        pass
+
+
 class Order(models.Model):
     """Represents a transaction."""
 
@@ -365,7 +373,7 @@ class Refund(SafeDeleteModel):
         return str(self.orderline) + ', ' + str(self.amount) + "$"
 
 
-class BaseProduct(models.Model):
+class BaseProduct(models.Model, ProductDisplayMixin):
     objects = InheritanceManager()
 
     name = models.CharField(
@@ -444,6 +452,9 @@ class BaseProduct(models.Model):
             )
             options = chain(options, retreat_type_options)
         return list(options)
+
+    def get_product_display_name(self):
+        return self.name
 
 
 class Membership(BaseProduct):

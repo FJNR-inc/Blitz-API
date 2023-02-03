@@ -109,7 +109,6 @@ class CouponTests(CustomAPITestCase):
             is_active=True,
         )
         cls.time_slot = TimeSlot.objects.create(
-            name="morning_time_slot",
             period=cls.period,
             price=1,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),

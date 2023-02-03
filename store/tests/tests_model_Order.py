@@ -45,7 +45,6 @@ class OrderTests(APITestCase):
             settlement_id=1,
         )
         cls.ts = TimeSlot.objects.create(
-            name="random_time_slot",
             period=cls.period,
             price=3,
             start_time=timezone.now(),

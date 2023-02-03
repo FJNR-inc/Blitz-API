@@ -543,7 +543,6 @@ class OrderLineTests(CustomAPITestCase):
         all order line
         """
         self.client.force_authenticate(user=self.admin)
-
         response = self.client.get(
             reverse(
                 'orderline-list'
@@ -553,7 +552,7 @@ class OrderLineTests(CustomAPITestCase):
         content = [
             {
                 'name': 'Package',
-                'id': 36,
+                'id': self.package_type.id,
                 'detail': True
             }
         ]
