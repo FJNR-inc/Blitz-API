@@ -521,6 +521,7 @@ class UsersTests(CustomAPITestCase):
             'get_number_of_past_tomatoes',
             'get_number_of_future_tomatoes',
             'last_acceptation_terms_and_conditions',
+            'tomato_field_matrix',
         ]
         for key in first_user.keys():
             self.assertTrue(
@@ -590,6 +591,7 @@ class UsersTests(CustomAPITestCase):
             'get_number_of_past_tomatoes',
             'get_number_of_future_tomatoes',
             'last_acceptation_terms_and_conditions',
+            'tomato_field_matrix',
         ]
         for key in first_user.keys():
             self.assertTrue(
