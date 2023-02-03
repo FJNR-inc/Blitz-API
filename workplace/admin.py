@@ -62,7 +62,7 @@ class PeriodAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
     actions = ['undelete_selected', 'export_admin_action']
 
 
-class TimeSlotAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
+class TimeSlotAdmin(SimpleHistoryAdmin, SafeDeleteAdmin,
                     ExportActionModelAdmin):
     resource_class = TimeSlotResource
     list_display = (

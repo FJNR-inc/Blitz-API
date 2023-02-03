@@ -56,7 +56,6 @@ class PeriodTests(APITestCase):
             is_active=True,
         )
         cls.time_slot_active = TimeSlot.objects.create(
-            name="evening_time_slot_active",
             period=cls.period_active,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 18)),
@@ -583,7 +582,7 @@ class PeriodTests(APITestCase):
         # Make sure the timeslot was deleted (cascade)
         self.assertFalse(
             TimeSlot.objects.filter(
-                name="evening_time_slot_active"
+                pk=self.time_slot_active.pk
             ).exists()
         )
         self.assertFalse(self.reservation.is_active)

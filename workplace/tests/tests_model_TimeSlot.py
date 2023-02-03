@@ -35,7 +35,6 @@ class TimeSlotTests(APITestCase):
         Ensure that we can create a time_slot.
         """
         time_slot = TimeSlot.objects.create(
-            name="random_time_slot",
             period=self.period,
             price=3,
             start_time=timezone.now(),
@@ -54,7 +53,6 @@ class TimeSlotTests(APITestCase):
         """
 
         time_slot = TimeSlot.objects.create(
-            name="random_time_slot",
             period=self.period,
             price=1,
             start_time=timezone.now(),
@@ -74,7 +72,6 @@ class TimeSlotTests(APITestCase):
         """
 
         time_slot = TimeSlot.objects.create(
-            name="random_time_slot",
             period=self.period,
             price=None,
             start_time=timezone.now(),
@@ -85,7 +82,6 @@ class TimeSlotTests(APITestCase):
 
     def test_property_duration(self):
         time_slot = TimeSlot.objects.create(
-            name="random_time_slot",
             period=self.period,
             price=3,
             start_time=timezone.now(),
@@ -98,7 +94,6 @@ class TimeSlotTests(APITestCase):
 
     def test_property_number_of_tomatoes(self):
         time_slot = TimeSlot.objects.create(
-            name="random_time_slot",
             period=self.period,
             price=3,
             start_time=timezone.now(),

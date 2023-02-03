@@ -155,13 +155,6 @@ class TimeSlot(SafeDeleteModel):
         verbose_name = _("Time slot")
         verbose_name_plural = _("Time slots")
 
-    name = models.CharField(
-        verbose_name=_("Name"),
-        blank=True,
-        null=True,
-        max_length=253,
-    )
-
     period = models.ForeignKey(
         Period,
         on_delete=models.CASCADE,

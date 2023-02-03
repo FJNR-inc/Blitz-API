@@ -77,28 +77,24 @@ class ReservationTests(APITestCase):
             is_active=True,
         )
         cls.time_slot = TimeSlot.objects.create(
-            name="evening_time_slot",
             period=cls.period,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
         cls.time_slot_active = TimeSlot.objects.create(
-            name="evening_time_slot_active",
             period=cls.period_active,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 18)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 22)),
         )
         cls.time_slot_overlap = TimeSlot.objects.create(
-            name="evening_time_slot2",
             period=cls.period,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 20)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 23)),
         )
         cls.time_slot_no_workplace = TimeSlot.objects.create(
-            name="evening_time_slot",
             period=cls.period_no_workplace,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
