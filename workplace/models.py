@@ -9,7 +9,7 @@ from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
 
 from blitz_api.models import Address
-
+from store.models import ProductDisplayMixin
 User = get_user_model()
 
 
@@ -148,7 +148,7 @@ class Period(SafeDeleteModel):
         return self.name
 
 
-class TimeSlot(SafeDeleteModel):
+class TimeSlot(SafeDeleteModel, ProductDisplayMixin):
     """Represents time slots in a day"""
 
     class Meta:
@@ -213,6 +213,9 @@ class TimeSlot(SafeDeleteModel):
         1 hour = 1 tomato, we don't count minutes.
         """
         return int(self.duration // 3600)
+
+    def get_product_display_name(self):
+        return self.start_time.strftime("%Y-%m-%dT%H:%M:%S")
 
 
 class Reservation(SafeDeleteModel):
