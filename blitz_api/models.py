@@ -17,6 +17,7 @@ from simple_history.models import HistoricalRecords
 from . import mailchimp
 
 from tomato.models import Tomato
+from utils.tomato_field import TomatoFieldManager
 from blitz_api import services
 from blitz_api.managers import ActionTokenManager
 
@@ -158,6 +159,12 @@ class User(AbstractUser):
         blank=True,
         null=True,
         verbose_name=_("Last acceptation of the terms and conditions"),
+    )
+
+    _tomato_field_matrix = models.TextField(
+        verbose_name=_("Tomato field matrix"),
+        blank=True,
+        null=True,
     )
 
     history = HistoricalRecords()
@@ -414,6 +421,16 @@ class User(AbstractUser):
     def credit_tickets(self, nb_tickets: int):
         self.tickets += nb_tickets
         self.save()
+
+    @property
+    def tomato_field_matrix(self):
+        if self._tomato_field_matrix:
+            return self._tomato_field_matrix
+        else:
+            matrix = TomatoFieldManager.generate_tomato_field_matrix()
+            self._tomato_field_matrix = matrix
+            self.save()
+            return matrix
 
 
 class TemporaryToken(Token):
