@@ -914,7 +914,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     })
             elif (membership_orderlines
                   or package_orderlines
-                  or retreat_orderlines) and int(amount):
+                  or retreat_orderlines) and int(amount) and need_transaction:
                 raise serializers.ValidationError({
                     'non_field_errors': [_(
                         "A payment_token or single_use_token is required to "

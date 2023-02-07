@@ -835,6 +835,41 @@ class OrderTests(CustomAPITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+    def test_bypas_payment_retreat(self):
+        """
+        Ensure we can create an order if we bypass payment.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'user': reverse('user-detail', args=[self.user.id]),
+            'bypass_payment': True,
+            'transaction_date': timezone.now(),
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'order': 'http://testserver/orders/' + str(self.order.id),
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/' +
+                       str(self.order_line.id)
+            }, {
+                'content_type': 'package',
+                'object_id': self.package.id,
+                'order': 'http://testserver/orders/' + str(self.order.id),
+                'quantity': 2,
+                'url': 'http://testserver/order_lines/' +
+                       str(self.order_line.id)
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
     @responses.activate
     def test_create_reservation_only_from_admin_without_payment(self):
         FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
