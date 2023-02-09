@@ -2,6 +2,7 @@ import binascii
 import datetime
 import os
 import logging
+import calendar
 
 from django.conf import settings
 from django.db import models
@@ -431,6 +432,23 @@ class User(AbstractUser):
             self._tomato_field_matrix = matrix
             self.save()
             return matrix
+
+    @property
+    def current_month_tomatoes(self):
+        today = timezone.now()
+        first_day = today.replace(
+            day=1, hour=0, minute=0, microsecond=0
+        )
+        day = calendar.monthrange(today.year, today.month)[1]
+        last_day = today.replace(
+            day=day, hour=23, minute=59, microsecond=999999
+        )
+
+        return Tomato.objects.filter(
+            user=self,
+            acquisition_date__gte=first_day,
+            acquisition_date__lte=last_day
+        ).aggregate(Sum('number_of_tomato'))['number_of_tomato__sum']
 
 
 class TemporaryToken(Token):
