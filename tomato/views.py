@@ -271,8 +271,10 @@ class TomatoViewSet(viewsets.ModelViewSet):
         start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         t = Tomato.objects.filter(
             acquisition_date__gte=start, acquisition_date__lte=today)
+        nb_tomatoes = t.aggregate(
+            Sum('number_of_tomato'))['number_of_tomato__sum']
+        nb_tomatoes = nb_tomatoes if nb_tomatoes else 0
         response_data = {
-            'community_tomato': t.aggregate(
-                Sum('number_of_tomato'))['number_of_tomato__sum'],
+            'community_tomato': nb_tomatoes,
         }
         return Response(response_data, status=status.HTTP_200_OK)

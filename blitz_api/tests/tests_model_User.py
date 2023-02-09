@@ -14,6 +14,7 @@ class UserTests(APITestCase):
         today = timezone.now()
         user1 = UserFactory()
         user2 = UserFactory()
+        user3 = UserFactory()
         t1_1 = TomatoFactory(
             user=user1,
             number_of_tomato=15,
@@ -66,3 +67,5 @@ class UserTests(APITestCase):
                 t1_3.number_of_tomato,
                 t1_4.number_of_tomato])
         )
+
+        self.assertEqual(user3.current_month_tomatoes, 0)

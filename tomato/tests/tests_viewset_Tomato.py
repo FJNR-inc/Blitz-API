@@ -439,6 +439,22 @@ class ReportTests(CustomAPITestCase):
         Test we can get community tomatoes of current month without being
         authenticated
         """
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            reverse('tomato-community-tomatoes'),
+            format='json',
+        )
+        result = response.json()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(
+            result['community_tomato'],
+            0
+        )
         today = timezone.now()
         # Out of month tomatoes
         last_month = today - timedelta(days=31)
@@ -453,7 +469,6 @@ class ReportTests(CustomAPITestCase):
         current_entries = [
             t1.number_of_tomato, t2.number_of_tomato, t3.number_of_tomato]
 
-        self.client.force_authenticate(user=self.user)
         response = self.client.get(
             reverse('tomato-community-tomatoes'),
             format='json',

@@ -443,12 +443,14 @@ class User(AbstractUser):
         last_day = today.replace(
             day=day, hour=23, minute=59, microsecond=999999
         )
-
-        return Tomato.objects.filter(
+        nb_tomatoes = Tomato.objects.filter(
             user=self,
             acquisition_date__gte=first_day,
             acquisition_date__lte=last_day
         ).aggregate(Sum('number_of_tomato'))['number_of_tomato__sum']
+        nb_tomatoes = nb_tomatoes if nb_tomatoes else 0
+
+        return nb_tomatoes
 
 
 class TemporaryToken(Token):
