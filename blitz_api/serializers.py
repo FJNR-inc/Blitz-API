@@ -405,6 +405,7 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
             'last_acceptation_terms_and_conditions',
             'password',
             'tomato_field_matrix',
+            'current_month_tomatoes',
         ]
         extra_kwargs = {
             'password': {'write_only': True},
@@ -432,6 +433,7 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
             'reservations',
             'membership_end',
             'tomato_field_matrix',
+            'current_month_tomatoes',
         )
 
 
@@ -582,6 +584,7 @@ class UserSerializer(UserUpdateSerializer):
             'password',
             'last_acceptation_terms_and_conditions',
             'tomato_field_matrix',
+            'current_month_tomatoes',
         ]
         extra_kwargs = {
             'password': {'write_only': True},
@@ -603,6 +606,7 @@ class UserSerializer(UserUpdateSerializer):
             'membership_end_notification',
             'last_acceptation_terms_and_conditions',
             'tomato_field_matrix',
+            'current_month_tomatoes',
         )
 
 
