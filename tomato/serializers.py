@@ -145,6 +145,7 @@ class TomatoSerializer(serializers.HyperlinkedModelSerializer):
                 "The date of acquisition of the tomatoes cannot be set "
                 "in the future."
             ))
+        return value
 
 
 class AttendanceDeleteKeySerializer(serializers.Serializer):
