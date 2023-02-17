@@ -2,6 +2,7 @@ import binascii
 import datetime
 import os
 import logging
+import calendar
 
 from django.conf import settings
 from django.db import models
@@ -17,6 +18,7 @@ from simple_history.models import HistoricalRecords
 from . import mailchimp
 
 from tomato.models import Tomato
+from utils.tomato_field import TomatoFieldManager
 from blitz_api import services
 from blitz_api.managers import ActionTokenManager
 
@@ -158,6 +160,12 @@ class User(AbstractUser):
         blank=True,
         null=True,
         verbose_name=_("Last acceptation of the terms and conditions"),
+    )
+
+    _tomato_field_matrix = models.TextField(
+        verbose_name=_("Tomato field matrix"),
+        blank=True,
+        null=True,
     )
 
     history = HistoricalRecords()
@@ -410,6 +418,39 @@ class User(AbstractUser):
             )
             return True
         return False
+
+    def credit_tickets(self, nb_tickets: int):
+        self.tickets += nb_tickets
+        self.save()
+
+    @property
+    def tomato_field_matrix(self):
+        if self._tomato_field_matrix:
+            return self._tomato_field_matrix
+        else:
+            matrix = TomatoFieldManager.generate_tomato_field_matrix()
+            self._tomato_field_matrix = matrix
+            self.save()
+            return matrix
+
+    @property
+    def current_month_tomatoes(self):
+        today = timezone.now()
+        first_day = today.replace(
+            day=1, hour=0, minute=0, microsecond=0
+        )
+        day = calendar.monthrange(today.year, today.month)[1]
+        last_day = today.replace(
+            day=day, hour=23, minute=59, microsecond=999999
+        )
+        nb_tomatoes = Tomato.objects.filter(
+            user=self,
+            acquisition_date__gte=first_day,
+            acquisition_date__lte=last_day
+        ).aggregate(Sum('number_of_tomato'))['number_of_tomato__sum']
+        nb_tomatoes = nb_tomatoes if nb_tomatoes else 0
+
+        return nb_tomatoes
 
 
 class TemporaryToken(Token):
@@ -680,7 +721,6 @@ class ExportMedia(models.Model):
     EXPORT_RETREAT_SALES = 'RETREAT SALES'
     EXPORT_RETREAT_PARTICIPATION = 'RETREAT PARTICIPATION'
     EXPORT_RETREAT_OPTIONS = 'RETREAT OPTIONS'
-    EXPORT_RETREAT_ROOM_DISTRIBUTION = 'RETREAT ROOM DISTRIBUTION'
 
     EXPORT_CHOICES = (
         (EXPORT_ANONYMOUS_CHRONO_DATA, _('Anonymous Chrono data')),
@@ -688,7 +728,6 @@ class ExportMedia(models.Model):
         (EXPORT_RETREAT_SALES, _('Retreat sales')),
         (EXPORT_RETREAT_PARTICIPATION, _('Retreat participation')),
         (EXPORT_RETREAT_OPTIONS, _('Retreat options')),
-        (EXPORT_RETREAT_ROOM_DISTRIBUTION, _('Retreat room distribution')),
     )
 
     file = models.FileField(

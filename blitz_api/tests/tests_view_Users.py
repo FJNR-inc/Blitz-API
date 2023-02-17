@@ -6,7 +6,7 @@ from unittest import mock
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.test import APIClient, APITestCase
+from rest_framework.test import APIClient
 
 from django.contrib.auth import get_user_model
 from django.core import mail
@@ -17,12 +17,16 @@ from ..factories import UserFactory, AdminFactory
 from ..models import (ActionToken, Organization, Domain,
                       AcademicField, AcademicLevel)
 from ..services import remove_translation_fields
-from store.models import Membership
+from store.models import (
+    Membership,
+)
+
+from ..testing_tools import CustomAPITestCase
 
 User = get_user_model()
 
 
-class UsersTests(APITestCase):
+class UsersTests(CustomAPITestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -517,6 +521,8 @@ class UsersTests(APITestCase):
             'get_number_of_past_tomatoes',
             'get_number_of_future_tomatoes',
             'last_acceptation_terms_and_conditions',
+            'tomato_field_matrix',
+            'current_month_tomatoes',
         ]
         for key in first_user.keys():
             self.assertTrue(
@@ -586,6 +592,8 @@ class UsersTests(APITestCase):
             'get_number_of_past_tomatoes',
             'get_number_of_future_tomatoes',
             'last_acceptation_terms_and_conditions',
+            'tomato_field_matrix',
+            'current_month_tomatoes',
         ]
         for key in first_user.keys():
             self.assertTrue(
@@ -738,3 +746,108 @@ class UsersTests(APITestCase):
         )
 
         self.assertEqual(len(mail.outbox), 1)
+
+    def test_credit_ticket_as_admin(self):
+        """
+        Ensure admin can credit tickets to a user
+        """
+        user = UserFactory()
+        self.assertEqual(user.tickets, 1)
+        nb_tickets_to_add = 5
+        data = {
+            'nb_tickets': nb_tickets_to_add,
+        }
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(
+            reverse(
+                'user-credit-tickets',
+                kwargs={'pk': user.id},
+            ),
+            data,
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(
+            User.objects.get(pk=user.id).tickets,
+            1 + nb_tickets_to_add
+        )
+
+    def test_credit_ticket_as_user(self):
+        """
+        Ensure user can't credit tickets to a user
+        """
+        user = UserFactory()
+        self.assertEqual(user.tickets, 1)
+        nb_tickets_to_add = 5
+        data = {
+            'nb_tickets': nb_tickets_to_add,
+        }
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            reverse(
+                'user-credit-tickets',
+                kwargs={'pk': user.id},
+            ),
+            data,
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_credit_ticket_not_int(self):
+        """
+        Ensure admin can't credit invalid tickets to a user
+        """
+        user = UserFactory()
+        self.assertEqual(user.tickets, 1)
+        nb_tickets_to_add = 'this is not an int'
+        data = {
+            'nb_tickets': nb_tickets_to_add,
+        }
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(
+            reverse(
+                'user-credit-tickets',
+                kwargs={'pk': user.id},
+            ),
+            data,
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    def test_credit_ticket_negative_int(self):
+        """
+        Ensure admin can't credit negative tickets to a user
+        """
+        user = UserFactory()
+        self.assertEqual(user.tickets, 1)
+        nb_tickets_to_add = -5
+        data = {
+            'nb_tickets': nb_tickets_to_add,
+        }
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(
+            reverse(
+                'user-credit-tickets',
+                kwargs={'pk': user.id},
+            ),
+            data,
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )

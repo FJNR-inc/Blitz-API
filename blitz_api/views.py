@@ -1,19 +1,13 @@
-import base64
-import json
-
 import pytz
-
-from datetime import datetime
 
 from django.contrib.auth import get_user_model, password_validation
 from django.conf import settings
-from django.core.files.base import ContentFile
 from django.utils import timezone
-from django.http import Http404, HttpResponse
+from django.http import Http404
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from rest_framework import status, viewsets, mixins, filters, generics
+from rest_framework import status, viewsets, mixins, generics
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -23,7 +17,6 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 
 from blitz_api.mixins import ExportMixin
-from log_management.models import EmailLog
 from .models import (
     TemporaryToken, ActionToken, Domain, Organization, AcademicLevel,
     AcademicField,
@@ -224,6 +217,22 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
                 ),
             }
             return Response(content, status=status.HTTP_403_FORBIDDEN)
+
+        return Response(status=status.HTTP_200_OK)
+
+    @action(methods=['post'], detail=True, permission_classes=[IsAdminUser])
+    def credit_tickets(self, request, pk=None):
+        """
+        Allow an admin to credit tickets to a user
+        """
+        user = self.get_object()
+        nb_tickets = request.data.get('nb_tickets', None)
+        if not isinstance(nb_tickets, int) or nb_tickets < 1:
+            error = {
+                'nb_tickets': _("nb_tickets must be a positive integer.")}
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+
+        user.credit_tickets(nb_tickets)
 
         return Response(status=status.HTTP_200_OK)
 
@@ -520,6 +529,7 @@ class OrganizationViewSet(ExportMixin, viewsets.ModelViewSet):
     queryset = Organization.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
     ordering = ('name',)
+    search_fields = ('name',)
 
     export_resource = OrganizationResource()
 

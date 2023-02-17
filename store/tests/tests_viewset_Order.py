@@ -9,7 +9,6 @@ from datetime import (
 from rest_framework import status
 from rest_framework.test import (
     APIClient,
-    APITestCase,
 )
 
 from django.conf import settings
@@ -69,6 +68,8 @@ from store.models import (
     OptionProduct,
     OrderLineBaseProduct,
 )
+from blitz_api import testing_tools
+from blitz_api.testing_tools import CustomAPITestCase
 
 User = get_user_model()
 
@@ -94,7 +95,9 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
         }
     }
 )
-class OrderTests(APITestCase):
+class OrderTests(CustomAPITestCase):
+    ORDER_ATTRIBUTES = testing_tools.ORDER_ATTRIBUTES
+    ORDERLINE_ATTRIBUTES = testing_tools.ORDERLINE_ATTRIBUTES
 
     def setUp(self):
         self.retreat_content_type = ContentType.objects.get_for_model(Retreat)
@@ -192,14 +195,12 @@ class OrderTests(APITestCase):
             is_active=True,
         )
         self.time_slot = TimeSlot.objects.create(
-            name="morning_time_slot",
             period=self.period,
             price=1,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
             end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12)),
         )
         self.time_slot_no_seats = TimeSlot.objects.create(
-            name="no_place_left_timeslot",
             period=self.period_no_seats,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
@@ -368,22 +369,30 @@ class OrderTests(APITestCase):
 
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
+        del response_data['taxes']
+        del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['url']
         del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['name']
 
         del response_data['order_lines'][1]['order']
         del response_data['order_lines'][1]['url']
         del response_data['order_lines'][1]['id']
+        del response_data['order_lines'][1]['name']
 
         del response_data['order_lines'][2]['order']
         del response_data['order_lines'][2]['url']
         del response_data['order_lines'][2]['id']
+        del response_data['order_lines'][2]['name']
 
         del response_data['order_lines'][3]['order']
         del response_data['order_lines'][3]['url']
         del response_data['order_lines'][3]['id']
+        del response_data['order_lines'][3]['name']
 
         self.assertEqual(
             response.status_code,
@@ -399,6 +408,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'total_cost': 50.0,
                 'metadata': None,
                 'options': []
             }, {
@@ -408,6 +418,7 @@ class OrderTests(APITestCase):
                 'coupon': "ABCD1234",
                 'coupon_real_value': 10.0,
                 'cost': 2 * self.package.price - 10,
+                'total_cost': 2 * self.package.price - 10,
                 'metadata': None,
                 'options': []
             }, {
@@ -417,6 +428,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'total_cost': 0.0,
                 'metadata': None,
                 'options': []
             }, {
@@ -427,10 +439,13 @@ class OrderTests(APITestCase):
                 'coupon_real_value': 0.0,
                 'metadata':
                     json.dumps({'invitation_id': self.invitation.id}),
-                'cost': 199.0 + self.options.price,
+                'cost': 199.0,
+                'total_cost': 199.0 + self.options.price,
                 'options': [{
                     'id': self.options.id,
-                    'quantity': 1
+                    'quantity': 1,
+                    'name': 'Vegan',
+                    'price': 50.0
                 }]
             }],
             'user': f'http://testserver/users/{self.admin.id}',
@@ -439,7 +454,6 @@ class OrderTests(APITestCase):
             'settlement_id': '1',
             'reference_number': '751',
         }
-
         self.assertCountEqual(response_data['order_lines'],
                               content['order_lines'])
         del response_data['order_lines']
@@ -708,10 +722,16 @@ class OrderTests(APITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
+        del response_data['taxes']
+        del response_data['is_made_by_admin']
+
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
         del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['name']
 
         content = {
             'order_lines': [{
@@ -720,6 +740,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'total_cost': 0.0,
                 'metadata': None,
                 'options': []
             }],
@@ -776,11 +797,16 @@ class OrderTests(APITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
         del response_data['transaction_date']
+        del response_data['taxes']
+
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
         del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['name']
 
         content = {
             'order_lines': [{
@@ -789,6 +815,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'total_cost': 0.0,
                 'metadata': None,
                 'options': []
             }],
@@ -796,6 +823,7 @@ class OrderTests(APITestCase):
             'authorization_id': '0',
             'settlement_id': '0',
             'reference_number': '0',
+            'is_made_by_admin': False,
         }
 
         self.assertEqual(response_data, content)
@@ -804,6 +832,41 @@ class OrderTests(APITestCase):
         user.refresh_from_db()
 
         self.assertEqual(user.tickets, 0)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_bypas_payment_retreat(self):
+        """
+        Ensure we can create an order if we bypass payment.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        data = {
+            'user': reverse('user-detail', args=[self.user.id]),
+            'bypass_payment': True,
+            'transaction_date': timezone.now(),
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'order': 'http://testserver/orders/' + str(self.order.id),
+                'quantity': 1,
+                'url': 'http://testserver/order_lines/' +
+                       str(self.order_line.id)
+            }, {
+                'content_type': 'package',
+                'object_id': self.package.id,
+                'order': 'http://testserver/orders/' + str(self.order.id),
+                'quantity': 2,
+                'url': 'http://testserver/order_lines/' +
+                       str(self.order_line.id)
+            }],
+        }
+
+        response = self.client.post(
+            reverse('order-list'),
+            data,
+            format='json',
+        )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -844,11 +907,16 @@ class OrderTests(APITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
         del response_data['transaction_date']
+        del response_data['taxes']
+
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
         del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['name']
 
         content = {
             'order_lines': [{
@@ -857,6 +925,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'total_cost': 0.0,
                 'metadata': None,
                 'options': []
             }],
@@ -864,6 +933,7 @@ class OrderTests(APITestCase):
             'authorization_id': '0',
             'settlement_id': '0',
             'reference_number': '0',
+            'is_made_by_admin': True,
         }
 
         self.assertEqual(response_data, content)
@@ -957,10 +1027,16 @@ class OrderTests(APITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
+        del response_data['taxes']
+        del response_data['is_made_by_admin']
+
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
         del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['name']
 
         content = {
             'order_lines': [{
@@ -969,6 +1045,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'total_cost': 0.0,
                 'metadata': None,
                 'options': []
             }],
@@ -1514,10 +1591,16 @@ class OrderTests(APITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
+        del response_data['taxes']
+        del response_data['is_made_by_admin']
+
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
         del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['name']
 
         content = {
             'order_lines': [{
@@ -1526,6 +1609,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
+                'total_cost': 199.0,
                 'metadata': None,
                 'options': []
             }],
@@ -1849,14 +1933,22 @@ class OrderTests(APITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
+        del response_data['taxes']
+        del response_data['is_made_by_admin']
+
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
         del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['name']
+
         del response_data['order_lines'][1]['order']
         del response_data['order_lines'][1]['object_id']
         del response_data['order_lines'][1]['url']
         del response_data['order_lines'][1]['id']
+        del response_data['order_lines'][1]['name']
         content = {
             'order_lines': [
                 {
@@ -1865,6 +1957,7 @@ class OrderTests(APITestCase):
                     'coupon': None,
                     'coupon_real_value': 0.0,
                     'cost': 199.0,
+                    'total_cost': 199.0,
                     'metadata': None,
                     'options': []
                 },
@@ -1874,6 +1967,7 @@ class OrderTests(APITestCase):
                     'coupon': None,
                     'coupon_real_value': 0.0,
                     'cost': 50.0,
+                    'total_cost': 50.0,
                     'metadata': None,
                     'options': []
                 }
@@ -1934,10 +2028,16 @@ class OrderTests(APITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
+        del response_data['taxes']
+        del response_data['is_made_by_admin']
+
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
         del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['name']
 
         content = {
             'order_lines': [{
@@ -1946,6 +2046,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 199.0,
+                'total_cost': 199.0,
                 'metadata': None,
                 'options': []
             }],
@@ -2198,16 +2299,22 @@ class OrderTests(APITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
+        del response_data['taxes']
+        del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
         del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['name']
 
         del response_data['order_lines'][1]['order']
         del response_data['order_lines'][1]['object_id']
         del response_data['order_lines'][1]['url']
         del response_data['order_lines'][1]['id']
+        del response_data['order_lines'][1]['name']
 
         content = {
             'order_lines': [{
@@ -2216,6 +2323,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
+                'total_cost': 2 * self.package.price,
                 'metadata': None,
                 'options': []
             }, {
@@ -2224,6 +2332,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 0.0,
+                'total_cost': 0.0,
                 'metadata': None,
                 'options': []
             }],
@@ -2294,16 +2403,22 @@ class OrderTests(APITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
+        del response_data['taxes']
+        del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
         del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['name']
 
         del response_data['order_lines'][1]['order']
         del response_data['order_lines'][1]['object_id']
         del response_data['order_lines'][1]['url']
         del response_data['order_lines'][1]['id']
+        del response_data['order_lines'][1]['name']
 
         content = {
             'order_lines': [{
@@ -2312,6 +2427,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'total_cost': 50.0,
                 'metadata': None,
                 'options': []
             }, {
@@ -2320,6 +2436,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
+                'total_cost': 2 * self.package.price,
                 'metadata': None,
                 'options': []
             }],
@@ -2589,16 +2706,22 @@ class OrderTests(APITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
+        del response_data['taxes']
+        del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['order']
         del response_data['order_lines'][0]['object_id']
         del response_data['order_lines'][0]['url']
         del response_data['order_lines'][0]['id']
+        del response_data['order_lines'][0]['name']
 
         del response_data['order_lines'][1]['order']
         del response_data['order_lines'][1]['object_id']
         del response_data['order_lines'][1]['url']
         del response_data['order_lines'][1]['id']
+        del response_data['order_lines'][1]['name']
 
         content = {
             'authorization_id': '1',
@@ -2608,6 +2731,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'total_cost': 50.0,
                 'metadata': None,
                 'options': []
             }, {
@@ -2616,6 +2740,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 2 * self.package.price,
+                'total_cost': 2 * self.package.price,
                 'metadata': None,
                 'options': []
             }],
@@ -2814,10 +2939,15 @@ class OrderTests(APITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
+        del response_data['taxes']
+        del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['id']
         del response_data['order_lines'][0]['url']
         del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['name']
 
         content = {
             'order_lines': [{
@@ -2827,6 +2957,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'total_cost': 50.0,
                 'metadata': None,
                 'options': []
             }],
@@ -2923,10 +3054,15 @@ class OrderTests(APITestCase):
         response_data = json.loads(response.content)
         del response_data['url']
         del response_data['id']
+        del response_data['total_cost_with_taxes']
+        del response_data['total_cost']
+        del response_data['taxes']
+        del response_data['is_made_by_admin']
 
         del response_data['order_lines'][0]['id']
         del response_data['order_lines'][0]['url']
         del response_data['order_lines'][0]['order']
+        del response_data['order_lines'][0]['name']
 
         content = {
             'order_lines': [{
@@ -2936,6 +3072,7 @@ class OrderTests(APITestCase):
                 'coupon': None,
                 'coupon_real_value': 0.0,
                 'cost': 50.0,
+                'total_cost': 50.0,
                 'metadata': None,
                 'options': []
             }],
@@ -2974,38 +3111,14 @@ class OrderTests(APITestCase):
             data,
             format='json',
         )
-
-        response_data = json.loads(response.content)
-
-        content = {
-            'id': self.order.id,
-            'url': 'http://testserver/orders/' + str(self.order.id),
-            'user': 'http://testserver/users/' + str(self.user.id),
-            'transaction_date': response_data['transaction_date'],
-            'authorization_id': '1',
-            'settlement_id': '1',
-            'reference_number': '751',
-            'order_lines': [{
-                'url': f'http://testserver/order_lines/{self.order_line.id}',
-                'id': self.order_line.id,
-                'content_type': 'package',
-                'coupon_real_value': 0.0,
-                'cost': 99.0 * self.package.price,
-                'coupon': None,
-                'object_id': self.package.id,
-                'quantity': 99,
-                'order': 'http://testserver/orders/' + str(self.order.id),
-                'metadata': None,
-                'options': [],
-            }],
-        }
-
-        self.assertCountEqual(response_data['order_lines'],
-                              content['order_lines'])
-        del response_data['order_lines']
-        del content['order_lines']
-
-        self.assertEqual(response_data, content)
+        content = json.loads(response.content)
+        self.check_attributes(content, self.ORDER_ATTRIBUTES)
+        self.check_attributes(
+            content['order_lines'][0], self.ORDERLINE_ATTRIBUTES)
+        self.assertEqual(content['order_lines'][0]['content_type'], 'package')
+        self.assertEqual(
+            content['order_lines'][0]['object_id'], self.package.id)
+        self.assertEqual(content['order_lines'][0]['quantity'], 99)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -3051,39 +3164,52 @@ class OrderTests(APITestCase):
             reverse('order-list'),
             format='json',
         )
+        content = json.loads(response.content)
+        self.assertEqual(content['count'], 1)
+        content = content['results']
+        self.check_attributes(content[0], self.ORDER_ATTRIBUTES)
+        self.check_attributes(
+            content[0]['order_lines'][0], self.ORDERLINE_ATTRIBUTES)
 
-        data = json.loads(response.content)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        content = {
-            'count': 1,
-            'next': None,
-            'previous': None,
-            'results': [{
-                'id': self.order.id,
-                'transaction_date': data['results'][0]['transaction_date'],
-                'authorization_id': '1',
-                'settlement_id': '1',
-                'reference_number': '751',
-                'order_lines': [{
-                    'content_type': 'package',
-                    'id': self.order_line.id,
-                    'object_id': self.package.id,
-                    'order': 'http://testserver/orders/' + str(self.order.id),
-                    'quantity': 1,
-                    'url': 'http://testserver/order_lines/' +
-                           str(self.order_line.id),
-                    'coupon': None,
-                    'coupon_real_value': 0.0,
-                    'cost': self.package.price,
-                    'metadata': None,
-                    'options': []
-                }],
-                'url': 'http://testserver/orders/' + str(self.order.id),
-                'user': 'http://testserver/users/' + str(self.user.id),
-            }]
-        }
+    def test_list_not_owner(self):
+        """
+        Ensure we can't list other user orders as an authenticated user.
+        """
+        user = UserFactory()
+        self.client.force_authenticate(user=user)
 
-        self.assertEqual(data, content)
+        response = self.client.get(
+            reverse('order-list'),
+            {
+                'user': self.user.id,
+            },
+            format='json',
+        )
+        content = json.loads(response.content)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(content['count'], 0)
+
+    def test_list_user_admin(self):
+        """
+        Ensure we can list a user orders as an admin.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.get(
+            reverse('order-list'),
+            {
+                'user': self.user.id,
+            },
+            format='json',
+        )
+        content = json.loads(response.content)
+        self.assertEqual(content['count'], 1)
+        content = content['results']
+        self.check_attributes(content[0], self.ORDER_ATTRIBUTES)
+        self.check_attributes(
+            content[0]['order_lines'][0], self.ORDERLINE_ATTRIBUTES)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -3097,48 +3223,12 @@ class OrderTests(APITestCase):
             reverse('order-list'),
             format='json',
         )
-
-        data = json.loads(response.content)
-
-        content = {
-            'count': 2,
-            'next': None,
-            'previous': None,
-            'results': [{
-                'id': self.order.id,
-                'transaction_date': data['results'][0]['transaction_date'],
-                'authorization_id': '1',
-                'settlement_id': '1',
-                'reference_number': '751',
-                'order_lines': [{
-                    'content_type': 'package',
-                    'id': self.order_line.id,
-                    'object_id': self.package.id,
-                    'order': 'http://testserver/orders/' + str(self.order.id),
-                    'quantity': 1,
-                    'url': 'http://testserver/order_lines/' +
-                           str(self.order_line.id),
-                    'coupon': None,
-                    'coupon_real_value': 0.0,
-                    'cost': self.package.price,
-                    'metadata': None,
-                    'options': []
-                }],
-                'url': 'http://testserver/orders/' + str(self.order.id),
-                'user': 'http://testserver/users/' + str(self.user.id),
-            }, {
-                'id': self.order_admin.id,
-                'transaction_date': data['results'][1]['transaction_date'],
-                'authorization_id': '2',
-                'settlement_id': '2',
-                'reference_number': '751',
-                'order_lines': [],
-                'url': 'http://testserver/orders/' + str(self.order_admin.id),
-                'user': 'http://testserver/users/' + str(self.admin.id),
-            }]
-        }
-
-        self.assertEqual(data, content)
+        content = json.loads(response.content)
+        self.assertEqual(content['count'], 2)
+        content = content['results']
+        self.check_attributes(content[0], self.ORDER_ATTRIBUTES)
+        self.check_attributes(
+            content[0]['order_lines'][0], self.ORDERLINE_ATTRIBUTES)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -3172,34 +3262,10 @@ class OrderTests(APITestCase):
                 kwargs={'pk': self.order.id},
             ),
         )
-
-        data = json.loads(response.content)
-
-        content = {
-            'id': self.order.id,
-            'transaction_date': data['transaction_date'],
-            'authorization_id': '1',
-            'settlement_id': '1',
-            'reference_number': '751',
-            'order_lines': [{
-                'content_type': 'package',
-                'id': self.order_line.id,
-                'object_id': self.package.id,
-                'order': 'http://testserver/orders/' + str(self.order.id),
-                'quantity': 1,
-                'url': 'http://testserver/order_lines/' +
-                       str(self.order_line.id),
-                'coupon': None,
-                'coupon_real_value': 0.0,
-                'cost': self.package.price,
-                'metadata': None,
-                'options': []
-            }],
-            'url': 'http://testserver/orders/' + str(self.order.id),
-            'user': 'http://testserver/users/' + str(self.user.id),
-        }
-
-        self.assertEqual(json.loads(response.content), content)
+        content = json.loads(response.content)
+        self.check_attributes(content, self.ORDER_ATTRIBUTES)
+        self.check_attributes(
+            content['order_lines'][0], self.ORDERLINE_ATTRIBUTES)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -3234,34 +3300,10 @@ class OrderTests(APITestCase):
                 kwargs={'pk': self.order.id},
             ),
         )
-
-        data = json.loads(response.content)
-
-        content = {
-            'id': self.order.id,
-            'transaction_date': data['transaction_date'],
-            'authorization_id': '1',
-            'settlement_id': '1',
-            'reference_number': '751',
-            'order_lines': [{
-                'content_type': 'package',
-                'id': self.order_line.id,
-                'object_id': self.package.id,
-                'order': 'http://testserver/orders/' + str(self.order.id),
-                'quantity': 1,
-                'url': 'http://testserver/order_lines/' +
-                       str(self.order_line.id),
-                'coupon': None,
-                'coupon_real_value': 0.0,
-                'cost': self.package.price,
-                'metadata': None,
-                'options': []
-            }],
-            'url': 'http://testserver/orders/' + str(self.order.id),
-            'user': 'http://testserver/users/' + str(self.user.id),
-        }
-
-        self.assertEqual(json.loads(response.content), content)
+        content = json.loads(response.content)
+        self.check_attributes(content, self.ORDER_ATTRIBUTES)
+        self.check_attributes(
+            content['order_lines'][0], self.ORDERLINE_ATTRIBUTES)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -3643,10 +3685,11 @@ class OrderTests(APITestCase):
         }
     }
 )
-class OrderWithOptionsTests(APITestCase):
+class OrderWithOptionsTests(CustomAPITestCase):
     """
     Test Order with options
     """
+    ORDER_ATTRIBUTES = testing_tools.ORDER_ATTRIBUTES
 
     def setUp(self):
         self.client = APIClient()

@@ -364,12 +364,17 @@ ANYMAIL = {
         ),
         'EXPORT_DONE': config(
             'EXPORT_DONE',
-            default='67',
+            default='76',
             cast=int
         ),
         'RETREAT_DELETED': config(
             'RETREAT_DELETED',
             default='68',
+            cast=int
+        ),
+        'RETREAT_UPDATED': config(
+            'RETREAT_UPDATED',
+            default='69',
             cast=int
         ),
     },

@@ -412,6 +412,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
     )
     coupon_real_value = serializers.ReadOnlyField()
     cost = serializers.ReadOnlyField()
+    total_cost = serializers.ReadOnlyField()
     coupon = serializers.SlugRelatedField(
         slug_field='code',
         allow_null=True,
@@ -478,18 +479,22 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
     def to_representation(self, instance: OrderLine):
         data = super(OrderLineSerializer, self).to_representation(instance)
 
+        data['name'] = instance.content_object.get_product_display_name()
+
         data['options'] = []
         options = instance.options.all()
         if options:
             option: BaseProduct
             for option in options:
                 option_id = option.id
-                option_quantity = option.orderlinebaseproduct_set.\
-                    get(order_line_id=instance.id).quantity
+                option_data = option.orderlinebaseproduct_set.\
+                    get(order_line_id=instance.id)
 
                 option_data = {
                     'id': option_id,
-                    'quantity': option_quantity
+                    'name': option_data.option.name,
+                    'quantity': option_data.quantity,
+                    'price': option_data.option.price
                 }
                 data['options'].append(option_data)
 
@@ -511,7 +516,11 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     authorization_id = serializers.ReadOnlyField()
     settlement_id = serializers.ReadOnlyField()
+    total_cost = serializers.ReadOnlyField()
+    total_cost_with_taxes = serializers.ReadOnlyField()
+    is_made_by_admin = serializers.ReadOnlyField()
     order_lines = OrderLineSerializerNoOrder(many=True)
+    is_made_by_admin = serializers.ReadOnlyField()
     payment_token = serializers.CharField(
         write_only=True,
         required=False,
@@ -615,6 +624,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         with transaction.atomic():
             coupon = validated_data.pop('coupon', None)
             order = Order.objects.create(**validated_data)
+            if is_staff and bypass_payment:
+                order.is_made_by_admin = True
+                order.save()
             charge_response = None
 
             order.add_line_from_data(orderlines_data)
@@ -902,7 +914,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                     })
             elif (membership_orderlines
                   or package_orderlines
-                  or retreat_orderlines) and int(amount):
+                  or retreat_orderlines) and int(amount) and need_transaction:
                 raise serializers.ValidationError({
                     'non_field_errors': [_(
                         "A payment_token or single_use_token is required to "
@@ -1018,7 +1030,11 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ['id', 'user', 'transaction_date', 'authorization_id',
+                  'settlement_id', 'reference_number', 'url', 'total_cost',
+                  'total_cost_with_taxes', 'order_lines', 'payment_token',
+                  'coupon', 'target_user', 'bypass_payment',
+                  'single_use_token', 'is_made_by_admin']
         extra_kwargs = {
             'transaction_date': {
                 'read_only': True,
@@ -1027,6 +1043,14 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                 'read_only': True,
             },
         }
+
+    def to_representation(self, instance):
+        data = super(OrderSerializer, self).to_representation(instance)
+        # TTC is in cents after serialization
+        data['total_cost_with_taxes'] = round(
+            data['total_cost_with_taxes']/100, 2)
+        data['taxes'] = data['total_cost_with_taxes'] - data['total_cost']
+        return data
 
 
 class CouponSerializer(serializers.HyperlinkedModelSerializer):
@@ -1155,6 +1179,7 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
 
             usages = list()
             for line in OrderLine.objects.filter(coupon=instance):
+                is_refunded = Refund.objects.filter(orderline=line).exists()
                 usages.append(
                     {
                         'date': line.order.transaction_date,
@@ -1174,6 +1199,7 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
                             },
                         ).data,
                         'product_name': line.content_object.name,
+                        'orderline_refunded': is_refunded,
                     }
                 )
 

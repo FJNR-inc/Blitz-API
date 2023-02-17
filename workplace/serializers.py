@@ -514,15 +514,11 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = TimeSlot
-        exclude = ('name', 'deleted', 'users')
+        exclude = ('deleted', 'users')
         extra_kwargs = {
             'period': {
                 'required': True,
                 'help_text': _("Period to which this time slot applies.")
-            },
-            'name': {
-                'required': True,
-                'help_text': _("Name of the time slot."),
             },
             'price': {
                 'help_text': _(
@@ -680,7 +676,7 @@ class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = TimeSlot
-        exclude = ('deleted', 'price', 'users', 'name', )
+        exclude = ('deleted', 'price', 'users',)
 
 
 class ReservationSerializer(serializers.HyperlinkedModelSerializer):

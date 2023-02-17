@@ -28,7 +28,6 @@ class ReservationTests(APITestCase):
             is_active=True,
         )
         cls.timeslot = TimeSlot.objects.create(
-            name="evening_time_slot",
             period=cls.period,
             price=3,
             start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),

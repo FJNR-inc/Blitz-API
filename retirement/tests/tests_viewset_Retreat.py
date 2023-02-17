@@ -1071,7 +1071,7 @@ class RetreatTests(CustomAPITestCase):
         )
 
     @patch('retirement.models.Retreat.cancel_participants_reservation')
-    @patch('retirement.services.send_deleted_retreat_email')
+    @patch('retirement.services.send_updated_retreat_email')
     def test_delete_with_participants(self, mock_email, mock_cancel):
         """
         Ensure we can delete a retreat that has participants
@@ -1112,6 +1112,7 @@ class RetreatTests(CustomAPITestCase):
         mock_email.assert_called_once_with(
             self.retreat,
             self.retreat.get_participants_emails(),
+            'deletion',
             deletion_message
         )
         mock_cancel.assert_called_once_with(False)
@@ -1186,50 +1187,6 @@ class RetreatTests(CustomAPITestCase):
         ]
         for item in content['results']:
             self.check_attributes(item, attributes)
-
-    def test_list_retreat_filtered_for_admin_panel(self):
-        """
-        Ensure we can list retreats with a filter on
-        the hide_from_client_admin_panel field
-        """
-        self.client.force_authenticate(user=self.admin)
-
-        response = self.client.get(
-            reverse('retreat:retreat-list'),
-            {
-                'hide_from_client_admin_panel': 'true'
-            },
-            format='json',
-        )
-
-        content = json.loads(response.content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        self.assertEqual(
-            content['count'],
-            0
-        )
-
-        self.retreat2.hide_from_client_admin_panel = True
-        self.retreat2.save()
-
-        response = self.client.get(
-            reverse('retreat:retreat-list'),
-            {
-                'hide_from_client_admin_panel': 'true'
-            },
-            format='json',
-        )
-
-        content = json.loads(response.content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        self.assertEqual(
-            content['count'],
-            1
-        )
 
     def test_list_as_admin(self):
         self.client.force_authenticate(user=self.admin)

@@ -1,4 +1,3 @@
-import json
 from datetime import datetime, timedelta
 import locale
 import pytz
@@ -18,9 +17,7 @@ from django_filters import (
 from blitz_api.mixins import ExportMixin
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail as django_send_mail
 from django.db import transaction
-from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
@@ -29,7 +26,6 @@ from rest_framework import (
     status,
     viewsets,
 )
-from rest_framework import serializers as rest_framework_serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import (
     IsAdminUser,
@@ -39,13 +35,8 @@ from rest_framework.response import Response
 
 from blitz_api.models import ExportMedia
 from blitz_api.serializers import ExportMediaSerializer
-from log_management.models import (
-    Log,
-    EmailLog,
-)
-from store.exceptions import PaymentAPIError
+
 from store.models import OrderLineBaseProduct
-from store.services import PAYSAFE_EXCEPTION
 
 from . import (
     permissions,
@@ -69,7 +60,6 @@ from .resources import (
     ReservationResource,
     RetreatResource,
     WaitQueueResource,
-    RetreatReservationResource,
     OptionProductResource,
 )
 from .serializers import (
@@ -84,6 +74,9 @@ from .services import (
     send_retreat_reminder_email,
     send_post_retreat_email,
     send_automatic_email,
+)
+from .exports import (
+    generate_retreat_participation,
 )
 
 User = get_user_model()
@@ -193,6 +186,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
                 is_active=True,
                 hidden=False
             )
+        queryset = queryset.filter(hide_from_client_admin_panel=False)
 
         queryset = queryset.annotate(
             max_end_date=Max('retreat_dates__end_time'),
@@ -233,6 +227,9 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
         if instance.is_active:
             instance.custom_delete(deletion_message, force_refund)
+        elif not instance.hide_from_client_admin_panel:
+            instance.hide_from_client_admin_panel = True
+            instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @transaction.atomic()
@@ -498,34 +495,8 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     def export_participation(self, request, pk=None):
 
         retreat: Retreat = self.get_object()
-        # Order queryset by ascending id, thus by descending age too
-        queryset = Reservation.objects.filter(retreat=retreat)
-        # Build dataset using paginated queryset
-        dataset = RetreatReservationResource().export(queryset)
-
-        date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
-            .strftime("%Y%m%d-%H%M%S")
-        filename = f'export-participation-{retreat.name}{date_file}.xls'
-
-        new_exprt = ExportMedia.objects.create(
-            type=ExportMedia.EXPORT_RETREAT_PARTICIPATION,
-        )
-        content = ContentFile(dataset.xls)
-        new_exprt.file.save(filename, content)
-
-        export_url = ExportMediaSerializer(
-            new_exprt,
-            context={'request': request}
-        ).data.get('file')
-
-        response = Response(
-            status=status.HTTP_200_OK,
-            data={
-                'file_url': export_url
-            }
-        )
-
-        return response
+        generate_retreat_participation.delay(request.user.id, retreat.id)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, permission_classes=[IsAdminUser])
     def export_options(self, request, pk=None):
@@ -801,6 +772,62 @@ class RetreatDateViewSet(viewsets.ModelViewSet):
     queryset = RetreatDate.objects.all()
     permission_classes = [permissions.IsAdminOrReadOnly]
     filter_fields = '__all__'
+
+    def update(self, request, *args, **kwargs):
+        retreat_date: RetreatDate = self.get_object()
+        reason_message = request.data.get('reason_message', None)
+        force_refund = request.data.get('force_refund', False)
+        if retreat_date.retreat.total_reservations > 0 and \
+                not reason_message:
+            error = {
+                'reason_message': _("There is at least one participant to "
+                                    "this retreat. Please provide a "
+                                    "deletion message.")
+            }
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        if not retreat_date.retreat.is_active:
+            return super(
+                RetreatDateViewSet, self).update(request, *args, **kwargs)
+        else:
+            retreat = retreat_date.retreat
+            with transaction.atomic():
+                response = super(RetreatDateViewSet, self).\
+                    update(request, *args, **kwargs)
+                retreat.set_automatic_email()  # Recalculate retreat auto-email
+                retreat.process_impacted_users(
+                    'update', reason_message, force_refund)
+            return response
+
+    def destroy(self, request, *args, **kwargs):
+        retreat_date: RetreatDate = self.get_object()
+        reason_message = request.data.get('reason_message', None)
+        force_refund = request.data.get('force_refund', False)
+        if retreat_date.retreat.total_reservations > 0 and \
+                not reason_message:
+            error = {
+                'reason_message': _("There is at least one participant to "
+                                    "this retreat. Please provide a "
+                                    "deletion message.")
+            }
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        if not retreat_date.retreat.is_active:
+            return super(
+                RetreatDateViewSet, self).destroy(request, *args, **kwargs)
+        else:
+            retreat = retreat_date.retreat
+            if RetreatDate.objects.filter(retreat=retreat).count() <= 1:
+                msg = _("Active retreat needs to have at least 1 date.")
+                return Response(
+                    {'date_count_error': msg},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            with transaction.atomic():
+                super(RetreatDateViewSet, self).destroy(
+                    request, *args, **kwargs)
+                retreat.set_automatic_email()  # Recalculate retreat auto-email
+                retreat.process_impacted_users(
+                    'update', reason_message, force_refund)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class RetreatTypeViewSet(viewsets.ModelViewSet):

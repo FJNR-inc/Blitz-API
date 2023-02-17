@@ -1,9 +1,10 @@
 import random
 import decimal
 
+from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
-
 
 from tomato.models import (
     Message,
@@ -129,12 +130,22 @@ class TomatoSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Tomato
-        fields = '__all__'
+        fields = ['id', 'url', 'user', 'number_of_tomato', 'source',
+                  'acquisition_date', 'created_at', 'updated_at']
 
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user
 
         return super(TomatoSerializer, self).create(validated_data)
+
+    def validate_acquisition_date(self, value):
+        today = timezone.now()
+        if value > today:
+            raise serializers.ValidationError(_(
+                "The date of acquisition of the tomatoes cannot be set "
+                "in the future."
+            ))
+        return value
 
 
 class AttendanceDeleteKeySerializer(serializers.Serializer):

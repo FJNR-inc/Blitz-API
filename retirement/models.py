@@ -3,7 +3,6 @@ import os
 import json
 import traceback
 from datetime import timedelta
-from operator import itemgetter
 
 import requests
 from django.conf import settings
@@ -16,6 +15,7 @@ from rest_framework import serializers as rest_framework_serializers
 
 from blitz_api.services import send_mail as send_templated_email
 from blitz_api.cron_manager_api import CronManager
+from cron_manager.models import Task
 from blitz_api.models import Address
 from django.contrib.auth import get_user_model
 from django.db import models, transaction
@@ -36,6 +36,7 @@ from store.models import (
     OptionProduct,
     Coupon,
     Refund,
+    CouponUser,
 )
 from store.services import refund_amount
 from store.exceptions import PaymentAPIError
@@ -503,6 +504,13 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
 
         return seat_remaining if seat_remaining > 0 else 0
 
+    @property
+    def has_room_option(self):
+        for opt in self.options:
+            if opt.is_room_option:
+                return True
+        return False
+
     def has_places_remaining(self, selected_invitation=None):
         seat_remaining = self.places_remaining
 
@@ -654,55 +662,79 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         return self.start_time - timedelta(
             days=self.min_day_refund)
 
-    def activate(self):
-        if not self.start_time:
-            raise ValueError(
-                _("Retreat need to have a start time before activate it")
-            )
-
-        if not self.end_time:
-            raise ValueError(
-                _("Retreat need to have a end time before activate it")
-            )
-
-        if self.seats <= 0:
-            raise ValueError(
-                _("Retreat need to have at least one seat available")
-            )
-
-        if self.min_day_refund is None:
-            raise ValueError(
-                _("Retreat need to have a minimum day refund policy")
-            )
-
-        if self.min_day_exchange is None:
-            raise ValueError(
-                _("Retreat need to have a minimum day exchange policy")
-            )
-
-        if self.refund_rate is None:
-            raise ValueError(
-                _("Retreat need to have a refund rate policy")
-            )
-
+    def set_automatic_email(self):
+        """
+        Create task for automatic email.
+        """
         cron_manager = CronManager()
-
         for email in self.type.automatic_emails.all():
             if email.time_base == AutomaticEmail.TIME_BASE_BEFORE_START:
                 execution_date = self.start_time
-            else:
+            elif email.time_base == AutomaticEmail.TIME_BASE_AFTER_END:
                 execution_date = self.end_time
+            else:
+                raise AttributeError(_("Time based not supported."))
 
-            execution_date += timedelta(minutes=email.minutes_delta)
+            if execution_date:
+                try:
+                    task_url = cron_manager.get_retreat_target_url(self, email)
+                    task = Task.objects.get(url=task_url, active=True)
+                    real_task_time = execution_date + timedelta(
+                        minutes=email.minutes_delta)
+                    if task.execution_datetime == real_task_time:
+                        # Task exists and date is correct
+                        create_task = False
+                    else:
+                        # Task exists and date has changed
+                        create_task = True
+                        task.active = False
+                        task.save()
+                except Task.DoesNotExist:
+                    create_task = True
+                if create_task:
+                    execution_date += timedelta(minutes=email.minutes_delta)
+                    cron_manager.create_email_task(
+                        self,
+                        email,
+                        execution_date
+                    )
 
-            cron_manager.create_email_task(
-                self,
-                email,
-                execution_date
-            )
+    def activate(self):
+        if not self.is_active:
+            if not self.start_time:
+                raise ValueError(
+                    _("Retreat need to have a start time before activate it")
+                )
 
-        self.is_active = True
-        self.save()
+            if not self.end_time:
+                raise ValueError(
+                    _("Retreat need to have a end time before activate it")
+                )
+
+            if self.seats <= 0:
+                raise ValueError(
+                    _("Retreat need to have at least one seat available")
+                )
+
+            if self.min_day_refund is None:
+                raise ValueError(
+                    _("Retreat need to have a minimum day refund policy")
+                )
+
+            if self.min_day_exchange is None:
+                raise ValueError(
+                    _("Retreat need to have a minimum day exchange policy")
+                )
+
+            if self.refund_rate is None:
+                raise ValueError(
+                    _("Retreat need to have a refund rate policy")
+                )
+
+            self.set_automatic_email()
+
+            self.is_active = True
+            self.save()
 
     @staticmethod
     def _set_participant_room(participant_data, room_number):
@@ -714,7 +746,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         """
         Generate room distribution for a retreat, matching people with their
         friends or their preferred gender.
-        Return a list of dict with data and room number for each participant
+        Return a dict of dict with data and room number for each participant
+        with participant id as key
         """
         active_reservations = self.reservations.filter(is_active=True)
         room_pool = {}
@@ -725,13 +758,14 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         current_man_room = None
         current_woman_room = None
         current_non_binary_room = None
-        current_mixte_room = None
+        current_mixed_room = None
 
-        retreat_room_distribution = []
+        retreat_room_distribution = {}
         room_number = 0
 
         for reservation in active_reservations:
             participant_data = {
+                'id': reservation.user.id,
                 'first_name': reservation.user.first_name,
                 'last_name': reservation.user.last_name,
                 'email': reservation.user.email,
@@ -742,14 +776,21 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 'placed': False
             }
             room_options = OptionProduct.objects.filter(is_room_option=True)
-            participant_order_detail = OrderLineBaseProduct.objects.get(
-                order_line=reservation.order_line,
-                option__in=room_options
-            )
+            try:
+                participant_order_detail = OrderLineBaseProduct.objects.get(
+                    order_line=reservation.order_line,
+                    option__in=room_options
+                )
+            except OrderLineBaseProduct.DoesNotExist:
+                # User has no options for the retreat
+                participant_data['room_option'] = 'NA'
+                participant_data['room_number'] = 'NA'
+                retreat_room_distribution[reservation.user.id] = \
+                    participant_data
+                continue
             current_option = OptionProduct.objects.get(
                 id=participant_order_detail.option_id,
             )
-
             if current_option.type == OptionProduct.METADATA_SHARED_ROOM:
                 participant_data['gender_preference'] = \
                     participant_order_detail.metadata[
@@ -772,12 +813,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         for key, value in single_pool.items():
             if not value['placed']:
                 room_number += 1
-                retreat_room_distribution.append(
-                    self._set_participant_room(
-                        value,
-                        room_number,
-                    )
-                )
+                retreat_room_distribution[value['id']] = \
+                    self._set_participant_room(value, room_number)
 
         # Handling friend pool
         for key, value in friend_pool.items():
@@ -786,18 +823,13 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 if is_in_friend_pool and value['share_with'] != key:
                     if friend_pool[value['share_with']]['share_with'] == key:
                         room_number += 1
-                        retreat_room_distribution.append(
-                            self._set_participant_room(
-                                value,
-                                room_number,
-                            )
-                        )
-                        retreat_room_distribution.append(
+                        retreat_room_distribution[value['id']] = \
+                            self._set_participant_room(value, room_number)
+                        roommate_id = friend_pool[value['share_with']]['id']
+                        retreat_room_distribution[roommate_id] = \
                             self._set_participant_room(
                                 friend_pool[value['share_with']],
-                                room_number,
-                            )
-                        )
+                                room_number)
                         continue
                 # Pairing not found, putting in other pool
                 if value['gender_preference'] == 'mixte':
@@ -811,54 +843,39 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 if value['gender_preference'] == 'man':
                     if current_man_room:
                         room_number += 1
-                        retreat_room_distribution.append(
-                            self._set_participant_room(
-                                value,
-                                room_number,
-                            )
-                        )
-                        retreat_room_distribution.append(
+                        retreat_room_distribution[value['id']] = \
+                            self._set_participant_room(value, room_number)
+                        roommate_id = room_pool[current_man_room]['id']
+                        retreat_room_distribution[roommate_id] = \
                             self._set_participant_room(
                                 room_pool[current_man_room],
-                                room_number,
-                            )
-                        )
+                                room_number)
                         current_man_room = None
                     else:
                         current_man_room = key
                 elif value['gender_preference'] == 'woman':
                     if current_woman_room:
                         room_number += 1
-                        retreat_room_distribution.append(
-                            self._set_participant_room(
-                                value,
-                                room_number,
-                            )
-                        )
-                        retreat_room_distribution.append(
+                        retreat_room_distribution[value['id']] = \
+                            self._set_participant_room(value, room_number)
+                        roommate_id = room_pool[current_woman_room]['id']
+                        retreat_room_distribution[roommate_id] = \
                             self._set_participant_room(
                                 room_pool[current_woman_room],
-                                room_number,
-                            )
-                        )
+                                room_number)
                         current_woman_room = None
                     else:
                         current_woman_room = key
                 elif value['gender_preference'] == 'non-binary':
                     if current_non_binary_room:
                         room_number += 1
-                        retreat_room_distribution.append(
-                            self._set_participant_room(
-                                value,
-                                room_number,
-                            )
-                        )
-                        retreat_room_distribution.append(
+                        retreat_room_distribution[value['id']] = \
+                            self._set_participant_room(value, room_number)
+                        roommate_id = room_pool[current_non_binary_room]['id']
+                        retreat_room_distribution[roommate_id] = \
                             self._set_participant_room(
                                 room_pool[current_non_binary_room],
-                                room_number,
-                            )
-                        )
+                                room_number)
                         current_non_binary_room = None
                     else:
                         current_non_binary_room = key
@@ -868,91 +885,99 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
             # fill the rooms or create mixte room
             if current_man_room:
                 room_number += 1
-                retreat_room_distribution.append(self._set_participant_room(
-                    value, room_number))
-                retreat_room_distribution.append(self._set_participant_room(
-                    room_pool[current_man_room], room_number))
+                retreat_room_distribution[value['id']] = \
+                    self._set_participant_room(value, room_number)
+                roommate_id = room_pool[current_man_room]['id']
+                retreat_room_distribution[roommate_id] = \
+                    self._set_participant_room(
+                        room_pool[current_man_room],
+                        room_number)
                 current_man_room = None
             elif current_woman_room:
                 room_number += 1
-                retreat_room_distribution.append(self._set_participant_room(
-                    value, room_number))
-                retreat_room_distribution.append(self._set_participant_room(
-                    room_pool[current_woman_room], room_number))
+                retreat_room_distribution[value['id']] = \
+                    self._set_participant_room(value, room_number)
+                roommate_id = room_pool[current_woman_room]['id']
+                retreat_room_distribution[roommate_id] = \
+                    self._set_participant_room(
+                        room_pool[current_woman_room],
+                        room_number)
                 current_woman_room = None
             elif current_non_binary_room:
                 room_number += 1
-                retreat_room_distribution.append(self._set_participant_room(
-                    value, room_number))
-                retreat_room_distribution.append(self._set_participant_room(
-                    room_pool[current_non_binary_room], room_number))
+                retreat_room_distribution[value['id']] = \
+                    self._set_participant_room(value, room_number)
+                roommate_id = room_pool[current_non_binary_room]['id']
+                retreat_room_distribution[roommate_id] = \
+                    self._set_participant_room(
+                        room_pool[current_non_binary_room],
+                        room_number)
                 current_non_binary_room = None
-            elif current_mixte_room:
+            elif current_mixed_room:
                 room_number += 1
-                retreat_room_distribution.append(self._set_participant_room(
-                    value, room_number))
-                retreat_room_distribution.append(self._set_participant_room(
-                    mixed_pool[current_mixte_room], room_number))
-                current_mixte_room = None
+                retreat_room_distribution[value['id']] = \
+                    self._set_participant_room(value, room_number)
+                roommate_id = room_pool[current_mixed_room]['id']
+                retreat_room_distribution[roommate_id] = \
+                    self._set_participant_room(
+                        mixed_pool[current_mixed_room],
+                        room_number)
+                current_mixed_room = None
             else:
-                current_mixte_room = key
+                current_mixed_room = key
 
         # Handling unpaired participants
-        if current_mixte_room:
+        if current_mixed_room:
             room_number += 1
-            retreat_room_distribution.append(self._set_participant_room(
-                mixed_pool[current_mixte_room], room_number))
+            roommate_id = mixed_pool[current_mixed_room]['id']
+            retreat_room_distribution[roommate_id] = \
+                self._set_participant_room(
+                    mixed_pool[current_mixed_room],
+                    room_number)
         else:
             if current_man_room and \
                     current_woman_room and \
                     current_non_binary_room:
                 room_number += 1
-                retreat_room_distribution.append(
+                roommate_id = room_pool[current_man_room]['id']
+                retreat_room_distribution[roommate_id] = \
                     self._set_participant_room(
                         room_pool[current_man_room],
-                        room_number,
-                    )
-                )
-                retreat_room_distribution.append(
+                        room_number)
+                roommate_id = room_pool[current_woman_room]['id']
+                retreat_room_distribution[roommate_id] = \
                     self._set_participant_room(
                         room_pool[current_woman_room],
-                        room_number,
-                    )
-                )
+                        room_number)
                 room_number += 1
-                retreat_room_distribution.append(
+                roommate_id = room_pool[current_non_binary_room]['id']
+                retreat_room_distribution[roommate_id] = \
                     self._set_participant_room(
                         room_pool[current_non_binary_room],
-                        room_number,
-                    )
-                )
+                        room_number)
             elif current_man_room or \
                     current_woman_room or \
                     current_non_binary_room:
                 room_number += 1
                 if current_man_room:
-                    retreat_room_distribution.append(
+                    roommate_id = room_pool[current_man_room]['id']
+                    retreat_room_distribution[roommate_id] = \
                         self._set_participant_room(
                             room_pool[current_man_room],
-                            room_number,
-                        )
-                    )
+                            room_number)
                 if current_woman_room:
-                    retreat_room_distribution.append(
+                    roommate_id = room_pool[current_woman_room]['id']
+                    retreat_room_distribution[roommate_id] = \
                         self._set_participant_room(
                             room_pool[current_woman_room],
-                            room_number,
-                        )
-                    )
+                            room_number)
                 if current_non_binary_room:
-                    retreat_room_distribution.append(
+                    roommate_id = room_pool[current_non_binary_room]['id']
+                    retreat_room_distribution[roommate_id] = \
                         self._set_participant_room(
                             room_pool[current_non_binary_room],
-                            room_number,
-                        )
-                    )
-
-        return sorted(retreat_room_distribution, key=itemgetter('room_number'))
+                            room_number)
+        return retreat_room_distribution
 
     def get_participants_emails(self):
         """
@@ -963,6 +988,23 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         for reservation in active_reservations:
             participant_emails.add(reservation.user.email)
         return list(participant_emails)
+
+    def process_impacted_users(self, reason, reason_message, force_refund):
+        """
+        Notify and potentially refund user for a reason happening on retreat:
+        Retreat cancelled, deleted ...
+        If a date changes or is deleted, users must be notified and refunded so
+        they can book again the retreat if they want
+        """
+        if self.total_reservations > 0:
+            from .services import send_updated_retreat_email
+            self.cancel_participants_reservation(force_refund)
+            send_updated_retreat_email(
+                self,
+                self.get_participants_emails(),
+                reason,
+                reason_message,
+            )
 
     def cancel_participants_reservation(self, force_refund):
         """
@@ -997,13 +1039,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         """
         self.is_active = False
         self.hide_from_client_admin_panel = True
-        if self.total_reservations > 0:
-            from .services import send_deleted_retreat_email
-            self.cancel_participants_reservation(force_refund)
-            send_deleted_retreat_email(
-                self,
-                self.get_participants_emails(),
-                deletion_message)
+        self.process_impacted_users('deletion', deletion_message, force_refund)
         self.save()
 
 
@@ -1028,6 +1064,35 @@ class RetreatDate(models.Model):
     end_time = models.DateTimeField(
         verbose_name=_("End time"),
     )
+
+    tomatoes_assigned = models.BooleanField(
+        verbose_name=_("Tomatoes assigned"),
+        default=False,
+    )
+
+    @property
+    def is_last_date(self):
+        """
+        Return True if the date is the last for this retreat
+        """
+        return self == RetreatDate.objects\
+            .filter(retreat=self.retreat)\
+            .latest('end_time')
+
+    @property
+    def number_of_tomatoes(self):
+        """
+        Return the number of tomatoes obtained by attending this date.
+        All dates worth the number of tomatoes of the retreat divided by the
+        number of date for this retreat. We only want positive integer so the
+        last date gets the modulo of the division.
+        """
+        nb_dates = RetreatDate.objects.filter(retreat=self.retreat).count()
+        number_of_tomato = self.retreat.get_number_of_tomatoes() // nb_dates
+        if self.is_last_date:
+            number_of_tomato += \
+                self.retreat.get_number_of_tomatoes() % nb_dates
+        return number_of_tomato
 
 
 class Picture(models.Model):
@@ -1181,11 +1246,11 @@ class Reservation(SafeDeleteModel):
         return str(self.user)
 
     def get_refund_value(self, total_refund=False):
-        if self.order_line is None:
+        if self.order_line is None or self.order_line.is_made_by_admin:
             return 0
 
         # First get net pay: total cost
-        refund_value = float(self.order_line.cost)
+        refund_value = float(self.order_line.total_cost)
         # Add the tax rate, so we have the real value pay by the user
         refund_value *= TAX_RATE + 1.0
 
@@ -1355,6 +1420,14 @@ class Reservation(SafeDeleteModel):
                                 )],
                                 'detail': err.detail
                             })
+                        if str(err) == PAYSAFE_EXCEPTION['3404']:
+                            raise rest_framework_serializers.ValidationError({
+                                'non_field_errors': [_(
+                                    "The order has already been refunded by "
+                                    "Paysafe."
+                                )],
+                                'detail': err.detail
+                            })
                         raise rest_framework_serializers.ValidationError(
                             {
                                 'message': str(err),
@@ -1373,6 +1446,16 @@ class Reservation(SafeDeleteModel):
                 self.cancelation_reason = cancel_reason
                 self.cancelation_date = timezone.now()
                 self.save()
+
+                # Rollback the coupon number of use if the reservation
+                # was done with a coupon
+                if order_line and order_line.coupon:
+                    coupon_user = CouponUser.objects.get(
+                        user=user,
+                        coupon=order_line.coupon,
+                    )
+                    coupon_user.uses = coupon_user.uses - 1
+                    coupon_user.save()
 
                 # free seat unless retreat is deleted
                 if cancel_reason != self.CANCELATION_REASON_RETREAT_DELETED:

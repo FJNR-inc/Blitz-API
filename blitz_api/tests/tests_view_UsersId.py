@@ -63,6 +63,8 @@ class UsersIdTests(APITestCase):
             'get_number_of_past_tomatoes',
             'get_number_of_future_tomatoes',
             'last_acceptation_terms_and_conditions',
+            'tomato_field_matrix',
+            'current_month_tomatoes',
         ]
 
     def setUp(self):

@@ -2,13 +2,14 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import format_html
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 
 from safedelete.models import SafeDeleteModel
 
 from simple_history.models import HistoricalRecords
 
 from blitz_api.models import Address
-
+from store.models import ProductDisplayMixin
 User = get_user_model()
 
 
@@ -147,19 +148,12 @@ class Period(SafeDeleteModel):
         return self.name
 
 
-class TimeSlot(SafeDeleteModel):
+class TimeSlot(SafeDeleteModel, ProductDisplayMixin):
     """Represents time slots in a day"""
 
     class Meta:
         verbose_name = _("Time slot")
         verbose_name_plural = _("Time slots")
-
-    name = models.CharField(
-        verbose_name=_("Name"),
-        blank=True,
-        null=True,
-        max_length=253,
-    )
 
     period = models.ForeignKey(
         Period,
@@ -204,6 +198,24 @@ class TimeSlot(SafeDeleteModel):
             return self.price
         else:
             return self.period.price
+
+    @property
+    def duration(self):
+        """
+        Return duration of timeslot in seconds
+        """
+        return int((self.end_time - self.start_time).total_seconds())
+
+    @property
+    def number_of_tomatoes(self):
+        """
+        Return the number of tomatoes obtained by attending this Timeslot
+        1 hour = 1 tomato, we don't count minutes.
+        """
+        return int(self.duration // 3600)
+
+    def get_product_display_name(self):
+        return self.start_time.strftime("%Y-%m-%dT%H:%M:%S")
 
 
 class Reservation(SafeDeleteModel):
@@ -256,3 +268,44 @@ class Reservation(SafeDeleteModel):
 
     def __str__(self):
         return str(self.user)
+
+    def assign_tomatoes(self, force_assign=False):
+        """
+        Credit tomatoes to user if he is present or remove them if updated
+        back to not present
+        :param force_assign: True if we want to assign tomato even if user is
+        not present
+        """
+        from tomato.models import Tomato
+        reservation_type = ContentType.objects.get_for_model(
+            Reservation)
+        if self.is_present or force_assign:
+            # user presence set to True: Add tomato for the timeslot
+            t, created = Tomato.objects.get_or_create(
+                user=self.user,
+                number_of_tomato=self.timeslot.number_of_tomatoes,
+                source=Tomato.TOMATO_SOURCE_TIMESLOT,
+                content_type=reservation_type,
+                object_id=self.id,
+                acquisition_date=self.timeslot.end_time,
+            )
+        else:
+            # User presence set to False: remove tomato for timeslot if exists
+            try:
+                Tomato.objects.get(
+                    user=self.user,
+                    source=Tomato.TOMATO_SOURCE_TIMESLOT,
+                    content_type=reservation_type,
+                    object_id=self.id,
+                    acquisition_date=self.timeslot.end_time,
+                ).delete()
+            except Tomato.DoesNotExist:
+                pass
+
+    def save(self, *args, **kwargs):
+        old_presence = None
+        if self.pk:
+            old_presence = Reservation.objects.get(pk=self.id).is_present
+        super(Reservation, self).save(*args, **kwargs)
+        if self.pk and old_presence != self.is_present:
+            self.assign_tomatoes()
