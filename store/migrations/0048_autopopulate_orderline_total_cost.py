@@ -11,10 +11,14 @@ def populate_orderline_total_cost(apps, schema_editor):
     for line in order_lines:
         # total_cost is the value of old cost.
         line.total_cost = line.cost
-        ct = ContentType.objects.get(model=line.content_type.model,
-                                     app_label=line.content_type.app_label)
-        content_object = ct.get_object_for_this_type(pk=line.object_id)
-        base_price = content_object.price if content_object.price else 0
+        try:
+            ct = ContentType.objects.get(model=line.content_type.model,
+                                         app_label=line.content_type.app_label)
+            content_object = ct.get_object_for_this_type(pk=line.object_id)
+            base_price = content_object.price if content_object.price else 0
+        except line.content_type.DoesNoExist:
+            # Old data was deleted
+            base_price = line.cost
         coupon_value = line.coupon_real_value if line.coupon_real_value else 0
         line.cost = base_price - coupon_value
         # No need to apply coupon on total_cost for it copies old cost
