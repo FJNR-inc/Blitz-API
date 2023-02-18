@@ -16,7 +16,7 @@ def populate_orderline_total_cost(apps, schema_editor):
                                          app_label=line.content_type.app_label)
             content_object = ct.get_object_for_this_type(pk=line.object_id)
             base_price = content_object.price if content_object.price else 0
-        except line.content_type.DoesNoExist:
+        except line.content_type.DoesNotExist:
             # Old data was deleted
             base_price = line.cost
         coupon_value = line.coupon_real_value if line.coupon_real_value else 0
