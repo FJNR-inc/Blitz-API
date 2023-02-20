@@ -581,6 +581,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
         'cancelation_date',
         'cancelation_reason',
         'cancelation_action',
+        'retreat__name',
     )
 
     export_resource = ReservationResource()
