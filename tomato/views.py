@@ -261,6 +261,16 @@ class TomatoViewSet(viewsets.ModelViewSet):
             ]
         return [permission() for permission in permission_classes]
 
+    @staticmethod
+    def get_queryset_number_of_tomatoes(queryset):
+        """
+        Returns the number of tomatoes for a given queryset
+        """
+        nb_tomatoes = queryset.aggregate(
+            Sum('number_of_tomato'))['number_of_tomato__sum']
+        nb_tomatoes = nb_tomatoes if nb_tomatoes else 0
+        return nb_tomatoes
+
     @action(detail=False, methods=["get"])
     def community_tomatoes(self, request):
         """
@@ -271,10 +281,7 @@ class TomatoViewSet(viewsets.ModelViewSet):
         start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         t = Tomato.objects.filter(
             acquisition_date__gte=start, acquisition_date__lte=today)
-        nb_tomatoes = t.aggregate(
-            Sum('number_of_tomato'))['number_of_tomato__sum']
-        nb_tomatoes = nb_tomatoes if nb_tomatoes else 0
         response_data = {
-            'community_tomato': nb_tomatoes,
+            'community_tomato': self.get_queryset_number_of_tomatoes(t),
         }
         return Response(response_data, status=status.HTTP_200_OK)
