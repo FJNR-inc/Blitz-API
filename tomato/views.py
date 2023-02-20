@@ -247,7 +247,7 @@ class TomatoViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_permissions(self):
-        if self.action in ['create', 'list', 'retrieve']:
+        if self.action in ['create', 'list', 'retrieve', 'statistics']:
             permission_classes = [
                 IsAuthenticated,
             ]
@@ -285,3 +285,40 @@ class TomatoViewSet(viewsets.ModelViewSet):
             'community_tomato': self.get_queryset_number_of_tomatoes(t),
         }
         return Response(response_data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def statistics(self, request):
+        period = request.query_params.get('period', None)
+        if period and period in ['week', 'month', 'year']:
+            today = timezone.now()
+            first_day_init = today.replace(
+                hour=0, minute=0, second=0, microsecond=0)
+            first_day = {
+                'year': first_day_init.replace(day=1, month=1),
+                'month': first_day_init.replace(day=1),
+                'week': first_day_init - timezone.timedelta(
+                    first_day_init.weekday()),
+            }
+            all_queryset = Tomato.objects.filter(
+                acquisition_date__lte=today,
+                acquisition_date__gte=first_day[period],
+            )
+            user_queryset = all_queryset.filter(user=request.user)
+            totals = {
+                "global": self.get_queryset_number_of_tomatoes(all_queryset),
+                "user": self.get_queryset_number_of_tomatoes(user_queryset)
+            }
+            return Response(
+                {
+                    "totals": totals,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        else:
+            return Response(
+                {
+                    'period': _('Please select a valid period'),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
