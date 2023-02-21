@@ -917,7 +917,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 room_number += 1
                 retreat_room_distribution[value['id']] = \
                     self._set_participant_room(value, room_number)
-                roommate_id = room_pool[current_mixed_room]['id']
+                roommate_id = mixed_pool[current_mixed_room]['id']
                 retreat_room_distribution[roommate_id] = \
                     self._set_participant_room(
                         mixed_pool[current_mixed_room],
