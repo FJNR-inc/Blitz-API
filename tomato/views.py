@@ -1,4 +1,5 @@
 import asyncio
+from django.utils.dateparse import parse_datetime
 from tomato.models import (
     Message,
     Attendance,
@@ -288,20 +289,13 @@ class TomatoViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def statistics(self, request):
-        period = request.query_params.get('period', None)
-        if period and period in ['week', 'month', 'year']:
-            today = timezone.now()
-            first_day_init = today.replace(
-                hour=0, minute=0, second=0, microsecond=0)
-            first_day = {
-                'year': first_day_init.replace(day=1, month=1),
-                'month': first_day_init.replace(day=1),
-                'week': first_day_init - timezone.timedelta(
-                    first_day_init.weekday()),
-            }
+        start = parse_datetime(request.query_params.get('start_date', None))
+        end = parse_datetime(request.query_params.get('end_date', None))
+
+        if start and end and end > start:
             all_queryset = Tomato.objects.filter(
-                acquisition_date__lte=today,
-                acquisition_date__gte=first_day[period],
+                acquisition_date__lte=end,
+                acquisition_date__gte=start,
             )
             user_queryset = all_queryset.filter(user=request.user)
             totals = {
@@ -318,7 +312,7 @@ class TomatoViewSet(viewsets.ModelViewSet):
         else:
             return Response(
                 {
-                    'period': _('Please select a valid period'),
+                    'dates': _('Please select a valid start and end dates'),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
