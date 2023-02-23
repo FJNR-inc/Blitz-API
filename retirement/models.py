@@ -997,11 +997,13 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         they can book again the retreat if they want
         """
         if self.total_reservations > 0:
+            # retrieve email before we cancel the reservation
+            emails = self.get_participants_emails()
             from .services import send_updated_retreat_email
             self.cancel_participants_reservation(force_refund)
             send_updated_retreat_email(
                 self,
-                self.get_participants_emails(),
+                emails,
                 reason,
                 reason_message,
             )
