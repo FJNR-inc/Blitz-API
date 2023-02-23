@@ -484,3 +484,189 @@ class ReportTests(CustomAPITestCase):
             result['community_tomato'],
             sum(current_entries)
         )
+
+    def test_statistics_tomatoes_invalid_period(self):
+        """
+        Test we cant get tomatoes statistics with invalid period
+        """
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            data={'period': 'invalid period'},
+            content_type='application/json',
+        )
+        result = response.json()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+    def test_statistics_tomatoes_no_period(self):
+        """
+        Test we cant get tomatoes statistics with invalid period
+        """
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            format='json',
+        )
+        result = response.json()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+    def test_statistics_tomatoes_year(self):
+        """
+        Test we can get tomatoes statistics of current year
+        """
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            data={'period': 'year'},
+            content_type='application/json',
+        )
+        result = response.json()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(result['totals']['global'], 0)
+        self.assertEqual(result['totals']['user'], 0)
+
+        today = timezone.now()
+        # Out of year tomatoes
+        last_year = today - timedelta(days=365)
+        Tomato.objects.create(user=self.user, number_of_tomato=5)
+        Tomato.objects.create(user=self.admin, number_of_tomato=4)
+        Tomato.objects.create(user=self.user, number_of_tomato=7)
+        Tomato.objects.all().update(acquisition_date=last_year)
+
+        t1 = Tomato.objects.create(user=self.user, number_of_tomato=15)
+        t2 = Tomato.objects.create(user=self.admin, number_of_tomato=23)
+        t3 = Tomato.objects.create(user=self.user, number_of_tomato=45)
+        current_entries = [
+            t1.number_of_tomato, t2.number_of_tomato, t3.number_of_tomato]
+        user_entries = [
+            t1.number_of_tomato, t3.number_of_tomato]
+
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            data={'period': 'year'},
+            content_type='application/json',
+        )
+        result = response.json()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(result['totals']['global'], sum(current_entries))
+        self.assertEqual(result['totals']['user'], sum(user_entries))
+
+    def test_statistics_tomatoes_month(self):
+        """
+        Test we can get tomatoes statistics of current month
+        """
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            data={'period': 'year'},
+            content_type='application/json',
+        )
+        result = response.json()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(result['totals']['global'], 0)
+        self.assertEqual(result['totals']['user'], 0)
+
+        today = timezone.now()
+        # Out of month tomatoes
+        last_month = today - timedelta(days=32)
+        Tomato.objects.create(user=self.user, number_of_tomato=5)
+        Tomato.objects.create(user=self.admin, number_of_tomato=4)
+        Tomato.objects.create(user=self.user, number_of_tomato=7)
+        Tomato.objects.all().update(acquisition_date=last_month)
+
+        t1 = Tomato.objects.create(user=self.user, number_of_tomato=15)
+        t2 = Tomato.objects.create(user=self.admin, number_of_tomato=23)
+        t3 = Tomato.objects.create(user=self.user, number_of_tomato=45)
+        current_entries = [
+            t1.number_of_tomato, t2.number_of_tomato, t3.number_of_tomato]
+        user_entries = [
+            t1.number_of_tomato, t3.number_of_tomato]
+
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            data={'period': 'month'},
+            content_type='application/json',
+        )
+        result = response.json()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(result['totals']['global'], sum(current_entries))
+        self.assertEqual(result['totals']['user'], sum(user_entries))
+
+    def test_statistics_tomatoes_week(self):
+        """
+        Test we can get tomatoes statistics of current week
+        """
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            data={'period': 'year'},
+            content_type='application/json',
+        )
+        result = response.json()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(result['totals']['global'], 0)
+        self.assertEqual(result['totals']['user'], 0)
+
+        today = timezone.now()
+        # Out of week tomatoes
+        last_week = today - timedelta(days=8)
+        Tomato.objects.create(user=self.user, number_of_tomato=5)
+        Tomato.objects.create(user=self.admin, number_of_tomato=4)
+        Tomato.objects.create(user=self.user, number_of_tomato=7)
+        Tomato.objects.all().update(acquisition_date=last_week)
+
+        t1 = Tomato.objects.create(user=self.user, number_of_tomato=15)
+        t2 = Tomato.objects.create(user=self.admin, number_of_tomato=23)
+        t3 = Tomato.objects.create(user=self.user, number_of_tomato=45)
+        current_entries = [
+            t1.number_of_tomato, t2.number_of_tomato, t3.number_of_tomato]
+        user_entries = [
+            t1.number_of_tomato, t3.number_of_tomato]
+
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            data={'period': 'week'},
+            content_type='application/json',
+        )
+        result = response.json()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(result['totals']['global'], sum(current_entries))
+        self.assertEqual(result['totals']['user'], sum(user_entries))
