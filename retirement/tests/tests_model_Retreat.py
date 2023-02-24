@@ -752,3 +752,28 @@ class RetreatTests(APITestCase):
         self.assertEqual(2, len(emails))
         self.assertTrue(user.email in emails)
         self.assertTrue(user2.email in emails)
+
+    def test_get_participants_participants(self):
+        user = UserFactory()
+        user2 = UserFactory()
+        user3 = UserFactory()
+
+        Reservation.objects.create(
+            user=user,
+            retreat=self.retreat,
+            is_active=True,
+        )
+        Reservation.objects.create(
+            user=user2,
+            retreat=self.retreat,
+            is_active=True,
+        )
+        Reservation.objects.create(
+            user=user3,
+            retreat=self.retreat,
+            is_active=False,
+        )
+        users = self.retreat.get_participants()
+        self.assertEqual(2, len(users))
+        self.assertTrue(user in users)
+        self.assertTrue(user2 in users)
