@@ -1111,7 +1111,7 @@ class RetreatTests(CustomAPITestCase):
 
         mock_email.assert_called_once_with(
             self.retreat,
-            self.retreat.get_participants_emails(),
+            self.retreat.get_participants(),
             'deletion',
             deletion_message
         )
