@@ -989,6 +989,16 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
             participant_emails.add(reservation.user.email)
         return list(participant_emails)
 
+    def get_participants(self):
+        """
+        Return a list of active participants
+        """
+        participants = set()
+        active_reservations = self.reservations.filter(is_active=True)
+        for reservation in active_reservations:
+            participants.add(reservation.user)
+        return list(participants)
+
     def process_impacted_users(self, reason, reason_message, force_refund):
         """
         Notify and potentially refund user for a reason happening on retreat:
@@ -997,13 +1007,13 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         they can book again the retreat if they want
         """
         if self.total_reservations > 0:
-            # retrieve email before we cancel the reservation
-            emails = self.get_participants_emails()
+            # retrieve active users before we cancel the reservation
+            users = self.get_participants()
             from .services import send_updated_retreat_email
             self.cancel_participants_reservation(force_refund)
             send_updated_retreat_email(
                 self,
-                emails,
+                users,
                 reason,
                 reason_message,
             )
