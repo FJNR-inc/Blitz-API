@@ -498,7 +498,6 @@ class TomatoTests(CustomAPITestCase):
             },
             content_type='application/json',
         )
-        result = response.json()
         self.assertEqual(
             response.status_code,
             status.HTTP_400_BAD_REQUEST,
@@ -518,7 +517,6 @@ class TomatoTests(CustomAPITestCase):
             },
             format='json',
         )
-        result = response.json()
         self.assertEqual(
             response.status_code,
             status.HTTP_400_BAD_REQUEST,
@@ -538,7 +536,6 @@ class TomatoTests(CustomAPITestCase):
             },
             format='json',
         )
-        result = response.json()
         self.assertEqual(
             response.status_code,
             status.HTTP_400_BAD_REQUEST,
