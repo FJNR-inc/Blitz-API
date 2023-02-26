@@ -1,3 +1,4 @@
+import pytz
 import asyncio
 from django.utils.dateparse import parse_datetime
 from tomato.models import (
@@ -5,6 +6,7 @@ from tomato.models import (
     Attendance,
     Report, Tomato,
 )
+from django.db.models.functions import TruncMonth, TruncDay
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 from rest_framework.response import Response
@@ -292,27 +294,136 @@ class TomatoViewSet(viewsets.ModelViewSet):
         start = parse_datetime(request.query_params.get('start_date', None))
         end = parse_datetime(request.query_params.get('end_date', None))
 
-        if start and end and end > start:
-            all_queryset = Tomato.objects.filter(
-                acquisition_date__lte=end,
-                acquisition_date__gte=start,
-            )
-            user_queryset = all_queryset.filter(user=request.user)
-            totals = {
-                "global": self.get_queryset_number_of_tomatoes(all_queryset),
-                "user": self.get_queryset_number_of_tomatoes(user_queryset)
-            }
-            return Response(
-                {
-                    "totals": totals,
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        else:
+        if not start or not end or end < start:
             return Response(
                 {
                     'dates': _('Please select a valid start and end dates'),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        return Response(
+            {
+                "totals": self._get_total_data(
+                    start_date=start,
+                    end_date=end,
+                ),
+                "graph": self._get_graph_data(
+                    start_date=start,
+                    end_date=end,
+                )
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def _get_total_data(self, start_date, end_date):
+        all_queryset = Tomato.objects.filter(
+            acquisition_date__lte=end_date,
+            acquisition_date__gte=start_date,
+        )
+        user_queryset = all_queryset.filter(user=self.request.user)
+        totals = {
+            "global": self.get_queryset_number_of_tomatoes(all_queryset),
+            "user": self.get_queryset_number_of_tomatoes(user_queryset)
+        }
+
+        return totals
+
+    def _get_graph_data(self, start_date, end_date):
+        interval_param = self._define_interval(start_date, end_date)
+
+        self.timezone = self.request.META.get(
+            'HTTP_REQUEST_TIMEZONE',
+            'America/Montreal',
+        )
+        queryset = Tomato.objects.all()
+
+        if end_date:
+            queryset = queryset.filter(acquisition_date__lte=end_date)
+        if start_date:
+            queryset = queryset.filter(acquisition_date__gte=start_date)
+
+        queryset = queryset.annotate(
+            interval=self._trunc_interval(interval_param),
+        )
+
+        response_data = {
+            'labels': self._get_intervals(queryset),
+            'datasets': self._get_datasets(queryset)
+        }
+
+        return response_data
+
+    @staticmethod
+    def _define_interval(start_date, end_date):
+        """
+        Return interval based on date span. diff_date being given in days and
+        seconds, we translate it in full seconds to handle partial day.
+        """
+        diff_date = end_date - start_date
+        seconds_in_day = 3600 * 24
+        seconds = diff_date.seconds + (diff_date.days * seconds_in_day)
+
+        if seconds <= 31 * seconds_in_day:
+            return 'day'
+        else:
+            return 'month'
+
+    def _trunc_interval(self, interval_param):
+        if interval_param == 'hour':
+            # To handle Daylight date changes AmbiguousTimeError we can't
+            # Truncate by hour. But Dataset is made by hour, so we just use
+            # the hour_stamp
+            return F('acquisition_date')
+
+        trunc_function = TruncMonth
+
+        if interval_param == 'day':
+            trunc_function = TruncDay
+
+        if interval_param == 'month':
+            trunc_function = TruncMonth
+
+        return trunc_function(
+            'acquisition_date', tzinfo=pytz.timezone(self.timezone)
+        )
+
+    @staticmethod
+    def _get_intervals(queryset):
+        labels = set(
+            [
+                data.interval.strftime('%Y-%m-%dT%H:%M:%S%z')
+                for data in queryset
+            ]
+        )
+        labels = list(labels)
+        labels.sort()
+        return labels
+
+    def _get_datasets(self, queryset):
+        queryset_by_interval = queryset.values('interval').annotate(
+            number_of_tomato=(Sum('number_of_tomato')),
+        )
+        data_set_types = ['number_of_tomato']
+
+        data_sets = []
+        for data_set_type in data_set_types:
+            data_set = {
+                'label': data_set_type,
+                'data': self._get_data(
+                    queryset_by_interval,
+                    data_set_type,
+                )
+            }
+            data_sets.append(data_set)
+
+        return data_sets
+
+    @staticmethod
+    def _get_data(queryset, data_set_type):
+
+        return [dict(
+            {'x': data['interval'].strftime('%Y-%m-%dT%H:%M:%S%z'),
+             'y': data.get(data_set_type)
+             })
+            for data in queryset]
