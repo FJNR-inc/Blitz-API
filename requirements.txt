@@ -13,7 +13,7 @@ Markdown==3.3.4
 django-anymail==8.4
 Pillow==8.4.0
 django-simple-history==3.0.0
-python-decouple==3.5
+python-decouple==3.8
 django-storages==1.12.2
 dj_database_url==0.5.0
 zappa==0.54.0
