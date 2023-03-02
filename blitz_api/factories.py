@@ -24,6 +24,12 @@ from store.models import (
     OrderLineBaseProduct,
     Coupon,
 )
+from workplace.models import (
+    TimeSlot,
+    Reservation as TimeSlotReservation,
+    Workplace,
+    Period,
+)
 from faker import Faker
 
 User = get_user_model()
@@ -182,3 +188,47 @@ class CouponFactory(DjangoModelFactory):
     end_time = "2020-01-06T15:11:06-05:00"
     max_use = 100
     max_use_per_user = 2
+
+
+class WorkplaceFactory(DjangoModelFactory):
+    class Meta:
+        model = Workplace
+
+    name = factory.Sequence(lambda n: f'Blitz {n}')
+    seats = factory.fuzzy.FuzzyInteger(0)
+    details = "short_description"
+    address_line1 = "123 random street"
+    postal_code = "123 456"
+    state_province = "Random state"
+    country = "Random country"
+
+
+class PeriodFactory(DjangoModelFactory):
+    class Meta:
+        model = Period
+
+    name = factory.Sequence(lambda n: f'Period {n}')
+    workplace = factory.SubFactory(WorkplaceFactory)
+    start_date = datetime(2130, 1, 1, 1)
+    end_date = datetime(2130, 12, 12, 12)
+    price = factory.fuzzy.FuzzyDecimal(0, 1000, 2)
+    is_active = True
+
+
+class TimeSlotFactory(DjangoModelFactory):
+    class Meta:
+        model = TimeSlot
+
+    period = factory.SubFactory(PeriodFactory)
+    price = factory.fuzzy.FuzzyDecimal(0, 1000, 2)
+    start_time = datetime(2130, 1, 15, 8)
+    end_time = datetime(2130, 1, 15, 12)
+
+
+class TimeSlotReservationFactory(DjangoModelFactory):
+    class Meta:
+        model = TimeSlotReservation
+
+    user = factory.SubFactory(UserFactory)
+    timeslot = factory.SubFactory(TimeSlotFactory)
+    is_active = True
