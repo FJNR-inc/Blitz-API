@@ -1,5 +1,6 @@
 import pytz
 import asyncio
+from django.conf import settings
 from django.utils.dateparse import parse_datetime
 from tomato.models import (
     Message,
@@ -336,6 +337,10 @@ class TomatoViewSet(viewsets.ModelViewSet):
             'HTTP_REQUEST_TIMEZONE',
             'America/Montreal',
         )
+
+        start_date = start_date.astimezone(pytz.timezone(self.timezone))
+        end_date = end_date.astimezone(pytz.timezone(self.timezone))
+
         queryset = Tomato.objects.filter(user=self.request.user)
 
         if end_date:
@@ -347,9 +352,11 @@ class TomatoViewSet(viewsets.ModelViewSet):
             interval=self._trunc_interval(interval_param),
         )
 
+        labels = self._get_intervals(start_date, end_date, interval_param)
+
         response_data = {
-            'labels': self._get_intervals(queryset),
-            'datasets': self._get_datasets(queryset)
+            'labels': labels,
+            'datasets': self._get_datasets(queryset, labels)
         }
 
         return response_data
@@ -370,37 +377,43 @@ class TomatoViewSet(viewsets.ModelViewSet):
             return 'month'
 
     def _trunc_interval(self, interval_param):
-        if interval_param == 'hour':
-            # To handle Daylight date changes AmbiguousTimeError we can't
-            # Truncate by hour. But Dataset is made by hour, so we just use
-            # the hour_stamp
-            return F('acquisition_date')
-
         trunc_function = TruncMonth
 
         if interval_param == 'day':
             trunc_function = TruncDay
-
-        if interval_param == 'month':
-            trunc_function = TruncMonth
 
         return trunc_function(
             'acquisition_date', tzinfo=pytz.timezone(self.timezone)
         )
 
     @staticmethod
-    def _get_intervals(queryset):
-        labels = set(
-            [
-                data.interval.strftime('%Y-%m-%dT%H:%M:%S%z')
-                for data in queryset
-            ]
-        )
+    def _get_intervals(start, end, interval_param):
+        labels = set()
+
+        date = start.replace(hour=0, minute=0, second=0)
+
+        if interval_param == 'day':
+            while end >= date:
+                labels.add(
+                    date.strftime("%Y-%m-%dT%H:%M:%S%z")
+                )
+                date += timedelta(days=1)
+        else:
+            date = date.replace(day=1)
+            end = end.replace(day=1, hour=0, minute=0, second=0)
+            while end >= date:
+                labels.add(
+                    date.strftime("%Y-%m-%dT%H:%M:%S%z")
+                )
+                # Get first day of next month
+                date += timedelta(days=32)
+                date = date.replace(day=1)
+
         labels = list(labels)
         labels.sort()
         return labels
 
-    def _get_datasets(self, queryset):
+    def _get_datasets(self, queryset, labels):
         queryset_by_interval = queryset.values('interval').annotate(
             number_of_tomato=(Sum('number_of_tomato')),
         )
@@ -413,6 +426,7 @@ class TomatoViewSet(viewsets.ModelViewSet):
                 'data': self._get_data(
                     queryset_by_interval,
                     data_set_type,
+                    labels,
                 )
             }
             data_sets.append(data_set)
@@ -420,10 +434,29 @@ class TomatoViewSet(viewsets.ModelViewSet):
         return data_sets
 
     @staticmethod
-    def _get_data(queryset, data_set_type):
+    def _get_data(queryset, data_set_type, labels):
+        results = list()
 
-        return [dict(
-            {'x': data['interval'].strftime('%Y-%m-%dT%H:%M:%S%z'),
-             'y': data.get(data_set_type)
-             })
-            for data in queryset]
+        non_covered_labels = labels.copy()
+        for data in queryset:
+            label = data['interval'].strftime('%Y-%m-%dT%H:%M:%S%z')
+            results.append(
+                {
+                    'x': label,
+                    'y': data.get(data_set_type),
+                }
+            )
+            non_covered_labels.remove(label)
+
+        # Adding missing datasets
+        for label in non_covered_labels:
+            results.append(
+                {
+                    'x': label,
+                    'y': 0.0,
+                }
+            )
+
+        results.sort(key=lambda d: parse_datetime(d['x']))
+
+        return results
