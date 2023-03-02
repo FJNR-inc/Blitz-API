@@ -336,7 +336,7 @@ class TomatoViewSet(viewsets.ModelViewSet):
             'HTTP_REQUEST_TIMEZONE',
             'America/Montreal',
         )
-        queryset = Tomato.objects.all()
+        queryset = Tomato.objects.filter(user=self.request.user)
 
         if end_date:
             queryset = queryset.filter(acquisition_date__lte=end_date)
