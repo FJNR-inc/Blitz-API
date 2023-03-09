@@ -395,7 +395,7 @@ class TomatoViewSet(viewsets.ModelViewSet):
         if interval_param == 'day':
             while end >= date:
                 labels.add(
-                    date.strftime("%Y-%m-%dT%H:%M:%S%z")
+                    date.strftime("%Y-%m-%dT%H:%M:%S")
                 )
                 date += timedelta(days=1)
         else:
@@ -403,7 +403,7 @@ class TomatoViewSet(viewsets.ModelViewSet):
             end = end.replace(day=1, hour=0, minute=0, second=0)
             while end >= date:
                 labels.add(
-                    date.strftime("%Y-%m-%dT%H:%M:%S%z")
+                    date.strftime("%Y-%m-%dT%H:%M:%S")
                 )
                 # Get first day of next month
                 date += timedelta(days=32)
@@ -439,7 +439,7 @@ class TomatoViewSet(viewsets.ModelViewSet):
 
         non_covered_labels = labels.copy()
         for data in queryset:
-            label = data['interval'].strftime('%Y-%m-%dT%H:%M:%S%z')
+            label = data['interval'].strftime('%Y-%m-%dT%H:%M:%S')
             results.append(
                 {
                     'x': label,
