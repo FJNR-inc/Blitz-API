@@ -244,7 +244,10 @@ class User(AbstractUser):
         }
 
     def get_nb_tomatoes_retreat(self):
-        from retirement.models import Reservation as RetreatReservation
+        from retirement.models import (
+            Reservation as RetreatReservation,
+            RetreatDate,
+        )
         today = timezone.now()
         nb_tomatoes = Tomato.objects.filter(
             user=self,
@@ -257,13 +260,18 @@ class User(AbstractUser):
             user=self,
             is_active=True,
         )
-        all_count = 0
-        for reservation in reservations:
-            all_count += reservation.retreat.get_number_of_tomatoes()
+        future_dates = RetreatDate.objects.filter(
+            end_time__gte=today,
+            tomatoes_assigned=False,
+            retreat__reservations__in=reservations,
+        )
+        future_count = 0
+        for date in future_dates:
+            future_count += date.number_of_tomatoes
 
         return {
             'past': past_count,
-            'future': all_count - past_count,
+            'future': future_count,
         }
 
     def get_active_membership(self):
