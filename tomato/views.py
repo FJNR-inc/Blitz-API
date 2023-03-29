@@ -1,9 +1,13 @@
+import pytz
 import asyncio
+from django.conf import settings
+from django.utils.dateparse import parse_datetime
 from tomato.models import (
     Message,
     Attendance,
     Report, Tomato,
 )
+from django.db.models.functions import TruncMonth, TruncDay
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 from rest_framework.response import Response
@@ -247,7 +251,7 @@ class TomatoViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_permissions(self):
-        if self.action in ['create', 'list', 'retrieve']:
+        if self.action in ['create', 'list', 'retrieve', 'statistics']:
             permission_classes = [
                 IsAuthenticated,
             ]
@@ -261,6 +265,16 @@ class TomatoViewSet(viewsets.ModelViewSet):
             ]
         return [permission() for permission in permission_classes]
 
+    @staticmethod
+    def get_queryset_number_of_tomatoes(queryset):
+        """
+        Returns the number of tomatoes for a given queryset
+        """
+        nb_tomatoes = queryset.aggregate(
+            Sum('number_of_tomato'))['number_of_tomato__sum']
+        nb_tomatoes = nb_tomatoes if nb_tomatoes else 0
+        return nb_tomatoes
+
     @action(detail=False, methods=["get"])
     def community_tomatoes(self, request):
         """
@@ -271,10 +285,178 @@ class TomatoViewSet(viewsets.ModelViewSet):
         start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         t = Tomato.objects.filter(
             acquisition_date__gte=start, acquisition_date__lte=today)
-        nb_tomatoes = t.aggregate(
-            Sum('number_of_tomato'))['number_of_tomato__sum']
-        nb_tomatoes = nb_tomatoes if nb_tomatoes else 0
         response_data = {
-            'community_tomato': nb_tomatoes,
+            'community_tomato': self.get_queryset_number_of_tomatoes(t),
         }
         return Response(response_data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def statistics(self, request):
+        start = parse_datetime(request.query_params.get('start_date', None))
+        end = parse_datetime(request.query_params.get('end_date', None))
+
+        if not start or not end or end < start:
+            return Response(
+                {
+                    'dates': _('Please select a valid start and end dates'),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {
+                "totals": self._get_total_data(
+                    start_date=start,
+                    end_date=end,
+                ),
+                "graph": self._get_graph_data(
+                    start_date=start,
+                    end_date=end,
+                )
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def _get_total_data(self, start_date, end_date):
+        all_queryset = Tomato.objects.filter(
+            acquisition_date__lte=end_date,
+            acquisition_date__gte=start_date,
+        )
+        user_queryset = all_queryset.filter(user=self.request.user)
+        totals = {
+            "global": self.get_queryset_number_of_tomatoes(all_queryset),
+            "user": self.get_queryset_number_of_tomatoes(user_queryset)
+        }
+
+        return totals
+
+    def _get_graph_data(self, start_date, end_date):
+        interval_param = self._define_interval(start_date, end_date)
+
+        self.timezone = self.request.META.get(
+            'HTTP_REQUEST_TIMEZONE',
+            'America/Montreal',
+        )
+
+        start_date = start_date.astimezone(pytz.timezone(self.timezone))
+        end_date = end_date.astimezone(pytz.timezone(self.timezone))
+
+        queryset = Tomato.objects.filter(user=self.request.user)
+
+        if end_date:
+            queryset = queryset.filter(acquisition_date__lte=end_date)
+        if start_date:
+            queryset = queryset.filter(acquisition_date__gte=start_date)
+
+        queryset = queryset.annotate(
+            interval=self._trunc_interval(interval_param),
+        )
+
+        labels = self._get_intervals(start_date, end_date, interval_param)
+
+        response_data = {
+            'labels': labels,
+            'datasets': self._get_datasets(queryset, labels)
+        }
+
+        return response_data
+
+    @staticmethod
+    def _define_interval(start_date, end_date):
+        """
+        Return interval based on date span. diff_date being given in days and
+        seconds, we translate it in full seconds to handle partial day.
+        """
+        diff_date = end_date - start_date
+        seconds_in_day = 3600 * 24
+        seconds = diff_date.seconds + (diff_date.days * seconds_in_day)
+
+        if seconds <= 31 * seconds_in_day:
+            return 'day'
+        else:
+            return 'month'
+
+    def _trunc_interval(self, interval_param):
+        trunc_function = TruncMonth
+
+        if interval_param == 'day':
+            trunc_function = TruncDay
+
+        return trunc_function(
+            'acquisition_date', tzinfo=pytz.timezone(self.timezone)
+        )
+
+    @staticmethod
+    def _get_intervals(start, end, interval_param):
+        labels = set()
+
+        date = start.replace(hour=0, minute=0, second=0)
+
+        if interval_param == 'day':
+            while end >= date:
+                labels.add(
+                    date.strftime("%Y-%m-%dT%H:%M:%S")
+                )
+                date += timedelta(days=1)
+        else:
+            date = date.replace(day=1)
+            end = end.replace(day=1, hour=0, minute=0, second=0)
+            while end >= date:
+                labels.add(
+                    date.strftime("%Y-%m-%dT%H:%M:%S")
+                )
+                # Get first day of next month
+                date += timedelta(days=32)
+                date = date.replace(day=1)
+
+        labels = list(labels)
+        labels.sort()
+        return labels
+
+    def _get_datasets(self, queryset, labels):
+        queryset_by_interval = queryset.values('interval').annotate(
+            number_of_tomato=(Sum('number_of_tomato')),
+        )
+        data_set_types = ['number_of_tomato']
+
+        data_sets = []
+        for data_set_type in data_set_types:
+            data_set = {
+                'label': data_set_type,
+                'data': self._get_data(
+                    queryset_by_interval,
+                    data_set_type,
+                    labels,
+                )
+            }
+            data_sets.append(data_set)
+
+        return data_sets
+
+    @staticmethod
+    def _get_data(queryset, data_set_type, labels):
+        results = list()
+
+        non_covered_labels = labels.copy()
+        for data in queryset:
+            label = data['interval'].strftime('%Y-%m-%dT%H:%M:%S')
+            results.append(
+                {
+                    'x': label,
+                    'y': data.get(data_set_type),
+                }
+            )
+            non_covered_labels.remove(label)
+
+        # Adding missing datasets
+        for label in non_covered_labels:
+            results.append(
+                {
+                    'x': label,
+                    'y': 0.0,
+                }
+            )
+
+        results.sort(key=lambda d: parse_datetime(d['x']))
+
+        return results

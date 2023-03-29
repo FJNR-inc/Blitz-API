@@ -21,7 +21,7 @@ from tomato.models import Tomato
 User = get_user_model()
 
 
-class ReportTests(CustomAPITestCase):
+class TomatoTests(CustomAPITestCase):
 
     ATTRIBUTES = [
         'id',
@@ -36,7 +36,7 @@ class ReportTests(CustomAPITestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(ReportTests, cls).setUpClass()
+        super(TomatoTests, cls).setUpClass()
 
         cls.client = APIClient()
         cls.user = UserFactory()
@@ -483,4 +483,491 @@ class ReportTests(CustomAPITestCase):
         self.assertEqual(
             result['community_tomato'],
             sum(current_entries)
+        )
+
+    def test_statistics_tomatoes_invalid_start(self):
+        """
+        Test we cant get tomatoes statistics with invalid start
+        """
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            data={
+                'start_date': 'invalid start',
+                'end_date': '2010-01-01T00:00:00Z'
+            },
+            content_type='application/json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+    def test_statistics_tomatoes_invalid_end(self):
+        """
+        Test we cant get tomatoes statistics with invalid end
+        """
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            data={
+                'end_date': 'invalid start',
+                'start_date': '2010-01-01T00:00:00Z'
+            },
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+    def test_statistics_tomatoes_invalid_dates(self):
+        """
+        Test we cant get tomatoes statistics with invalid dates
+        """
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            data={
+                'start_date': '2012-01-01T00:00:00Z',
+                'end_date': '2010-01-01T00:00:00Z'
+            },
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content
+        )
+
+    def test_statistics_tomatoes_empty_data(self):
+        """
+        Test we can get tomatoes statistics
+        even if there is no data at all
+        """
+        today = timezone.datetime(2023, 2, 26, 0, 0, 0)
+        last_year = today - timedelta(days=366)
+        limit_last_year = last_year + timedelta(days=1)
+
+        end = today.strftime('%Y-%m-%dT%H:%M:%SZ')
+        start = limit_last_year.strftime('%Y-%m-%dT%H:%M:%SZ')
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            data={
+                'start_date': start,
+                'end_date': end
+            },
+            content_type='application/json',
+        )
+        result = response.json()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(result['totals']['global'], 0)
+        self.assertEqual(result['totals']['user'], 0)
+        self.assertEqual(
+            result['graph']['labels'],
+            [
+                '2022-02-01T00:00:00',
+                '2022-03-01T00:00:00',
+                '2022-04-01T00:00:00',
+                '2022-05-01T00:00:00',
+                '2022-06-01T00:00:00',
+                '2022-07-01T00:00:00',
+                '2022-08-01T00:00:00',
+                '2022-09-01T00:00:00',
+                '2022-10-01T00:00:00',
+                '2022-11-01T00:00:00',
+                '2022-12-01T00:00:00',
+                '2023-01-01T00:00:00',
+                '2023-02-01T00:00:00',
+            ],
+        )
+        self.assertEqual(
+            result['graph']['datasets'],
+            [
+                {
+                    'label': 'number_of_tomato',
+                    'data': [
+                        {'x': '2022-02-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-03-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-04-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-05-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-06-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-07-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-08-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-09-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-10-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-11-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-12-01T00:00:00', 'y': 0.0},
+                        {'x': '2023-01-01T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-01T00:00:00', 'y': 0.0},
+                    ]
+                }
+            ],
+        )
+
+    def test_statistics_tomatoes_year(self):
+        """
+        Test we can get tomatoes statistics of current year
+        """
+        today = timezone.datetime(2023, 2, 26, 0, 0, 0)
+        last_year = today - timedelta(days=366)
+        limit_last_year = last_year + timedelta(days=1)
+
+        end = today.strftime('%Y-%m-%dT%H:%M:%SZ')
+        start = limit_last_year.strftime('%Y-%m-%dT%H:%M:%SZ')
+        self.client.force_authenticate(user=self.user)
+
+        Tomato.objects.create(user=self.user, number_of_tomato=5)
+        Tomato.objects.create(user=self.admin, number_of_tomato=4)
+        Tomato.objects.create(user=self.user, number_of_tomato=7)
+        Tomato.objects.all().update(acquisition_date=last_year)
+
+        t1 = Tomato.objects.create(
+            user=self.user,
+            number_of_tomato=15,
+            acquisition_date=today - timedelta(days=1),
+        )
+        t2 = Tomato.objects.create(
+            user=self.admin,
+            number_of_tomato=23,
+            acquisition_date=today - timedelta(days=2),
+        )
+        t3 = Tomato.objects.create(
+            user=self.user,
+            number_of_tomato=45,
+            acquisition_date=today - timedelta(days=3),
+        )
+        current_entries = [
+            t1.number_of_tomato,
+            t2.number_of_tomato,
+            t3.number_of_tomato,
+        ]
+        user_entries = [
+            t1.number_of_tomato,
+            t3.number_of_tomato,
+        ]
+
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            data={
+                'start_date': start,
+                'end_date': end
+            },
+            content_type='application/json',
+        )
+        result = response.json()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(result['totals']['global'], sum(current_entries))
+        self.assertEqual(result['totals']['user'], sum(user_entries))
+        self.assertEqual(
+            result['graph']['labels'],
+            [
+                '2022-02-01T00:00:00',
+                '2022-03-01T00:00:00',
+                '2022-04-01T00:00:00',
+                '2022-05-01T00:00:00',
+                '2022-06-01T00:00:00',
+                '2022-07-01T00:00:00',
+                '2022-08-01T00:00:00',
+                '2022-09-01T00:00:00',
+                '2022-10-01T00:00:00',
+                '2022-11-01T00:00:00',
+                '2022-12-01T00:00:00',
+                '2023-01-01T00:00:00',
+                '2023-02-01T00:00:00',
+            ],
+        )
+        self.assertEqual(
+            result['graph']['datasets'],
+            [
+                {
+                    'label': 'number_of_tomato',
+                    'data': [
+                        {'x': '2022-02-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-03-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-04-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-05-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-06-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-07-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-08-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-09-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-10-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-11-01T00:00:00', 'y': 0.0},
+                        {'x': '2022-12-01T00:00:00', 'y': 0.0},
+                        {'x': '2023-01-01T00:00:00', 'y': 0.0},
+                        {
+                            'x': '2023-02-01T00:00:00',
+                            'y': 60.0
+                        },
+                    ]
+                }
+            ],
+        )
+
+    def test_statistics_tomatoes_month(self):
+        """
+        Test we can get tomatoes statistics of current month
+        """
+        today = timezone.datetime(2023, 2, 26, 0, 0, 0)
+        last_month = today - timedelta(days=32)
+        limit_last_month = last_month + timedelta(days=1)
+
+        end = today.strftime('%Y-%m-%dT%H:%M:%SZ')
+        start = limit_last_month.strftime('%Y-%m-%dT%H:%M:%SZ')
+        self.client.force_authenticate(user=self.user)
+
+        Tomato.objects.create(user=self.user, number_of_tomato=5)
+        Tomato.objects.create(user=self.admin, number_of_tomato=4)
+        Tomato.objects.create(user=self.user, number_of_tomato=7)
+        Tomato.objects.all().update(acquisition_date=last_month)
+
+        t1 = Tomato.objects.create(
+            user=self.user,
+            number_of_tomato=15,
+            acquisition_date=today - timedelta(days=1),
+        )
+        t2 = Tomato.objects.create(
+            user=self.admin,
+            number_of_tomato=23,
+            acquisition_date=today - timedelta(days=2),
+        )
+        t3 = Tomato.objects.create(
+            user=self.user,
+            number_of_tomato=45,
+            acquisition_date=today - timedelta(days=3),
+        )
+        current_entries = [
+            t1.number_of_tomato,
+            t2.number_of_tomato,
+            t3.number_of_tomato,
+        ]
+        user_entries = [
+            t1.number_of_tomato,
+            t3.number_of_tomato,
+        ]
+
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            data={
+                'start_date': start,
+                'end_date': end
+            },
+            content_type='application/json',
+        )
+        result = response.json()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(result['totals']['global'], sum(current_entries))
+        self.assertEqual(result['totals']['user'], sum(user_entries))
+        self.assertEqual(
+            result['graph']['labels'],
+            [
+                '2023-01-25T00:00:00',
+                '2023-01-26T00:00:00',
+                '2023-01-27T00:00:00',
+                '2023-01-28T00:00:00',
+                '2023-01-29T00:00:00',
+                '2023-01-30T00:00:00',
+                '2023-01-31T00:00:00',
+                '2023-02-01T00:00:00',
+                '2023-02-02T00:00:00',
+                '2023-02-03T00:00:00',
+                '2023-02-04T00:00:00',
+                '2023-02-05T00:00:00',
+                '2023-02-06T00:00:00',
+                '2023-02-07T00:00:00',
+                '2023-02-08T00:00:00',
+                '2023-02-09T00:00:00',
+                '2023-02-10T00:00:00',
+                '2023-02-11T00:00:00',
+                '2023-02-12T00:00:00',
+                '2023-02-13T00:00:00',
+                '2023-02-14T00:00:00',
+                '2023-02-15T00:00:00',
+                '2023-02-16T00:00:00',
+                '2023-02-17T00:00:00',
+                '2023-02-18T00:00:00',
+                '2023-02-19T00:00:00',
+                '2023-02-20T00:00:00',
+                '2023-02-21T00:00:00',
+                '2023-02-22T00:00:00',
+                '2023-02-23T00:00:00',
+                '2023-02-24T00:00:00',
+                '2023-02-25T00:00:00',
+            ],
+        )
+        self.assertEqual(
+            result['graph']['datasets'],
+            [
+                {
+                    'label': 'number_of_tomato',
+                    'data': [
+                        {'x': '2023-01-25T00:00:00', 'y': 0.0},
+                        {'x': '2023-01-26T00:00:00', 'y': 0.0},
+                        {'x': '2023-01-27T00:00:00', 'y': 0.0},
+                        {'x': '2023-01-28T00:00:00', 'y': 0.0},
+                        {'x': '2023-01-29T00:00:00', 'y': 0.0},
+                        {'x': '2023-01-30T00:00:00', 'y': 0.0},
+                        {'x': '2023-01-31T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-01T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-02T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-03T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-04T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-05T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-06T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-07T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-08T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-09T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-10T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-11T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-12T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-13T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-14T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-15T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-16T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-17T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-18T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-19T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-20T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-21T00:00:00', 'y': 0.0},
+                        {'x': '2023-02-22T00:00:00', 'y': 0.0},
+                        {
+                            'x': '2023-02-23T00:00:00',
+                            'y': 45.0
+                        },
+                        {'x': '2023-02-24T00:00:00', 'y': 0.0},
+                        {
+                            'x': '2023-02-25T00:00:00',
+                            'y': 15.0
+                        }
+                    ]
+                }
+            ],
+        )
+
+    def test_statistics_tomatoes_week(self):
+        """
+        Test we can get tomatoes statistics of current week
+        """
+        today = timezone.datetime(2023, 2, 26, 0, 0, 0)
+        last_week = today - timedelta(days=7)
+        limit_last_week = last_week + timedelta(days=1)
+
+        end = today.strftime('%Y-%m-%dT%H:%M:%SZ')
+        start = limit_last_week.strftime('%Y-%m-%dT%H:%M:%SZ')
+        self.client.force_authenticate(user=self.user)
+
+        Tomato.objects.create(user=self.user, number_of_tomato=5)
+        Tomato.objects.create(user=self.admin, number_of_tomato=4)
+        Tomato.objects.create(user=self.user, number_of_tomato=7)
+        Tomato.objects.all().update(acquisition_date=last_week)
+
+        t1 = Tomato.objects.create(
+            user=self.user,
+            number_of_tomato=15,
+            acquisition_date=today - timedelta(days=1),
+        )
+        t2 = Tomato.objects.create(
+            user=self.admin,
+            number_of_tomato=23,
+            acquisition_date=today - timedelta(days=2),
+        )
+        t3 = Tomato.objects.create(
+            user=self.user,
+            number_of_tomato=45,
+            acquisition_date=today - timedelta(days=3),
+        )
+        current_entries = [
+            t1.number_of_tomato,
+            t2.number_of_tomato,
+            t3.number_of_tomato,
+        ]
+        user_entries = [
+            t1.number_of_tomato,
+            t3.number_of_tomato,
+        ]
+
+        response = self.client.get(
+            reverse('tomato-statistics'),
+            data={
+                'start_date': start,
+                'end_date': end
+            },
+            content_type='application/json',
+        )
+        result = response.json()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        self.assertEqual(result['totals']['global'], sum(current_entries))
+        self.assertEqual(result['totals']['user'], sum(user_entries))
+        self.assertEqual(
+            result['graph']['labels'],
+            [
+                '2023-02-19T00:00:00',
+                '2023-02-20T00:00:00',
+                '2023-02-21T00:00:00',
+                '2023-02-22T00:00:00',
+                '2023-02-23T00:00:00',
+                '2023-02-24T00:00:00',
+                '2023-02-25T00:00:00',
+            ],
+        )
+        self.assertEqual(
+            result['graph']['datasets'],
+            [
+                {
+                    'label': 'number_of_tomato',
+                    'data': [
+                        {
+                            'x': '2023-02-19T00:00:00',
+                            'y': 0.0,
+                        },
+                        {
+                            'x': '2023-02-20T00:00:00',
+                            'y': 0.0,
+                        },
+                        {
+                            'x': '2023-02-21T00:00:00',
+                            'y': 0.0,
+                        },
+                        {
+                            'x': '2023-02-22T00:00:00',
+                            'y': 0.0,
+                        },
+                        {
+                            'x': '2023-02-23T00:00:00',
+                            'y': 45.0
+                        },
+                        {
+                            'x': '2023-02-24T00:00:00',
+                            'y': 0.0
+                        },
+                        {
+                            'x': '2023-02-25T00:00:00',
+                            'y': 15.0
+                        }
+                    ]
+                },
+            ],
         )

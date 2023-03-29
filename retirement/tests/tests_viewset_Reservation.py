@@ -625,6 +625,62 @@ class ReservationTests(CustomAPITestCase):
 
         self.check_attributes(content['results'][0])
 
+    def test_list_ordering_by_retreat_name(self):
+        """
+        Test that we can order the reservation list by retreat name
+        """
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(
+            reverse('retreat:reservation-list'),
+            {
+                'ordering': 'retreat__name'
+            },
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        self.assertEqual(content['count'], 3)
+        self.assertEqual(
+            content['results'][0]['retreat_details']['name'],
+            self.retreat.name
+        )
+        self.assertEqual(
+            content['results'][2]['retreat_details']['name'],
+            self.retreat2.name
+        )
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(
+            reverse('retreat:reservation-list'),
+            {
+                'ordering': '-retreat__name'
+            },
+            format='json',
+        )
+
+        content = json.loads(response.content)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        self.assertEqual(content['count'], 3)
+        self.assertEqual(
+            content['results'][0]['retreat_details']['name'],
+            self.retreat2.name
+        )
+        self.assertEqual(
+            content['results'][2]['retreat_details']['name'],
+            self.retreat.name
+        )
+
     def test_list_as_non_admin(self):
         """
         Ensure that a user can list its reservations.

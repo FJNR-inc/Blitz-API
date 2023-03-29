@@ -202,98 +202,72 @@ class User(AbstractUser):
             )
 
     def get_number_of_past_tomatoes(self):
-        timeslots = self.get_nb_tomatoes_timeslot()
-        virtual_retreats = self.get_nb_tomatoes_virtual_retreat()
-        physical_retreats = self.get_nb_tomatoes_physical_retreat()
-
-        past_count = timeslots['past'] + \
-            virtual_retreats['past'] + \
-            physical_retreats['past']
-
-        custom_tomatoes = Tomato.objects.filter(
+        today = timezone.now()
+        nb_tomatoes = Tomato.objects.filter(
             user=self,
-        ).aggregate(
-            Sum('number_of_tomato'),
-        )
+            acquisition_date__lte=today
+        ).aggregate(Sum('number_of_tomato'))['number_of_tomato__sum']
+        nb_tomatoes = nb_tomatoes if nb_tomatoes else 0
 
-        if custom_tomatoes['number_of_tomato__sum'] is not None:
-            past_count += custom_tomatoes['number_of_tomato__sum']
-
-        return past_count
+        return nb_tomatoes
 
     def get_number_of_future_tomatoes(self):
         timeslots = self.get_nb_tomatoes_timeslot()
-        virtual_retreats = self.get_nb_tomatoes_virtual_retreat()
-        physical_retreats = self.get_nb_tomatoes_physical_retreat()
+        retreats = self.get_nb_tomatoes_retreat()
 
-        future_count = timeslots['future'] + \
-            virtual_retreats['future'] + \
-            physical_retreats['future']
+        future_count = timeslots['future'] + retreats['future']
 
         return future_count
 
     def get_nb_tomatoes_timeslot(self):
         from workplace.models import Reservation as TimeslotReservation
+        today = timezone.now()
+        nb_tomatoes = Tomato.objects.filter(
+            user=self,
+            source=Tomato.TOMATO_SOURCE_TIMESLOT,
+            acquisition_date__lte=today
+        ).aggregate(Sum('number_of_tomato'))['number_of_tomato__sum']
+        past_count = nb_tomatoes if nb_tomatoes else 0
 
         reservations = TimeslotReservation.objects.filter(
             user=self,
             is_active=True,
         )
-
-        past_count = 0
         future_count = 0
-
         for reservation in reservations:
-            if reservation.timeslot.end_time < timezone.now():
-                past_count += settings.NUMBER_OF_TOMATOES_TIMESLOT
-            else:
-                future_count += settings.NUMBER_OF_TOMATOES_TIMESLOT
+            if reservation.timeslot.end_time >= timezone.now():
+                future_count += reservation.timeslot.number_of_tomatoes
 
         return {
             'past': past_count,
             'future': future_count,
         }
 
-    def get_nb_tomatoes_virtual_retreat(self):
-        from retirement.models import Reservation as RetreatReservation
+    def get_nb_tomatoes_retreat(self):
+        from retirement.models import (
+            Reservation as RetreatReservation,
+            RetreatDate,
+        )
+        today = timezone.now()
+        nb_tomatoes = Tomato.objects.filter(
+            user=self,
+            source=Tomato.TOMATO_SOURCE_RETREAT,
+            acquisition_date__lte=today
+        ).aggregate(Sum('number_of_tomato'))['number_of_tomato__sum']
+        past_count = nb_tomatoes if nb_tomatoes else 0
 
         reservations = RetreatReservation.objects.filter(
             user=self,
             is_active=True,
-            retreat__type__is_virtual=True,
         )
-
-        past_count = 0
-        future_count = 0
-
-        for reservation in reservations:
-            if reservation.retreat.end_time < timezone.now():
-                past_count += reservation.retreat.get_number_of_tomatoes()
-            else:
-                future_count += reservation.retreat.get_number_of_tomatoes()
-
-        return {
-            'past': past_count,
-            'future': future_count,
-        }
-
-    def get_nb_tomatoes_physical_retreat(self):
-        from retirement.models import Reservation as RetreatReservation
-
-        reservations = RetreatReservation.objects.filter(
-            user=self,
-            is_active=True,
-            retreat__type__is_virtual=False,
+        future_dates = RetreatDate.objects.filter(
+            end_time__gte=today,
+            tomatoes_assigned=False,
+            retreat__reservations__in=reservations,
         )
-
-        past_count = 0
         future_count = 0
-
-        for reservation in reservations:
-            if reservation.retreat.end_time < timezone.now():
-                past_count += reservation.retreat.get_number_of_tomatoes()
-            else:
-                future_count += reservation.retreat.get_number_of_tomatoes()
+        for date in future_dates:
+            future_count += date.number_of_tomatoes
 
         return {
             'past': past_count,
