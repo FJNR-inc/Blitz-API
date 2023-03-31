@@ -411,11 +411,11 @@ class User(AbstractUser):
     def current_month_tomatoes(self):
         today = timezone.now()
         first_day = today.replace(
-            day=1, hour=0, minute=0, microsecond=0
+            day=1, hour=0, minute=0, second=0, microsecond=0
         )
         day = calendar.monthrange(today.year, today.month)[1]
         last_day = today.replace(
-            day=day, hour=23, minute=59, microsecond=999999
+            day=day, hour=23, minute=59, second=59, microsecond=999999
         )
         nb_tomatoes = Tomato.objects.filter(
             user=self,
