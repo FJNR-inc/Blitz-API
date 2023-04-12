@@ -1,6 +1,6 @@
 from admin_auto_filters.filters import AutocompleteFilterFactory
 from django.contrib import admin
-from datetime import datetime
+from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 
 from log_management.tasks import export_anonymous_chrono_data
@@ -13,10 +13,10 @@ from log_management.models import (
 
 def export_anonymous_chrono_data_month(self, request, queryset):
 
-    end_date = datetime.now()
+    end_date = timezone.now()
     start_date = end_date - relativedelta(months=1)
-    start_date = start_date.strftime('%Y-%m-%d %H:%M:%S')
-    end_date = end_date.strftime('%Y-%m-%d %H:%M:%S')
+    start_date = start_date.strftime('%Y-%m-%d %H:%M:%S %z')
+    end_date = end_date.strftime('%Y-%m-%d %H:%M:%S %z')
     export_anonymous_chrono_data.delay(request.user.id, start_date, end_date)
 
 
