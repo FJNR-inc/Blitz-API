@@ -1,5 +1,5 @@
 import calendar
-
+import pytz
 from rest_framework import status
 from rest_framework.test import (
     APIClient,
@@ -547,7 +547,8 @@ class TomatoTests(CustomAPITestCase):
         Test we can get tomatoes statistics
         even if there is no data at all
         """
-        today = timezone.datetime(2023, 2, 26, 0, 0, 0)
+        today = timezone.datetime(2023, 2, 26, 0, 0, 0).astimezone(
+                    pytz.timezone('America/Montreal'))
         last_year = today - timedelta(days=366)
         limit_last_year = last_year + timedelta(days=1)
 
@@ -617,7 +618,8 @@ class TomatoTests(CustomAPITestCase):
         """
         Test we can get tomatoes statistics of current year
         """
-        today = timezone.datetime(2023, 2, 26, 0, 0, 0)
+        today = timezone.datetime(2023, 2, 26, 0, 0, 0).astimezone(
+                    pytz.timezone('America/Montreal'))
         last_year = today - timedelta(days=366)
         limit_last_year = last_year + timedelta(days=1)
 
@@ -721,7 +723,8 @@ class TomatoTests(CustomAPITestCase):
         """
         Test we can get tomatoes statistics of current month
         """
-        today = timezone.datetime(2023, 2, 26, 0, 0, 0)
+        today = timezone.datetime(2023, 2, 26, 0, 0, 0).astimezone(
+                    pytz.timezone('America/Montreal'))
         last_month = today - timedelta(days=32)
         limit_last_month = last_month + timedelta(days=1)
 
@@ -866,7 +869,8 @@ class TomatoTests(CustomAPITestCase):
         """
         Test we can get tomatoes statistics of current week
         """
-        today = timezone.datetime(2023, 2, 26, 0, 0, 0)
+        today = timezone.datetime(2023, 2, 26, 0, 0, 0).astimezone(
+                    pytz.timezone('America/Montreal'))
         last_week = today - timedelta(days=7)
         limit_last_week = last_week + timedelta(days=1)
 
