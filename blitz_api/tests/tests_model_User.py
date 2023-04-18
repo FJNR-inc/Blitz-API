@@ -1,3 +1,6 @@
+import pytz
+
+from django.conf import settings
 from django.utils import timezone
 from datetime import datetime
 from rest_framework.test import APITestCase
@@ -13,6 +16,8 @@ from blitz_api.factories import (
     TimeSlotFactory,
     TimeSlotReservationFactory,
 )
+
+LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
 class UserTests(APITestCase):
@@ -90,7 +95,8 @@ class UserTests(APITestCase):
         r = RetreatFactory(
             number_of_tomatoes=10,
             type=type,
-            display_start_time=datetime(1990, 1, 15, 8)
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(1990, 1, 15, 8))
         )
         date = RetreatDateFactory(retreat=r)
         resa = ReservationFactory(
@@ -101,7 +107,8 @@ class UserTests(APITestCase):
         r2 = RetreatFactory(
             number_of_tomatoes=30,
             type=type,
-            display_start_time=datetime(1990, 1, 15, 8)
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(1990, 1, 15, 8))
         )
         date2 = RetreatDateFactory(retreat=r2)
         resa2 = ReservationFactory(
@@ -112,12 +119,13 @@ class UserTests(APITestCase):
         r3 = RetreatFactory(
             number_of_tomatoes=15,
             type=type,
-            display_start_time=datetime(1990, 1, 15, 8)
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(1990, 1, 15, 8))
         )
         date3 = RetreatDateFactory(
             retreat=r3,
-            start_time=datetime(1990, 1, 15, 8),
-            end_time=datetime(1990, 1, 17, 12)
+            start_time=LOCAL_TIMEZONE.localize(datetime(1990, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(1990, 1, 17, 12))
         )
         resa3 = ReservationFactory(
             retreat=r3,
@@ -223,8 +231,8 @@ class UserTests(APITestCase):
             timeslot=t2, is_active=False, user=user1)
 
         t3 = TimeSlotFactory(
-            start_time=datetime(1990, 1, 15, 8),
-            end_time=datetime(1990, 1, 16, 8))
+            start_time=LOCAL_TIMEZONE.localize(datetime(1990, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(1990, 1, 16, 8)))
         r3 = TimeSlotReservationFactory(timeslot=t3, user=user1)
 
         self.assertEqual(
