@@ -3,14 +3,11 @@ from datetime import timedelta, datetime
 from django.conf import settings
 from django.utils import timezone
 
-import factory
 from factory.django import DjangoModelFactory
 import factory.fuzzy
-from dateutil.tz import tz
 from django.contrib.auth import get_user_model
 
-from blitz_api.models import Organization, AcademicLevel, AcademicField, \
-    Address
+from blitz_api.models import Organization, AcademicLevel, AcademicField
 from retirement.models import (
     Retreat,
     RetreatDate,
@@ -133,8 +130,10 @@ class RetreatDateFactory(DjangoModelFactory):
     class Meta:
         model = RetreatDate
 
-    start_time = datetime(2130, 1, 15, 8)
-    end_time = datetime(2130, 1, 17, 12)
+    start_time = datetime(2130, 1, 15, 8).astimezone(
+        pytz.timezone('America/Montreal'))
+    end_time = datetime(2130, 1, 17, 12).astimezone(
+        pytz.timezone('America/Montreal'))
 
 
 class OrderFactory(DjangoModelFactory):
@@ -209,8 +208,8 @@ class PeriodFactory(DjangoModelFactory):
 
     name = factory.Sequence(lambda n: f'Period {n}')
     workplace = factory.SubFactory(WorkplaceFactory)
-    start_date = datetime(2130, 1, 1, 1)
-    end_date = datetime(2130, 12, 12, 12)
+    start_date = LOCAL_TIMEZONE.localize(datetime(2130, 1, 1, 1))
+    end_date = LOCAL_TIMEZONE.localize(datetime(2130, 12, 12, 12))
     price = factory.fuzzy.FuzzyDecimal(0, 1000, 2)
     is_active = True
 
@@ -221,8 +220,8 @@ class TimeSlotFactory(DjangoModelFactory):
 
     period = factory.SubFactory(PeriodFactory)
     price = factory.fuzzy.FuzzyDecimal(0, 1000, 2)
-    start_time = datetime(2130, 1, 15, 8)
-    end_time = datetime(2130, 1, 15, 12)
+    start_time = LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8))
+    end_time = LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 12))
 
 
 class TimeSlotReservationFactory(DjangoModelFactory):

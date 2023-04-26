@@ -1,6 +1,6 @@
 from unittest import mock
 from django.test import TestCase
-from datetime import datetime
+from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 
 
@@ -31,10 +31,10 @@ class TestExportAnonymousChronoDataTask(TestCase):
         """
         """
         mock_method.return_value = None
-        end_date = datetime.now()
+        end_date = timezone.now()
         start_date = end_date - relativedelta(months=1)
-        start_date = start_date.strftime('%Y-%m-%d %H:%M:%S')
-        end_date = end_date.strftime('%Y-%m-%d %H:%M:%S')
+        start_date = start_date.strftime('%Y-%m-%d %H:%M:%S %z')
+        end_date = end_date.strftime('%Y-%m-%d %H:%M:%S %z')
         export_anonymous_chrono_data(self.admin.id, start_date, end_date)
         self.assertEqual(
             ExportMedia.objects.all().count(),

@@ -276,7 +276,7 @@ CORS_EXPOSE_HEADERS = ["Link", ]
 # Temporary Token
 
 REST_FRAMEWORK_TEMPORARY_TOKENS = {
-    'MINUTES': config('TEMPORARY_TOKEN_MINUTES', default=30, cast=int),
+    'MINUTES': config('TEMPORARY_TOKEN_MINUTES', default=480, cast=int),
     'RENEW_ON_SUCCESS': config('TEMPORARY_TOKEN_RENEW_ON_SUCCESS',
                                default=True, cast=bool),
     'USE_AUTHENTICATION_BACKENDS': config('USE_AUTHENTICATION_BACKENDS',

@@ -1,12 +1,12 @@
 import json
 import tempfile
-from datetime import datetime
 
 import pytz
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import override_settings
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
@@ -72,7 +72,7 @@ class PictureTests(APITestCase):
             carpool_url='example2.com',
             review_url='example3.com',
             has_shared_rooms=True,
-            display_start_time=datetime.now(),
+            display_start_time=timezone.now(),
             type=self.retreatType,
         )
         self.picture = Picture.objects.create(
