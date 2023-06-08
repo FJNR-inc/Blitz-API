@@ -13,7 +13,10 @@ from django.utils.translation import ugettext_lazy as _
 
 from log_management.models import Log, EmailLog
 from .exceptions import PaymentAPIError
-from .models import CouponUser
+from .models import (
+    CouponUser,
+    OrderLine,
+)
 
 
 ###############################################################################
@@ -560,9 +563,6 @@ def validate_coupon_for_order(coupon, order):
         | Q(content_type__model='retreat',
             object_id__in=coupon.applicable_retreats.all().
             values_list('id', flat=True))
-        | Q(content_type__model='retreattype',
-            object_id__in=coupon.applicable_retreat_types.all().
-            values_list('id', flat=True))
         | Q(content_type__model='retreat',
             object_id__in=list_physical_retreat_id_applicable.
             values_list('id', flat=True))
@@ -570,6 +570,20 @@ def validate_coupon_for_order(coupon, order):
             object_id__in=list_virtual_retreat_id_applicable.
             values_list('id', flat=True))
     )
+
+    # check for retreat type application since we don't have GenericRelation
+    applicable_retreat_types = coupon.applicable_retreat_types.all()
+    applicable_order_lines_retreat_type_ids = []
+    for order_line in order.order_lines.all():
+        if order_line.content_type.model == 'retreat':
+            retreat = Retreat.objects.get(pk=order_line.object_id)
+            if retreat.type in applicable_retreat_types:
+                applicable_order_lines_retreat_type_ids.append(order_line.id)
+    applicable_order_lines_retreat_type = OrderLine.objects.filter(
+        pk__in=applicable_order_lines_retreat_type_ids)
+    if applicable_order_lines_retreat_type:
+        applicable_orderlines = applicable_orderlines | \
+                                applicable_order_lines_retreat_type
 
     if not applicable_orderlines:
         coupon_info['error'] = {
