@@ -14,14 +14,21 @@ from rest_framework.test import APITestCase
 
 from datetime import datetime, timedelta
 
-from blitz_api.factories import UserFactory
+from blitz_api.factories import (
+    UserFactory,
+    RetreatTypeFactory,
+    RetreatFactory,
+    RetreatDateFactory,
+)
 
 from .paysafe_sample_responses import (
     UNKNOWN_EXCEPTION,
     SAMPLE_INVALID_PAYMENT_TOKEN,
     SAMPLE_PROFILE_RESPONSE,
 )
-
+from retirement.models import (
+    Retreat,
+)
 from ..exceptions import PaymentAPIError
 from ..models import PaymentProfile, Order, Coupon, Package, OrderLine
 from ..services import (
@@ -397,3 +404,114 @@ class ServicesTests(APITestCase):
         self.assertIsNotNone(coupon_info_order_line)
         self.assertEqual(coupon_info_order_line.id,
                          order_line_most_exp_product.id)
+
+    def test_valide_coupon_retreattype(self):
+        """
+        Test that a coupon can be used on retreat type
+        """
+        retreat_type = RetreatTypeFactory()
+        coupon = Coupon.objects.create(
+            value=10,
+            code="RETREATTYPE",
+            start_time=LOCAL_TIMEZONE.localize(
+                datetime.now() -
+                timedelta(weeks=5)
+            ),
+            end_time=LOCAL_TIMEZONE.localize(
+                datetime.now() +
+                timedelta(weeks=5)
+            ),
+            max_use=100,
+            max_use_per_user=2,
+            details="Any retreat type for clients",
+            owner=self.user,
+        )
+        coupon.applicable_retreat_types.add(retreat_type)
+
+        r = RetreatFactory(
+            number_of_tomatoes=10,
+            price=500,
+            type=retreat_type,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(1990, 1, 15, 8))
+        )
+        date = RetreatDateFactory(retreat=r)
+
+        order = Order.objects.create(
+            user=self.user,
+            transaction_date=timezone.now(),
+            authorization_id=1,
+            settlement_id=1,
+            reference_number=897,
+        )
+        order_line_retreat = OrderLine.objects.create(
+            order=order,
+            quantity=1,
+            content_type=ContentType.objects.get_for_model(Retreat),
+            object_id=r.id
+        )
+
+        coupon_info = validate_coupon_for_order(coupon, order)
+        coupon_info_order_line = coupon_info.get('orderlines')[0].get(
+            'order_line'
+        )
+        self.assertIsNotNone(coupon_info_order_line)
+        self.assertEqual(coupon_info_order_line.id,
+                         order_line_retreat.id)
+
+    def test_valide_coupon_retreattype_duplicate(self):
+        """
+        Test that a coupon can be used on retreat type and a retreat but not
+        duplicating usage
+        """
+        retreat_type = RetreatTypeFactory()
+        coupon = Coupon.objects.create(
+            value=10,
+            code="RETREATTYPE",
+            start_time=LOCAL_TIMEZONE.localize(
+                datetime.now() -
+                timedelta(weeks=5)
+            ),
+            end_time=LOCAL_TIMEZONE.localize(
+                datetime.now() +
+                timedelta(weeks=5)
+            ),
+            max_use=100,
+            max_use_per_user=2,
+            details="Any retreat type for clients",
+            owner=self.user,
+        )
+        coupon.applicable_retreat_types.add(retreat_type)
+
+        r = RetreatFactory(
+            number_of_tomatoes=10,
+            price=500,
+            type=retreat_type,
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(1990, 1, 15, 8))
+        )
+        RetreatDateFactory(retreat=r)
+        coupon.applicable_retreats.add(r)
+
+        order = Order.objects.create(
+            user=self.user,
+            transaction_date=timezone.now(),
+            authorization_id=1,
+            settlement_id=1,
+            reference_number=897,
+        )
+        order_line_retreat = OrderLine.objects.create(
+            order=order,
+            quantity=1,
+            content_type=ContentType.objects.get_for_model(Retreat),
+            object_id=r.id
+        )
+
+        coupon_info = validate_coupon_for_order(coupon, order)
+        self.assertEqual(len(coupon_info.get('orderlines')), 1)
+        coupon_info_order_line = coupon_info.get('orderlines')[0].get(
+            'order_line'
+        )
+        self.assertIsNotNone(coupon_info_order_line)
+        self.assertEqual(coupon_info_order_line.id,
+                         order_line_retreat.id)
