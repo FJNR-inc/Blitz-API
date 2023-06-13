@@ -47,8 +47,7 @@ from .services import (charge_payment,
                        create_external_payment_profile,
                        create_external_card,
                        get_external_cards,
-                       PAYSAFE_CARD_TYPE,
-                       validate_coupon_for_order, )
+                       PAYSAFE_CARD_TYPE,)
 
 User = get_user_model()
 
