@@ -28,7 +28,9 @@ from .resources import (MembershipResource, PackageResource, OrderResource,
                         CouponResource, CouponUserResource, RefundResource, )
 from .services import (delete_external_card, validate_coupon_for_order,
                        notify_for_coupon, )
-
+from .exports import (
+    generate_coupon_usage,
+)
 from . import serializers, permissions
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
@@ -539,6 +541,13 @@ class CouponViewSet(ExportMixin, viewsets.ModelViewSet):
             super(CouponViewSet, self).destroy(request, *args, **kwargs)
         except Http404:
             pass
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, permission_classes=[IsAdminUser])
+    def export_usage(self, request, pk=None):
+
+        coupon: Coupon = self.get_object()
+        generate_coupon_usage.delay(request.user.id, coupon.id)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
