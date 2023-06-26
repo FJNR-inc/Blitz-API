@@ -19,9 +19,14 @@ RUN pip --timeout=1000 install -r /requirements.txt \
 
 RUN mkdir -p /opt/project
 
+COPY ./docker/entrypoint /entrypoint
+RUN sed -i 's/\r$//g' /entrypoint
+RUN chmod +x /entrypoint
+
+COPY ./docker/start /start
+RUN sed -i 's/\r$//g' /start
+RUN chmod +x /start
+
 WORKDIR /opt/project
 
-EXPOSE 8000
-
-# Run the production server
-CMD newrelic-admin run-program gunicorn --bind 0.0.0.0:$PORT --access-logfile - Blitz-API.wsgi:application
+ENTRYPOINT ["/entrypoint"]
