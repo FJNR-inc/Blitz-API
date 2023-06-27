@@ -68,6 +68,7 @@ router.register(
 )
 
 router.register('export_media', views.ExportMediaViewSet)
+router.register('magic_links', views.MagicLinkViewSet, basename='magiclink')
 
 urlpatterns = [
     websocket("ws/last_messages", tomato_views.last_messages),

@@ -18,9 +18,15 @@ from rest_framework.exceptions import PermissionDenied
 
 from blitz_api.mixins import ExportMixin
 from .models import (
-    TemporaryToken, ActionToken, Domain, Organization, AcademicLevel,
+    TemporaryToken,
+    ActionToken,
+    Domain,
+    Organization,
+    AcademicLevel,
     AcademicField,
-    ExportMedia)
+    ExportMedia,
+    MagicLink,
+)
 from .resources import (AcademicFieldResource, AcademicLevelResource,
                         OrganizationResource, UserResource)
 from . import serializers, permissions, services
@@ -635,3 +641,24 @@ class ExportMediaViewSet(viewsets.ModelViewSet):
 class MailChimpView(generics.CreateAPIView):
     serializer_class = serializers.MailChimpSerializer
     permission_classes = []
+
+
+class MagicLinkViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.MagicLinkSerializer
+    queryset = MagicLink.objects.all()
+    filter_fields = ('type',)
+    permission_classes = []
+
+    def get_permissions(self):
+        if self.action in ['retrieve']:
+            permission_classes = []
+        else:
+            permission_classes = [IsAdminUser]
+
+        return [permission() for permission in permission_classes]
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.use()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
