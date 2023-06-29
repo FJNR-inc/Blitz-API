@@ -10,14 +10,8 @@ RUN pip --timeout=1000 --no-cache-dir install -r /requirements-dev.txt
 
 RUN mkdir -p /opt/project
 
-COPY ./docker/entrypoint /entrypoint
-RUN sed -i 's/\r$//g' /entrypoint
-RUN chmod +x /entrypoint
-
 COPY ./docker/start /start
 RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
 
 WORKDIR /opt/project
-
-ENTRYPOINT ["/entrypoint"]
