@@ -12,6 +12,7 @@ from django.conf import settings
 
 from blitz_api.models import ExportMedia
 from retirement.models import Retreat
+from store.models import OrderLineBaseProduct
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
@@ -72,6 +73,7 @@ def generate_retreat_participation(
     output_stream = io.StringIO()
     writer = csv.writer(output_stream)
     retreat = Retreat.objects.get(pk=retreat_id)
+    option_mapping = {}
     room_export = retreat.has_room_option
     rooms_data = {}
     to_reorder_lines = []
@@ -80,6 +82,12 @@ def generate_retreat_participation(
         'Nom', 'Prénom', 'Email', "Date d'inscription",
         'Restrictions personnelles', 'Ville', 'Téléphone', 'Genre',
     ]
+    options = retreat.options
+    for opt in options:
+        option_mapping[opt.id] = len(header)
+        room_header = [opt.name]
+        header += room_header
+    room_index = len(header)
     if room_export:
         room_header = [
             'Option de chambre', 'Préférence de genre',
@@ -106,13 +114,24 @@ def generate_retreat_participation(
         line_array[6] = reservation.user.phone
         line_array[7] = reservation.user.gender
 
+        for opt in options:
+            try:
+                quantity = OrderLineBaseProduct.objects.get(
+                    order_line=reservation.order_line,
+                    option=opt
+                ).quantity
+            except OrderLineBaseProduct.DoesNotExist:
+                quantity = 0
+            line_array[option_mapping[opt.id]] = quantity
+
         if room_export:
             user_id = reservation.user.id
-            line_array[8] = rooms_data[user_id]['room_option']
-            line_array[9] = rooms_data[user_id]['gender_preference']
-            line_array[10] = rooms_data[user_id]['share_with']
-            line_array[11] = rooms_data[user_id]['room_number']
-            if line_array[11] == 'NA':
+            line_array[room_index] = rooms_data[user_id]['room_option']
+            line_array[room_index + 1] = rooms_data[
+                user_id]['gender_preference']
+            line_array[room_index + 2] = rooms_data[user_id]['share_with']
+            line_array[room_index + 3] = rooms_data[user_id]['room_number']
+            if line_array[room_index + 3] == 'NA':
                 no_room_lines.append(line_array)
             else:
                 to_reorder_lines.append(line_array)
