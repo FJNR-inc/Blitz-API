@@ -12,8 +12,13 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from .models import (
-    Domain, Organization, ActionToken, AcademicField, AcademicLevel,
-    ExportMedia
+    Domain,
+    Organization,
+    ActionToken,
+    AcademicField,
+    AcademicLevel,
+    ExportMedia,
+    MagicLink,
 )
 from .services import remove_translation_fields, check_if_translated_field
 from . import services, mailchimp
@@ -726,3 +731,15 @@ class MailChimpSerializer(serializers.Serializer):
                 'non_field_errors': [e.args[0]['detail']]
             })
         return validated_data
+
+
+class MagicLinkSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = MagicLink
+        fields = [
+            'id',
+            'full_link',
+            'description',
+        ]

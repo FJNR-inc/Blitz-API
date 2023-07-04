@@ -7,7 +7,12 @@ from factory.django import DjangoModelFactory
 import factory.fuzzy
 from django.contrib.auth import get_user_model
 
-from blitz_api.models import Organization, AcademicLevel, AcademicField
+from blitz_api.models import (
+    Organization,
+    AcademicLevel,
+    AcademicField,
+    MagicLink,
+)
 from retirement.models import (
     Retreat,
     RetreatDate,
@@ -81,6 +86,14 @@ class AcademicFieldFactory(DjangoModelFactory):
         model = AcademicField
 
     name = factory.Sequence(lambda n: f'AcademicField {n}')
+
+
+class MagicLinkFactory(DjangoModelFactory):
+    class Meta:
+        model = MagicLink
+
+    full_link = 'http://myverylonglink.thatiwantshorten.toamagiclink'
+    description = 'This is a factory magic link'
 
 
 class RetreatTypeFactory(DjangoModelFactory):
