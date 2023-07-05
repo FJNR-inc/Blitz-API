@@ -1,7 +1,7 @@
 pipeline {
   agent {
     docker {
-        image 'tmaier/docker-compose'
+        image 'docker:20.10.24-cli-alpine3.18'
         args '-v /var/run/docker.sock:/var/run/docker.sock'
     }
   }
@@ -11,22 +11,22 @@ pipeline {
   stages {
     stage('Debug info') {
       steps {
-        sh 'docker-compose --version'
+        sh 'docker compose --version'
       }
     }
     stage('Build images') {
       steps {
-        sh 'docker-compose build'
+        sh 'docker compose build'
       }
     }
     stage('Static code analysis') {
       steps {
-        sh 'docker-compose run --rm api pycodestyle --config=.pycodestylerc .'
+        sh 'docker compose run --rm api pycodestyle --config=.pycodestylerc .'
       }
     }
     stage('Unit tests') {
       steps {
-        sh 'docker-compose run --rm api python manage.py test'
+        sh 'docker compose run --rm api python manage.py test'
       }
     }
     stage('deploy QA') {

@@ -3,6 +3,7 @@ import datetime
 import os
 import logging
 import calendar
+import uuid
 
 from django.conf import settings
 from django.db import models
@@ -689,6 +690,63 @@ class Address(models.Model):
         abstract = True
 
 
+class MagicLink(models.Model):
+    """
+    This model stores a full link (for download etc.) and uuid.
+    The uuid is used publicly (in email etc.) and the model does the
+    bridge between uuid and the full link
+    """
+    MAGIC_LINK_TYPE_DOWNLOAD = 'DOWNLOAD'
+
+    MAGIC_LINK_TYPE_CHOICES = (
+        (MAGIC_LINK_TYPE_DOWNLOAD, _('Download')),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    full_link = models.TextField(
+        verbose_name=_("Full link")
+    )
+    type = models.CharField(
+        max_length=255,
+        choices=MAGIC_LINK_TYPE_CHOICES,
+        default=MAGIC_LINK_TYPE_DOWNLOAD,
+    )
+    description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Description"),
+    )
+    nb_uses = models.PositiveIntegerField(
+        verbose_name=_('Number of uses'),
+        default=0,
+    )
+    created_at = models.DateTimeField(
+        verbose_name=_('Created at'),
+        auto_now_add=True,
+    )
+    updated_at = models.DateTimeField(
+        verbose_name=_('Updated at'),
+        auto_now=True
+    )
+
+    @property
+    def is_used(self):
+        return self.nb_uses > 0
+
+    def use(self):
+        self.nb_uses += 1
+        self.save()
+
+    def get_url(self):
+        FRONTEND_SETTINGS = settings.LOCAL_SETTINGS['FRONTEND_INTEGRATION']
+        BASE_URL = FRONTEND_SETTINGS['SSO_URL']
+
+        return BASE_URL + FRONTEND_SETTINGS['MAGIC_LINK_URL'].replace(
+            "{{token}}",
+            str(self.id)
+        )
+
+
 class ExportMedia(models.Model):
     EXPORT_ANONYMOUS_CHRONO_DATA = 'ANONYMOUS CHRONO DATA'
     EXPORT_OTHER = 'OTHER'
@@ -740,12 +798,19 @@ class ExportMedia(models.Model):
 
     def send_confirmation_email(self):
         if self.author:
+            magic_link = MagicLink.objects.create(
+                full_link=self.file.url,
+                type=MagicLink.MAGIC_LINK_TYPE_DOWNLOAD,
+                description=f'Export {self.type} '
+                            f'for {self.author}'
+            )
+
             services.send_mail(
                 [self.author],
                 {
                     "USER_FIRST_NAME": self.author.first_name,
                     "USER_LAST_NAME": self.author.last_name,
-                    "export_link": self.file.url,
+                    "export_link": magic_link.get_url(),
                 },
                 "EXPORT_DONE",
             )

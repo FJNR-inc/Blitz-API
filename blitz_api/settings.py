@@ -421,6 +421,10 @@ LOCAL_SETTINGS = {
         cast=bool,
     ),
     'FRONTEND_INTEGRATION': {
+        'SSO_URL': config(
+            'SSO_URL',
+            default='https://login-dev-gcp.thesez-vous.org/',
+        ),
         'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT': config(
             'LINK_TO_BE_PREPARED_FOR_VIRTUAL_RETREAT',
             default='https://www.thesez-vous.com/sypreparer_retraitevirtuelle.html',
@@ -453,6 +457,7 @@ LOCAL_SETTINGS = {
             'RETREAT_UNSUBSCRIBE_URL',
             default='https://example.com/wait_queue/{{wait_queue_id}}/unsubscribe',
         ),
+        "MAGIC_LINK_URL": "magic-link/{{token}}",
     },
     'SELLING_TAX': 0.14975,
     'RETREAT_NOTIFICATION_LIFETIME_DAYS': config(
