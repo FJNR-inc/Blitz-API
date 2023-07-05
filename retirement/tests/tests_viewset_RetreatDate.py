@@ -208,7 +208,7 @@ class RetreatDateTests(CustomAPITestCase):
             'update',
             reason_message,
         )
-        mock_cancel.assert_called_once_with(False)
+        mock_cancel.assert_called_once_with(None)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -258,7 +258,7 @@ class RetreatDateTests(CustomAPITestCase):
             'update',
             reason_message,
         )
-        mock_cancel.assert_called_once_with(False)
+        mock_cancel.assert_called_once_with(None)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -308,7 +308,7 @@ class RetreatDateTests(CustomAPITestCase):
             'update',
             reason_message,
         )
-        mock_cancel.assert_called_once_with(False)
+        mock_cancel.assert_called_once_with(None)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -378,7 +378,7 @@ class RetreatDateTests(CustomAPITestCase):
             'update',
             reason_message,
         )
-        mock_cancel.assert_called_once_with(False)
+        mock_cancel.assert_called_once_with(None)
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
@@ -426,7 +426,7 @@ class RetreatDateTests(CustomAPITestCase):
             'update',
             reason_message,
         )
-        mock_cancel.assert_called_once_with(False)
+        mock_cancel.assert_called_once_with(None)
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
@@ -474,7 +474,7 @@ class RetreatDateTests(CustomAPITestCase):
             'update',
             reason_message,
         )
-        mock_cancel.assert_called_once_with(False)
+        mock_cancel.assert_called_once_with(None)
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
