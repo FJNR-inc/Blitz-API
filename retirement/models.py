@@ -1317,10 +1317,19 @@ class Reservation(SafeDeleteModel):
         user = email_dict['user']
         total_amount = email_dict['total_amount']
         amount_tax = email_dict['amount_tax']
+        refund_policy = email_dict['refund_policy']
         # Here the price takes the applied coupon into account, if
         # applicable.
+        if refund_policy == 'full_rate':
+            price = amount
+        elif refund_policy == 'retreat_rate':
+            price = (amount * retreat.refund_rate) / 100
+        elif refund_policy == 'no_refund':
+            price = 0
+        else:
+            raise Exception(f'Refund policy {refund_policy} not handled')
         old_retreat = {
-            'price': (amount * retreat.refund_rate) / 100,
+            'price': price,
             'name': "{0}: {1}".format(
                 _("Retreat"),
                 retreat.name
@@ -1499,6 +1508,7 @@ class Reservation(SafeDeleteModel):
                 'user': user,
                 'total_amount': refund.amount,
                 'amount_tax': round(refund.amount * TAX_RATE, 2),
+                'refund_policy': refund_policy,
             }
         return email_data
 
