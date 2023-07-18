@@ -1321,18 +1321,21 @@ class Reservation(SafeDeleteModel):
         # Here the price takes the applied coupon into account, if
         # applicable.
         if refund_policy == 'full_rate':
-            price = amount
-        elif refund_policy == 'retreat_rate':
-            price = (amount * retreat.refund_rate) / 100
+            refund_rate = 100
+        elif refund_policy in ['retreat_rate', None]:
+            refund_rate = retreat.refund_rate
         elif refund_policy == 'no_refund':
-            price = 0
+            refund_rate = 0
         else:
             raise Exception(f'Refund policy {refund_policy} not handled')
         old_retreat = {
-            'price': price,
-            'name': "{0}: {1}".format(
+            'price': amount,
+            'name': "{0}: {1} - {2}$ CAD | {3}% {4}".format(
                 _("Retreat"),
-                retreat.name
+                retreat.name,
+                retreat.price,
+                refund_rate,
+                _("refund rate")
             )
         }
 
