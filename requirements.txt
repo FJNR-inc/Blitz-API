@@ -8,7 +8,7 @@ django-cors-headers==3.10.0
 django-filter==21.1
 coreapi==2.3.3
 factory-boy==3.2.1
-Pygments==2.10.0
+Pygments==2.16.0
 Markdown==3.3.4
 django-anymail==8.4
 Pillow==8.4.0
