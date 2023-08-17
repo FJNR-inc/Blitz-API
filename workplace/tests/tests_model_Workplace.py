@@ -17,6 +17,7 @@ class WorkplaceTests(APITestCase):
             postal_code="123 456",
             state_province="Random state",
             country="Random country",
+            is_accessible=True,
         )
 
         self.assertEqual(workplace.__str__(), "random_workplace")
