@@ -3,13 +3,11 @@ from copy import copy
 
 from datetime import datetime
 
-from dateutil.parser import parse
 from dateutil.rrule import rrule, DAILY
 
 import pytz
 
-from rest_framework import serializers, status
-from rest_framework.reverse import reverse
+from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from django.conf import settings
