@@ -47,6 +47,11 @@ class Workplace(Address, SafeDeleteModel):
         related_name='workplaces',
     )
 
+    is_accessible = models.BooleanField(
+        default=True,
+        verbose_name=_("Is accessible"),
+    )
+
     # History is registered in translation.py
     # history = HistoricalRecords()
 
