@@ -24,11 +24,13 @@ class WorkplaceAdmin(SimpleHistoryAdmin, SafeDeleteAdmin, TranslationAdmin,
     list_display = (
         'name',
         'seats',
+        'is_accessible',
         highlight_deleted,
     ) + SafeDeleteAdmin.list_display
     list_filter = (
         'name',
         'seats',
+        'is_accessible',
     ) + SafeDeleteAdmin.list_filter
 
     actions = ['undelete_selected', 'export_admin_action']
