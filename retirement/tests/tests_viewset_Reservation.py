@@ -1332,6 +1332,7 @@ class ReservationTests(CustomAPITestCase):
                     'retreat:reservation-detail',
                     kwargs={'pk': self.reservation_admin.id},
                 ),
+                data={"refund_policy": "retreat_rate"},
             )
 
         self.assertEqual(

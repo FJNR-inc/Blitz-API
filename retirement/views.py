@@ -217,7 +217,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         deletion_message = request.data.get('deletion_message', None)
-        force_refund = request.data.get('force_refund', False)
+        refund_policy = request.data.get('refund_policy', None)
         if instance.total_reservations > 0 and not deletion_message:
             error = {
                 'deletion_message': _("There is at least one participant to "
@@ -226,7 +226,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             }
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
         if instance.is_active:
-            instance.custom_delete(deletion_message, force_refund)
+            instance.custom_delete(deletion_message, refund_policy)
         elif not instance.hide_from_client_admin_panel:
             instance.hide_from_client_admin_panel = True
             instance.save()
@@ -632,16 +632,16 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
 
         instance = self.get_object()
         user = instance.user
-        force_refund = False
+        refund_policy = None
 
         if self.request.user.is_staff:
-            force_refund = request.data.get('force_refund', False)
+            refund_policy = request.data.get('refund_policy', None)
         if self.request.user.id != user.id:
             cancel_reason = Reservation.CANCELATION_REASON_ADMIN_CANCELLED
         else:
             cancel_reason = Reservation.CANCELATION_REASON_USER_CANCELLED
 
-        refund_data = instance.process_refund(cancel_reason, force_refund)
+        refund_data = instance.process_refund(cancel_reason, refund_policy)
         if refund_data:
             Reservation.send_refund_confirmation_email(refund_data)
 
@@ -777,7 +777,7 @@ class RetreatDateViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         retreat_date: RetreatDate = self.get_object()
         reason_message = request.data.get('reason_message', None)
-        force_refund = request.data.get('force_refund', False)
+        refund_policy = request.data.get('refund_policy', None)
         if retreat_date.retreat.total_reservations > 0 and \
                 not reason_message:
             error = {
@@ -796,13 +796,13 @@ class RetreatDateViewSet(viewsets.ModelViewSet):
                     update(request, *args, **kwargs)
                 retreat.set_automatic_email()  # Recalculate retreat auto-email
                 retreat.process_impacted_users(
-                    'update', reason_message, force_refund)
+                    'update', reason_message, refund_policy)
             return response
 
     def destroy(self, request, *args, **kwargs):
         retreat_date: RetreatDate = self.get_object()
         reason_message = request.data.get('reason_message', None)
-        force_refund = request.data.get('force_refund', False)
+        refund_policy = request.data.get('refund_policy', None)
         if retreat_date.retreat.total_reservations > 0 and \
                 not reason_message:
             error = {
@@ -827,7 +827,7 @@ class RetreatDateViewSet(viewsets.ModelViewSet):
                     request, *args, **kwargs)
                 retreat.set_automatic_email()  # Recalculate retreat auto-email
                 retreat.process_impacted_users(
-                    'update', reason_message, force_refund)
+                    'update', reason_message, refund_policy)
             return Response(status=status.HTTP_204_NO_CONTENT)
 
 

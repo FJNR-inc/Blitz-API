@@ -50,6 +50,13 @@ class WorkplaceViewSet(ExportMixin, viewsets.ModelViewSet):
 
     export_resource = WorkplaceResource()
 
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            queryset = Workplace.objects.all()
+        else:
+            queryset = Workplace.objects.filter(is_accessible=True)
+        return queryset
+
 
 class PictureViewSet(viewsets.ModelViewSet):
     """

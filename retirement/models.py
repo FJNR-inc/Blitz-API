@@ -999,7 +999,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
             participants.add(reservation.user)
         return list(participants)
 
-    def process_impacted_users(self, reason, reason_message, force_refund):
+    def process_impacted_users(self, reason, reason_message, refund_policy):
         """
         Notify and potentially refund user for a reason happening on retreat:
         Retreat cancelled, deleted ...
@@ -1010,7 +1010,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
             # retrieve active users before we cancel the reservation
             users = self.get_participants()
             from .services import send_updated_retreat_email
-            self.cancel_participants_reservation(force_refund)
+            self.cancel_participants_reservation(refund_policy)
             send_updated_retreat_email(
                 self,
                 users,
@@ -1018,11 +1018,10 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 reason_message,
             )
 
-    def cancel_participants_reservation(self, force_refund):
+    def cancel_participants_reservation(self, refund_policy):
         """
         Cancel all participants' reservation
-        :params force_refund: True if we want to force refund for participants,
-        otherwise regular refund will be done.
+        :params refund_policy: Admin policy to apply to refund participants
         """
         active_reservations = self.reservations.filter(is_active=True)
         refund_data = []
@@ -1033,7 +1032,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 refund_data.append(
                     reservation.process_refund(
                         Reservation.CANCELATION_REASON_RETREAT_DELETED,
-                        force_refund)
+                        refund_policy)
                 )
 
         # Send emails to each participant having a refund
@@ -1042,7 +1041,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 if data:
                     Reservation.send_refund_confirmation_email(data)
 
-    def custom_delete(self, deletion_message=None, force_refund=False):
+    def custom_delete(self, deletion_message=None, refund_policy=None):
         """
         Deleting a retreat sends an email to all registered participants
         set the retreat to inactive and hide it from the admin panel.
@@ -1051,7 +1050,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         """
         self.is_active = False
         self.hide_from_client_admin_panel = True
-        self.process_impacted_users('deletion', deletion_message, force_refund)
+        self.process_impacted_users(
+            'deletion', deletion_message, refund_policy)
         self.save()
 
 
@@ -1257,8 +1257,14 @@ class Reservation(SafeDeleteModel):
     def __str__(self):
         return str(self.user)
 
-    def get_refund_value(self, total_refund=False):
-        if self.order_line is None or self.order_line.is_made_by_admin:
+    def get_refund_value(self, refund_policy=None):
+        """
+        Refund the user. Admin can specify a refund_policy to fully refund
+        user, or not refund at all or refund at retreat rate.
+        """
+        if self.order_line is None or \
+                self.order_line.is_made_by_admin or \
+                refund_policy == 'no_refund':
             return 0
 
         # First get net pay: total cost
@@ -1266,7 +1272,7 @@ class Reservation(SafeDeleteModel):
         # Add the tax rate, so we have the real value pay by the user
         refund_value *= TAX_RATE + 1.0
 
-        if not total_refund:
+        if refund_policy in ['retreat_rate', None]:
             # keep only the part that the retreat allow to refund
             refund_value *= self.retreat.refund_rate / 100
 
@@ -1279,8 +1285,8 @@ class Reservation(SafeDeleteModel):
 
         return round(refund_value, 2) if refund_value > 0 else 0
 
-    def make_refund(self, refund_reason, total_refund=False):
-        amount_to_refund = self.get_refund_value(total_refund)
+    def make_refund(self, refund_reason, refund_policy=None):
+        amount_to_refund = self.get_refund_value(refund_policy)
 
         # paysafe use value without cent
         amount_to_refund_paysafe = int(round(amount_to_refund * 100))
@@ -1314,10 +1320,10 @@ class Reservation(SafeDeleteModel):
         # Here the price takes the applied coupon into account, if
         # applicable.
         old_retreat = {
-            'price': (amount * retreat.refund_rate) / 100,
+            'price': amount,
             'name': "{0}: {1}".format(
                 _("Retreat"),
-                retreat.name
+                retreat.name,
             )
         }
 
@@ -1362,7 +1368,7 @@ class Reservation(SafeDeleteModel):
             )
             raise
 
-    def process_refund(self, cancel_reason, force_refund):
+    def process_refund(self, cancel_reason, refund_policy):
         """
         User will be refund the retreat's "refund_rate" if we're at least
         "min_day_refund" days before the event.
@@ -1398,12 +1404,17 @@ class Reservation(SafeDeleteModel):
         #  refundable
         #
         #  2 - An admin want to force a refund and the user paid for
-        #  his reservation
+        #  his reservation or force no refund
         #
         # In all case, only paid reservation (amount > 0) can be refunded
         if self.get_refund_value() > 0:
-            process_refund = (respects_minimum_days and refundable) or \
-                             force_refund
+            if refund_policy:
+                if refund_policy in ['retreat_rate', 'full_rate']:
+                    process_refund = True
+                else:
+                    process_refund = False
+            else:
+                process_refund = respects_minimum_days and refundable
         else:
             process_refund = False
 
@@ -1422,7 +1433,9 @@ class Reservation(SafeDeleteModel):
                 if process_refund:
                     try:
                         refund = self.make_refund(
-                            self.REFUND_REASON[cancel_reason])
+                            self.REFUND_REASON[cancel_reason],
+                            refund_policy
+                        )
                     except PaymentAPIError as err:
                         if str(err) == PAYSAFE_EXCEPTION['3406']:
                             raise rest_framework_serializers.ValidationError({
@@ -1486,6 +1499,7 @@ class Reservation(SafeDeleteModel):
                 'user': user,
                 'total_amount': refund.amount,
                 'amount_tax': round(refund.amount * TAX_RATE, 2),
+                'refund_policy': refund_policy,
             }
         return email_data
 

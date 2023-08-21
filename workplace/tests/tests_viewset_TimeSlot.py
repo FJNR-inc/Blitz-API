@@ -507,6 +507,7 @@ class TimeSlotTests(APITestCase):
                 "latitude": None,
                 "longitude": None,
                 "name": "Blitz",
+                "geolocation_link": None,
                 "pictures": [],
                 "postal_code": "123 456",
                 "seats": 40,
@@ -514,7 +515,8 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 'place_name': '',
                 "volunteers": [],
-                "url": f"http://testserver/workplaces/{self.workplace.id}"
+                "url": f"http://testserver/workplaces/{self.workplace.id}",
+                'is_accessible': True,
             }
         }
 
@@ -652,6 +654,7 @@ class TimeSlotTests(APITestCase):
                 "latitude": None,
                 "longitude": None,
                 "name": "Blitz",
+                "geolocation_link": None,
                 "pictures": [],
                 "postal_code": "123 456",
                 "seats": 40,
@@ -659,7 +662,8 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 'place_name': '',
                 "volunteers": [],
-                "url": f"http://testserver/workplaces/{self.workplace.id}"
+                "url": f"http://testserver/workplaces/{self.workplace.id}",
+                'is_accessible': True,
             }
         }
 
@@ -816,6 +820,7 @@ class TimeSlotTests(APITestCase):
                 "latitude": None,
                 "longitude": None,
                 "name": "Blitz",
+                "geolocation_link": None,
                 "pictures": [],
                 "postal_code": "123 456",
                 "seats": 40,
@@ -823,7 +828,8 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 'place_name': '',
                 "volunteers": [],
-                "url": f"http://testserver/workplaces/{self.workplace.id}"
+                "url": f"http://testserver/workplaces/{self.workplace.id}",
+                'is_accessible': True,
             }
         }
 
@@ -908,6 +914,7 @@ class TimeSlotTests(APITestCase):
                 "latitude": None,
                 "longitude": None,
                 "name": "Blitz",
+                "geolocation_link": None,
                 "pictures": [],
                 "postal_code": "123 456",
                 "seats": 40,
@@ -915,7 +922,8 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 'place_name': '',
                 "volunteers": [],
-                "url": f"http://testserver/workplaces/{self.workplace.id}"
+                "url": f"http://testserver/workplaces/{self.workplace.id}",
+                'is_accessible': True,
             }
         }
 
@@ -1111,6 +1119,7 @@ class TimeSlotTests(APITestCase):
                     "latitude": None,
                     "longitude": None,
                     "name": "Blitz2",
+                    "geolocation_link": None,
                     "pictures": [],
                     "postal_code": "123 456",
                     "seats": 40,
@@ -1118,7 +1127,8 @@ class TimeSlotTests(APITestCase):
                     "timezone": None,
                     "place_name": '',
                     "volunteers": [],
-                    "url": f"http://testserver/workplaces/{self.workplace2.id}"
+                    "url": f"http://testserver/workplaces/{self.workplace2.id}",
+                    'is_accessible': True,
                 }
             }]
         }
@@ -1170,6 +1180,7 @@ class TimeSlotTests(APITestCase):
                     "latitude": None,
                     "longitude": None,
                     "name": "Blitz",
+                    "geolocation_link": None,
                     "pictures": [],
                     "postal_code": "123 456",
                     "seats": 40,
@@ -1177,7 +1188,8 @@ class TimeSlotTests(APITestCase):
                     "timezone": None,
                     "place_name": '',
                     "volunteers": [],
-                    "url": f"http://testserver/workplaces/{self.workplace.id}"
+                    "url": f"http://testserver/workplaces/{self.workplace.id}",
+                    'is_accessible': True,
                 }
             }, {
                 'id': self.time_slot_active.id,
@@ -1202,6 +1214,7 @@ class TimeSlotTests(APITestCase):
                     "latitude": None,
                     "longitude": None,
                     "name": "Blitz2",
+                    "geolocation_link": None,
                     "pictures": [],
                     "postal_code": "123 456",
                     "seats": 40,
@@ -1209,7 +1222,8 @@ class TimeSlotTests(APITestCase):
                     "timezone": None,
                     "place_name": '',
                     "volunteers": [],
-                    "url": f"http://testserver/workplaces/{self.workplace2.id}"
+                    "url": f"http://testserver/workplaces/{self.workplace2.id}",
+                    'is_accessible': True,
                 }
             }]
         }
@@ -1271,6 +1285,7 @@ class TimeSlotTests(APITestCase):
                     "latitude": None,
                     "longitude": None,
                     "name": "Blitz",
+                    "geolocation_link": None,
                     "pictures": [],
                     "postal_code": "123 456",
                     "seats": 40,
@@ -1278,7 +1293,8 @@ class TimeSlotTests(APITestCase):
                     "timezone": None,
                     "place_name": '',
                     "volunteers": [],
-                    "url": f"http://testserver/workplaces/{self.workplace.id}"
+                    "url": f"http://testserver/workplaces/{self.workplace.id}",
+                    'is_accessible': True,
                 }
             }]
         }
@@ -1388,6 +1404,7 @@ class TimeSlotTests(APITestCase):
                 "latitude": None,
                 "longitude": None,
                 "name": "Blitz2",
+                "geolocation_link": None,
                 "pictures": [],
                 "postal_code": "123 456",
                 "seats": 40,
@@ -1395,7 +1412,8 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 "place_name": '',
                 "volunteers": [],
-                "url": f"http://testserver/workplaces/{self.workplace2.id}"
+                "url": f"http://testserver/workplaces/{self.workplace2.id}",
+                'is_accessible': True,
             }
         }
 
@@ -1444,6 +1462,7 @@ class TimeSlotTests(APITestCase):
                 "latitude": None,
                 "longitude": None,
                 "name": "Blitz2",
+                "geolocation_link": None,
                 "pictures": [],
                 "postal_code": "123 456",
                 "seats": 40,
@@ -1451,7 +1470,8 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 "place_name": '',
                 "volunteers": [],
-                "url": f"http://testserver/workplaces/{self.workplace2.id}"
+                "url": f"http://testserver/workplaces/{self.workplace2.id}",
+                'is_accessible': True,
             }
         }
 
@@ -1517,6 +1537,7 @@ class TimeSlotTests(APITestCase):
                 "latitude": None,
                 "longitude": None,
                 "name": "Blitz",
+                "geolocation_link": None,
                 "pictures": [],
                 "postal_code": "123 456",
                 "seats": 40,
@@ -1524,7 +1545,8 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 "place_name": '',
                 "volunteers": [],
-                "url": f"http://testserver/workplaces/{self.workplace.id}"
+                "url": f"http://testserver/workplaces/{self.workplace.id}",
+                'is_accessible': True,
             }
         }
 

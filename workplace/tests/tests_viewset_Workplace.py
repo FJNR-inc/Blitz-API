@@ -53,6 +53,7 @@ class WorkplaceTests(APITestCase):
             'state_province': 'Random_State',
             'timezone': "America/Montreal",
             'volunteers': [f"http://testserver/users/{self.user.id}"],
+            'is_accessible': False,
         }
 
         response = self.client.post(
@@ -77,6 +78,7 @@ class WorkplaceTests(APITestCase):
             'latitude': None,
             'longitude': None,
             'name': 'random_workplace',
+            'geolocation_link': None,
             'pictures': [],
             'seats': 40,
             'timezone': "America/Montreal",
@@ -84,6 +86,7 @@ class WorkplaceTests(APITestCase):
             'volunteers': [
                 f'http://testserver/users/{self.user.id}'
             ],
+            'is_accessible': False,
         }
 
         del response_content['id']
@@ -245,9 +248,11 @@ class WorkplaceTests(APITestCase):
             'address_line1': 'new_address',
             'city': 'new_city',
             'country': 'Random_Country',
+            'geolocation_link': 'https://goo.gl/maps/YmWaRRvShFQ2MFMs6',
             'postal_code': 'NEW_CIT',
             'state_province': 'Random_State',
             'timezone': "America/Montreal",
+            'is_accessible': False,
         }
 
         response = self.client.put(
@@ -271,12 +276,14 @@ class WorkplaceTests(APITestCase):
             'postal_code': 'NEW_CIT',
             'state_province': 'Random_State',
             'name': 'new_workplace',
+            'geolocation_link': 'https://goo.gl/maps/YmWaRRvShFQ2MFMs6',
             'pictures': [],
             'seats': 200,
             'timezone': 'America/Montreal',
             'place_name': '',
             'volunteers': [],
-            'url': f'http://testserver/workplaces/{self.workplace.id}'
+            'url': f'http://testserver/workplaces/{self.workplace.id}',
+            'is_accessible': False,
         }
 
         self.assertEqual(
@@ -301,10 +308,24 @@ class WorkplaceTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-    def test_list(self):
+    def test_list_unauthenticated(self):
         """
-        Ensure we can list workplaces as an unauthenticated user.
+        Ensure we can list workplaces as an unauthenticated user. Only seeing
+        accessible worplaces
         """
+
+        Workplace.objects.create(
+            name="Inaccessible",
+            seats=40,
+            details="short_description",
+            address_line1="random_address_1",
+            postal_code="RAN_DOM",
+            city='random_city',
+            state_province="Random_State",
+            country="Random_Country",
+            timezone="America/Montreal",
+            is_accessible=False,
+        )
 
         response = self.client.get(
             reverse('workplace-list'),
@@ -327,17 +348,72 @@ class WorkplaceTests(APITestCase):
                 'postal_code': 'RAN_DOM',
                 'state_province': 'Random_State',
                 'name': 'Blitz',
+                'geolocation_link': None,
                 'pictures': [],
                 'seats': 40,
                 'timezone': 'America/Montreal',
                 'place_name': '',
                 'volunteers': [],
-                'url': f'http://testserver/workplaces/{self.workplace.id}'
+                'url': f'http://testserver/workplaces/{self.workplace.id}',
+                'is_accessible': True,
             }]
         }
 
         self.assertEqual(json.loads(response.content), content)
 
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_admin(self):
+        """
+        Ensure we can list workplaces as an admin user.
+        """
+        self.client.force_authenticate(user=self.admin)
+        Workplace.objects.create(
+            name="Inaccessible",
+            seats=40,
+            details="short_description",
+            address_line1="random_address_1",
+            postal_code="RAN_DOM",
+            city='random_city',
+            state_province="Random_State",
+            country="Random_Country",
+            timezone="America/Montreal",
+            is_accessible=False,
+        )
+
+        response = self.client.get(
+            reverse('workplace-list'),
+            format='json',
+        )
+
+        self.assertEqual(json.loads(response.content)['count'], 2)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_user(self):
+        """
+        Ensure we can list workplaces as user, only seeing accessible
+        """
+
+        Workplace.objects.create(
+            name="Inaccessible",
+            seats=40,
+            details="short_description",
+            address_line1="random_address_1",
+            postal_code="RAN_DOM",
+            city='random_city',
+            state_province="Random_State",
+            country="Random_Country",
+            timezone="America/Montreal",
+            is_accessible=False,
+        )
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            reverse('workplace-list'),
+            format='json',
+        )
+        content = json.loads(response.content)
+        self.assertEqual(content['count'], 1)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_read(self):
@@ -364,12 +440,14 @@ class WorkplaceTests(APITestCase):
             'postal_code': 'RAN_DOM',
             'state_province': 'Random_State',
             'name': 'Blitz',
+            'geolocation_link': None,
             'pictures': [],
             'seats': 40,
             'place_name': '',
             'timezone': 'America/Montreal',
             'volunteers': [],
-            'url': f'http://testserver/workplaces/{self.workplace.id}'
+            'url': f'http://testserver/workplaces/{self.workplace.id}',
+            'is_accessible': True,
         }
 
         self.assertEqual(json.loads(response.content), content)

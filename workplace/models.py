@@ -30,6 +30,12 @@ class Workplace(Address, SafeDeleteModel):
         max_length=1000,
     )
 
+    geolocation_link = models.TextField(
+        verbose_name=_("Geolocation link"),
+        null=True,
+        blank=True,
+    )
+
     seats = models.IntegerField(
         verbose_name=_("Seats"),
     )
@@ -39,6 +45,11 @@ class Workplace(Address, SafeDeleteModel):
         blank=True,
         verbose_name=_("Volunteer"),
         related_name='workplaces',
+    )
+
+    is_accessible = models.BooleanField(
+        default=True,
+        verbose_name=_("Is accessible"),
     )
 
     # History is registered in translation.py

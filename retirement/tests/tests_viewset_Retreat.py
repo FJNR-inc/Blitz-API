@@ -1115,7 +1115,7 @@ class RetreatTests(CustomAPITestCase):
             'deletion',
             deletion_message
         )
-        mock_cancel.assert_called_once_with(False)
+        mock_cancel.assert_called_once_with(None)
 
         self.retreat.refresh_from_db()
         self.assertFalse(self.retreat.is_active)
