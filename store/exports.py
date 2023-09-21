@@ -11,7 +11,8 @@ from django.conf import settings
 from blitz_api.models import ExportMedia
 from store.models import (
     Coupon,
-    CouponUser,
+    OrderLine,
+    Refund,
 )
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
@@ -27,26 +28,28 @@ def generate_coupon_usage(admin_id, coupon_id):
     output_stream = io.StringIO()
     writer = csv.writer(output_stream)
     header = [
-        'user_email', 'university', 'user_firstname', 'user_lastname',
-        'student_number', 'academic_program_code', 'uses',
+        'Utilisateur.trice', 'Université', 'Prénom', 'Nom',
+        'Numéro étudiant', 'Code programme académique', 'Valeur utilisée',
+        'Élément associé',
     ]
     writer.writerow(header)
 
     coupon = Coupon.objects.get(pk=coupon_id)
-    coupon_users = CouponUser.objects.filter(coupon=coupon)
 
-    for usage in coupon_users:
-        if usage.uses > 0:
+    for line in OrderLine.objects.filter(coupon=coupon):
+        is_refunded = Refund.objects.filter(orderline=line).exists()
+        if not is_refunded:
             line_array = [None] * len(header)
-            line_array[0] = usage.user.email
-            university = usage.user.university
+            user = line.order.user
+            line_array[0] = user.email
+            university = user.university
             line_array[1] = university.name if university else ''
-            line_array[2] = usage.user.first_name
-            line_array[3] = usage.user.last_name
-            line_array[4] = usage.user.student_number
-            line_array[5] = usage.user.academic_program_code
-            line_array[6] = usage.uses
-
+            line_array[2] = user.first_name
+            line_array[3] = user.last_name
+            line_array[4] = user.student_number
+            line_array[5] = user.academic_program_code
+            line_array[6] = line.coupon_real_value
+            line_array[7] = line.content_object.name
             writer.writerow(line_array)
 
     date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
