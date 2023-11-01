@@ -169,6 +169,7 @@ class OrderLineAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
         CouponFilter,
         'quantity',
         OrderUserFilter,
+        'order__transaction_date',
     )
     search_fields = [
         'order__user__email',
