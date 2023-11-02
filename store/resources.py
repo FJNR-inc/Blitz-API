@@ -100,7 +100,11 @@ class OrderLineResource(resources.ModelResource):
 
     def dehydrate_item_name(self, orderline):
         model = get_model_from_name(orderline.content_type.model)
-        return model.objects.get(id=orderline.object_id).name
+        try:
+            name = model.objects.get(id=orderline.object_id).name
+        except AttributeError:
+            name = model._meta.verbose_name.title()
+        return name
 
     def dehydrate_item_id(self, orderline):
         model = get_model_from_name(orderline.content_type.model)
