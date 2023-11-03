@@ -94,10 +94,7 @@ class OrderLineResource(resources.ModelResource):
         attribute='content_type__model',
     )
 
-    transaction_date = fields.Field(
-        column_name='transaction_date',
-        attribute='order__transaction_date',
-    )
+    transaction_date = fields.Field()
 
     item_name = fields.Field()
 
@@ -114,6 +111,10 @@ class OrderLineResource(resources.ModelResource):
     def dehydrate_item_id(self, orderline):
         model = get_model_from_name(orderline.content_type.model)
         return model.objects.get(id=orderline.object_id).id
+
+    def dehydrate_transaction_date(self, orderline):
+        date = orderline.order.transaction_date
+        return date.strftime('%Y-%m-%d %H:%M:%S')
 
     class Meta:
         model = OrderLine
