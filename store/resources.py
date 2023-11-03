@@ -94,6 +94,11 @@ class OrderLineResource(resources.ModelResource):
         attribute='content_type__model',
     )
 
+    transaction_date = fields.Field(
+        column_name='transaction_date',
+        attribute='order__transaction_date',
+    )
+
     item_name = fields.Field()
 
     item_id = fields.Field()
@@ -120,6 +125,7 @@ class OrderLineResource(resources.ModelResource):
             'item_id',
             'quantity',
             'order',
+            'transaction_date',
             'coupon',
             'coupon_real_value',
             'cost',
@@ -132,6 +138,7 @@ class OrderLineResource(resources.ModelResource):
             'item_id',
             'quantity',
             'order',
+            'transaction_date',
             'coupon',
             'coupon_real_value',
             'cost',
