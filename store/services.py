@@ -9,7 +9,7 @@ from django.core.mail import send_mail
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from log_management.models import Log, EmailLog
 from .exceptions import PaymentAPIError

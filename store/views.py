@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.http import Http404, HttpResponse, HttpRequest
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from rest_framework import viewsets, status, mixins, exceptions
 from rest_framework import serializers as drf_serializers
@@ -50,7 +50,7 @@ class BaseProductViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.BaseProductManagerSerializer
     queryset = BaseProduct.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
-    filter_fields = {
+    filterset_fields = {
         'available': ['exact'],
         'name': ['exact'],
         'price': ['exact', 'gte', 'lte'],
@@ -90,7 +90,7 @@ class MembershipViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.MembershipSerializer
     queryset = Membership.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
-    filter_fields = {
+    filterset_fields = {
         'duration': ['exact', 'gte', 'lte'],
         'academic_levels': ['exact', 'isnull'],
         'details': ['exact'],
@@ -136,7 +136,7 @@ class PackageViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.PackageSerializer
     queryset = Package.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
-    filter_fields = {
+    filterset_fields = {
         'reservations': ['exact', 'gte', 'lte'],
         'exclusive_memberships': ['exact', 'isnull'],
         'details': ['exact'],
@@ -183,7 +183,7 @@ class OptionProductViewSet(ExportMixin, viewsets.ModelViewSet):
     queryset = OptionProduct.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
     search_fields = ('name',)
-    filter_fields = {
+    filterset_fields = {
         'available': ['exact'],
     }
 
@@ -220,7 +220,7 @@ class PaymentProfileViewSet(
     serializer_class = serializers.PaymentProfileSerializer
     queryset = PaymentProfile.objects.all()
     permission_classes = (IsAuthenticated,)
-    filter_fields = '__all__'
+    filterset_fields = '__all__'
 
     def cards(self, request, *args, **kwargs):
         """
@@ -373,7 +373,7 @@ class OrderLineViewSet(ExportMixin, ChartJSMixin, viewsets.ModelViewSet):
     serializer_class = serializers.OrderLineSerializer
     queryset = OrderLine.objects.all()
     permission_classes = (IsAuthenticated,)
-    filter_fields = {
+    filterset_fields = {
         'order__transaction_date': ['gte', 'lte']
     }
 
@@ -442,7 +442,7 @@ class CustomPaymentViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.CustomPaymentSerializer
     queryset = CustomPayment.objects.all()
     permission_classes = (IsAuthenticated, permissions.IsAdminOrReadOnly)
-    filter_fields = '__all__'
+    filterset_fields = '__all__'
 
     export_resource = CustomPaymentResource()
 
@@ -473,7 +473,7 @@ class CouponViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.CouponSerializer
     queryset = Coupon.objects.all()
     permission_classes = (IsAuthenticated, permissions.IsAdminOrReadOnly)
-    filter_fields = {
+    filterset_fields = {
         'start_time': ['exact', 'gte', 'lte'],
         'end_time': ['exact',  'gte', 'lte'],
         'code': ['exact'],
@@ -558,7 +558,7 @@ class CouponUserViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.CouponUserSerializer
     queryset = CouponUser.objects.all()
     permission_classes = (IsAuthenticated, IsAdminUser)
-    filter_fields = '__all__'
+    filterset_fields = '__all__'
 
     export_resource = CouponUserResource()
 
@@ -585,7 +585,7 @@ class RefundViewSet(ExportMixin, viewsets.GenericViewSet,
     serializer_class = serializers.RefundSerializer
     queryset = Refund.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly, IsAuthenticated)
-    filter_fields = '__all__'
+    filterset_fields = '__all__'
 
     export_resource = RefundResource()
 

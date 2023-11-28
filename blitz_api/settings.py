@@ -18,7 +18,7 @@ from pathlib import Path
 import sys
 
 from decouple import config, Csv
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from dj_database_url import parse as db_url
 
 IS_GAE_ENV = config('GAE_INSTANCE', False)
@@ -152,7 +152,7 @@ WSGI_APPLICATION = 'blitz_api.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'HOST': config('DB_HOST', default="postgres"),
         'USER': config('DB_USER', default='my_db_user'),
         'PASSWORD': config('DB_PASSWORD', default='my_db_password'),
@@ -510,7 +510,7 @@ CELERY_BROKER_URL = config(
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_RESULT_BACKEND_DB = ''.join(
     [
-        'postgresql+psycopg2://',
+        'postgresql://',
         config("DB_USER", default='myprojectuser'),
         ":",
         config("DB_PASSWORD", default='password'),

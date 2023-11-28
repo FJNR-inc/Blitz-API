@@ -9,7 +9,7 @@ from django.core.mail import send_mail
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueValidator
@@ -261,7 +261,7 @@ class RetreatSerializer(BaseProductSerializer):
 
     class Meta:
         model = Retreat
-        exclude = ('deleted', 'users')
+        exclude = ('deleted', 'deleted_by_cascade', 'users')
         extra_kwargs = {
             'details': {
                 'help_text': _("Description of the retreat.")
@@ -935,7 +935,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Reservation
-        exclude = ('deleted', )
+        exclude = ('deleted', 'deleted_by_cascade')
         extra_kwargs = {
             'retreat': {
                 'help_text': _("Retreat represented by the picture."),

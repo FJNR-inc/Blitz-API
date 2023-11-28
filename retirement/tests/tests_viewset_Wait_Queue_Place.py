@@ -131,7 +131,7 @@ class WaitQueuePlaceTests(APITestCase):
         )
 
     def check_count_wait_queue_place(self, wait_queue_place, count):
-        self.assertEquals(
+        self.assertEqual(
             WaitQueuePlaceReserved.objects.filter(
                 wait_queue_place=wait_queue_place,
                 used=False,

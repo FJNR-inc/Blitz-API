@@ -8,7 +8,7 @@ from tomato.models import (
     Report, Tomato,
 )
 from django.db.models.functions import TruncMonth, TruncDay
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework import (
@@ -236,7 +236,7 @@ class ReportViewSet(viewsets.ModelViewSet):
 class TomatoViewSet(viewsets.ModelViewSet):
     serializer_class = TomatoSerializer
     queryset = Tomato.objects.all()
-    filter_fields = {
+    filterset_fields = {
         'user': ['exact'],
         'source': ['exact'],
         'acquisition_date': ['gte', 'lte']
