@@ -6,7 +6,12 @@ from django.utils import timezone
 from django.http import Http404
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-
+from django_filters import (
+    FilterSet,
+    DateFilter,
+    NumberFilter,
+    BooleanFilter,
+)
 from rest_framework import status, viewsets, mixins, generics
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser
@@ -36,6 +41,28 @@ User = get_user_model()
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
+class UserFilter(FilterSet):
+    membership_end_after = DateFilter(
+        field_name='membership_end',
+        lookup_expr='gte',
+    )
+    university = NumberFilter(
+        field_name='university__id',
+        lookup_expr='exact',
+    )
+    membership = NumberFilter(
+        field_name='membership__id',
+        lookup_expr='exact',
+    )
+    is_active = BooleanFilter(
+        field_name='is_active'
+    )
+
+    class Meta:
+        model = User
+        fields = '__all__'
+
+
 class UserViewSet(ExportMixin, viewsets.ModelViewSet):
     """
     retrieve:
@@ -54,26 +81,7 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
     Sets the user inactive.
     """
     queryset = User.objects.all()
-    filterset_fields = {
-        'email',
-        'phone',
-        'other_phone',
-        'academic_field',
-        'university',
-        'academic_level',
-        'membership',
-        'last_login',
-        'first_name',
-        'last_name',
-        'is_active',
-        'date_joined',
-        'birthdate',
-        'gender',
-        'membership_end',
-        'tickets',
-        'groups',
-        'user_permissions',
-    }
+    filterset_class = UserFilter
     search_fields = ('first_name', 'last_name', 'email')
     ordering = ('email',)
 
