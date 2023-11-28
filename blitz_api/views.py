@@ -5,7 +5,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.http import Http404
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from rest_framework import status, viewsets, mixins, generics
 from rest_framework.decorators import action
@@ -646,7 +646,7 @@ class MailChimpView(generics.CreateAPIView):
 class MagicLinkViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.MagicLinkSerializer
     queryset = MagicLink.objects.all()
-    filter_fields = ('type',)
+    filterset_fields = ('type',)
     permission_classes = []
 
     def get_permissions(self):

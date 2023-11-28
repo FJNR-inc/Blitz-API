@@ -19,7 +19,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from rest_framework import (
     mixins,
@@ -169,7 +169,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         'display_start_time',
     )
 
-    filter_class = RetreatFilter
+    filterset_class = RetreatFilter
     search_fields = ('name',)
     export_resource = RetreatResource()
 
@@ -573,7 +573,7 @@ class ReservationViewSet(ExportMixin, viewsets.ModelViewSet):
     serializer_class = serializers.ReservationSerializer
     queryset = Reservation.objects.all()
 
-    filter_class = RetreatReservationFilter
+    filterset_class = RetreatReservationFilter
 
     ordering_fields = (
         'is_active',
@@ -704,7 +704,7 @@ class RetreatInvitationViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.RetreatInvitationSerializer
     queryset = RetreatInvitation.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
-    filter_fields = '__all__'
+    filterset_fields = '__all__'
 
 
 class WaitQueuePlaceViewSet(viewsets.ModelViewSet):
@@ -772,7 +772,7 @@ class RetreatDateViewSet(viewsets.ModelViewSet):
     serializer_class = RetreatDateSerializer
     queryset = RetreatDate.objects.all()
     permission_classes = [permissions.IsAdminOrReadOnly]
-    filter_fields = '__all__'
+    filterset_fields = '__all__'
 
     def update(self, request, *args, **kwargs):
         retreat_date: RetreatDate = self.get_object()
@@ -835,7 +835,7 @@ class RetreatTypeViewSet(viewsets.ModelViewSet):
     serializer_class = RetreatTypeSerializer
     queryset = RetreatType.objects.all()
     permission_classes = [permissions.IsAdminOrReadOnly]
-    filter_fields = [
+    filterset_fields = [
         'is_virtual',
         'is_visible',
     ]
@@ -856,11 +856,11 @@ class AutomaticEmailViewSet(viewsets.ModelViewSet):
     serializer_class = AutomaticEmailSerializer
     queryset = AutomaticEmail.objects.all()
     permission_classes = [permissions.IsAdminOrReadOnly]
-    filter_fields = '__all__'
+    filterset_fields = '__all__'
 
 
 class RetreatUsageLogViewSet(viewsets.ModelViewSet):
     serializer_class = RetreatUsageLogSerializer
     queryset = RetreatUsageLog.objects.all()
     permission_classes = [IsAuthenticated]
-    filter_fields = '__all__'
+    filterset_fields = '__all__'

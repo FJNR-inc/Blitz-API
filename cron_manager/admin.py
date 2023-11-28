@@ -2,7 +2,7 @@ from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
 
 from . import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django_admin_inline_paginator.admin import TabularInlinePaginated
 
 

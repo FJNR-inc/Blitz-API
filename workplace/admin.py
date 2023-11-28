@@ -1,6 +1,6 @@
 from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from import_export.admin import ExportActionModelAdmin
 from modeltranslation.admin import TranslationAdmin
 from safedelete.admin import SafeDeleteAdmin, highlight_deleted
