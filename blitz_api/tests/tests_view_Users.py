@@ -851,3 +851,72 @@ class UsersTests(CustomAPITestCase):
             response.status_code,
             status.HTTP_400_BAD_REQUEST,
         )
+
+    def test_member_filter(self):
+        """
+        Ensure we can list members while filtering
+        """
+        now = timezone.now()
+        str_now = now.strftime("%Y-%m-%d")
+        self.user.delete()
+        self.client.force_authenticate(user=self.admin)
+
+        new_membership = Membership.objects.create(
+            name="new_1",
+            available=True,
+            price=50,
+            duration=timedelta(days=365),
+        )
+
+        new_membership_2 = Membership.objects.create(
+            name="new_2",
+            available=True,
+            price=50,
+            duration=timedelta(days=365),
+        )
+
+        inactive_user = UserFactory()
+        inactive_user.is_active = False
+        inactive_user.save()
+
+        active_user = UserFactory()
+        active_user.is_active = True
+        active_user.save()
+
+        membership_ended_user = UserFactory()
+        membership_ended_user.is_active = True
+        membership_ended_user.membership = new_membership
+        membership_ended_user.membership_end = now - relativedelta(days=1)
+        membership_ended_user.save()
+
+        membership_1_user = UserFactory()
+        membership_1_user.is_active = True
+        membership_1_user.membership = new_membership
+        membership_1_user.membership_end = now + relativedelta(days=1)
+        membership_1_user.save()
+
+        membership_2_user = UserFactory()
+        membership_2_user.is_active = True
+        membership_2_user.membership = new_membership_2
+        membership_2_user.membership_end = now + relativedelta(days=1)
+        membership_2_user.save()
+
+        inactive_filter = f'?is_active=false'
+        active_filter = f'?is_active=true'
+        active_member = f'?is_active=true&membership_end_after={str_now}'
+        active_target_member = (f'?is_active=true'
+                                f'&membership_end_after={str_now}'
+                                f'&membership={new_membership.id}')
+
+        response = self.client.get(reverse('user-list') + inactive_filter)
+        self.assertEqual(json.loads(response.content)['count'], 1)
+
+        response = self.client.get(reverse('user-list') + active_filter)
+        # 5 including admin
+        self.assertEqual(json.loads(response.content)['count'], 5)
+
+        response = self.client.get(reverse('user-list') + active_member)
+        self.assertEqual(json.loads(response.content)['count'], 2)
+
+        response = self.client.get(reverse('user-list') + active_target_member)
+        self.assertEqual(json.loads(response.content)['count'], 1)

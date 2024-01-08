@@ -17,7 +17,7 @@ from django.db import transaction
 from django.db.models import F
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from blitz_api.serializers import UserSerializer
 from blitz_api.services import (remove_translation_fields,
@@ -114,7 +114,7 @@ class WorkplaceSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Workplace
-        exclude = ('deleted',)
+        exclude = ('deleted', 'deleted_by_cascade')
         extra_kwargs = {
             'details': {'help_text': _("Description of the workplace.")},
             'name': {
@@ -258,7 +258,7 @@ class PeriodSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Period
-        exclude = ('deleted',)
+        exclude = ('deleted', 'deleted_by_cascade')
         extra_kwargs = {
             'workplace': {
                 'required': True,
@@ -512,7 +512,7 @@ class TimeSlotSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = TimeSlot
-        exclude = ('deleted', 'users')
+        exclude = ('deleted', 'deleted_by_cascade', 'users')
         extra_kwargs = {
             'period': {
                 'required': True,
@@ -674,7 +674,7 @@ class BatchTimeSlotSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = TimeSlot
-        exclude = ('deleted', 'price', 'users',)
+        exclude = ('deleted', 'deleted_by_cascade', 'price', 'users',)
 
 
 class ReservationSerializer(serializers.HyperlinkedModelSerializer):
@@ -753,7 +753,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Reservation
-        exclude = ('deleted',)
+        exclude = ('deleted', 'deleted_by_cascade')
         extra_kwargs = {
             'is_active': {
                 'required': True,

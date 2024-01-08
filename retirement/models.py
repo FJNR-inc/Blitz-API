@@ -20,7 +20,7 @@ from blitz_api.models import Address
 from django.contrib.auth import get_user_model
 from django.db import models, transaction
 from django.utils.html import format_html
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
 

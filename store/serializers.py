@@ -17,7 +17,7 @@ import uuid
 
 from django.apps import apps
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction, models
@@ -1255,7 +1255,7 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Coupon
-        exclude = ('deleted',)
+        exclude = ('deleted', 'deleted_by_cascade')
         extra_kwargs = {
             'applicable_retreats': {
                 'required': False,
@@ -1282,7 +1282,7 @@ class CouponUserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = CouponUser
-        exclude = ('deleted',)
+        exclude = ('deleted', 'deleted_by_cascade')
 
 
 class RefundSerializer(serializers.HyperlinkedModelSerializer):
@@ -1290,4 +1290,4 @@ class RefundSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Refund
-        exclude = ('deleted',)
+        exclude = ('deleted', 'deleted_by_cascade')

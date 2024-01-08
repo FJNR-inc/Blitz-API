@@ -1,7 +1,7 @@
 import os
 import logging
 from time import time, sleep
-import psycopg2
+import psycopg
 check_timeout = os.getenv("POSTGRES_CHECK_TIMEOUT", 30)
 check_interval = os.getenv("POSTGRES_CHECK_INTERVAL", 1)
 interval_unit = "second" if check_interval == 1 else "seconds"
@@ -21,11 +21,11 @@ logger.addHandler(logging.StreamHandler())
 def pg_isready(host, user, password, dbname):
     while time() - start_time < check_timeout:
         try:
-            conn = psycopg2.connect(**vars())
+            conn = psycopg.connect(**vars())
             logger.info("Postgres is ready! ✨ 💅")
             conn.close()
             return True
-        except psycopg2.OperationalError:
+        except psycopg.OperationalError:
             logger.info(
                 f"Postgres isn't ready. Waiting for {check_interval} "
                 f"{interval_unit}..."

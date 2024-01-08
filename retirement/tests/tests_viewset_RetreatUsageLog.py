@@ -161,7 +161,7 @@ class RetreatUsageLogTests(CustomAPITestCase):
 
         content = json.loads(response.content)
 
-        self.assertEquals(
+        self.assertEqual(
             content,
             {
                 'reservation': [

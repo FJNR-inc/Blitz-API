@@ -2,24 +2,25 @@
 mkdocs==1.2.3
 mkdocs-material==7.3.6
 
-Django==3.2.8
-djangorestframework==3.12.4
-django-cors-headers==3.10.0
-django-filter==21.1
+Django==4.2.5
+djangorestframework==3.14.0
+django-cors-headers==3.11.0
+django-filter==23.4
 coreapi==2.3.3
 factory-boy==3.2.1
 Pygments==2.10.0
 Markdown==3.3.4
-django-anymail==8.4
-Pillow==8.4.0
+django-anymail==10.2
+Pillow==9.1.0
 django-simple-history==3.0.0
 python-decouple==3.5
-django-storages==1.12.2
+django-storages==1.14.2
 dj_database_url==0.5.0
 zappa==0.54.0
-psycopg2-binary==2.9.1
-django-safedelete==0.5.6
-django-request-logging==0.7.3
+psycopg-binary==3.1.12
+psycopg==3.1.12
+django-safedelete==1.3.3
+django-request-logging==0.7.5
 django-modeltranslation==0.17.3
 django-import-export==2.6.1
 jsonfield==3.1.0
@@ -31,13 +32,14 @@ mailchimp3==3.0.14
 babel==2.9.1
 troposphere==3.1.0
 
-asgiref==3.4.1
+django-admin-inline-paginator==0.4.0
+asgiref==3.7.2
 
 # Google cloud platform
-google-cloud-storage==1.42.3
+google-cloud-storage==2.8.0
 
 # Celery
-celery[pytest]==5.1.2
-pytest==6.2.4
-django-celery-results==2.2.0
-django-celery-beat==2.2.1
+celery[pytest]==5.2.7
+pytest==7.2.2
+django-celery-results==2.5.1
+django-celery-beat==2.5.0
