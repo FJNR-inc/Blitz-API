@@ -521,3 +521,4 @@ CELERY_RESULT_BACKEND_DB = ''.join(
     ]
 )
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_RESULT_EXTENDED = True
