@@ -36,7 +36,7 @@ django-admin-inline-paginator==0.4.0
 asgiref==3.7.2
 
 # Google cloud platform
-google-cloud-storage==2.8.0
+google-cloud-storage==2.16.0
 
 # Celery
 celery[pytest]==5.2.7
