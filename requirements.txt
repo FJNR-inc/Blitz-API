@@ -33,7 +33,7 @@ babel==2.9.1
 troposphere==3.1.0
 
 django-admin-inline-paginator==0.4.0
-asgiref==3.7.2
+asgiref==3.8.0
 
 # Google cloud platform
 google-cloud-storage==2.8.0
