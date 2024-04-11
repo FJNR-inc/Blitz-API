@@ -420,6 +420,16 @@ LOCAL_SETTINGS = {
         default=False,
         cast=bool,
     ),
+    'STATUS_URLS': {
+        'ASSIGN_RETREAT_TOMATOES': config(
+            'STATUS_URL_ASSIGN_RETREAT_TOMATOES',
+            default='',
+        ),
+        'TASK_EXECUTION': config(
+            'STATUS_URL_TASK_EXECUTION',
+            default='',
+        ),
+    },
     'FRONTEND_INTEGRATION': {
         'SSO_URL': config(
             'SSO_URL',
