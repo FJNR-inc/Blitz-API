@@ -35,7 +35,8 @@ def assign_retreat_tomatoes():
             date.save()
 
     try:
-        status_url = settings.LOCAL_SETTINGS['STATUS_URLS']['ASSIGN_RETREAT_TOMATOES']
+        urls = settings.LOCAL_SETTINGS['STATUS_URLS']
+        status_url = urls['ASSIGN_RETREAT_TOMATOES']
 
         if status_url:
             requests.get(status_url)
