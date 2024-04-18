@@ -36,6 +36,7 @@ from store.models import (
     Package,
     Membership,
     Coupon,
+    CouponUser,
 )
 
 User = get_user_model()
@@ -1240,6 +1241,53 @@ class CouponTests(CustomAPITestCase):
 
         data = json.loads(response.content)
         self.assertEqual(len(data['results']), 0)
+
+    def test_list_filter_max_use(self):
+        """
+        Ensure we can list all coupons used or not.
+        """
+        Coupon.objects.all().delete()
+        self.client.force_authenticate(user=self.admin)
+        c1 = CouponFactory(code='Available', owner=self.user, max_use=8)
+        c2 = CouponFactory(code='All used', owner=self.user, max_use=4, max_use_per_user=4)
+        c3 = CouponFactory(code='Overused', owner=self.user, max_use=5, max_use_per_user=10)
+        c4 = CouponFactory(code='Not used', owner=self.user, max_use=10)
+
+        response = self.client.get(
+            reverse('coupon-list'),
+            format='json',
+        )
+
+        data = json.loads(response.content)
+        self.assertEqual(len(data['results']), 4)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse('coupon-list'),
+            {'display_sold_out': 'false'},
+            format='json',
+        )
+
+        data = json.loads(response.content)
+        self.assertEqual(len(data['results']), 4)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        CouponUser.objects.create(coupon=c1, user=self.user, uses=1)
+        CouponUser.objects.create(coupon=c2, user=self.user, uses=4)
+        CouponUser.objects.create(coupon=c3, user=self.user, uses=10)
+
+        response = self.client.get(
+            reverse('coupon-list'),
+            {'display_sold_out': 'true'},
+            format='json',
+        )
+
+        data = json.loads(response.content)
+        coupon_ids = [coupon['id'] for coupon in data['results']]
+        self.assertEqual(len(data['results']), 2)
+        self.assertTrue(c1.id in coupon_ids)
+        self.assertTrue(c4.id in coupon_ids)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_read(self):
         """
