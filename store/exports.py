@@ -28,9 +28,20 @@ def generate_coupon_usage(admin_id, coupon_id):
     output_stream = io.StringIO()
     writer = csv.writer(output_stream)
     header = [
-        'Utilisateur.trice', 'Université', 'Prénom', 'Nom',
-        'Numéro étudiant', 'Code programme académique', 'Valeur utilisée',
+        'Numéro membre',  # django ID
+        'Utilisateur.trice',
+        'Université',
+        'Domaine',
+        'Niveau académique',
+        'Prénom',
+        'Nom',
+        'Sexe',
+        'Ville',
+        'Numéro étudiant',
+        'Code programme académique',
+        'Valeur utilisée',
         'Élément associé',
+        'Date d\'utilisation',
     ]
     writer.writerow(header)
 
@@ -41,15 +52,24 @@ def generate_coupon_usage(admin_id, coupon_id):
         if not is_refunded:
             line_array = [None] * len(header)
             user = line.order.user
-            line_array[0] = user.email
+            line_array[0] = user.id
+            line_array[1] = user.email
             university = user.university
-            line_array[1] = university.name if university else ''
-            line_array[2] = user.first_name
-            line_array[3] = user.last_name
-            line_array[4] = user.student_number
-            line_array[5] = user.academic_program_code
-            line_array[6] = line.coupon_real_value
-            line_array[7] = line.content_object.name
+            line_array[2] = university.name if university else ''
+            academic_field = user.academic_field
+            line_array[3] = academic_field.name if academic_field else ''
+            academic_level = user.academic_level
+            line_array[4] = academic_level.name if academic_level else ''
+            line_array[5] = user.first_name
+            line_array[6] = user.last_name
+            line_array[7] = user.gender
+            line_array[8] = user.city
+            line_array[9] = user.student_number
+            line_array[10] = user.academic_program_code
+            line_array[11] = line.coupon_real_value
+            line_array[12] = line.content_object.name
+            line_array[13] = LOCAL_TIMEZONE.localize(
+                line.order.transaction_date).strftime("%Y-%m-%d %H:%M:%S")
             writer.writerow(line_array)
 
     date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
