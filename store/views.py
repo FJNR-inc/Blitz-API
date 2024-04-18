@@ -543,8 +543,7 @@ class CouponViewSet(ExportMixin, viewsets.ModelViewSet):
         """
         queryset = Coupon.objects.all()
         if not self.request.user.is_staff:
-            # non staff can't filter on usage
-            return queryset.filter(owner=self.request.user)
+            queryset = queryset.filter(owner=self.request.user)
 
         # Check if we want to display sold ou coupon
         display_sold_out_str = self.request.query_params.get('display_sold_out', None)
