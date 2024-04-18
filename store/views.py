@@ -301,6 +301,13 @@ class OrderViewSet(ExportMixin, viewsets.ModelViewSet):
                 return Response(error, status=status.HTTP_400_BAD_REQUEST)
             orderlines = serializer.validated_data.pop('order_lines', None)
             coupon = serializer.validated_data.pop('coupon', None)
+
+            if coupon.organization and request.user.university != coupon.organization:
+                error = {
+                    'coupon_invalid_university': [coupon.organization.name]
+                }
+                return Response(error, status=status.HTTP_400_BAD_REQUEST)
+
             serializer.validated_data.pop('payment_token', None)
             serializer.validated_data.pop('single_use_token', None)
             order = Order(
