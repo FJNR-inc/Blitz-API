@@ -30,7 +30,8 @@ from blitz_api.factories import (
     RetreatTypeFactory,
     RetreatDateFactory,
     OrderFactory,
-    OptionProductFactory
+    OptionProductFactory,
+    CouponFactory,
 )
 
 from workplace.models import (
@@ -70,6 +71,9 @@ from store.models import (
 )
 from blitz_api import testing_tools
 from blitz_api.testing_tools import CustomAPITestCase
+from blitz_api.models import (
+    Organization,
+)
 
 User = get_user_model()
 
@@ -1236,6 +1240,106 @@ class OrderTests(CustomAPITestCase):
 
         self.assertEqual(admin.tickets, 1)
         self.assertEqual(admin.membership, None)
+
+    def test_create_coupon_university(self):
+        """
+        Ensure we can't create an order with invalid coupon university.
+        """
+        o1 = Organization.objects.create(name="Random organization")
+        o2 = Organization.objects.create(name="organization_valid")
+
+        c1 = CouponFactory(
+            owner=self.admin,
+            code="INVALID_UNIVERSITY",
+            organization=o1,
+            end_time="2030-01-06T15:11:06-05:00",
+            value=10,
+        )
+        c1.applicable_memberships.set([self.membership])
+        c2 = CouponFactory(
+            owner=self.admin,
+            code="VALID_UNIVERSITY",
+            organization=o2,
+            end_time="2030-01-06T15:11:06-05:00",
+            value=10
+        )
+        c2.applicable_memberships.set([self.membership])
+        c3 = CouponFactory(
+            owner=self.admin,
+            code="NO_UNIVERSITY",
+            end_time="2030-01-06T15:11:06-05:00",
+            value=10
+        )
+        c3.applicable_memberships.set([self.membership])
+
+        user = UserFactory(university=o2)
+        self.client.force_authenticate(user=user)
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'quantity': 1,
+            }],
+            'coupon': c1.code,
+        }
+
+        response = self.client.post(
+            reverse('order-validate-coupon'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'coupon_invalid_university': [c1.organization.name]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        admin = self.admin
+        admin.refresh_from_db()
+
+        self.assertEqual(admin.tickets, 1)
+        self.assertEqual(admin.membership, None)
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'quantity': 1,
+            }],
+            'coupon': c2.code,
+        }
+
+        response = self.client.post(
+            reverse('order-validate-coupon'),
+            data,
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'quantity': 1,
+            }],
+            'coupon': c3.code,
+        }
+
+        response = self.client.post(
+            reverse('order-validate-coupon'),
+            data,
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_create_coupon_max_use_exceeded(self):
         """
