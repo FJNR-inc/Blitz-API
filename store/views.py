@@ -5,6 +5,8 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.db.models import Sum, F
+from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponse, HttpRequest
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -532,9 +534,20 @@ class CouponViewSet(ExportMixin, viewsets.ModelViewSet):
         This viewset should return owned coupons except if
         the currently authenticated user is an admin (is_staff).
         """
-        if self.request.user.is_staff:
-            return Coupon.objects.all()
-        return Coupon.objects.filter(owner=self.request.user)
+        queryset = Coupon.objects.all()
+        if not self.request.user.is_staff:
+            # non staff can't filter on usage
+            return queryset.filter(owner=self.request.user)
+
+        # Check if we want to display sold ou coupon
+        display_sold_out_str = self.request.query_params.get('display_sold_out', None)
+        display_sold_out = display_sold_out_str.lower() in ['true', '1'] if display_sold_out_str is not None else None
+        if display_sold_out:
+            queryset = queryset.annotate(
+                total_uses=Coalesce(Sum('coupon_users__uses'), 0))
+
+            queryset = queryset.filter(total_uses__lt=F('max_use'))
+        return queryset
 
     def destroy(self, request, *args, **kwargs):
         try:
