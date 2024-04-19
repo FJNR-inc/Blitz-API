@@ -241,9 +241,9 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
         """
         user = self.get_object()
         nb_tickets = request.data.get('nb_tickets', None)
-        if not isinstance(nb_tickets, int) or nb_tickets < 1:
+        if not isinstance(nb_tickets, int):
             error = {
-                'nb_tickets': _("nb_tickets must be a positive integer.")}
+                'nb_tickets': _("nb_tickets must be an integer.")}
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
 
         user.credit_tickets(nb_tickets)
