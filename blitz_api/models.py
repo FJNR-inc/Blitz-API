@@ -396,6 +396,8 @@ class User(AbstractUser):
 
     def credit_tickets(self, nb_tickets: int):
         self.tickets += nb_tickets
+        if self.tickets < 0:
+            self.tickets = 0
         self.save()
 
     @property

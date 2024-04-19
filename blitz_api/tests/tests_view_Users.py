@@ -829,7 +829,8 @@ class UsersTests(CustomAPITestCase):
 
     def test_credit_ticket_negative_int(self):
         """
-        Ensure admin can't credit negative tickets to a user
+        Ensure admin can credit negative tickets to a user but it won't
+        go lower than 0
         """
         user = UserFactory()
         self.assertEqual(user.tickets, 1)
@@ -849,8 +850,10 @@ class UsersTests(CustomAPITestCase):
         )
         self.assertEqual(
             response.status_code,
-            status.HTTP_400_BAD_REQUEST,
+            status.HTTP_200_OK,
         )
+        user = User.objects.get(pk=user.id)
+        self.assertEqual(user.tickets, 0)
 
     def test_member_filter(self):
         """
