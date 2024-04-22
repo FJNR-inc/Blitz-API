@@ -548,7 +548,7 @@ class CouponViewSet(ExportMixin, viewsets.ModelViewSet):
         # Check if we want to display sold ou coupon
         display_sold_out_str = self.request.query_params.get('display_sold_out', None)
         display_sold_out = display_sold_out_str.lower() in ['true', '1'] if display_sold_out_str is not None else None
-        if display_sold_out:
+        if not display_sold_out:
             queryset = queryset.annotate(
                 total_uses=Coalesce(Sum('coupon_users__uses'), 0))
 

@@ -68,8 +68,9 @@ def generate_coupon_usage(admin_id, coupon_id):
             line_array[10] = user.academic_program_code
             line_array[11] = line.coupon_real_value
             line_array[12] = line.content_object.name
-            line_array[13] = LOCAL_TIMEZONE.localize(
-                line.order.transaction_date).strftime("%Y-%m-%d %H:%M:%S")
+            line_array[13] = (line.order.transaction_date.
+                              astimezone(LOCAL_TIMEZONE).
+                              strftime("%Y-%m-%d %H:%M:%S"))
             writer.writerow(line_array)
 
     date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
