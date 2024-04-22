@@ -1262,6 +1262,10 @@ class CouponTests(CustomAPITestCase):
         self.assertEqual(len(data['results']), 4)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+        CouponUser.objects.create(coupon=c1, user=self.user, uses=1)
+        CouponUser.objects.create(coupon=c2, user=self.user, uses=4)
+        CouponUser.objects.create(coupon=c3, user=self.user, uses=10)
+
         response = self.client.get(
             reverse('coupon-list'),
             {'display_sold_out': 'false'},
@@ -1269,12 +1273,11 @@ class CouponTests(CustomAPITestCase):
         )
 
         data = json.loads(response.content)
-        self.assertEqual(len(data['results']), 4)
+        self.assertEqual(len(data['results']), 2)
+        coupon_ids = [coupon['id'] for coupon in data['results']]
+        self.assertTrue(c1.id in coupon_ids)
+        self.assertTrue(c4.id in coupon_ids)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        CouponUser.objects.create(coupon=c1, user=self.user, uses=1)
-        CouponUser.objects.create(coupon=c2, user=self.user, uses=4)
-        CouponUser.objects.create(coupon=c3, user=self.user, uses=10)
 
         response = self.client.get(
             reverse('coupon-list'),
@@ -1283,10 +1286,7 @@ class CouponTests(CustomAPITestCase):
         )
 
         data = json.loads(response.content)
-        coupon_ids = [coupon['id'] for coupon in data['results']]
-        self.assertEqual(len(data['results']), 2)
-        self.assertTrue(c1.id in coupon_ids)
-        self.assertTrue(c4.id in coupon_ids)
+        self.assertEqual(len(data['results']), 4)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_read(self):
