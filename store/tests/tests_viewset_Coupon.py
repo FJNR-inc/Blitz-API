@@ -1268,6 +1268,14 @@ class CouponTests(CustomAPITestCase):
 
         response = self.client.get(
             reverse('coupon-list'),
+            format='json',
+        )
+        data = json.loads(response.content)
+        self.assertEqual(len(data['results']), 4)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse('coupon-list'),
             {'display_sold_out': 'false'},
             format='json',
         )
