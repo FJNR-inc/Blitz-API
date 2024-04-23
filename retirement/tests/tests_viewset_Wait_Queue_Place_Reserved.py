@@ -30,6 +30,7 @@ class WaitQueuePlaceReservedTests(CustomAPITestCase):
         'used',
         'available',
         'create',
+        'retreat_id',
     ]
 
     def setUp(self) -> None:

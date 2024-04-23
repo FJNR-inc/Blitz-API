@@ -514,7 +514,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 validated_data,
             )
 
-            # Update retreat seats
+            # Add a new spot for the waitlist
             free_seats = current_retreat.places_remaining
             if current_retreat.reserved_seats or free_seats == 1:
                 current_retreat.add_wait_queue_place(user)
@@ -542,6 +542,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                             "retreat."
                         )]
                     })
+                new_retreat.check_and_use_reserved_place(user)
                 if user_waiting:
                     user_waiting.delete()
 
@@ -1051,3 +1052,8 @@ class WaitQueuePlaceReservedSerializer(serializers.HyperlinkedModelSerializer):
                 'view_name': 'retreat:waitqueueplacereserved-detail',
             },
         }
+
+    def to_representation(self, instance):
+        data = super(WaitQueuePlaceReservedSerializer, self).to_representation(instance)
+        data['retreat_id'] = instance.wait_queue_place.retreat.id
+        return data
