@@ -31,7 +31,7 @@ from .resources import (MembershipResource, PackageResource, OrderResource,
 from .services import (delete_external_card, validate_coupon_for_order,
                        notify_for_coupon, )
 from .exports import (
-    generate_coupon_usage,
+    generate_coupon_usage, export_orderlines_sales,
 )
 from . import serializers, permissions
 
@@ -435,6 +435,34 @@ class OrderLineViewSet(ExportMixin, ChartJSMixin, viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
             data=product_object_list
         )
+
+    @action(methods=['post'], detail=False, permission_classes=[IsAdminUser])
+    def export_sales(self, request):
+        """
+        Export sales data to a csv file.
+        """
+        try:
+            year = request.data.get('year', None)
+            month = request.data.get('month', None)
+
+            if not year or not month:
+                raise KeyError
+            if not isinstance(year, int) or not isinstance(month, int):
+                raise ValueError
+            export_orderlines_sales.delay(
+                request.user.id, str(year), str(month))
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except KeyError:
+            error = {
+                    'missing_arguments': _('Please provide a year and a month '
+                                           'for this export')
+                }
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError:
+            error = {
+                    'invalid_arguments': _('Year and month must be integers')
+                }
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CustomPaymentViewSet(ExportMixin, viewsets.ModelViewSet):
