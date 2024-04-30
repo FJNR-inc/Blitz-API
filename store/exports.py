@@ -122,7 +122,7 @@ def export_orderlines_sales(admin_id, year, month):
             order__transaction_date__month=month
     ):
         try:
-            refund = Refund.objects.ge(orderline=line)
+            refund = Refund.objects.get(orderline=line)
         except Refund.DoesNotExist:
             refund = None
         order = line.order
