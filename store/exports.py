@@ -145,7 +145,7 @@ def export_orderlines_sales(admin_id, year, month):
 
         # Orderline information
         line_array[8] = line.content_type
-        line_array[9] = line.content_object.name
+        line_array[9] = line.content_object
         line_array[10] = line.quantity
 
         # Coupon information
