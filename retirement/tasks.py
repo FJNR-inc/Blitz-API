@@ -2,6 +2,8 @@ from celery import shared_task
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.conf import settings
+import requests
 
 
 @shared_task
@@ -31,3 +33,14 @@ def assign_retreat_tomatoes():
                 )
             date.tomatoes_assigned = True
             date.save()
+
+    try:
+        urls = settings.LOCAL_SETTINGS['STATUS_URLS']
+        status_url = urls['ASSIGN_RETREAT_TOMATOES']
+
+        if status_url:
+            requests.get(status_url)
+    except Exception:
+        # We don't want to block the task because of a status update
+        # Status system should already report the error if needed
+        pass

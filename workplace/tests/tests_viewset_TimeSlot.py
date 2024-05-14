@@ -1127,7 +1127,8 @@ class TimeSlotTests(APITestCase):
                     "timezone": None,
                     "place_name": '',
                     "volunteers": [],
-                    "url": f"http://testserver/workplaces/{self.workplace2.id}",
+                    "url":
+                        f"http://testserver/workplaces/{self.workplace2.id}",
                     'is_accessible': True,
                 }
             }]
@@ -1222,7 +1223,8 @@ class TimeSlotTests(APITestCase):
                     "timezone": None,
                     "place_name": '',
                     "volunteers": [],
-                    "url": f"http://testserver/workplaces/{self.workplace2.id}",
+                    "url":
+                        f"http://testserver/workplaces/{self.workplace2.id}",
                     'is_accessible': True,
                 }
             }]

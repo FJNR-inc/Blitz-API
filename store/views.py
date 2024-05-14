@@ -5,6 +5,8 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.db.models import Sum, F
+from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponse, HttpRequest
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -29,7 +31,7 @@ from .resources import (MembershipResource, PackageResource, OrderResource,
 from .services import (delete_external_card, validate_coupon_for_order,
                        notify_for_coupon, )
 from .exports import (
-    generate_coupon_usage,
+    generate_coupon_usage, export_orderlines_sales,
 )
 from . import serializers, permissions
 
@@ -301,6 +303,13 @@ class OrderViewSet(ExportMixin, viewsets.ModelViewSet):
                 return Response(error, status=status.HTTP_400_BAD_REQUEST)
             orderlines = serializer.validated_data.pop('order_lines', None)
             coupon = serializer.validated_data.pop('coupon', None)
+
+            if coupon.organization and request.user.university != coupon.organization:
+                error = {
+                    'coupon_invalid_university': [coupon.organization.name]
+                }
+                return Response(error, status=status.HTTP_400_BAD_REQUEST)
+
             serializer.validated_data.pop('payment_token', None)
             serializer.validated_data.pop('single_use_token', None)
             order = Order(
@@ -427,6 +436,34 @@ class OrderLineViewSet(ExportMixin, ChartJSMixin, viewsets.ModelViewSet):
             data=product_object_list
         )
 
+    @action(methods=['post'], detail=False, permission_classes=[IsAdminUser])
+    def export_sales(self, request):
+        """
+        Export sales data to a csv file.
+        """
+        try:
+            year = request.data.get('year', None)
+            month = request.data.get('month', None)
+
+            if not year or not month:
+                raise KeyError
+            if not isinstance(year, int) or not isinstance(month, int):
+                raise ValueError
+            export_orderlines_sales.delay(
+                request.user.id, str(year), str(month))
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except KeyError:
+            error = {
+                    'missing_arguments': _('Please provide a year and a month '
+                                           'for this export')
+                }
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError:
+            error = {
+                    'invalid_arguments': _('Year and month must be integers')
+                }
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CustomPaymentViewSet(ExportMixin, viewsets.ModelViewSet):
     """
@@ -532,9 +569,17 @@ class CouponViewSet(ExportMixin, viewsets.ModelViewSet):
         This viewset should return owned coupons except if
         the currently authenticated user is an admin (is_staff).
         """
-        if self.request.user.is_staff:
-            return Coupon.objects.all()
-        return Coupon.objects.filter(owner=self.request.user)
+        queryset = Coupon.objects.all()
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(owner=self.request.user)
+
+        display_sold_out = self.request.query_params.get('display_sold_out', None)
+        # If None or True, we display all coupons
+        if display_sold_out and display_sold_out.lower() in ['false', '0']:
+            queryset = queryset.annotate(
+                total_uses=Coalesce(Sum('coupon_users__uses'), 0))
+            queryset = queryset.filter(total_uses__lt=F('max_use'))
+        return queryset
 
     def destroy(self, request, *args, **kwargs):
         try:

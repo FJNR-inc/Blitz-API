@@ -24,6 +24,14 @@ export_anonymous_chrono_data_month.short_description = \
     'export_anonymous_chrono_data_month'
 
 
+def export_anonymous_chrono_data_all(self, request, queryset):
+    export_anonymous_chrono_data.delay(request.user.id)
+
+
+export_anonymous_chrono_data_all.short_description = \
+    'export_anonymous_chrono_data_all'
+
+
 class LogAdmin(admin.ModelAdmin):
     list_display = ('source', 'level', 'error_code', 'message', 'created')
     search_fields = (
@@ -52,6 +60,7 @@ class EmailLogAdmin(admin.ModelAdmin):
 class ActionLogAdmin(admin.ModelAdmin):
     actions = [
         export_anonymous_chrono_data_month,
+        export_anonymous_chrono_data_all,
     ]
     list_display = (
         'id',
