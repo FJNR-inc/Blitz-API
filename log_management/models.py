@@ -161,7 +161,7 @@ class ActionLog(models.Model):
         or the session in a user column
         :params start_date: date to filter the range
         :params end_date: date to filter the range
-        :params target_queryset: a queryset to filter the data
+        :params targetIds: a list of ids to filter the data
         return nothing but will send an email when export is ready
         """
         anonymized_data = []
