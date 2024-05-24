@@ -154,25 +154,25 @@ class ActionLog(models.Model):
         verbose_name_plural = _("Action Logs")
 
     @classmethod
-    def anonymize_data(cls, start_date=None, end_date=None):
+    def anonymize_data(cls, start_date=None, end_date=None, targetIds=None):
         """
         Return a list of dict, one per ActionLog, where any reference to a
         user has been modified to a new UUID. We only want either the user
         or the session in a user column
         :params start_date: date to filter the range
         :params end_date: date to filter the range
+        :params target_queryset: a queryset to filter the data
         return nothing but will send an email when export is ready
         """
         anonymized_data = []
         user_uuid_matching = {}
         session_uuid_matching = {}
+        queryset = cls.objects.filter(id__in=targetIds) if targetIds else cls.objects.all()
         if start_date and end_date:
-            queryset = cls.objects.filter(
+            queryset = queryset.objects.filter(
                 created__gte=start_date,
                 created__lte=end_date,
             )
-        else:
-            queryset = cls.objects.all()
 
         for action in queryset:
             anonymized_action = {}
