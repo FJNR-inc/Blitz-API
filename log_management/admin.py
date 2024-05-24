@@ -32,7 +32,7 @@ export_anonymous_chrono_data_all.short_description = \
     'export_anonymous_chrono_data_all'
 
 def export_anonymous_chrono_data_selected(self, request, queryset):
-    targetIds = queryset.values_list('id', flat=True)
+    targetIds = queryset.all().values_list('id', flat=True)
     export_anonymous_chrono_data.delay(request.user.id, targetIds=targetIds)
 
 
