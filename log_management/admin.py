@@ -31,6 +31,14 @@ def export_anonymous_chrono_data_all(self, request, queryset):
 export_anonymous_chrono_data_all.short_description = \
     'export_anonymous_chrono_data_all'
 
+def export_anonymous_chrono_data_selected(self, request, queryset):
+    targetIds = list(queryset.all().values_list('id', flat=True))
+    export_anonymous_chrono_data.delay(request.user.id, targetIds=targetIds)
+
+
+export_anonymous_chrono_data_selected.short_description = \
+    'export_anonymous_chrono_data_selected'
+
 
 class LogAdmin(admin.ModelAdmin):
     list_display = ('source', 'level', 'error_code', 'message', 'created')
@@ -61,6 +69,7 @@ class ActionLogAdmin(admin.ModelAdmin):
     actions = [
         export_anonymous_chrono_data_month,
         export_anonymous_chrono_data_all,
+        export_anonymous_chrono_data_selected,
     ]
     list_display = (
         'id',

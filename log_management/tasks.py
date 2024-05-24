@@ -9,7 +9,7 @@ User = get_user_model()
 
 
 @shared_task()
-def export_anonymous_chrono_data(admin_id, start_date=None, end_date=None):
+def export_anonymous_chrono_data(admin_id, start_date=None, end_date=None, targetIds=None):
     """
     Allow an admin to export chrono data between 2 dates.
     Data will be anonymized and sent by email to the admin as CSV.
@@ -26,7 +26,7 @@ def export_anonymous_chrono_data(admin_id, start_date=None, end_date=None):
     if end_date : end_date = datetime.datetime.strptime(
         end_date, '%Y-%m-%d %H:%M:%S %z')
 
-    anonymized_actions = ActionLog.anonymize_data(start_date, end_date)
+    anonymized_actions = ActionLog.anonymize_data(start_date, end_date, targetIds)
 
     # Create a csv
     export_data = []
