@@ -272,22 +272,6 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
         old_email = getattr(self.instance, 'email', None)
 
         new_email = attrs.get('email', None)
-        new_university = attrs.get('university', None)
-
-        if (new_email or new_university) and university:
-            # Check that the email-university match is valid
-            domains = university.domains.all()
-
-            email_d = email.split("@", 1)[1]
-            if not any(d.name.lower() == email_d.lower() for d in domains):
-                raise serializers.ValidationError({
-                    'email': [
-                        _(
-                            "You must use your university address to "
-                            "choose this university."
-                        )
-                    ]
-                })
 
         if new_email and new_email != old_email:
             # Email is already taken by another user
