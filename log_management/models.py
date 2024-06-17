@@ -169,7 +169,7 @@ class ActionLog(models.Model):
         session_uuid_matching = {}
         queryset = cls.objects.filter(id__in=targetIds) if targetIds else cls.objects.all()
         if start_date and end_date:
-            queryset = queryset.objects.filter(
+            queryset = queryset.filter(
                 created__gte=start_date,
                 created__lte=end_date,
             )

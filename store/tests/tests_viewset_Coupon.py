@@ -7,7 +7,6 @@ from datetime import (
 from rest_framework import status
 from rest_framework.test import (
     APIClient,
-    APITestCase,
 )
 from unittest import mock
 from django.conf import settings
@@ -20,6 +19,8 @@ from blitz_api.factories import (
     UserFactory,
     AdminFactory,
     CouponFactory,
+    OrderFactory,
+    OrderLineFactory,
 )
 from blitz_api.testing_tools import CustomAPITestCase
 from workplace.models import (
@@ -37,6 +38,7 @@ from store.models import (
     Membership,
     Coupon,
     CouponUser,
+    Refund,
 )
 
 User = get_user_model()
@@ -77,6 +79,7 @@ class CouponTests(CustomAPITestCase):
         cls.client = APIClient()
         cls.user = UserFactory()
         cls.admin = AdminFactory()
+        cls.retreat_type = ContentType.objects.get_for_model(Retreat)
         cls.package_type = ContentType.objects.get_for_model(Package)
         cls.package = Package.objects.create(
             name="extreme_package",
@@ -1386,6 +1389,139 @@ class CouponTests(CustomAPITestCase):
         self.assertEqual(
             data,
             content
+        )
+
+    def test_usages(self):
+        """
+        Ensure we have the correct info for usages.
+        """
+        self.client.force_authenticate(user=self.admin)
+
+        coupon = Coupon.objects.create(
+            value=13,
+            code="ABCDEFGH",
+            start_time="2019-01-06T15:11:05-05:00",
+            end_time="2100-01-06T15:11:06-05:00",
+            max_use=100,
+            max_use_per_user=2,
+            details="Coupon to test usages",
+            owner=self.user,
+        )
+        coupon.applicable_product_types.add(self.package_type)
+        coupon.applicable_retreats.add(self.retreat)
+
+        order1 = OrderFactory(user=self.user)
+        ol11 = OrderLineFactory(
+            order=order1,
+            content_type=self.package_type,
+            object_id=self.package.id,
+            coupon=coupon,
+            coupon_real_value=5
+        )
+
+        ol12 = OrderLineFactory(
+            order=order1,
+            content_type=self.retreat_type,
+            object_id=self.retreat.id,
+            coupon=coupon,
+            coupon_real_value=6
+        )
+        ol13 = OrderLineFactory(
+            order=order1,
+            content_type=self.retreat_type,
+            object_id=self.retreat.id,
+            coupon=coupon,
+            coupon_real_value=7
+        )
+
+        order2 = OrderFactory(user=self.user)
+        ol21 = OrderLineFactory(
+            order=order2,
+            content_type=self.package_type,
+            object_id=self.package.id,
+            coupon=coupon,
+            coupon_real_value=8
+        )
+
+        order3 = OrderFactory(user=self.user)
+        ol31 = OrderLineFactory(
+            order=order3,
+            content_type=self.retreat_type,
+            object_id=self.retreat.id,
+            coupon=coupon,
+            coupon_real_value=9
+        )
+
+        Refund.objects.create(
+            orderline=ol13,
+            amount=self.retreat.price,
+            refund_date="2019-01-06T15:11:05-05:00"
+        )
+        Refund.objects.create(
+            orderline=ol31,
+            amount=self.retreat.price,
+            refund_date="2019-01-06T15:11:05-05:00"
+        )
+
+        response = self.client.get(
+            reverse(
+                'coupon-detail',
+                kwargs={'pk': coupon.id},
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.content
+        )
+
+        data = json.loads(response.content)
+
+        expected_usages = [
+            {
+                'date': order1.transaction_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                'user': {
+                    'id': self.user.id,
+                    'first_name': self.user.first_name,
+                    'last_name': self.user.last_name,
+                    'email': self.user.email,
+                    'url': f'http://testserver/users/{self.user.id}',
+                    'phone': None,
+                    'personnal_restrictions': None
+                },
+                'amount_used': 11.0,
+                'user_university': {
+                    'name': '',
+                    'name_fr': '',
+                    'name_en': ''
+                },
+                'product_name': 'extreme_package, mega_retreat'
+            },
+            {
+                'date': order2.transaction_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                'user': {
+                    'id': self.user.id,
+                    'first_name': self.user.first_name,
+                    'last_name': self.user.last_name,
+                    'email': self.user.email,
+                    'url': f'http://testserver/users/{self.user.id}',
+                    'phone': None,
+                    'personnal_restrictions': None
+                },
+                'amount_used': 8.0,
+                'user_university': {
+                    'name': '',
+                    'name_fr': '',
+                    'name_en': ''
+                },
+                'product_name': 'extreme_package'
+            }
+        ]
+
+        self.assertEqual(
+            data['usages'],
+            expected_usages,
         )
 
     def test_read_non_existent(self):

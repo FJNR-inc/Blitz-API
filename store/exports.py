@@ -18,6 +18,35 @@ from store.models import (
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
 
+def _get_coupon_export_usage(coupon):
+    usages_per_order = {}
+    for line in OrderLine.objects.filter(coupon=coupon):
+        is_refunded = Refund.objects.filter(orderline=line).exists()
+        if is_refunded: continue
+        if line.order.id not in usages_per_order:
+            usages_per_order[line.order.id] = {
+                'date': line.order.transaction_date.
+                          astimezone(LOCAL_TIMEZONE).
+                          strftime("%Y-%m-%d %H:%M:%S"),
+                'user': line.order.user,
+                'amount_used': line.coupon_real_value,
+                'product_name': set(),
+            }
+            usages_per_order[line.order.id]['product_name'].add(
+                line.content_object.name)
+        else:
+            usages_per_order[line.order.id]['amount_used'] += \
+                line.coupon_real_value
+            usages_per_order[line.order.id]['product_name'].add(
+                line.content_object.name
+            )
+    display_usages = []
+    for key, value in usages_per_order.items():
+        value['product_name'] = ', '.join(list(value['product_name']))
+        display_usages.append(value)
+    return display_usages
+
+
 @shared_task()
 def generate_coupon_usage(admin_id, coupon_id):
     """
@@ -40,38 +69,35 @@ def generate_coupon_usage(admin_id, coupon_id):
         'Numéro étudiant',
         'Code programme académique',
         'Valeur utilisée',
-        'Élément associé',
+        'Éléments associés',
         'Date d\'utilisation',
     ]
     writer.writerow(header)
 
     coupon = Coupon.objects.get(pk=coupon_id)
+    usages = _get_coupon_export_usage(coupon)
 
-    for line in OrderLine.objects.filter(coupon=coupon):
-        is_refunded = Refund.objects.filter(orderline=line).exists()
-        if not is_refunded:
-            line_array = [None] * len(header)
-            user = line.order.user
-            line_array[0] = user.id
-            line_array[1] = user.email
-            university = user.university
-            line_array[2] = university.name if university else ''
-            academic_field = user.academic_field
-            line_array[3] = academic_field.name if academic_field else ''
-            academic_level = user.academic_level
-            line_array[4] = academic_level.name if academic_level else ''
-            line_array[5] = user.first_name
-            line_array[6] = user.last_name
-            line_array[7] = user.gender
-            line_array[8] = user.city
-            line_array[9] = user.student_number
-            line_array[10] = user.academic_program_code
-            line_array[11] = line.coupon_real_value
-            line_array[12] = line.content_object.name
-            line_array[13] = (line.order.transaction_date.
-                              astimezone(LOCAL_TIMEZONE).
-                              strftime("%Y-%m-%d %H:%M:%S"))
-            writer.writerow(line_array)
+    for usage in usages:
+        line_array = [None] * len(header)
+        user = usage['user']
+        line_array[0] = user.id
+        line_array[1] = user.email
+        university = user.university
+        line_array[2] = university.name if university else ''
+        academic_field = user.academic_field
+        line_array[3] = academic_field.name if academic_field else ''
+        academic_level = user.academic_level
+        line_array[4] = academic_level.name if academic_level else ''
+        line_array[5] = user.first_name
+        line_array[6] = user.last_name
+        line_array[7] = user.gender
+        line_array[8] = user.city
+        line_array[9] = user.student_number
+        line_array[10] = user.academic_program_code
+        line_array[11] = usage['amount_used']
+        line_array[12] = usage['product_name']
+        line_array[13] = usage['date']
+        writer.writerow(line_array)
 
     date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
         .strftime("%Y%m%d")
