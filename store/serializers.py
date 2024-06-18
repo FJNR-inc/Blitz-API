@@ -47,7 +47,7 @@ from .services import (charge_payment,
                        create_external_payment_profile,
                        create_external_card,
                        get_external_cards,
-                       PAYSAFE_CARD_TYPE,)
+                       PAYSAFE_CARD_TYPE, )
 
 User = get_user_model()
 
@@ -79,7 +79,6 @@ class BaseProductManagerSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class OrderLineBaseProductSerializer(serializers.ModelSerializer):
-
     id = serializers.IntegerField()
     quantity = serializers.IntegerField()
     metadata = serializers.JSONField(required=False)
@@ -117,7 +116,7 @@ class SimpleBaseProductSerializer(serializers.HyperlinkedModelSerializer):
     product_type = serializers.SerializerMethodField()
 
     def get_product_type(self, obj):
-        return BaseProduct.objects.get_subclass(id=obj.id).\
+        return BaseProduct.objects.get_subclass(id=obj.id). \
             __class__.__name__.lower()
 
     class Meta:
@@ -486,7 +485,7 @@ class OrderLineSerializer(serializers.HyperlinkedModelSerializer):
             option: BaseProduct
             for option in options:
                 option_id = option.id
-                option_data = option.orderlinebaseproduct_set.\
+                option_data = option.orderlinebaseproduct_set. \
                     get(order_line_id=instance.id)
 
                 option_data = {
@@ -570,8 +569,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             else:
                 raise serializers.ValidationError({
                     'non_field_errors': [_(
-                       "You don't have the permission to create "
-                       "an order for another user."
+                        "You don't have the permission to create "
+                        "an order for another user."
                     )]
                 })
         if 'bypass_payment' in validated_data.keys():
@@ -760,7 +759,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
                             'non_field_errors': [_(
                                 "You already are registered "
                                 "to this timeslot: ") + str(timeslot) + "."
-                            ]
+                                                 ]
                         })
                     if (timeslot.period.workplace and
                             timeslot.period.workplace.seats - reserved > 0):
@@ -1047,7 +1046,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         data = super(OrderSerializer, self).to_representation(instance)
         # TTC is in cents after serialization
         data['total_cost_with_taxes'] = round(
-            data['total_cost_with_taxes']/100, 2)
+            data['total_cost_with_taxes'] / 100, 2)
         data['taxes'] = data['total_cost_with_taxes'] - data['total_cost']
         return data
 
@@ -1162,47 +1161,63 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
 
         return super(CouponSerializer, self).update(instance, validated_data)
 
-    def to_representation(self, instance):
-        data = super(CouponSerializer, self).to_representation(instance)
-        from workplace.serializers import TimeSlotSerializer
+    def get_coupon_usage(self, instance):
+        """
+        Get coupon usage per order, listing elements for frontend
+        """
         from blitz_api.serializers import (
             OrganizationSerializer,
             ReservationUserSerializer,
         )
+        usages_per_order = {}
+        for line in OrderLine.objects.filter(coupon=instance):
+            is_refunded = Refund.objects.filter(orderline=line).exists()
+            if is_refunded: continue
+            if line.order.id not in usages_per_order:
+                usages_per_order[line.order.id] = {
+                    'date': line.order.transaction_date,
+                    'user': ReservationUserSerializer(
+                        line.order.user,
+                        context={
+                            'request': self.context['request'],
+                            'view': self.context['view'],
+                        },
+                    ).data,
+                    'amount_used': line.coupon_real_value,
+                    'user_university': OrganizationSerializer(
+                        line.order.user.university,
+                        context={
+                            'request': self.context['request'],
+                            'view': self.context['view'],
+                        },
+                    ).data,
+                    'product_name': set(),
+                }
+                usages_per_order[line.order.id]['product_name'].add(
+                    line.content_object.name)
+            else:
+                usages_per_order[line.order.id]['amount_used'] += \
+                    line.coupon_real_value
+                usages_per_order[line.order.id]['product_name'].add(
+                        line.content_object.name
+                    )
+        display_usages = []
+        for key, value in usages_per_order.items():
+            value['product_name'] = ', '.join(list(sorted(value['product_name'])))
+            display_usages.append(value)
+        return display_usages
+
+    def to_representation(self, instance):
+        data = super(CouponSerializer, self).to_representation(instance)
+        from workplace.serializers import TimeSlotSerializer
+        from blitz_api.serializers import OrganizationSerializer
         from retirement.serializers import (
             RetreatSerializer,
             RetreatTypeSerializer,
         )
         action = self.context['view'].action
         if action == 'retrieve' or action == 'list':
-
-            usages = list()
-            for line in OrderLine.objects.filter(coupon=instance):
-                is_refunded = Refund.objects.filter(orderline=line).exists()
-                usages.append(
-                    {
-                        'date': line.order.transaction_date,
-                        'user': ReservationUserSerializer(
-                            line.order.user,
-                            context={
-                                'request': self.context['request'],
-                                'view': self.context['view'],
-                            },
-                        ).data,
-                        'amount_used': line.coupon_real_value,
-                        'user_university': OrganizationSerializer(
-                            line.order.user.university,
-                            context={
-                                'request': self.context['request'],
-                                'view': self.context['view'],
-                            },
-                        ).data,
-                        'product_name': line.content_object.name,
-                        'orderline_refunded': is_refunded,
-                    }
-                )
-
-            data['usages'] = usages
+            data['usages'] = self.get_coupon_usage(instance)
             data['applicable_retreats'] = RetreatSerializer(
                 instance.applicable_retreats,
                 many=True,
