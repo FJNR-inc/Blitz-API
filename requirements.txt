@@ -2,7 +2,7 @@
 mkdocs==1.2.3
 mkdocs-material==7.3.6
 
-Django==4.2.5
+Django==5.1.1
 djangorestframework==3.14.0
 django-cors-headers==3.11.0
 django-filter==23.4
