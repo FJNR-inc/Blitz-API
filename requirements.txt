@@ -30,7 +30,7 @@ tqdm==4.62.3
 colorama==0.4.4
 django-admin-autocomplete-filter==0.7.1
 mailchimp3==3.0.14
-babel==2.9.1
+babel==2.17.0
 troposphere==3.1.0
 
 django-admin-inline-paginator==0.4.0
