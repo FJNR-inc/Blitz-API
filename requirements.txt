@@ -40,7 +40,7 @@ asgiref==3.7.2
 google-cloud-storage==2.8.0
 
 # Celery
-celery[pytest]==5.2.7
+celery[pytest]==5.5.1
 pytest==7.2.2
 django-celery-results==2.5.1
 django-celery-beat==2.5.0
