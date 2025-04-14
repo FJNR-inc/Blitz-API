@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-25 15:01-0400\n"
+"POT-Creation-Date: 2023-02-02 10:02-0500\n"
 "PO-Revision-Date: 2022-10-25 21:00+0000\n"
 "Last-Translator: Romain Fayolle <romain.fayolle@fjnr.ca>\n"
 "Language-Team: French <https://weblate.fjnr.ca/projects/tv-blitz-api/"
@@ -23,116 +23,116 @@ msgstr ""
 msgid "Unknown timezone"
 msgstr "Fuseau horaire inconnu"
 
-#: workplace/models.py:19 workplace/models.py:67 workplace/models.py:110
+#: workplace/models.py:20 workplace/models.py:68 workplace/models.py:111
 msgid "Workplace"
 msgstr "Espace"
 
-#: workplace/models.py:20
+#: workplace/models.py:21
 msgid "Workplaces"
 msgstr "Espaces"
 
-#: workplace/models.py:23 workplace/models.py:58 workplace/models.py:101
-#: workplace/models.py:158
+#: workplace/models.py:24 workplace/models.py:59 workplace/models.py:102
+#: workplace/models.py:159
 msgid "Name"
 msgstr "Nom"
 
-#: workplace/models.py:28
+#: workplace/models.py:29
 msgid "Details"
 msgstr "Détails"
 
-#: workplace/models.py:33
+#: workplace/models.py:34
 msgid "Seats"
 msgstr "Places"
 
-#: workplace/models.py:39
+#: workplace/models.py:40
 msgid "Volunteer"
 msgstr "Volontaires"
 
-#: workplace/models.py:54
+#: workplace/models.py:55
 msgid "Picture"
 msgstr "Image"
 
-#: workplace/models.py:55
+#: workplace/models.py:56
 msgid "Pictures"
 msgstr "Images"
 
-#: workplace/models.py:72
+#: workplace/models.py:73
 msgid "picture"
 msgstr "Image"
 
-#: workplace/models.py:97 workplace/models.py:167
+#: workplace/models.py:98 workplace/models.py:168
 msgid "Period"
 msgstr "Périodes"
 
-#: workplace/models.py:98
+#: workplace/models.py:99
 msgid "Periods"
 msgstr "Préiodes"
 
-#: workplace/models.py:117 workplace/models.py:182
+#: workplace/models.py:118 workplace/models.py:183
 msgid "Price"
 msgstr "Prix"
 
-#: workplace/models.py:121
+#: workplace/models.py:122
 msgid "Start Date"
 msgstr "Date de début"
 
-#: workplace/models.py:126
+#: workplace/models.py:127
 msgid "End Date"
 msgstr "Date de fin"
 
-#: workplace/models.py:131
+#: workplace/models.py:132
 msgid "Activation"
 msgstr "Activation"
 
-#: workplace/models.py:154 workplace/models.py:228
+#: workplace/models.py:155 workplace/models.py:248
 msgid "Time slot"
 msgstr "Bloc à l'espace"
 
-#: workplace/models.py:155
+#: workplace/models.py:156
 msgid "Time slots"
 msgstr "Blocs à l'espace"
 
-#: workplace/models.py:175 workplace/models.py:222
+#: workplace/models.py:176 workplace/models.py:242
 msgid "User"
 msgstr "Utilisateur"
 
-#: workplace/models.py:188
+#: workplace/models.py:189
 msgid "Start time"
 msgstr "Date de début"
 
-#: workplace/models.py:192
+#: workplace/models.py:193
 msgid "End time"
 msgstr "Date de fin"
 
-#: workplace/models.py:213
+#: workplace/models.py:233
 msgid "User canceled"
 msgstr "Annulation par l'utilisateur"
 
-#: workplace/models.py:214
+#: workplace/models.py:234
 msgid "Timeslot deleted"
 msgstr "Bloc à l'espace supprimé"
 
-#: workplace/models.py:215
+#: workplace/models.py:235
 msgid "Timeslot modified"
 msgstr "Bloc à l'espace modifié"
 
-#: workplace/models.py:216
+#: workplace/models.py:236
 msgid "Admin canceled"
 msgstr "Annulation par l'administrateur"
 
-#: workplace/models.py:232
+#: workplace/models.py:252
 msgid "Active"
 msgstr "Actif"
 
-#: workplace/models.py:239
+#: workplace/models.py:259
 msgid "Cancelation reason"
 msgstr "Raison de l'annulation"
 
-#: workplace/models.py:244
+#: workplace/models.py:264
 msgid "Cancelation date"
 msgstr "Date de l'annulation"
 
-#: workplace/models.py:247
+#: workplace/models.py:267
 msgid "Present"
 msgstr "Présent"
 
@@ -284,7 +284,7 @@ msgstr ""
 msgid "Whether the reservation is active or not."
 msgstr "Si la réservation est active ou non."
 
-#: workplace/views.py:147
+#: workplace/views.py:139
 msgid ""
 "Trying to do a Period deletion that affects users without providing "
 "`force_delete` field set to True."
@@ -292,7 +292,7 @@ msgstr ""
 "Essayer de faire une suppression de période qui affecte les utilisateurs "
 "sans fournir le champ ''force_delete'' défini sur ''True''."
 
-#: workplace/views.py:358
+#: workplace/views.py:350
 msgid ""
 "Trying to do a TimeSlot deletion that affects users without providing "
 "`force_delete` field set to True."
