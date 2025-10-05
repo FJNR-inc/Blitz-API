@@ -20,6 +20,24 @@ class ReservationResource(resources.ModelResource):
         attribute='user',
         widget=ForeignKeyWidget(User, 'email'),
     )
+    
+    university = fields.Field(
+        column_name='actual_university',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'university__name'),
+    )
+    
+    academic_level = fields.Field(
+        column_name='actual_academic_level',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'academic_level__name'),
+    )
+     
+    academic_field = fields.Field(
+        column_name='actual_academic_field',
+        attribute='user',
+        widget=ForeignKeyWidget(User, 'academic_field__name'),
+    )
 
     retreat = fields.Field(
         column_name='retreat',
@@ -54,6 +72,9 @@ class ReservationResource(resources.ModelResource):
         fields = (
             'id',
             'user',
+            'university',
+            'academic_level',
+            'academic_field',
             'retreat',
             'start_time',
             'end_time',
@@ -66,6 +87,9 @@ class ReservationResource(resources.ModelResource):
         export_order = (
             'id',
             'user',
+            'university',
+            'academic_level',
+            'academic_field',
             'retreat',
             'start_time',
             'end_time',
