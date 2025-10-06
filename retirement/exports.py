@@ -79,8 +79,17 @@ def generate_retreat_participation(
     to_reorder_lines = []
     no_room_lines = []
     header = [
-        'Nom', 'Prénom', 'Email', "Date d'inscription",
-        'Restrictions personnelles', 'Ville', 'Téléphone', 'Genre',
+        'Nom', 
+        'Prénom',
+        'Email', 
+        'Université actuelle',
+        'Niveau d\'étude actuel',
+        'Domaine d\'étude actuel',
+        "Date d'inscription",
+        'Restrictions personnelles',
+        'Ville', 
+        'Téléphone',
+        'Genre',
     ]
     options = retreat.options
     for opt in options:
@@ -103,16 +112,19 @@ def generate_retreat_participation(
         line_array[0] = reservation.user.last_name
         line_array[1] = reservation.user.first_name
         line_array[2] = reservation.user.email
+        line_array[3] = reservation.user.university.name if reservation.user.university else ''
+        line_array[4] = reservation.user.academic_level.name if reservation.user.academic_level else ''
+        line_array[5] = reservation.user.academic_field.name if reservation.user.academic_field else ''
         # Error using celery: celery tries to access something in membership
         # meaning the following line always raise AttributeError: 'NoneType'
         # object has no attribute 'name'
         # if reservation.user.membership:
         #     line_array[3] = reservation.user.membership.name
-        line_array[3] = reservation.order_line.order.transaction_date
-        line_array[4] = reservation.user.personnal_restrictions
-        line_array[5] = reservation.user.city
-        line_array[6] = reservation.user.phone
-        line_array[7] = reservation.user.gender
+        line_array[6] = reservation.order_line.order.transaction_date
+        line_array[7] = reservation.user.personnal_restrictions
+        line_array[8] = reservation.user.city
+        line_array[9] = reservation.user.phone
+        line_array[10] = reservation.user.gender
 
         for opt in options:
             try:
