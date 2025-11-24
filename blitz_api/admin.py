@@ -9,10 +9,23 @@ from import_export.admin import ExportActionModelAdmin
 from modeltranslation.admin import TranslationAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from .models import (AcademicField, AcademicLevel, ActionToken, Domain,
-                     Organization, TemporaryToken, User, ExportMedia)
-from .resources import (AcademicFieldResource, AcademicLevelResource,
-                        OrganizationResource, UserResource)
+from .models import (
+    AcademicField,
+    AcademicLevel,
+    ActionToken,
+    Domain,
+    Affiliation,
+    Organization, 
+    TemporaryToken, 
+    User, 
+    ExportMedia,
+)
+from .resources import (
+    AcademicFieldResource,
+    AcademicLevelResource,
+    OrganizationResource, 
+    UserResource,
+)
 
 
 class UserFilter(AutocompleteFilter):
@@ -144,6 +157,7 @@ class ExportMediaAdmin(admin.ModelAdmin):
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(Organization, CustomOrganizationAdmin)
 admin.site.register(Domain, SimpleHistoryAdmin)
+admin.site.register(Affiliation, SimpleHistoryAdmin)
 admin.site.register(ActionToken, ActionTokenAdmin)
 admin.site.register(TemporaryToken, TemporaryTokenAdmin)
 admin.site.register(AcademicField, AcademicFieldAdmin)
