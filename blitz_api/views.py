@@ -526,6 +526,7 @@ class AffiliationViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.AffiliationSerializer
     queryset = Affiliation.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
+    filterset_fields = ('organization',)
     ordering = ('name',)
 
 

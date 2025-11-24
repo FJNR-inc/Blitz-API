@@ -6,7 +6,12 @@ from rest_framework.test import APIClient, APITestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 
-from ..factories import UserFactory, AdminFactory
+from ..factories import (
+    UserFactory, 
+    AdminFactory, 
+    OrganizationFactory,
+    AffiliationFactory,
+)
 from ..models import Organization, Affiliation
 from ..services import remove_translation_fields
 
@@ -134,6 +139,39 @@ class AffiliationTests(APITestCase):
                 'organization': 'http://testserver/organizations/' +
                                 str(self.org.id),
                 'url': 'http://testserver/affiliations/' + str(self.affiliation.id)
+            }]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+    def test_list_filtered_by_organization(self):
+        """
+        Ensure we can get a list of affiliations filtered by organizatio nas an unauthenticated user.
+        """
+
+        organization = OrganizationFactory()
+        affiliation = AffiliationFactory(organization=organization)
+        
+        affiliation_non_filtered = AffiliationFactory()
+
+        response = self.client.get(
+            reverse('affiliation-list') + f'?organization={organization.id}',
+            format='json',
+        )
+
+        content = {
+            'count': 1,
+            'next': None,
+            'previous': None,
+            'results': [{
+                'id': affiliation.id,
+                'name': affiliation.name,
+                'organization': 'http://testserver/organizations/' +
+                                str(organization.id),
+                'url': 'http://testserver/affiliations/' + str(affiliation.id)
             }]
         }
 
