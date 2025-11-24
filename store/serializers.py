@@ -26,6 +26,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
+from blitz_api.models import Organization
 from blitz_api.services import (remove_translation_fields,
                                 check_if_translated_field,
                                 getMessageTranslate)
@@ -1104,6 +1105,28 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
                         "discount percentage (percent_off) for this coupon."
                     )]
                 })
+                
+        affiliation = validated_data.get('affiliation', None)
+        if affiliation:
+            organization = validated_data.get('organization', None)
+
+            if organization:
+                if organization.id != affiliation.organization.id:
+                    raise serializers.ValidationError({
+                        'affiliation': [_(
+                            "The affiliation must be a part of the "
+                            "organization."
+                        )]
+                    })
+            
+            else:
+                raise serializers.ValidationError({
+                    'affiliation': [_(
+                        "You must provide an organization if you provide "
+                        "an affiliation."
+                    )]
+                })
+        
         return validated_data
 
     def create(self, validated_data):
@@ -1173,6 +1196,14 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
         for line in OrderLine.objects.filter(coupon=instance):
             is_refunded = Refund.objects.filter(orderline=line).exists()
             if is_refunded: continue
+            
+            # Sometimes, we have a cancellation, but since the price was 0 (due to the coupon) we don't have a refund
+            # This allow to not display these lines
+            is_canceled = False
+            if line.content_type.model == 'retreat':
+                is_canceled = RetreatReservation.objects.filter(
+                    order_line=line, is_active=False).exists()
+            
             if line.order.id not in usages_per_order:
                 usages_per_order[line.order.id] = {
                     'date': line.order.transaction_date,
@@ -1210,7 +1241,10 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
     def to_representation(self, instance):
         data = super(CouponSerializer, self).to_representation(instance)
         from workplace.serializers import TimeSlotSerializer
-        from blitz_api.serializers import OrganizationSerializer
+        from blitz_api.serializers import (
+            OrganizationSerializer,
+            AffiliationSerializer,
+        )
         from retirement.serializers import (
             RetreatSerializer,
             RetreatTypeSerializer,
@@ -1261,6 +1295,14 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
             if instance.organization:
                 data['organization'] = OrganizationSerializer(
                     instance.organization,
+                    context={
+                        'request': self.context['request'],
+                        'view': self.context['view'],
+                    },
+                ).data
+            if instance.affiliation:
+                data['affiliation'] = AffiliationSerializer(
+                    instance.affiliation,
                     context={
                         'request': self.context['request'],
                         'view': self.context['view'],

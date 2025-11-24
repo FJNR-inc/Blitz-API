@@ -22,7 +22,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.template.loader import render_to_string
 from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
-from blitz_api.models import AcademicLevel, Organization
+from blitz_api.models import AcademicLevel, Organization, Affiliation
 from model_utils.managers import InheritanceManager
 from log_management.models import Log, EmailLog
 
@@ -877,6 +877,15 @@ class Coupon(AbstractCoupon):
         Organization,
         on_delete=models.CASCADE,
         verbose_name=_("Organization"),
+        related_name='coupons',
+        blank=True,
+        null=True,
+    )
+    
+    affiliation = models.ForeignKey(
+        Affiliation,
+        on_delete=models.CASCADE,
+        verbose_name=_("Affiliation"),
         related_name='coupons',
         blank=True,
         null=True,

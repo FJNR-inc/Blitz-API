@@ -309,6 +309,12 @@ class OrderViewSet(ExportMixin, viewsets.ModelViewSet):
                     'coupon_invalid_university': [coupon.organization.name]
                 }
                 return Response(error, status=status.HTTP_400_BAD_REQUEST)
+            
+            if coupon.affiliation and request.user.affiliation != coupon.affiliation:
+                error = {
+                    'coupon_invalid_affiliation': [coupon.affiliation.name]
+                }
+                return Response(error, status=status.HTTP_400_BAD_REQUEST)
 
             serializer.validated_data.pop('payment_token', None)
             serializer.validated_data.pop('single_use_token', None)

@@ -60,6 +60,13 @@ class User(AbstractUser):
         null=True,
         on_delete=models.SET_NULL,
     )
+    affiliation = models.ForeignKey(
+        'Affiliation',
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        verbose_name=_("Affiliation"),
+    )
     academic_level = models.ForeignKey(
         'AcademicLevel',
         blank=True,
@@ -594,6 +601,27 @@ class Domain(models.Model):
     def __str__(self):
         return self.name
 
+
+class Affiliation(models.Model):
+    """Affiliation such as Medicine or Engineering"""
+
+    class Meta:
+        verbose_name = _('Affiliation')
+        verbose_name_plural = _('Affiliations')
+
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=100,
+    )
+
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="affiliations",
+    )
+
+    def __str__(self):
+        return self.name
 
 class AcademicLevel(models.Model):
     """Academic level such as college or university"""

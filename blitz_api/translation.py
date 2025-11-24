@@ -22,3 +22,4 @@ class OrganizationTranslationOptions(TranslationOptions):
 simple_history.register(models.AcademicLevel, inherit=True)
 simple_history.register(models.AcademicField, inherit=True)
 simple_history.register(models.Organization, inherit=True)
+simple_history.register(models.Affiliation, inherit=True)

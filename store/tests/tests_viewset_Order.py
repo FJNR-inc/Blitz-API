@@ -32,6 +32,8 @@ from blitz_api.factories import (
     OrderFactory,
     OptionProductFactory,
     CouponFactory,
+    OrganizationFactory,
+    AffiliationFactory,
 )
 
 from workplace.models import (
@@ -1340,6 +1342,127 @@ class OrderTests(CustomAPITestCase):
             format='json',
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+    def test_create_order_with_coupon_missing_affiliation(self):
+        """
+        Ensure we can create an order with a coupon that does not require an affiliation
+        """
+        organization = OrganizationFactory()
+
+        coupon = CouponFactory(
+            owner=self.admin,
+            code="INVALID_AFFILIATION",
+            organization=organization,
+            end_time="2030-01-06T15:11:06-05:00",
+            value=10,
+        )
+        coupon.applicable_memberships.set([self.membership])
+
+        user = UserFactory(university=organization)
+        self.client.force_authenticate(user=user)
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'quantity': 1,
+            }],
+            'coupon': coupon.code,
+        }
+
+        response = self.client.post(
+            reverse('order-validate-coupon'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_order_with_valid_affiliation_in_coupon(self):
+        """
+        Ensure we can create an order with the valid coupon affiliation.
+        """
+        organization = OrganizationFactory()
+        affiliation = AffiliationFactory(organization=organization)
+
+        coupon = CouponFactory(
+            owner=self.admin,
+            code="INVALID_AFFILIATION",
+            organization=organization,
+            affiliation=affiliation,
+            end_time="2030-01-06T15:11:06-05:00",
+            value=10,
+        )
+        coupon.applicable_memberships.set([self.membership])
+
+        user = UserFactory(university=organization, affiliation=affiliation)
+        self.client.force_authenticate(user=user)
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'quantity': 1,
+            }],
+            'coupon': coupon.code,
+        }
+
+        response = self.client.post(
+            reverse('order-validate-coupon'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+    def test_create_order_with_invalid_affiliation_in_coupon(self):
+        """
+        Ensure we can't create an order with invalid coupon affiliation.
+        """
+        organization = OrganizationFactory()
+        affiliation = AffiliationFactory(organization=organization)
+
+        coupon = CouponFactory(
+            owner=self.admin,
+            code="INVALID_AFFILIATION",
+            organization=organization,
+            affiliation=affiliation,
+            end_time="2030-01-06T15:11:06-05:00",
+            value=10,
+        )
+        coupon.applicable_memberships.set([self.membership])
+
+        # User does not have the affiliation, just the organization
+        user = UserFactory(university=organization)
+        self.client.force_authenticate(user=user)
+
+        data = {
+            'payment_token': "CZgD1NlBzPuSefg",
+            'order_lines': [{
+                'content_type': 'membership',
+                'object_id': self.membership.id,
+                'quantity': 1,
+            }],
+            'coupon': coupon.code,
+        }
+
+        response = self.client.post(
+            reverse('order-validate-coupon'),
+            data,
+            format='json',
+        )
+
+        response_data = json.loads(response.content)
+
+        content = {
+            'coupon_invalid_affiliation': [coupon.affiliation.name]
+        }
+
+        self.assertEqual(response_data, content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_coupon_max_use_exceeded(self):
         """

@@ -12,6 +12,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from .models import (
+    Affiliation,
     Domain,
     Organization,
     ActionToken,
@@ -36,6 +37,19 @@ def phone_number_validator(phone):
     if not reg.match(phone):
         raise serializers.ValidationError(_("Invalid format."))
     return phone
+
+
+class AffiliationSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Affiliation
+        fields = [
+            'id',
+            'url',
+            'name',
+            'organization',
+        ]
 
 
 class DomainSerializer(serializers.HyperlinkedModelSerializer):
@@ -253,11 +267,40 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
         return value
 
     def validate(self, attrs):
-        """Validate university and email match"""
         validated_data = super().validate(attrs)
-
         user = self.context['request'].user
+        
+        # Validate university and affiliation match
+        affiliation = validated_data.get(
+            'affiliation',
+            getattr(self.instance, 'affiliation', None)
+        )
+        university = validated_data.get(
+            'university',
+            getattr(self.instance, 'university', None)
+        )
+        
+        if affiliation:
+            if university and affiliation.organization != university:
+                raise serializers.ValidationError({
+                    'affiliation': [
+                        _(
+                            "The affiliation does not belong to "
+                            "the selected university."
+                        )
+                    ]
+                })
+            elif not university:
+                raise serializers.ValidationError({
+                    'university': [
+                        _(
+                            "You must select a university "
+                            "when choosing an affiliation."
+                        )
+                    ]
+                })
 
+        # Validate university and email match
         email_activation_needed = False
 
         email = validated_data.get(
@@ -366,6 +409,14 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
                 raise serializers.ValidationError(msg)
 
         return super().update(instance, validated_data)
+    
+    def to_representation(self, instance):
+        data = super(UserUpdateSerializer, self).to_representation(instance)
+        
+        data['affiliation'] = AffiliationSerializer(instance.affiliation, context=self.context).data
+        
+        return data
+        
 
     class Meta:
         model = User
@@ -381,6 +432,7 @@ class UserUpdateSerializer(serializers.HyperlinkedModelSerializer):
             'is_superuser',
             'is_staff',
             'university',
+            'affiliation',
             'last_login',
             'date_joined',
             'academic_level',
@@ -485,6 +537,7 @@ class UserSerializer(UserUpdateSerializer):
         required=True,
     )
     university = OrganizationSerializer(read_only=True)
+    affiliation = AffiliationSerializer(read_only=True)
     academic_level = AcademicLevelSerializer(read_only=True)
     academic_field = AcademicFieldSerializer(read_only=True)
     membership = MembershipSerializer(read_only=True)
@@ -562,6 +615,7 @@ class UserSerializer(UserUpdateSerializer):
             'is_superuser',
             'is_staff',
             'university',
+            'affiliation',
             'last_login',
             'date_joined',
             'academic_level',

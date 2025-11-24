@@ -277,7 +277,10 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
 
         retreat_data_list = list()
         tz = pytz.timezone('America/Montreal')
-        locale.setlocale(locale.LC_TIME, "fr_CA")
+        try:
+            locale.setlocale(locale.LC_TIME, "fr_CA")
+        except locale.Error:
+            locale.setlocale(locale.LC_TIME, "")
         validated_data.pop('bulk_start_time')
         validated_data.pop('bulk_end_time')
         validated_data.pop('weekdays')

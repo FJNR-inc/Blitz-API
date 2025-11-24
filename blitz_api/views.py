@@ -25,6 +25,7 @@ from blitz_api.mixins import ExportMixin
 from .models import (
     TemporaryToken,
     ActionToken,
+    Affiliation,
     Domain,
     Organization,
     AcademicLevel,
@@ -509,6 +510,23 @@ class ChangePassword(APIView):
                 {'detail': error},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class AffiliationViewSet(viewsets.ModelViewSet):
+    """
+    retrieve:
+    Return the given affiliation.
+
+    list:
+    Return a list of all the existing affiliations.
+
+    create:
+    Create a new affiliation instance.
+    """
+    serializer_class = serializers.AffiliationSerializer
+    queryset = Affiliation.objects.all()
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+    ordering = ('name',)
 
 
 class DomainViewSet(viewsets.ModelViewSet):

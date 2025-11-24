@@ -10,7 +10,12 @@ from django.urls import reverse
 
 from store.models import Membership
 from .. import models
-from ..factories import UserFactory, AdminFactory
+from ..factories import (
+    UserFactory, 
+    AdminFactory, 
+    AffiliationFactory,
+    OrganizationFactory,
+)
 from django.test.utils import override_settings
 
 
@@ -38,6 +43,7 @@ class UsersIdTests(APITestCase):
             'is_superuser',
             'is_staff',
             'university',
+            'affiliation',
             'last_login',
             'date_joined',
             'academic_level',
@@ -612,6 +618,167 @@ class UsersIdTests(APITestCase):
             'email': [
                 'You must use your university address to choose this '
                 'university.'
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_partial_update_user_change_affiliation_without_university(self):
+        """
+        Ensure we can't change affiliation if there is not a current university.
+        """
+        
+        affiliation = AffiliationFactory()
+
+        data = {
+            "affiliation": f"http://testserver/affiliations/{affiliation.id}",
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse(
+                'user-detail',
+                kwargs={'pk': self.user.id},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'university': [
+                'You must select a university when choosing an affiliation.'
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+    def test_partial_update_user_change_affiliation_with_invalid_university(self):
+        """
+        Ensure we can't change affiliation if current university does not match.
+        """
+        
+        university = OrganizationFactory()
+        models.Domain.objects.create(
+            name="blitz.com",
+            organization=university
+        )
+        affiliation = AffiliationFactory()
+
+        data = {
+            "university": {
+                'name': university.name,
+            },
+            "affiliation": f"http://testserver/affiliations/{affiliation.id}",
+
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse(
+                'user-detail',
+                kwargs={'pk': self.user.id},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'affiliation': [
+                'The affiliation does not belong to the selected university.'
+            ]
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_partial_update_user_change_affiliation(self):
+        """
+        Ensure we can change affiliation if current university DO match.
+        """
+        
+        university = OrganizationFactory()
+        models.Domain.objects.create(
+            name="blitz.com",
+            organization=university
+        )
+        affiliation = AffiliationFactory(organization=university)
+
+        data = {
+            "university": {
+                'name': university.name,
+            },
+            "affiliation": f"http://testserver/affiliations/{affiliation.id}",
+
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse(
+                'user-detail',
+                kwargs={'pk': self.user.id},
+            ),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        content = response.json()
+
+        self.assertEqual(
+            content['affiliation']['name'],
+            affiliation.name
+        )
+        
+        self.assertEqual(
+            content['university']['name'],
+            university.name
+        )
+        
+    def test_partial_update_user_change_university_non_matching_affiliation(self):
+        """
+        Ensure we can't change university if current affiliation does not match.
+        """
+        
+        university = OrganizationFactory()
+        models.Domain.objects.create(
+            name="blitz.com",
+            organization=university
+        )
+
+        affiliation = AffiliationFactory()
+
+        self.user.affiliation = affiliation
+        self.user.save()
+
+        data = {
+            "university": {
+                'name': university.name,
+            },
+        }
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse(
+                'user-detail',
+                kwargs={'pk': self.user.id},
+            ),
+            data,
+            format='json',
+        )
+
+        content = {
+            'affiliation': [
+                'The affiliation does not belong to the selected university.'
             ]
         }
 

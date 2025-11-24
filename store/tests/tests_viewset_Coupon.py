@@ -19,6 +19,8 @@ from blitz_api.factories import (
     UserFactory,
     AdminFactory,
     CouponFactory,
+    OrganizationFactory,
+    AffiliationFactory,
     OrderFactory,
     OrderLineFactory,
 )
@@ -61,6 +63,7 @@ class CouponTests(CustomAPITestCase):
         'details',
         'owner',
         'organization',
+        'affiliation',
         'applicable_product_types',
         'applicable_memberships',
         'applicable_packages',
@@ -219,6 +222,7 @@ class CouponTests(CustomAPITestCase):
             "max_use_per_user": 2,
             "details": "Any package for clients",
             "owner": "http://testserver/users/" + str(self.user.id),
+            "affiliation": None,
             "organization": None,
             "applicable_retreats": [],
             "applicable_retreat_types": [],
@@ -285,6 +289,7 @@ class CouponTests(CustomAPITestCase):
             "max_use_per_user": 2,
             "details": "Any package for clients",
             "owner": "http://testserver/users/" + str(self.user.id),
+            "affiliation": None,
             "organization": None,
             "applicable_retreats": [],
             "applicable_retreat_types": [],
@@ -349,6 +354,7 @@ class CouponTests(CustomAPITestCase):
             "max_use_per_user": 2,
             "details": "Any package for clients",
             "owner": "http://testserver/users/" + str(self.user.id),
+            "affiliation": None,
             "organization": None,
             "applicable_retreats": [],
             "applicable_retreat_types": [],
@@ -455,6 +461,171 @@ class CouponTests(CustomAPITestCase):
         self.assertEqual(
             json.loads(response.content),
             content
+        )
+
+
+    def test_create_with_affiliation_matching_organization(self):
+        """
+        Ensure we can't create a coupon if the selected affiliation 
+        does not match the organization.
+        """
+        self.client.force_authenticate(user=self.admin)
+        
+        # Create organization and affiliation that DO match
+        organization = OrganizationFactory.create()
+        affiliation = AffiliationFactory.create(organization=organization)
+
+        data = {
+            "applicable_product_types": [
+                "package"
+            ],
+            "value": "13.00",
+            "start_time": "2019-01-06T15:11:05-05:00",
+            "end_time": "2020-01-06T15:11:06-05:00",
+            "max_use": 100,
+            "max_use_per_user": 2,
+            "details": "Any package for clients",
+            "owner": "http://testserver/users/" + str(self.user.id),
+            "organization": "http://testserver/organizations/" + str(organization.id),
+            "affiliation": "http://testserver/affiliations/" + str(affiliation.id),
+        }
+
+        response = self.client.post(
+            reverse('coupon-list'),
+            data,
+            format='json',
+        )
+
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.content,
+        )
+
+        self.assertEqual(
+            response.json(),
+            {
+                "id": response.json()['id'],
+                "url": "http://testserver/coupons/" + str(response.json()['id']),
+                "applicable_product_types": [
+                    "package"
+                ],
+                "value": "13.00",
+                "percent_off": None,
+                "code": response.json()['code'],
+                "start_time": "2019-01-06T15:11:05-05:00",
+                "end_time": "2020-01-06T15:11:06-05:00",
+                "max_use": 100,
+                "max_use_per_user": 2,
+                "details": "Any package for clients",
+                "owner": "http://testserver/users/" + str(self.user.id),
+                "affiliation": "http://testserver/affiliations/" + str(affiliation.id),
+                "organization": "http://testserver/organizations/" + str(organization.id),
+                "applicable_retreats": [],
+                "applicable_retreat_types": [],
+                "applicable_timeslots": [],
+                "applicable_packages": [],
+                "applicable_memberships": [],
+                "users": [],
+                "is_applicable_to_physical_retreat": False,
+                "is_applicable_to_virtual_retreat": False
+            }
+        )
+
+
+    def test_create_with_affiliation_but_without_organization(self):
+        """
+        Ensure we can't create a coupon if the selected affiliation 
+        does not match the organization.
+        """
+        self.client.force_authenticate(user=self.admin)
+        
+        affiliation = AffiliationFactory.create()
+
+        data = {
+            "applicable_product_types": [
+                "package"
+            ],
+            "value": "13.00",
+            "start_time": "2019-01-06T15:11:05-05:00",
+            "end_time": "2020-01-06T15:11:06-05:00",
+            "max_use": 100,
+            "max_use_per_user": 2,
+            "details": "Any package for clients",
+            "owner": "http://testserver/users/" + str(self.user.id),
+            "affiliation": "http://testserver/affiliations/" + str(affiliation.id),
+        }
+
+        response = self.client.post(
+            reverse('coupon-list'),
+            data,
+            format='json',
+        )
+
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        self.assertEqual(
+            response.json(),
+            {
+                'affiliation': [
+                    "You must provide an organization if you provide an affiliation."
+                ]
+            }
+        )
+
+
+    def test_create_with_affiliation_not_matching_organization(self):
+        """
+        Ensure we can't create a coupon if the selected affiliation 
+        does not match the organization.
+        """
+        self.client.force_authenticate(user=self.admin)
+        
+        # Create organization and affiliation that do not match
+        organization = OrganizationFactory.create()
+        affiliation = AffiliationFactory.create()
+
+        data = {
+            "applicable_product_types": [
+                "package"
+            ],
+            "value": "13.00",
+            "start_time": "2019-01-06T15:11:05-05:00",
+            "end_time": "2020-01-06T15:11:06-05:00",
+            "max_use": 100,
+            "max_use_per_user": 2,
+            "details": "Any package for clients",
+            "owner": "http://testserver/users/" + str(self.user.id),
+            "organization": "http://testserver/organizations/" + str(organization.id),
+            "affiliation": "http://testserver/affiliations/" + str(affiliation.id),
+        }
+
+        response = self.client.post(
+            reverse('coupon-list'),
+            data,
+            format='json',
+        )
+
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        self.assertEqual(
+            response.json(),
+            {
+                'affiliation': [
+                    "The affiliation must be a part of the organization."
+                ]
+            }
         )
 
     def test_notify_email_for_coupon(self):
@@ -969,6 +1140,7 @@ class CouponTests(CustomAPITestCase):
             "max_use_per_user": 20,
             "details": "Any package for clients (updated max_use)",
             "owner": "http://testserver/users/" + str(self.user.id),
+            "affiliation": None,
             "organization": None,
             "applicable_retreats": [],
             "applicable_retreat_types": [],
@@ -1031,6 +1203,7 @@ class CouponTests(CustomAPITestCase):
             "max_use_per_user": 20,
             "details": "Any package for clients (updated max_use)",
             "owner": "http://testserver/users/" + str(self.user.id),
+            "affiliation": None,
             "organization": None,
             "applicable_retreats": [],
             "applicable_retreat_types": [],
@@ -1169,6 +1342,7 @@ class CouponTests(CustomAPITestCase):
                 "max_use_per_user": 2,
                 "details": "Any package for clients",
                 "owner": "http://testserver/users/" + str(self.user.id),
+                "affiliation": None,
                 "organization": None,
                 "applicable_retreats": [],
                 "applicable_retreat_types": [],
@@ -1192,6 +1366,7 @@ class CouponTests(CustomAPITestCase):
                 "max_use_per_user": 2,
                 "details": "Any package for clients",
                 "owner": "http://testserver/users/" + str(self.admin.id),
+                "affiliation": None,
                 "organization": None,
                 "applicable_retreats": [],
                 "applicable_retreat_types": [],
@@ -1374,6 +1549,7 @@ class CouponTests(CustomAPITestCase):
             "max_use_per_user": 2,
             "details": "Any package for clients",
             "owner": "http://testserver/users/" + str(self.user.id),
+            "affiliation": None,
             "organization": None,
             "applicable_retreats": [],
             "applicable_retreat_types": [],

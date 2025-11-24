@@ -57,6 +57,7 @@ router.registry.extend(tomato_router.registry)
 router.registry.extend(log_management_router.registry)
 
 router.register('users', views.UserViewSet)
+router.register('affiliations', views.AffiliationViewSet)
 router.register('domains', views.DomainViewSet)
 router.register('organizations', views.OrganizationViewSet)
 router.register('academic_levels', views.AcademicLevelViewSet)

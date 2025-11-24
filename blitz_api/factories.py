@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 
 from blitz_api.models import (
     Organization,
+    Affiliation,
     AcademicLevel,
     AcademicField,
     MagicLink,
@@ -72,6 +73,14 @@ class OrganizationFactory(DjangoModelFactory):
         model = Organization
 
     name = factory.Sequence(lambda n: f'Organization {n}')
+
+
+class AffiliationFactory(DjangoModelFactory):
+    class Meta:
+        model = Affiliation
+
+    name = factory.Sequence(lambda n: f'Affiliation {n}')
+    organization = factory.SubFactory(OrganizationFactory)
 
 
 class AcademicLevelFactory(DjangoModelFactory):
