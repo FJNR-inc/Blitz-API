@@ -75,6 +75,7 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
         allow_null=True,
     )
     domains = DomainSerializer(many=True, read_only=True)
+    affiliations = AffiliationSerializer(many=True, read_only=True)
 
     def validate(self, attr):
         if not check_if_translated_field('name', attr):

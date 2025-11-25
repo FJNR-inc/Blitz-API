@@ -41,6 +41,7 @@ class OrganizationTests(APITestCase):
 
         content = {
             'domains': [],
+            'affiliations': [],
             'name': 'fake organization',
         }
 
@@ -96,6 +97,7 @@ class OrganizationTests(APITestCase):
             'previous': None,
             'results': [{
                 'domains': [],
+                'affiliations': [],
                 'id': self.org.id,
                 'name': 'random_organization',
                 'url': 'http://testserver/organizations/' + str(self.org.id)
