@@ -525,6 +525,19 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
     def __str__(self):
         return self.name
 
+    def notify_all_wait_queue(self):
+        wait_queue_places: WaitQueuePlace = self.wait_queue_places.filter(
+            available=True
+        ).order_by('create')
+        
+        list_of_users_notified = []
+        for wait_queue_place in wait_queue_places:
+            detail, stop = wait_queue_place.notify(force_notify_all=true)
+            
+            list_of_users_notified.append(detail)
+            
+        return list_of_users_notified
+        
     def notify_scheduler_waite_queue(self, retrat_notification_url):
         # Ask the external scheduler to start calling /notify if the
         # reserved_seats count == 1. Otherwise, the scheduler should
@@ -1711,7 +1724,7 @@ class WaitQueuePlace(models.Model):
 
         return retreat_wait_queues
 
-    def notify(self):
+    def notify(self, force_notify_all=False):
 
         users_notified = []
 
@@ -1747,7 +1760,7 @@ class WaitQueuePlace(models.Model):
             )
             if not user_already_notified:
                 users_notified.append(wait_queue_reserved.notify())
-                if not less_than_min_day_refund:
+                if not less_than_min_day_refund and not force_notify_all:
                     break
 
         return users_notified, False

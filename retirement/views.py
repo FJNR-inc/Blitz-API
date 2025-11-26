@@ -494,6 +494,18 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         }
         return Response(response_data, status=status.HTTP_200_OK)
 
+    @action(detail=True, permission_classes=[IsAdminUser], methods=['post'])
+    def notify_all_waiting_queue(self, request, pk=None):
+        retreat: Retreat = self.get_object()
+
+        users_notified = retreat.notify_all_wait_queue()
+
+        response_data = {
+            'users_notified': users_notified 
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
     @action(detail=True, permission_classes=[IsAdminUser])
     def export_participation(self, request, pk=None):
 

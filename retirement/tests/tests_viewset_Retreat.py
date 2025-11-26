@@ -2084,3 +2084,76 @@ class RetreatTests(CustomAPITestCase):
         self.assertEqual(results[2].get('id'), retreat_1.id)
         self.assertEqual(results[1].get('id'), retreat_8.id)
         self.assertEqual(results[0].get('id'), retreat_5.id)
+
+    def test_notify_all_waiting_queue_without_authentication(self):
+        """
+        Ensure that unauthenticated users can't notify all users in the waiting
+        list of a retreat.
+        """
+
+        response = self.client.post(
+            reverse(
+                'retreat:retreat-notify-all-waiting-queue',
+                kwargs={'pk': self.retreat.id},
+            ),
+            {},
+            format='json',
+        )
+
+        content = {
+            'detail': 'Authentication credentials were not provided.',
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_notify_all_waiting_queue_without_permission(self):
+        """
+        Ensure that a non-admin user can't notify all users in the waiting
+        list of a retreat.
+        """
+
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            reverse(
+                'retreat:retreat-notify-all-waiting-queue',
+                kwargs={'pk': self.retreat.id},
+            ),
+            {},
+            format='json',
+        )
+
+        content = {
+            'detail': 'You do not have permission to perform this action.'
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_notify_all_waiting_queue(self):
+        """
+        Ensure that an admin can notify all users in the waiting list of a
+        retreat.
+        """
+
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.post(
+            reverse(
+                'retreat:retreat-notify-all-waiting-queue',
+                kwargs={'pk': self.retreat.id},
+            ),
+            {},
+            format='json',
+        )
+
+        content = {
+            'users_notified': [],
+        }
+
+        self.assertEqual(json.loads(response.content), content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
