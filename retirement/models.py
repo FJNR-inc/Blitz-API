@@ -532,7 +532,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         
         list_of_users_notified = []
         for wait_queue_place in wait_queue_places:
-            detail, stop = wait_queue_place.notify(force_notify_all=true)
+            detail, stop = wait_queue_place.notify(force_notify_all=True)
             
             list_of_users_notified.append(detail)
             
