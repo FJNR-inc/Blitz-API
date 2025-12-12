@@ -22,6 +22,14 @@ app.conf.beat_schedule = {
         'task': 'retirement.tasks.assign_retreat_tomatoes',
         'schedule': crontab(minute=1, hour='*'),
     },
+    'alert_users_of_inactivity': {
+        'task': 'blitz_api.tasks.alert_users_of_inactivity',
+        'schedule': crontab(minute=0, hour=9),
+    },
+    'disable_inactive_users': {
+        'task': 'blitz_api.tasks.disable_inactive_users',
+        'schedule': crontab(minute=0, hour=10),
+    }
 }
 
 app.autodiscover_tasks()

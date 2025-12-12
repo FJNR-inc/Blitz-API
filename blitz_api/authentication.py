@@ -38,5 +38,8 @@ class TemporaryTokenAuthentication(TokenAuthentication):
             )
             token.expires = expires
             token.save()
+            
+        token.user.last_login = timezone.now()
+        token.user.save()
 
         return token.user, token

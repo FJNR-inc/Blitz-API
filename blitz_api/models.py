@@ -169,6 +169,12 @@ class User(AbstractUser):
         null=True,
         verbose_name=_("Last acceptation of the terms and conditions"),
     )
+    
+    last_inactivity_alert_sent = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Last inactivity alert sent"),
+    )
 
     _tomato_field_matrix = models.TextField(
         verbose_name=_("Tomato field matrix"),
@@ -177,6 +183,69 @@ class User(AbstractUser):
     )
 
     history = HistoricalRecords()
+
+    def send_inactivity_alert(self):
+        if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is True:
+            FRONTEND_SETTINGS = settings.LOCAL_SETTINGS[
+                'FRONTEND_INTEGRATION'
+            ]
+
+            services.send_mail(
+                [self],
+                {
+                    "login_url": FRONTEND_SETTINGS['SSO_URL'],
+                    "first_name": self.first_name,
+                    "last_name": self.last_name,
+                },
+                "INACTIVITY_ALERT",
+            )
+
+            # Update last alert sent time
+            user.last_inactivity_alert_sent = timezone.now()
+            user.save()
+            
+    def send_account_disabled_alert(self):
+        if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is True:
+            FRONTEND_SETTINGS = settings.LOCAL_SETTINGS[
+                'FRONTEND_INTEGRATION'
+            ]
+
+            services.send_mail(
+                [self],
+                {
+                    "login_url": FRONTEND_SETTINGS['SSO_URL'],
+                    "first_name": self.first_name,
+                    "last_name": self.last_name,
+                },
+                "ACCOUNT_DISABLED_ALERT",
+            )
+            
+    def anonymise_and_disable_account(self):
+        # Alert user of the automatic action before action
+        self.send_account_disabled_alert()
+
+        # Anonymise user data
+        self.first_name = None
+        self.last_name = None
+        self.phone = None
+        self.other_phone = None
+        self.university = None
+        self.affiliation = None
+        self.academic_level = None
+        self.academic_field = None
+        self.academic_program_code = None
+        self.faculty = None
+        self.student_number = None
+        self.birthdate = None
+        self.gender = None
+        self.language = None
+        self.city = None
+        self.personnal_restrictions = None
+        
+        # Disable account
+        self.is_active = False
+
+        self.save()
 
     def send_new_activation_email(self):
         if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is True:
