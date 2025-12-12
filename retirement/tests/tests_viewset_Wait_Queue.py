@@ -96,6 +96,7 @@ class WaitQueueTests(APITestCase):
         )
 
         content = {
+            'first_notify': None,
             'list_size': 2,
             'notified': False,
             'retreat': 'http://testserver/retreat/retreats/' +
@@ -141,6 +142,7 @@ class WaitQueueTests(APITestCase):
         )
 
         content = {
+            'first_notify': None,
             'list_size': 2,
             'notified': False,
             'retreat': 'http://testserver/retreat/retreats/' + str(
@@ -375,6 +377,7 @@ class WaitQueueTests(APITestCase):
             'results': [{
                 'created_at': response_data['results'][0]['created_at'],
                 'id': self.wait_queue_subscription.id,
+                'first_notify': None,
                 'list_size': 1,
                 'notified': False,
                 'retreat':
@@ -425,6 +428,7 @@ class WaitQueueTests(APITestCase):
 
         content = {
             'id': self.wait_queue_subscription.id,
+            'first_notify': None,
             'list_size': 1,
             'notified': False,
             'retreat':
@@ -480,6 +484,7 @@ class WaitQueueTests(APITestCase):
 
         content = {
             'id': self.wait_queue_subscription.id,
+            'first_notify': None,
             'list_size': 1,
             'notified': False,
             'retreat': 'http://testserver/retreat/retreats/' + str(
