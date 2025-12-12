@@ -63,6 +63,38 @@ class WaitQueueTests(APITestCase):
             retreat=self.retreat,
         )
         self.retreat.activate()
+        
+        self.retreat_without_wait_queue = Retreat.objects.create(
+            name="mega_retreat",
+            details="This is a description of the mega retreat.",
+            seats=400,
+            address_line1="123 random street",
+            postal_code="123 456",
+            state_province="Random state",
+            country="Random country",
+            price=199,
+            min_day_refund=7,
+            min_day_exchange=7,
+            refund_rate=50,
+            activity_language='FR',
+            accessibility=True,
+            form_url="example.com",
+            carpool_url='example2.com',
+            review_url='example3.com',
+            has_shared_rooms=True,
+            waiting_queue_enabled=False, # Disable wait queue for this retreat
+            display_start_time=LOCAL_TIMEZONE.localize(
+                datetime(2130, 1, 15, 8)
+            ),
+            type=self.retreatType,
+        )
+        RetreatDate.objects.create(
+            start_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 15, 8)),
+            end_time=LOCAL_TIMEZONE.localize(datetime(2130, 1, 17, 12)),
+            retreat=self.retreat_without_wait_queue,
+        )
+        self.retreat_without_wait_queue.activate()
+
         self.wait_queue_subscription = WaitQueue.objects.create(
             user=self.user2,
             retreat=self.retreat,
@@ -112,6 +144,38 @@ class WaitQueueTests(APITestCase):
 
         self.assertEqual(
             response_data,
+            content
+        )
+        
+    def test_create_when_wait_queue_disabled(self):
+        """
+        Ensure we can subscribe't a user to a retreat when the wait_queue is disabled.
+        """
+        self.client.force_authenticate(user=self.user)
+
+        data = {
+            'retreat': reverse(
+                'retreat:retreat-detail', args=[self.retreat_without_wait_queue.id]
+            ),
+            'user': reverse('user-detail', args=[self.admin.id]),
+        }
+
+        response = self.client.post(
+            reverse('retreat:waitqueue-list'),
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            response.content,
+        )
+
+        content = {"retreat":["The wait queue is not enabled for this retreat."]}
+
+        self.assertEqual(
+            response.json(),
             content
         )
 

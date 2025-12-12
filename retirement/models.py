@@ -449,6 +449,11 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         null=True,
         blank=True,
     )
+    
+    waiting_queue_enabled = models.BooleanField(
+        verbose_name=_("Waiting queue enabled"),
+        default=True,
+    )
 
     # History is registered in translation.py
     # history = HistoricalRecords()
@@ -456,6 +461,37 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
     @property
     def get_product_display_type(self):
         return _('Retreat')
+
+    def disable_waiting_queue(self):
+        """
+        Disable waiting queue for this Retreat.
+        
+        Also clean all WaitingQueue, WaitingQueuePlace and WaitingQueuePlaceReserved
+        related to this Retreat in order to reset the waiting queue for this retreat
+        in order to not have dangling data.
+        """
+        # Disable waiting queue feature
+        retreat.waiting_queue_enabled = False
+        retreat.save()
+
+        # Remove all WaitQueue
+        wait_queues = self.wait_queue.all()
+        for wait_queue in wait_queues:
+            wait_queue.delete()
+
+        # Remove all WaitQueuePlace and WaitQueuePlaceReserved
+        # There are cascading delete between WaitQueuePlace and
+        # WaitQueuePlaceReserved but we do it manually to
+        # avoid any side effect in the future.
+        wait_queue_places = self.wait_queue_places.all()
+        for wait_queue_place in wait_queue_places:
+
+            wait_queue_place_reserved = wait_queue_place.wait_queue_places_reserved.all()
+            for reserved_place in wait_queue_place_reserved:
+                reserved_place.delete()
+
+            wait_queue_place.delete()
+        
 
     def get_number_of_tomatoes(self):
         if self.number_of_tomatoes:
@@ -1495,12 +1531,14 @@ class Reservation(SafeDeleteModel):
                     coupon_user.uses = coupon_user.uses - 1
                     coupon_user.save()
 
-                # free seat unless retreat is deleted
+                # Create WaitQueuePlace unless retreat is deleted
                 if cancel_reason != self.CANCELATION_REASON_RETREAT_DELETED:
-                    free_seats = retreat.places_remaining
-                    if retreat.reserved_seats or free_seats == 1:
-                        retreat.add_wait_queue_place(user)
-                    retreat.save()
+                    # Create WaitQueuePlace only if waitit queue is enable
+                    if retreat.waiting_queue_enabled:                    
+                        free_seats = retreat.places_remaining
+                        if retreat.reserved_seats or free_seats == 1:
+                            retreat.add_wait_queue_place(user)
+                        retreat.save()
 
         email_data = {}
         if reservation_active and \

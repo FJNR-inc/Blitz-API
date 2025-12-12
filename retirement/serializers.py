@@ -514,10 +514,11 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
                 validated_data,
             )
 
-            # Add a new spot for the waitlist
-            free_seats = current_retreat.places_remaining
-            if current_retreat.reserved_seats or free_seats == 1:
-                current_retreat.add_wait_queue_place(user)
+            # Add a new spot for the waitlist - if waitlist is enabled
+            if instance.retreat.waiting_queue_enabled:
+                free_seats = current_retreat.places_remaining
+                if current_retreat.reserved_seats or free_seats == 1:
+                        current_retreat.add_wait_queue_place(user)
 
             if validated_data.get('retreat'):
                 # Validate if user has the right to reserve a seat in the new
@@ -963,6 +964,18 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
     first_notify = serializers.SerializerMethodField()
     notified = serializers.SerializerMethodField()
 
+    def validate_retreat(self, obj):
+        """
+        Check that the retreat's wait queue is enabled.
+        """
+        
+        if not obj.waiting_queue_enabled:
+            raise serializers.ValidationError(_(
+                "The wait queue is not enabled for this retreat."
+            ))
+
+        return obj
+        
     def validate_user(self, obj):
         """
         Subscribe the authenticated user.

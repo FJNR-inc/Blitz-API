@@ -505,6 +505,14 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, permission_classes=[IsAdminUser], methods=['post'])
+    def disable_waiting_queue_feature(self, request, pk=None):
+        retreat: Retreat = self.get_object()
+
+        retreat.disable_waiting_queue()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, permission_classes=[IsAdminUser])
     def export_participation(self, request, pk=None):
