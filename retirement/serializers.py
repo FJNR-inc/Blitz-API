@@ -960,6 +960,7 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     created_at = serializers.ReadOnlyField()
     list_size = serializers.SerializerMethodField()
+    first_notify = serializers.SerializerMethodField()
     notified = serializers.SerializerMethodField()
 
     def validate_user(self, obj):
@@ -1004,6 +1005,18 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
             wait_queue_place__retreat=obj.retreat,
             notified=True,
         ).exists()
+        
+    def get_first_notify(self, obj):
+        first_notify = WaitQueuePlaceReserved.objects.filter(
+            user=obj.user,
+            wait_queue_place__retreat=obj.retreat,
+            notified=True,
+        ).order_by('create').first()
+
+        if first_notify:
+            return first_notify.create
+        else:
+            return None
 
 
 class WaitQueuePlaceSerializer(serializers.HyperlinkedModelSerializer):
