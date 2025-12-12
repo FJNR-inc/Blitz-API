@@ -53,3 +53,26 @@ def disable_inactive_users():
             user.anonymise_and_disable_account()
             
     return disabled_users
+
+
+@shared_task
+def export_personal_data_of_users(author_id, user_id):
+    queryset = setting.AUTH_USER_MODEL.objects.filter(id=user_id)
+
+    dataset = UserPersonalDataResource().export(queryset)
+
+    date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
+        .strftime("%Y%m%d-%H%M%S")
+    filename = f'export-personal-data-user-{user_id}-{date_file}.xls'
+
+    new_export = ExportMedia.objects.create(
+        name=filename,
+        type=ExportMedia.EXPORT_PERSONAL_DATA,
+        author_id=author_id
+    )
+    content = ContentFile(dataset.xls)
+    new_export.file.save(filename, content)
+    
+    new_export.send_confirmation_email()
+    
+    return f"Exported personal data for user {user.email}"

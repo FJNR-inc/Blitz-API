@@ -854,6 +854,7 @@ class ExportMedia(models.Model):
     EXPORT_RETREAT_OPTIONS = 'RETREAT OPTIONS'
     EXPORT_COUPON_USAGE = 'COUPON USAGE'
     EXPORT_SALES_AND_REFUND = 'SALES AND REFUND'
+    EXPORT_PERSONAL_DATA = 'PERSONAL DATA'
 
     EXPORT_CHOICES = (
         (EXPORT_ANONYMOUS_CHRONO_DATA, _('Anonymous Chrono data')),
@@ -863,6 +864,7 @@ class ExportMedia(models.Model):
         (EXPORT_RETREAT_OPTIONS, _('Retreat options')),
         (EXPORT_COUPON_USAGE, _('Coupon usage')),
         (EXPORT_SALES_AND_REFUND, _('Sales and refund')),
+        (EXPORT_PERSONAL_DATA, _('Personal data')),
     )
 
     file = models.FileField(

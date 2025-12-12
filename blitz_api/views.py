@@ -22,6 +22,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 
 from blitz_api.mixins import ExportMixin
+from blitz_api.tasks import export_personal_data_of_users
 from .models import (
     TemporaryToken,
     ActionToken,
@@ -249,6 +250,26 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
 
         user.credit_tickets(nb_tickets)
 
+        return Response(status=status.HTTP_200_OK)
+    
+    @action(methods=['post'], detail=True)
+    def trigger_personal_data_export(self, request, pk):
+        user = self.get_object()
+
+        is_owner = user.id == self.request.user.id
+        is_admin = self.request.user.is_superuser
+
+        # Only owner or admin can trigger personal data export
+        if not is_owner and not is_admin:
+            content = {
+                'non_field_errors': _(
+                    "You can't export personal data of others users."
+                ),
+            }
+            return Response(content, status=status.HTTP_403_FORBIDDEN)
+        
+        # Process export in background
+        export_personal_data_of_users().delay(request.user.id, user.id)
         return Response(status=status.HTTP_200_OK)
 
 

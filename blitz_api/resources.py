@@ -90,3 +90,70 @@ class UserResource(resources.ModelResource):
             'last_login',
             'language',
         )
+
+
+class UserPersonalDataResource(resources.ModelResource):
+    
+    academic_field = fields.Field(
+        column_name='academic_field',
+        attribute='academic_field',
+        widget=ForeignKeyWidget(AcademicField, 'name'),
+    )
+
+    academic_level = fields.Field(
+        column_name='academic_level',
+        attribute='academic_level',
+        widget=ForeignKeyWidget(AcademicLevel, 'name'),
+    )
+
+    university = fields.Field(
+        column_name='university',
+        attribute='university',
+        widget=ForeignKeyWidget(Organization, 'name'),
+    )
+
+    membership = fields.Field(
+        column_name='membership',
+        attribute='membership',
+        widget=ForeignKeyWidget(Membership, 'name'),
+    )
+
+    class Meta:
+        model = User
+        exclude = (
+            'password',
+            'username',
+            'groups',
+            'user_permissions'
+        )
+        export_order = (
+            'id',
+            'first_name',
+            'last_name',
+            'email',
+            'phone',
+            'other_phone',
+            'birthdate',
+            'gender',
+            'university',
+            'academic_field',
+            'academic_level',
+            'membership',
+            'membership_end',
+            'tickets',
+            'date_joined',
+            'last_login',
+            'language',
+            'is_superuser',
+            'is_staff',
+            'is_active',
+            'academic_program_code',
+            'faculty',
+            'student_number',
+            'membership_end_notification',
+            'number_of_free_virtual_retreat',
+            'city',
+            'personnal_restrictions',
+            'hide_newsletter',
+            'last_acceptation_terms_and_conditions',
+        )
