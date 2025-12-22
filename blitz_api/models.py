@@ -196,6 +196,11 @@ class User(AbstractUser):
                     "login_url": FRONTEND_SETTINGS['SSO_URL'],
                     "first_name": self.first_name,
                     "last_name": self.last_name,
+                    "date_inactivation": "{:%d/%m/%Y}".format(
+                        timezone.now() + timezone.timedelta(
+                            days=settings.INACTIVITY_SETTINGS['DAYS_BEFORE_DISABLE']
+                        )
+                    ),
                 },
                 "INACTIVITY_ALERT",
             )

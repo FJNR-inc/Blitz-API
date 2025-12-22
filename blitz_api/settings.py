@@ -304,12 +304,12 @@ ANYMAIL = {
         ),
         'INACTIVITY_ALERT': config(
             'INACTIVITY_ALERT',
-            default='0',
+            default='270',
             cast=int
         ),
         'ACCOUNT_DISABLED_ALERT': config(
             'ACCOUNT_DISABLED_ALERT',
-            default='0',
+            default='271',
             cast=int
         ),
         'FORGOT_PASSWORD': config(
