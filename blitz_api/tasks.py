@@ -18,12 +18,13 @@ def alert_users_of_inactivity():
         )
 
         # If user has never logged in, use date of account creation
-        last_seen = user.last_login or user.date_joined
-        
-        # Since we did not log last_login date before end of december 2022, set a minimum 2 years delay to all users
-        feature_start_date = timezone.datetime(2022, 12, 31, tzinfo=timezone.utc)
-        last_seen = max(last_seen, min_date)
-        
+        # Since we did not log last_login date before end of december 2025, set a minimum 2 years delay to all users before inactivity alerts
+        min_date = max(
+            timezone.datetime(2022, 12, 31, tzinfo=timezone.utc),
+            user.date_joined
+        )
+        last_seen = user.last_login or min_date
+               
         # If user never logged since last alert sent, do not send another alert
         last_alert = user.last_inactivity_alert_sent
         if last_alert and last_alert > last_seen:
@@ -47,13 +48,14 @@ def disable_inactive_users():
         inactivity_disable_period = timezone.timedelta(
             years=5
         )
-
-        # If user has never logged in, use date of account creation
-        last_seen = user.last_login or user.date_joined
         
-        # Since we did not log last_login date before end of december 2022, set a minimum 2 years delay to all users
-        feature_start_date = timezone.datetime(2022, 12, 31, tzinfo=timezone.utc)
-        last_seen = max(last_seen, min_date)
+        # If user has never logged in, use date of account creation
+        # Since we did not log last_login date before end of december 2025, set a minimum 2 years delay to all users before disabling accounts
+        min_date = max(
+            timezone.datetime(2022, 12, 31, tzinfo=timezone.utc),
+            user.date_joined
+        )
+        last_seen = user.last_login or min_date
         
         # If user has been inactive for longer than the disable period, disable account
         if timezone.now() - last_seen > inactivity_disable_period:
