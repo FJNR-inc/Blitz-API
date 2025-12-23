@@ -471,8 +471,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         in order to not have dangling data.
         """
         # Disable waiting queue feature
-        retreat.waiting_queue_enabled = False
-        retreat.save()
+        self.waiting_queue_enabled = False
+        self.save()
 
         # Remove all WaitQueue
         wait_queues = self.wait_queue.all()
