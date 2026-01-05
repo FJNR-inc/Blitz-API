@@ -206,8 +206,8 @@ class User(AbstractUser):
             )
 
             # Update last alert sent time
-            user.last_inactivity_alert_sent = timezone.now()
-            user.save()
+            self.last_inactivity_alert_sent = timezone.now()
+            self.save()
             
     def send_account_disabled_alert(self):
         if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is True:
