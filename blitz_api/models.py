@@ -198,7 +198,7 @@ class User(AbstractUser):
                     "last_name": self.last_name,
                     "date_inactivation": "{:%d/%m/%Y}".format(
                         timezone.now() + timezone.timedelta(
-                            days=settings.INACTIVITY_SETTINGS['DAYS_BEFORE_DISABLE']
+                            days=settings.LOCAL_SETTINGS['INACTIVITY_SETTINGS']['DAYS_BEFORE_DISABLE']
                         )
                     ),
                 },

@@ -1,5 +1,6 @@
 from celery import shared_task
 from django.utils import timezone
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from blitz_api.resources import UserPersonalDataResource
 
@@ -11,7 +12,7 @@ def alert_users_of_inactivity():
     for user in get_user_model().objects.filter(is_active=True):
         
         inactivity_alert_period = timezone.timedelta(
-            days=5*365-30 # Approximately 59 months
+            days=settings.LOCAL_SETTINGS['INACTIVITY_SETTINGS']['DAYS_BEFORE_ALERT']
         )
 
         # If user has never logged in, use date of account creation
@@ -43,7 +44,7 @@ def disable_inactive_users():
     for user in get_user_model().objects.filter(is_active=True):
         
         inactivity_disable_period = timezone.timedelta(
-            days=5*365 # Approximately 5 years
+            days=settings.LOCAL_SETTINGS['INACTIVITY_SETTINGS']['DAYS_BEFORE_DISABLE']
         )
         
         # If user has never logged in, use date of account creation

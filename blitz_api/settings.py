@@ -416,6 +416,10 @@ LIMIT_DATE_FOR_FREE_VIRTUAL_RETREAT_ON_MEMBERSHIP = config(
 )
 
 LOCAL_SETTINGS = {
+    'INACTIVITY_SETTINGS': {
+        'DAYS_BEFORE_DISABLE': 5*365,  # Approximately 5 years
+        'DAYS_BEFORE_ALERT': 5*365-30, # Approximately 59 months
+    },
     'ORGANIZATION': config(
         'ORGANIZATION',
         default='Blitz',
