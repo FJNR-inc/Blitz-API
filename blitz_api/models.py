@@ -175,6 +175,13 @@ class User(AbstractUser):
         null=True,
         verbose_name=_("Last inactivity alert sent"),
     )
+    
+    anonymisation_date = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Anonymisation date"),
+        help_text=_("Date when the user account had been anonymised"),
+    )
 
     _tomato_field_matrix = models.TextField(
         verbose_name=_("Tomato field matrix"),
@@ -259,6 +266,7 @@ class User(AbstractUser):
         self.personnal_restrictions = None
         
         # Disable account
+        self.anonymisation_date = timezone.now()
         self.is_active = False
 
         self.save()

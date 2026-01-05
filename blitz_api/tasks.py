@@ -9,7 +9,7 @@ from blitz_api.resources import UserPersonalDataResource
 def alert_users_of_inactivity():
     alerted_users = []
 
-    for user in get_user_model().objects.filter(is_active=True):
+    for user in get_user_model().objects.filter(anonymisation_date=None):
         
         inactivity_alert_period = timezone.timedelta(
             days=settings.LOCAL_SETTINGS['INACTIVITY_SETTINGS']['DAYS_BEFORE_ALERT']
@@ -35,7 +35,7 @@ def alert_users_of_inactivity():
 def disable_inactive_users():
     disabled_users = []
 
-    for user in get_user_model().objects.filter(is_active=True):
+    for user in get_user_model().objects.filter(anonymisation_date=None):
         
         inactivity_disable_period = timezone.timedelta(
             days=settings.LOCAL_SETTINGS['INACTIVITY_SETTINGS']['DAYS_BEFORE_DISABLE']
