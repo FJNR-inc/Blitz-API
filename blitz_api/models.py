@@ -248,8 +248,8 @@ class User(AbstractUser):
         self.send_account_disabled_alert()
 
         # Anonymise user data
-        self.first_name = None
-        self.last_name = None
+        self.first_name = 'Anonymised'
+        self.last_name = 'Anonymised'
         self.phone = None
         self.other_phone = None
         self.university = None
