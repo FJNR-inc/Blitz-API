@@ -15,13 +15,7 @@ def alert_users_of_inactivity():
             days=settings.LOCAL_SETTINGS['INACTIVITY_SETTINGS']['DAYS_BEFORE_ALERT']
         )
 
-        # If user has never logged in, use date of account creation
-        # Since we did not log last_login date before end of december 2025, set a minimum 2 years delay to all users before inactivity alerts
-        min_date = max(
-            timezone.datetime(2022, 12, 31, tzinfo=timezone.utc),
-            user.date_joined
-        )
-        last_seen = user.last_login or min_date
+        last_seen = user.last_seen()
                
         # If user never logged since last alert sent, do not send another alert
         last_alert = user.last_inactivity_alert_sent
@@ -46,14 +40,8 @@ def disable_inactive_users():
         inactivity_disable_period = timezone.timedelta(
             days=settings.LOCAL_SETTINGS['INACTIVITY_SETTINGS']['DAYS_BEFORE_DISABLE']
         )
-        
-        # If user has never logged in, use date of account creation
-        # Since we did not log last_login date before end of december 2025, set a minimum 2 years delay to all users before disabling accounts
-        min_date = max(
-            timezone.datetime(2022, 12, 31, tzinfo=timezone.utc),
-            user.date_joined
-        )
-        last_seen = user.last_login or min_date
+
+        last_seen = user.last_seen()
         
         # If user has been inactive for longer than the disable period, disable account
         if timezone.now() - last_seen > inactivity_disable_period:

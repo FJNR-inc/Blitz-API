@@ -184,6 +184,17 @@ class User(AbstractUser):
 
     history = HistoricalRecords()
 
+    def last_seen(self):
+        # If user has never logged in, use date of account creation
+        # Since we did not log last_login date before end of december 2025, set a minimum 2 years delay to all users before inactivity alerts
+        min_date = max(
+            timezone.datetime(2022, 12, 31, tzinfo=timezone.utc),
+            self.date_joined
+        )
+        last_seen = self.last_login or min_date
+        
+        return last_seen
+
     def send_inactivity_alert(self):
         if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is True:
             FRONTEND_SETTINGS = settings.LOCAL_SETTINGS[
@@ -197,7 +208,7 @@ class User(AbstractUser):
                     "first_name": self.first_name,
                     "last_name": self.last_name,
                     "date_inactivation": "{:%d/%m/%Y}".format(
-                        timezone.now() + timezone.timedelta(
+                        self.last_seen() + timezone.timedelta(
                             days=settings.LOCAL_SETTINGS['INACTIVITY_SETTINGS']['DAYS_BEFORE_DISABLE']
                         )
                     ),
