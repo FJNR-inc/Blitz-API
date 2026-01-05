@@ -11,7 +11,7 @@ def alert_users_of_inactivity():
     for user in get_user_model().objects.filter(is_active=True):
         
         inactivity_alert_period = timezone.timedelta(
-            month=59
+            days=5*365-30 # Approximately 59 months
         )
 
         # If user has never logged in, use date of account creation
@@ -43,7 +43,7 @@ def disable_inactive_users():
     for user in get_user_model().objects.filter(is_active=True):
         
         inactivity_disable_period = timezone.timedelta(
-            year=5
+            days=5*365 # Approximately 5 years
         )
         
         # If user has never logged in, use date of account creation
