@@ -53,7 +53,7 @@ def disable_inactive_users():
 
 @shared_task
 def export_personal_data_of_users(author_id, user_id):
-    queryset = setting.AUTH_USER_MODEL.objects.filter(id=user_id)
+    queryset = get_user_model().objects.filter(id=user_id)
 
     dataset = UserPersonalDataResource().export(queryset)
 
