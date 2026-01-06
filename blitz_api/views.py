@@ -269,7 +269,7 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
             return Response(content, status=status.HTTP_403_FORBIDDEN)
         
         # Process export in background
-        export_personal_data_of_users().delay(request.user.id, user.id)
+        export_personal_data_of_users.delay(request.user.id, user.id)
         return Response(status=status.HTTP_200_OK)
 
 
