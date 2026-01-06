@@ -76,4 +76,4 @@ def export_personal_data_of_users(author_id, user_id):
     
     new_export.send_confirmation_email()
     
-    return f"Exported personal data for user {user.email}"
+    return f"Exported personal data for user"
