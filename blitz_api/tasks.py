@@ -3,6 +3,8 @@ from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from blitz_api.resources import UserPersonalDataResource
+from datetime import datetime
+import pytz
 
 
 @shared_task
@@ -57,8 +59,9 @@ def export_personal_data_of_users(author_id, user_id):
 
     dataset = UserPersonalDataResource().export(queryset)
 
-    date_file = LOCAL_TIMEZONE.localize(datetime.now()) \
-        .strftime("%Y%m%d-%H%M%S")
+    LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
+    date_file = LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S")
+
     filename = f'export-personal-data-user-{user_id}-{date_file}.xls'
 
     new_export = ExportMedia.objects.create(
