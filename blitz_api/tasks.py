@@ -3,8 +3,10 @@ from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from blitz_api.resources import UserPersonalDataResource
+from blitz_api.models import ExportMedia
 from datetime import datetime
 import pytz
+from django.core.files.base import ContentFile
 
 
 @shared_task
