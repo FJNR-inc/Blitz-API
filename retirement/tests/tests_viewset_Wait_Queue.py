@@ -135,7 +135,7 @@ class WaitQueueTests(APITestCase):
                        str(self.retreat.id),
             'user': ''.join(['http://testserver/users/', str(self.user.id)]),
             'created_at': json.loads(response.content)['created_at'],
-            'used': False,
+            'used': None,
         }
 
         response_data = json.loads(response.content)
@@ -224,7 +224,7 @@ class WaitQueueTests(APITestCase):
                     args=[self.user.id],
                 ),
             },
-            'used': False,
+            'used': None,
         }
 
         response_data = json.loads(response.content)
@@ -450,7 +450,7 @@ class WaitQueueTests(APITestCase):
                 'url':
                     'http://testserver/retreat/wait_queues/' +
                     str(self.wait_queue_subscription.id),
-                'used': False,
+                'used': None,
                 'user': 'http://testserver/users/' + str(self.user2.id)
             }]
         }
@@ -503,7 +503,7 @@ class WaitQueueTests(APITestCase):
                 str(self.wait_queue_subscription.id),
             'user': ''.join(['http://testserver/users/', str(self.user2.id)]),
             'created_at': json.loads(response.content)['created_at'],
-            'used': False,
+            'used': None,
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -570,7 +570,7 @@ class WaitQueueTests(APITestCase):
                 ),
             },
             'created_at': json.loads(response.content)['created_at'],
-            'used': False,
+            'used': None,
         }
 
         self.assertEqual(response_data, content)

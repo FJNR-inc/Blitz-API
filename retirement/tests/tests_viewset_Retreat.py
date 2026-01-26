@@ -100,6 +100,7 @@ class RetreatTests(CustomAPITestCase):
         'is_specific_to_community',
         'community_description',
         'community_name',
+        'waiting_queue_enabled',
     ]
 
     @classmethod

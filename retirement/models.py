@@ -684,7 +684,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         if wait_queue_place:
             wait_queues = self.wait_queue.filter(user=user)
             for wait_queue in wait_queues:
-                wait_queue.used = True
+                wait_queue.used = timezone.now()
                 wait_queue.save()
 
             wait_queue_place.available = False
@@ -695,7 +695,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
                 user=user
             )
             for user_place_reserved in user_places_reserved:
-                user_place_reserved.used = True
+                user_place_reserved.used = timezone.now()
                 user_place_reserved.save()
 
     def can_order_the_retreat(self, user, invitation=None):
@@ -1638,10 +1638,12 @@ class WaitQueue(models.Model):
         verbose_name=_("Retreat"),
         related_name='wait_queue',
     )
-
-    used = models.BooleanField(
+    
+    used = models.DateTimeField(
         verbose_name=_("Used"),
-        default=False
+        null=True,
+        blank=True,
+        default=None,
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1753,10 +1755,10 @@ class WaitQueuePlace(models.Model):
     def get_user_without_places_reserved(self):
         wait_queue_places_reserved_ids = \
             self.wait_queue_places_reserved.filter(
-                used=False).values('user_id')
+                used=None).values('user_id')
 
         retreat_wait_queues = self.retreat.wait_queue\
-            .filter(used=False) \
+            .filter(used=None) \
             .exclude(user_id__in=wait_queue_places_reserved_ids) \
             .order_by('created_at')
 
@@ -1787,7 +1789,7 @@ class WaitQueuePlace(models.Model):
             user_already_notified = WaitQueuePlaceReserved.objects.filter(
                 user=wait_queue.user,
                 notified=True,
-                used=False,
+                used=None,
                 wait_queue_place__available=True,
                 wait_queue_place__retreat=self.retreat
             ).exists()
@@ -1829,10 +1831,12 @@ class WaitQueuePlaceReserved(models.Model):
         verbose_name=_("Notified"),
         default=False
     )
-
-    used = models.BooleanField(
+    
+    used = models.DateTimeField(
         verbose_name=_("Used"),
-        default=False
+        null=True, 
+        blank=True,
+        default=None
     )
 
     def __str__(self):

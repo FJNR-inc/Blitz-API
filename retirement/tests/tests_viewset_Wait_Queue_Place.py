@@ -112,7 +112,7 @@ class WaitQueuePlaceTests(APITestCase):
             WaitQueuePlaceReserved.objects.filter(
                 user=user,
                 notified=True,
-                used=False,
+                used=None,
                 wait_queue_place=wait_queue_place
             ).exists()
         )
@@ -125,7 +125,7 @@ class WaitQueuePlaceTests(APITestCase):
             WaitQueuePlaceReserved.objects.filter(
                 user=user,
                 notified=False,
-                used=False,
+                used=None,
                 wait_queue_place=wait_queue_place
             ).exists()
         )
@@ -134,7 +134,7 @@ class WaitQueuePlaceTests(APITestCase):
         self.assertEqual(
             WaitQueuePlaceReserved.objects.filter(
                 wait_queue_place=wait_queue_place,
-                used=False,
+                used=None,
             ).count(),
             count
         )
@@ -144,7 +144,7 @@ class WaitQueuePlaceTests(APITestCase):
             WaitQueuePlaceReserved.objects.get(
                 user=user,
                 wait_queue_place=wait_queue_place
-            ).used
+            ).used is not None
         )
 
     def test_notify_wait_queue_place(self):
@@ -182,7 +182,7 @@ class WaitQueuePlaceTests(APITestCase):
 
         self.wait_queue_user2.refresh_from_db()
         self.assertTrue(
-            self.wait_queue_user2.used
+            self.wait_queue_user2.used is not None
         )
 
         self.wait_queue_place.refresh_from_db()
