@@ -1016,14 +1016,14 @@ class WaitQueueSerializer(serializers.HyperlinkedModelSerializer):
         return WaitQueuePlaceReserved.objects.filter(
             user=obj.user,
             wait_queue_place__retreat=obj.retreat,
-            notified=True,
+            notified__isnull=False,
         ).exists()
         
     def get_first_notify(self, obj):
         first_notify = WaitQueuePlaceReserved.objects.filter(
             user=obj.user,
             wait_queue_place__retreat=obj.retreat,
-            notified=True,
+            notified__isnull=False,
         ).order_by('create').first()
 
         if first_notify:

@@ -111,7 +111,7 @@ class WaitQueuePlaceTests(APITestCase):
         self.assertTrue(
             WaitQueuePlaceReserved.objects.filter(
                 user=user,
-                notified=True,
+                notified__isnull=False,
                 used=None,
                 wait_queue_place=wait_queue_place
             ).exists()
@@ -124,7 +124,7 @@ class WaitQueuePlaceTests(APITestCase):
         self.assertTrue(
             WaitQueuePlaceReserved.objects.filter(
                 user=user,
-                notified=False,
+                notified__isnull=True,
                 used=None,
                 wait_queue_place=wait_queue_place
             ).exists()
@@ -259,7 +259,7 @@ class WaitQueuePlaceTests(APITestCase):
         self.assertTrue(
             WaitQueuePlaceReserved.objects.filter(
                 user=self.user1,
-                notified=True,
+                notified__isnull=False,
                 wait_queue_place=self.wait_queue_place
             ).exists()
         )

@@ -1788,7 +1788,7 @@ class WaitQueuePlace(models.Model):
             # check if the user is already notified for this retreat
             user_already_notified = WaitQueuePlaceReserved.objects.filter(
                 user=wait_queue.user,
-                notified=True,
+                notified__isnull=False,
                 used=None,
                 wait_queue_place__available=True,
                 wait_queue_place__retreat=self.retreat
