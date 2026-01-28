@@ -1827,9 +1827,12 @@ class WaitQueuePlaceReserved(models.Model):
         verbose_name=_("Create"),
         auto_now_add=True,
     )
-    notified = models.BooleanField(
-        verbose_name=_("Notified"),
-        default=False
+    
+    notified = models.DateTimeField(
+        verbose_name=_("Notification date"),
+        null=True,
+        blank=True,
+        default=None
     )
     
     used = models.DateTimeField(
