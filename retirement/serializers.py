@@ -1038,6 +1038,15 @@ class WaitQueuePlaceSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = WaitQueuePlace
         fields = '__all__'
+        extra_kwargs = {
+            'retreat': {
+                'help_text': _("Retreat"),
+                'view_name': 'retreat:retreat-detail',
+            },
+            'url': {
+                'view_name': 'retreat:waitqueueplace-detail',
+            },
+        }
 
 
 class RetreatInvitationSerializer(serializers.HyperlinkedModelSerializer):
