@@ -1847,7 +1847,7 @@ class WaitQueuePlaceReserved(models.Model):
 
     def notify(self):
         self.wait_queue_place.retreat.notify_reserved_seat(self.user)
-        self.notified = True
+        self.notified = timezone.now()
         self.save()
 
         return self.user.email
