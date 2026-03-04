@@ -19,7 +19,6 @@ import sys
 
 from decouple import config, Csv
 from django.utils.translation import gettext_lazy as _
-from dj_database_url import parse as db_url
 
 IS_GAE_ENV = config('GAE_INSTANCE', False)
 

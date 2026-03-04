@@ -7,11 +7,7 @@ from . import views
 
 
 class OptionalSlashSimpleRouter(SimpleRouter):
-    """ Subclass of SimpleRouter to make the trailing slash optional """
-
-    def __init__(self, *args, **kwargs):
-        super(SimpleRouter, self).__init__(*args, **kwargs)
-        self.trailing_slash = '/?'
+    trailing_slash = '/?'
 
 
 app_name = "ckeditor_api"

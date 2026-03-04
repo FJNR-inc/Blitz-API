@@ -36,10 +36,7 @@ from . import views
 
 
 class OptionalSlashDefaultRouter(DefaultRouter):
-    """ Subclass of DefaultRouter to make the trailing slash optional """
-    def __init__(self, *args, **kwargs):
-        super(DefaultRouter, self).__init__(*args, **kwargs)
-        self.trailing_slash = '/?'
+    trailing_slash = '/?'
 
 
 # Create a router and register our viewsets with it.

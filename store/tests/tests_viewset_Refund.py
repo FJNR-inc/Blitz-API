@@ -112,13 +112,13 @@ class RefundTests(APITestCase):
             'previous': None,
             'results': [{
                 'orderline':
-                    f'http://testserver/order_lines/{self.order_line.id}',
+                    f'http://testserver/order_lines/{self.order_line.id}/',
                 'id': self.refund.id,
                 'details': "Refund details",
                 'amount': '10.00',
                 'refund_date': response_data['results'][0]['refund_date'],
                 'refund_id': None,
-                'url': f'http://testserver/refunds/{self.refund.id}'
+                'url': f'http://testserver/refunds/{self.refund.id}/'
             }]
         }
 
@@ -149,23 +149,23 @@ class RefundTests(APITestCase):
             'previous': None,
             'results': [{
                 'orderline':
-                    f'http://testserver/order_lines/{self.order_line.id}',
+                    f'http://testserver/order_lines/{self.order_line.id}/',
                 'id': self.refund.id,
                 'details': "Refund details",
                 'amount': '10.00',
                 'refund_date': response_data['results'][0]['refund_date'],
                 'refund_id': None,
-                'url': f'http://testserver/refunds/{self.refund.id}'
+                'url': f'http://testserver/refunds/{self.refund.id}/'
             }, {
                 'orderline':
                     f'http://testserver/order_lines/'
-                    f'{self.order_line_admin.id}',
+                    f'{self.order_line_admin.id}/',
                 'id': self.refund_admin.id,
                 'details': "Admin refund details",
                 'amount': '10.00',
                 'refund_date': response_data['results'][1]['refund_date'],
                 'refund_id': None,
-                'url': f'http://testserver/refunds/{self.refund_admin.id}'
+                'url': f'http://testserver/refunds/{self.refund_admin.id}/'
             }]
         }
 
@@ -205,13 +205,13 @@ class RefundTests(APITestCase):
         response_data = json.loads(response.content)
 
         content = {
-            'orderline': f'http://testserver/order_lines/{self.order_line.id}',
+            'orderline': f'http://testserver/order_lines/{self.order_line.id}/',
             'id': self.refund.id,
             'details': "Refund details",
             'amount': '10.00',
             'refund_date': response_data['refund_date'],
             'refund_id': None,
-            'url': f'http://testserver/refunds/{self.refund.id}'
+            'url': f'http://testserver/refunds/{self.refund.id}/'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -231,7 +231,7 @@ class RefundTests(APITestCase):
             ),
         )
 
-        content = {'detail': 'Not found.'}
+        content = {'detail': 'No Refund matches the given query.'}
 
         self.assertEqual(json.loads(response.content), content)
 
@@ -253,13 +253,13 @@ class RefundTests(APITestCase):
         response_data = json.loads(response.content)
 
         content = {
-            'orderline': f'http://testserver/order_lines/{self.order_line.id}',
+            'orderline': f'http://testserver/order_lines/{self.order_line.id}/',
             'id': self.refund.id,
             'details': "Refund details",
             'amount': '10.00',
             'refund_date': response_data['refund_date'],
             'refund_id': None,
-            'url': f'http://testserver/refunds/{self.refund.id}'
+            'url': f'http://testserver/refunds/{self.refund.id}/'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -280,7 +280,7 @@ class RefundTests(APITestCase):
             ),
         )
 
-        content = {'detail': 'Not found.'}
+        content = {'detail': 'No Refund matches the given query.'}
 
         self.assertEqual(json.loads(response.content), content)
 

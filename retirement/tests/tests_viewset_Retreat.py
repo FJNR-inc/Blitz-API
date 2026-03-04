@@ -1297,7 +1297,7 @@ class RetreatTests(CustomAPITestCase):
             ),
         )
 
-        content = {'detail': 'Not found.'}
+        content = {'detail': 'No Retreat matches the given query.'}
 
         self.assertEqual(json.loads(response.content), content)
 

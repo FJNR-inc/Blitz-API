@@ -78,8 +78,9 @@ class MembershipTests(APITestCase):
             'duration': '1095 00:00:00',
             'name': 'advanced_membership',
             'price': '125.00',
-            'academic_levels': ['http://testserver/academic_levels/' +
-                                str(self.academic_level.id)],
+            'academic_levels': [
+                f'http://testserver/academic_levels/{str(self.academic_level.id)}/'
+            ],
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
@@ -251,10 +252,11 @@ class MembershipTests(APITestCase):
             'duration': '365 00:00:00',
             'name': 'basic_membership_updated',
             'price': '10.00',
-            'url': 'http://testserver/memberships/' + str(self.membership.id),
+            'url': f'http://testserver/memberships/{str(self.membership.id)}/',
             'id': self.membership.id,
-            'academic_levels': ['http://testserver/academic_levels/' +
-                                str(self.academic_level.id)],
+            'academic_levels': [
+                f'http://testserver/academic_levels/{str(self.academic_level.id)}/',
+            ],
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
@@ -344,11 +346,11 @@ class MembershipTests(APITestCase):
                 'duration': '365 00:00:00',
                 'name': 'basic_membership',
                 'price': '50.00',
-                'url': 'http://testserver/memberships/' +
-                       str(self.membership.id),
+                'url': f'http://testserver/memberships/{str(self.membership.id)}/',
                 'id': self.membership.id,
-                'academic_levels': ['http://testserver/academic_levels/' +
-                                    str(self.academic_level.id)],
+                'academic_levels': [
+                    f'http://testserver/academic_levels/{str(self.academic_level.id)}/',
+                ],
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
@@ -388,10 +390,10 @@ class MembershipTests(APITestCase):
                 'duration': '365 00:00:00',
                 'name': 'basic_membership',
                 'price': '50.00',
-                'url': 'http://testserver/memberships/' +
-                       str(self.membership.id),
-                'academic_levels': ['http://testserver/academic_levels/' +
-                                    str(self.academic_level.id)],
+                'url': f'http://testserver/memberships/{str(self.membership.id)}/',
+                'academic_levels': [
+                    f'http://testserver/academic_levels/{str(self.academic_level.id)}/',
+                ],
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
@@ -404,10 +406,10 @@ class MembershipTests(APITestCase):
                 'duration': '365 00:00:00',
                 'name': 'pending_membership',
                 'price': '50.00',
-                'url': 'http://testserver/memberships/' +
-                       str(self.membership_unavailable.id),
-                'academic_levels': ['http://testserver/academic_levels/' +
-                                    str(self.academic_level.id)],
+                'url': f'http://testserver/memberships/{str(self.membership_unavailable.id)}/',
+                'academic_levels': [
+                    f'http://testserver/academic_levels/{str(self.academic_level.id)}/',
+                ],
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
@@ -439,9 +441,10 @@ class MembershipTests(APITestCase):
             'duration': '365 00:00:00',
             'name': 'basic_membership',
             'price': '50.00',
-            'url': 'http://testserver/memberships/' + str(self.membership.id),
-            'academic_levels': ['http://testserver/academic_levels/' +
-                                str(self.academic_level.id)],
+            'url': f'http://testserver/memberships/{str(self.membership.id)}/',
+            'academic_levels': [
+                f'http://testserver/academic_levels/{str(self.academic_level.id)}/',
+            ],
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
@@ -473,9 +476,10 @@ class MembershipTests(APITestCase):
             'duration': '365 00:00:00',
             'name': 'basic_membership',
             'price': '50.00',
-            'url': 'http://testserver/memberships/' + str(self.membership.id),
-            'academic_levels': ['http://testserver/academic_levels/' +
-                                str(self.academic_level.id)],
+            'url': f'http://testserver/memberships/{str(self.membership.id)}/',
+            'academic_levels': [
+                f'http://testserver/academic_levels/{str(self.academic_level.id)}/',
+            ],
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
@@ -503,7 +507,7 @@ class MembershipTests(APITestCase):
             ),
         )
 
-        content = {'detail': 'Not found.'}
+        content = {'detail': 'No Membership matches the given query.'}
 
         self.assertEqual(json.loads(response.content), content)
 

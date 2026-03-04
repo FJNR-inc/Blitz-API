@@ -96,8 +96,7 @@ class AcademicFieldTests(APITestCase):
             'results': [{
                 'id': self.field.id,
                 'name': 'random_field',
-                'url': 'http://testserver/academic_fields/' +
-                       str(self.field.id)
+                'url': f'http://testserver/academic_fields/{str(self.field.id)}/'
             }]
         }
 

@@ -3,8 +3,7 @@
 import datetime
 from django.db import migrations, models
 import django.utils.timezone
-from django.utils.timezone import utc
-
+from datetime import timezone
 
 def update_inscription_date(apps, schema_editor):
     reservation_model = apps.get_model('retirement', 'reservation')
@@ -27,7 +26,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='historicalreservation',
             name='inscription_date',
-            field=models.DateTimeField(blank=True, default=datetime.datetime(2019, 7, 30, 13, 10, 22, 589179, tzinfo=utc), editable=False, verbose_name='Inscription date'),
+            field=models.DateTimeField(blank=True, default=datetime.datetime(2019, 7, 30, 13, 10, 22, 589179, tzinfo=timezone.utc), editable=False, verbose_name='Inscription date'),
             preserve_default=False,
         ),
         migrations.AddField(

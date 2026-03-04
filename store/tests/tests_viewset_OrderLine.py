@@ -493,7 +493,7 @@ class OrderLineTests(CustomAPITestCase):
             ),
         )
 
-        content = {'detail': 'Not found.'}
+        content = {'detail': 'No OrderLine matches the given query.'}
 
         self.assertEqual(json.loads(response.content), content)
 
@@ -531,7 +531,7 @@ class OrderLineTests(CustomAPITestCase):
             ),
         )
 
-        content = {'detail': 'Not found.'}
+        content = {'detail': 'No OrderLine matches the given query.'}
 
         self.assertEqual(json.loads(response.content), content)
 
@@ -543,10 +543,10 @@ class OrderLineTests(CustomAPITestCase):
         all order line
         """
         self.client.force_authenticate(user=self.admin)
+                
         response = self.client.get(
-            reverse(
-                'orderline-list'
-            ) + '/product_list',
+            f"http://testserver{reverse('orderline-list')}product_list/",
+            format='json',
         )
 
         content = [
@@ -556,5 +556,7 @@ class OrderLineTests(CustomAPITestCase):
                 'detail': True
             }
         ]
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
 
-        self.assertEqual(json.loads(response.content), content)
+        self.assertEqual(response.json(), content)

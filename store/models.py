@@ -23,7 +23,8 @@ from django.template.loader import render_to_string
 from safedelete.models import SafeDeleteModel
 from simple_history.models import HistoricalRecords
 from blitz_api.models import AcademicLevel, Organization, Affiliation
-from model_utils.managers import InheritanceManager
+from modeltranslation.manager import MultilingualManager
+from model_utils.managers import InheritanceManagerMixin
 from log_management.models import Log, EmailLog
 
 User = get_user_model()
@@ -38,6 +39,9 @@ class ProductDisplayMixin:
     def get_product_display_name(self):
         pass
 
+
+class TranslatedInheritanceManager(InheritanceManagerMixin, MultilingualManager):
+    pass
 
 class Order(models.Model):
     """Represents a transaction."""
@@ -374,7 +378,7 @@ class Refund(SafeDeleteModel):
 
 
 class BaseProduct(models.Model, ProductDisplayMixin):
-    objects = InheritanceManager()
+    objects = TranslatedInheritanceManager()
 
     name = models.CharField(
         verbose_name=_("Name"),

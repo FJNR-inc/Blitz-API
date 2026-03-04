@@ -105,7 +105,7 @@ class UsersIdTests(APITestCase):
             )
         )
 
-        content = {"detail": "Not found."}
+        content = {"detail": "No User matches the given query."}
         self.assertEqual(json.loads(response.content), content)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -633,7 +633,7 @@ class UsersIdTests(APITestCase):
         affiliation = AffiliationFactory()
 
         data = {
-            "affiliation": f"http://testserver/affiliations/{affiliation.id}",
+            "affiliation": f"http://testserver/affiliations/{affiliation.id}/",
         }
 
         self.client.force_authenticate(user=self.user)
@@ -673,7 +673,7 @@ class UsersIdTests(APITestCase):
             "university": {
                 'name': university.name,
             },
-            "affiliation": f"http://testserver/affiliations/{affiliation.id}",
+            "affiliation": f"http://testserver/affiliations/{affiliation.id}/",
 
         }
 
@@ -714,7 +714,7 @@ class UsersIdTests(APITestCase):
             "university": {
                 'name': university.name,
             },
-            "affiliation": f"http://testserver/affiliations/{affiliation.id}",
+            "affiliation": f"http://testserver/affiliations/{affiliation.id}/",
 
         }
 
@@ -1099,7 +1099,7 @@ class UsersIdTests(APITestCase):
             format='json',
         )
 
-        content = {'detail': 'Not found.'}
+        content = {'detail': 'No User matches the given query.'}
 
         self.assertEqual(json.loads(response.content), content)
 

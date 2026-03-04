@@ -92,7 +92,7 @@ class PackageTests(APITestCase):
         content = {
             'details': '10 reservations package',
             'exclusive_memberships': [
-                f'http://testserver/memberships/{self.membership.id}'],
+                f'http://testserver/memberships/{self.membership.id}/'],
             'available': True,
             'name': 'basic_package',
             'price': '50.00',
@@ -303,7 +303,7 @@ class PackageTests(APITestCase):
             'name': 'extreme_package_updated',
             'price': '1.00',
             'reservations': 999,
-            'url': f'http://testserver/packages/{self.package.id}',
+            'url': f'http://testserver/packages/{self.package.id}/',
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
@@ -346,7 +346,7 @@ class PackageTests(APITestCase):
             'name': 'extreme_package',
             'price': '99.00',
             'reservations': 100,
-            'url': f'http://testserver/packages/{self.package.id}',
+            'url': f'http://testserver/packages/{self.package.id}/',
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
@@ -438,7 +438,7 @@ class PackageTests(APITestCase):
                 'name': 'extreme_package',
                 'price': '400.00',
                 'reservations': 100,
-                'url': f'http://testserver/packages/{self.package.id}',
+                'url': f'http://testserver/packages/{self.package.id}/',
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
@@ -513,7 +513,7 @@ class PackageTests(APITestCase):
                 'name': 'extreme_package',
                 'price': '400.00',
                 'reservations': 100,
-                'url': f'http://testserver/packages/{self.package.id}',
+                'url': f'http://testserver/packages/{self.package.id}/',
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
@@ -529,7 +529,7 @@ class PackageTests(APITestCase):
                 'reservations': 100,
                 'url':
                     f'http://testserver/packages/'
-                    f'{self.package_unavailable.id}',
+                    f'{self.package_unavailable.id}/',
                 'available_on_product_types': [],
                 'available_on_products': [],
                 'options': [],
@@ -562,7 +562,7 @@ class PackageTests(APITestCase):
             'name': 'extreme_package',
             'price': '400.00',
             'reservations': 100,
-            'url': f'http://testserver/packages/{self.package.id}',
+            'url': f'http://testserver/packages/{self.package.id}/',
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
@@ -595,7 +595,7 @@ class PackageTests(APITestCase):
             'name': 'extreme_package',
             'price': '400.00',
             'reservations': 100,
-            'url': f'http://testserver/packages/{self.package.id}',
+            'url': f'http://testserver/packages/{self.package.id}/',
             'available_on_product_types': [],
             'available_on_products': [],
             'options': [],
@@ -623,7 +623,7 @@ class PackageTests(APITestCase):
             ),
         )
 
-        content = {'detail': 'Not found.'}
+        content = {'detail': 'No Package matches the given query.'}
 
         self.assertEqual(json.loads(response.content), content)
 

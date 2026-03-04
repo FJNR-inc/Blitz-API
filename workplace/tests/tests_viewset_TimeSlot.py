@@ -115,15 +115,14 @@ class TimeSlotTests(APITestCase):
         )
 
         content = {
-            'billing_price': 10,
+            'billing_price': 10.0,
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
             'places_remaining': 0,
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 0,
             'start_time': data['start_time'].isoformat(),
-            'period': f'http://testserver/periods/'
-            f'{self.period_no_workplace.id}',
+            'period': f'http://testserver/periods/{self.period_no_workplace.id}/',
             'is_reserved': False,
             'workplace': None
         }
@@ -165,7 +164,7 @@ class TimeSlotTests(APITestCase):
         del response_data['url']
 
         content = {
-            'billing_price': 3,
+            'billing_price': 3.0,
             'end_time': data['end_time'].isoformat(),
             'is_reserved': False,
             'price': '3.00',
@@ -173,7 +172,7 @@ class TimeSlotTests(APITestCase):
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 0,
             'start_time': data['start_time'].isoformat(),
-            'period': f'http://testserver/periods/{self.period.id}',
+            'period': f'http://testserver/periods/{self.period.id}/',
         }
 
         self.assertEqual(response_data, content)
@@ -489,14 +488,14 @@ class TimeSlotTests(APITestCase):
             'id': self.time_slot_active.id,
             'end_time': data['end_time'].isoformat(),
             'price': '10.00',
-            'billing_price': 10,
+            'billing_price': 10.0,
             'is_reserved': False,
             'places_remaining': 40,
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 0,
             'start_time': data['start_time'].isoformat(),
-            'url': f'http://testserver/time_slots/{self.time_slot_active.id}',
-            'period': f'http://testserver/periods/{self.period.id}',
+            'url': f'http://testserver/time_slots/{self.time_slot_active.id}/',
+            'period': f'http://testserver/periods/{self.period.id}/',
             "workplace": {
                 "address_line1": "123 random street",
                 "address_line2": None,
@@ -515,7 +514,7 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 'place_name': '',
                 "volunteers": [],
-                "url": f"http://testserver/workplaces/{self.workplace.id}",
+                "url": f"http://testserver/workplaces/{self.workplace.id}/",
                 'is_accessible': True,
             }
         }
@@ -574,8 +573,8 @@ class TimeSlotTests(APITestCase):
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 2,
             'start_time': data['start_time'].isoformat(),
-            'url': f'http://testserver/time_slots/{self.time_slot.id}',
-            'period': f'http://testserver/periods/{self.period.id}',
+            'url': f'http://testserver/time_slots/{self.time_slot.id}/',
+            'period': f'http://testserver/periods/{self.period.id}/',
         }
 
         self.assertEqual(response_data['nb_reservations_canceled'],
@@ -636,14 +635,14 @@ class TimeSlotTests(APITestCase):
             'id': self.time_slot.id,
             'end_time': response_data['end_time'],
             'price': '1000.00',
-            'billing_price': 1000,
+            'billing_price': 1000.0,
             'is_reserved': True,
             'places_remaining': 38,
             'nb_reservations_active': 2,
             'nb_reservations_canceled': 0,
             'start_time': response_data['start_time'],
-            'url': f'http://testserver/time_slots/{self.time_slot.id}',
-            'period': f'http://testserver/periods/{self.period.id}',
+            'url': f'http://testserver/time_slots/{self.time_slot.id}/',
+            'period': f'http://testserver/periods/{self.period.id}/',
             "workplace": {
                 "address_line1": "123 random street",
                 "address_line2": None,
@@ -662,7 +661,7 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 'place_name': '',
                 "volunteers": [],
-                "url": f"http://testserver/workplaces/{self.workplace.id}",
+                "url": f"http://testserver/workplaces/{self.workplace.id}/",
                 'is_accessible': True,
             }
         }
@@ -802,14 +801,14 @@ class TimeSlotTests(APITestCase):
             'id': self.time_slot.id,
             'end_time': response_data['end_time'],
             'price': '1000.00',
-            'billing_price': 1000,
+            'billing_price': 1000.0,
             'is_reserved': False,
             'places_remaining': 40,
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 2,
             'start_time': data['start_time'].isoformat(),
-            'url': f'http://testserver/time_slots/{self.time_slot.id}',
-            'period': f'http://testserver/periods/{self.period.id}',
+            'url': f'http://testserver/time_slots/{self.time_slot.id}/',
+            'period': f'http://testserver/periods/{self.period.id}/',
             "workplace": {
                 "address_line1": "123 random street",
                 "address_line2": None,
@@ -828,7 +827,7 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 'place_name': '',
                 "volunteers": [],
-                "url": f"http://testserver/workplaces/{self.workplace.id}",
+                "url": f"http://testserver/workplaces/{self.workplace.id}/",
                 'is_accessible': True,
             }
         }
@@ -896,14 +895,14 @@ class TimeSlotTests(APITestCase):
             'id': self.time_slot.id,
             'end_time': response_data['end_time'],
             'price': '1000.00',
-            'billing_price': 1000,
+            'billing_price': 1000.0,
             'is_reserved': False,
             'places_remaining': 40,
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 2,
             'start_time': data['start_time'].isoformat(),
-            'url': f'http://testserver/time_slots/{self.time_slot.id}',
-            'period': f'http://testserver/periods/{self.period.id}',
+            'url': f'http://testserver/time_slots/{self.time_slot.id}/',
+            'period': f'http://testserver/periods/{self.period.id}/',
             "workplace": {
                 "address_line1": "123 random street",
                 "address_line2": None,
@@ -922,7 +921,7 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 'place_name': '',
                 "volunteers": [],
-                "url": f"http://testserver/workplaces/{self.workplace.id}",
+                "url": f"http://testserver/workplaces/{self.workplace.id}/",
                 'is_accessible': True,
             }
         }
@@ -1100,15 +1099,14 @@ class TimeSlotTests(APITestCase):
                 'id': self.time_slot_active.id,
                 'end_time': data['results'][0]['end_time'],
                 'price': None,
-                'billing_price': 3,
+                'billing_price': 3.0,
                 'places_remaining': 40,
                 'is_reserved': False,
                 'nb_reservations_active': 0,
                 'nb_reservations_canceled': 0,
                 'start_time': data['results'][0]['start_time'],
-                'url': f'http://testserver/time_slots/'
-                f'{self.time_slot_active.id}',
-                'period': f'http://testserver/periods/{self.period_active.id}',
+                'url': f'http://testserver/time_slots/{self.time_slot_active.id}/',
+                'period': f'http://testserver/periods/{self.period_active.id}/',
                 "workplace": {
                     "address_line1": "123 random street",
                     "address_line2": None,
@@ -1128,7 +1126,7 @@ class TimeSlotTests(APITestCase):
                     "place_name": '',
                     "volunteers": [],
                     "url":
-                        f"http://testserver/workplaces/{self.workplace2.id}",
+                        f"http://testserver/workplaces/{self.workplace2.id}/",
                     'is_accessible': True,
                 }
             }]
@@ -1162,7 +1160,7 @@ class TimeSlotTests(APITestCase):
             'results': [{
                 'id': self.time_slot.id,
                 'end_time': data['results'][0]['end_time'],
-                'period': f'http://testserver/periods/{self.period.id}',
+                'period': f'http://testserver/periods/{self.period.id}/',
                 'price': '3.00',
                 'billing_price': 3.0,
                 'is_reserved': True,
@@ -1170,7 +1168,7 @@ class TimeSlotTests(APITestCase):
                 'nb_reservations_active': 2,
                 'nb_reservations_canceled': 0,
                 'start_time': data['results'][0]['start_time'],
-                'url': f'http://testserver/time_slots/{self.time_slot.id}',
+                'url': f'http://testserver/time_slots/{self.time_slot.id}/',
                 "workplace": {
                     "address_line1": "123 random street",
                     "address_line2": None,
@@ -1189,7 +1187,7 @@ class TimeSlotTests(APITestCase):
                     "timezone": None,
                     "place_name": '',
                     "volunteers": [],
-                    "url": f"http://testserver/workplaces/{self.workplace.id}",
+                    "url": f"http://testserver/workplaces/{self.workplace.id}/",
                     'is_accessible': True,
                 }
             }, {
@@ -1202,9 +1200,8 @@ class TimeSlotTests(APITestCase):
                 'nb_reservations_active': 0,
                 'nb_reservations_canceled': 0,
                 'start_time': data['results'][1]['start_time'],
-                'url': f'http://testserver/time_slots/'
-                f'{self.time_slot_active.id}',
-                'period': f'http://testserver/periods/{self.period_active.id}',
+                'url': f'http://testserver/time_slots/{self.time_slot_active.id}/',
+                'period': f'http://testserver/periods/{self.period_active.id}/',
                 "workplace": {
                     "address_line1": "123 random street",
                     "address_line2": None,
@@ -1224,7 +1221,7 @@ class TimeSlotTests(APITestCase):
                     "place_name": '',
                     "volunteers": [],
                     "url":
-                        f"http://testserver/workplaces/{self.workplace2.id}",
+                        f"http://testserver/workplaces/{self.workplace2.id}/",
                     'is_accessible': True,
                 }
             }]
@@ -1268,15 +1265,15 @@ class TimeSlotTests(APITestCase):
             'results': [{
                 'id': self.time_slot.id,
                 'end_time': self.time_slot.end_time.isoformat(),
-                'period': f'http://testserver/periods/{self.period.id}',
+                'period': f'http://testserver/periods/{self.period.id}/',
                 'places_remaining': 38,
                 'nb_reservations_active': 2,
                 'nb_reservations_canceled': 0,
                 'price': '3.00',
-                "billing_price": 3,
+                "billing_price": 3.0,
                 'is_reserved': True,
                 'start_time': self.time_slot.start_time.isoformat(),
-                'url': f'http://testserver/time_slots/{self.time_slot.id}',
+                'url': f'http://testserver/time_slots/{self.time_slot.id}/',
                 "workplace": {
                     "address_line1": "123 random street",
                     "address_line2": None,
@@ -1295,7 +1292,7 @@ class TimeSlotTests(APITestCase):
                     "timezone": None,
                     "place_name": '',
                     "volunteers": [],
-                    "url": f"http://testserver/workplaces/{self.workplace.id}",
+                    "url": f"http://testserver/workplaces/{self.workplace.id}/",
                     'is_accessible': True,
                 }
             }]
@@ -1388,14 +1385,14 @@ class TimeSlotTests(APITestCase):
             'id': self.time_slot_active.id,
             'end_time': self.time_slot_active.end_time.isoformat(),
             'price': None,
-            'billing_price': 3,
+            'billing_price': 3.0,
             'is_reserved': False,
             'places_remaining': 40,
             'nb_reservations_active': 0,
             'nb_reservations_canceled': 0,
             'start_time': self.time_slot_active.start_time.isoformat(),
-            'url': f'http://testserver/time_slots/{self.time_slot_active.id}',
-            'period': f'http://testserver/periods/{self.period_active.id}',
+            'url': f'http://testserver/time_slots/{self.time_slot_active.id}/',
+            'period': f'http://testserver/periods/{self.period_active.id}/',
             "workplace": {
                 "address_line1": "123 random street",
                 "address_line2": None,
@@ -1414,7 +1411,7 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 "place_name": '',
                 "volunteers": [],
-                "url": f"http://testserver/workplaces/{self.workplace2.id}",
+                "url": f"http://testserver/workplaces/{self.workplace2.id}/",
                 'is_accessible': True,
             }
         }
@@ -1446,14 +1443,14 @@ class TimeSlotTests(APITestCase):
             'id': self.time_slot_active.id,
             'end_time': self.time_slot_active.end_time.isoformat(),
             'price': None,
-            'billing_price': 3,
+            'billing_price': 3.0,
             'places_remaining': 39,
             'is_reserved': True,
             'nb_reservations_active': 1,
             'nb_reservations_canceled': 0,
             'start_time': self.time_slot_active.start_time.isoformat(),
-            'url': f'http://testserver/time_slots/{self.time_slot_active.id}',
-            'period': f'http://testserver/periods/{self.period_active.id}',
+            'url': f'http://testserver/time_slots/{self.time_slot_active.id}/',
+            'period': f'http://testserver/periods/{self.period_active.id}/',
             "workplace": {
                 "address_line1": "123 random street",
                 "address_line2": None,
@@ -1472,7 +1469,7 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 "place_name": '',
                 "volunteers": [],
-                "url": f"http://testserver/workplaces/{self.workplace2.id}",
+                "url": f"http://testserver/workplaces/{self.workplace2.id}/",
                 'is_accessible': True,
             }
         }
@@ -1493,7 +1490,7 @@ class TimeSlotTests(APITestCase):
             ),
         )
 
-        content = {'detail': 'Not found.'}
+        content = {'detail': 'No TimeSlot matches the given query.'}
 
         self.assertEqual(json.loads(response.content), content)
 
@@ -1520,15 +1517,15 @@ class TimeSlotTests(APITestCase):
         content = {
             'id': self.time_slot.id,
             'end_time': data['end_time'],
-            'period': f'http://testserver/periods/{self.period.id}',
+            'period': f'http://testserver/periods/{self.period.id}/',
             'price': '3.00',
-            'billing_price': 3,
+            'billing_price': 3.0,
             'is_reserved': True,
             'places_remaining': 38,
             'nb_reservations_active': 2,
             'nb_reservations_canceled': 0,
             'start_time': data['start_time'],
-            'url': f'http://testserver/time_slots/{self.time_slot.id}',
+            'url': f'http://testserver/time_slots/{self.time_slot.id}/',
             "workplace": {
                 "address_line1": "123 random street",
                 "address_line2": None,
@@ -1547,7 +1544,7 @@ class TimeSlotTests(APITestCase):
                 "timezone": None,
                 "place_name": '',
                 "volunteers": [],
-                "url": f"http://testserver/workplaces/{self.workplace.id}",
+                "url": f"http://testserver/workplaces/{self.workplace.id}/",
                 'is_accessible': True,
             }
         }
@@ -1571,7 +1568,7 @@ class TimeSlotTests(APITestCase):
             ),
         )
 
-        content = {'detail': 'Not found.'}
+        content = {'detail': 'No TimeSlot matches the given query.'}
 
         self.assertEqual(json.loads(response.content), content)
 

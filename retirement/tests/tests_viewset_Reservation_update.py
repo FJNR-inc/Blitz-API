@@ -170,14 +170,10 @@ class ReservationTests(APITestCase):
             'id': self.reservation.id,
             'is_active': True,
             'is_present': False,
-            'retreat': 'http://testserver/retreat/retreats/' +
-                       str(self.reservation.retreat.id),
-            'url': 'http://testserver/retreat/reservations/' +
-                   str(self.reservation.id),
-            'user': 'http://testserver/users/' +
-                    str(self.user.id),
-            'order_line': 'http://testserver/order_lines/' +
-                          str(self.order_line.id),
+            'retreat': f'http://testserver/retreat/retreats/{str(self.reservation.retreat.id)}/',
+            'url': f'http://testserver/retreat/reservations/{str(self.reservation.id)}/',
+            'user': f'http://testserver/users/{str(self.user.id)}/',
+            'order_line': f'http://testserver/order_lines/{str(self.order_line.id)}/',
             'cancelation_date': None,
             'cancelation_action': None,
             'cancelation_reason': None,

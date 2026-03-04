@@ -37,7 +37,7 @@ class ExportMixin(object):
         filename = f'{request.resolver_match.view_name}-{date_file}.xls'
 
         new_exprt = ExportMedia.objects.create()
-        content = ContentFile(dataset.xls)
+        content = ContentFile(dataset.export('xls'))
         new_exprt.file.save(filename, content)
 
         export_url = serializers.ExportMediaSerializer(
