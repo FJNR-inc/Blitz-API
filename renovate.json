@@ -1,10 +1,12 @@
 {
   "extends": [
-    "config:base"
+    "config:recommended"
   ],
   "packageRules": [
     {
-      "matchPackageNames": ["django"],
+      "matchPackageNames": [
+        "django"
+      ],
       "allowedVersions": "/^\\d+\\.2\\./"
     }
   ]
