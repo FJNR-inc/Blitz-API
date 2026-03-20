@@ -1,5 +1,5 @@
 pycodestyle==2.14.0
 coveralls==4.1.0
 responses==0.26.0
-awscli==1.44.62
+awscli==1.44.63
 six==1.17.0
