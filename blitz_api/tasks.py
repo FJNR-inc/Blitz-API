@@ -45,8 +45,19 @@ def disable_inactive_users():
             days=settings.LOCAL_SETTINGS['INACTIVITY_SETTINGS']['DAYS_BEFORE_DISABLE']
         )
 
+        last_alert = user.last_inactivity_alert_sent
+
+        # If user has never been sent an alert, skip this user
+        # we want to give them a chance to react to the alert before disabling their account
+        if not last_alert:
+            continue
+
+        # If last alert was sent less than 30 days ago, skip this user
+        if timezone.now() - last_alert < timezone.timedelta(days=30):
+            continue
+
         last_seen = user.last_seen()
-        
+
         # If user has been inactive for longer than the disable period, disable account
         if timezone.now() - last_seen > inactivity_disable_period:
             disabled_users.append(user.email)
