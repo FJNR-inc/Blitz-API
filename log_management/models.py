@@ -143,6 +143,10 @@ class ActionLog(models.Model):
         blank=True,
         null=True,
     )
+    
+    categories = models.JSONField(
+        verbose_name=_("Categories"),
+    )
 
     created = models.DateTimeField(
         verbose_name="Creation date",

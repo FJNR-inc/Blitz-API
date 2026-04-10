@@ -22,6 +22,7 @@ class ActionLogTests(CustomAPITestCase):
         'source',
         'action',
         'additional_data',
+        'categories',
         'created',
     ]
 

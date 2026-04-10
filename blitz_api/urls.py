@@ -109,14 +109,6 @@ urlpatterns = [
     path(
         'admin/', admin.site.urls
     ),
-    path(
-        'docs/',
-        include_docs_urls(
-            title=settings.LOCAL_SETTINGS['ORGANIZATION'] + " API",
-            authentication_classes=[],
-            permission_classes=[]
-        )
-    ),
     path('api-auth/', include('rest_framework.urls')),
     path('', include(router.urls)),  # includes router generated URL
     # The retreat app must be namespaced due to conflicting resources names
