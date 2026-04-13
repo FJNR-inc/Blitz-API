@@ -213,37 +213,57 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = config('FILE_UPLOAD_MAX_MEMORY_SIZE',
                                      default=2621440, cast=int)
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.0/howto/static-files/
-# Force local storage for unittests. Temporary.
-if len(sys.argv) > 1 and sys.argv[1] == 'test':
-    STATIC_URL = '/static/'
-    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
-else:
-    STATIC_URL = config('STATIC_URL', default='/static/')
-    STATICFILES_STORAGE = config('STATICFILES_STORAGE',
-                                 default='django.contrib.staticfiles.storage.StaticFilesStorage')
-if STATICFILES_STORAGE == 'django.contrib.staticfiles.storage.StaticFilesStorage':
-    STATIC_ROOT = 'static/'
 
-# User uploaded files (MEDIA)
-if IS_GAE_ENV:
+# Static and Media files
+if len(sys.argv) > 1 and sys.argv[1] == "test":
+    STATIC_URL = "/static/"
+    STATIC_ROOT = "static/"
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+elif IS_GAE_ENV:
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials.json"
-    DEFAULT_FILE_STORAGE = 'blitz_api.storage_backends.' \
-                           'GoogleCloudMediaStorage'
-    GS_PROJECT_ID = config('GS_MEDIA_BUCKET_NAME',
-                           default='thesez-vous-qa')
-    GS_MEDIA_BUCKET_NAME = config('GS_MEDIA_BUCKET_NAME')
-    MEDIA_URL = f'https://storage.googleapis.com/{GS_MEDIA_BUCKET_NAME}/'
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-    GS_DEFAULT_ACL = 'private'  # makes the files to private
-    GS_FILE_OVERWRITE = False
+
+    GS_BUCKET_NAME = config("GS_MEDIA_BUCKET_NAME")
+    GS_PROJECT_ID = config("GS_PROJECT_ID")
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+            "OPTIONS": {
+                "bucket_name": GS_BUCKET_NAME,
+                "project_id": GS_PROJECT_ID,
+                "default_acl": "private",
+                "file_overwrite": False,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    STATIC_URL = config('STATIC_URL', default='/static/')
+    STATIC_ROOT = 'static/'
+    MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/"
 else:
-    MEDIA_URL = config('MEDIA_URL', default='/media/')
-    MEDIA_ROOT = config('MEDIA_ROOT', default='media/')
-    DEFAULT_FILE_STORAGE = config(
-        'DEFAULT_FILE_STORAGE',
-        default='django.core.files.storage.FileSystemStorage')
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    STATIC_URL = config('STATIC_URL', default='/static/')
+    STATIC_ROOT = 'static/'
+    MEDIA_URL = config("MEDIA_URL", default="/media/")
+    MEDIA_ROOT = config("MEDIA_ROOT", default="media/")
+
 
 # Django Rest Framework
 
