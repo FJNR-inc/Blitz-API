@@ -21,7 +21,9 @@ from . import views
 
 
 class OptionalSlashSimpleRouter(SimpleRouter):
-    trailing_slash = '/?'
+    def __init__(self):
+        super().__init__()
+        self.trailing_slash = '/?'
 
 
 app_name = "workplace"
