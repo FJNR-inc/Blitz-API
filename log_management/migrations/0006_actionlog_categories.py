@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='actionlog',
             name='categories',
-            field=models.JSONField(default=['cookies-analytics'], verbose_name='Categories'),
+            field=models.JSONField(default="[\"cookies-performance\"]", verbose_name='Categories'),
             preserve_default=False,
         ),
     ]
