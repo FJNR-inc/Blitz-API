@@ -392,6 +392,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             retreat = Retreat.objects.get(pk=pk)
         except Exception:
             response_data = {
+                'stop': True,  # No need to retry to execute the task later if the retreat doesn't exist
                 'detail': "Retreat not found"
             }
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
@@ -402,6 +403,7 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
             )
         except Exception:
             response_data = {
+                'stop': True,  # No need to retry to execute the task later if the email doesn't exist
                 'detail': "AutomaticEmail not found"
             }
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
