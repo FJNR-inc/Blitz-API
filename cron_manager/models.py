@@ -86,14 +86,16 @@ class Task(models.Model):
         success = False
         if 200 <= response.status_code < 300:
             success = True
-            try:
-                content = response.json()
-                stop_cron_task = content.get('stop', False)
-                if stop_cron_task or not self.execution_interval:
-                    self.active = False
-                    self.save()
-            except Exception:
-                success = False
+
+        try:
+            content = response.json()
+            stop_cron_task = content.get('stop', False)
+            if stop_cron_task or not self.execution_interval:
+                self.active = False
+                self.save()
+        except Exception:
+            success = False
+
         execution.success = success
         execution.http_code = response.status_code
         execution.http_response = response.text
