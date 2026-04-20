@@ -194,11 +194,14 @@ class User(AbstractUser):
     def last_seen(self):
         # If user has never logged in, use date of account creation
         # Since we did not log last_login date before end of december 2025, set a minimum 2 years delay to all users before inactivity alerts
-        return max(
-            timezone.datetime(2022, 12, 31, tzinfo=timezone.utc),
-            self.date_joined,
-            self.last_login
-        )
+        dates = [self.date_joined, self.last_login]
+        dates = [date for date in dates if date is not None]
+        if dates:
+            return max(
+                timezone.datetime(2022, 12, 31, tzinfo=timezone.utc),
+                *dates
+            )
+        return timezone.datetime(2022, 12, 31, tzinfo=timezone.utc)
     
     def send_inactivity_alert(self):
         if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is True:
