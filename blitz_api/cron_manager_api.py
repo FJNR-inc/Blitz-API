@@ -14,21 +14,6 @@ class CronManager:
     def create_task(self, data):
         Task.objects.create(**data)
 
-    def create_wait_queue_place_notification(self, wait_queue_place_id):
-        wait_queue_place_url = self.url_to_call + reverse(
-                'retreat:waitqueueplace-notify',
-                args=[wait_queue_place_id]
-            )
-
-        data = {
-            "execution_datetime": timezone.now(),
-            "execution_interval": 1000 * 60 * 60 * 24,
-            "url": wait_queue_place_url,
-            "description": "Retreat wait queue notification"
-        }
-
-        self.create_task(data)
-
     def get_retreat_target_url(self, retreat, email):
         """
         :param retreat: The Retreat associate with this email
