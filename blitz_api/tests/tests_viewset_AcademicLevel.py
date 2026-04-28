@@ -96,7 +96,7 @@ class AcademicLevelTests(APITestCase):
             'results': [{
                 'id': self.lvl.id,
                 'name': 'random_level',
-                'url': f'http://testserver/academic_levels/{str(self.lvl.id)}/'
+                'url': f'http://testserver/academic_levels/{str(self.lvl.id)}'
             }]
         }
 

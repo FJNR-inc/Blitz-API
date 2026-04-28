@@ -240,10 +240,10 @@ class ReservationTests(CustomAPITestCase):
             'id': self.reservation.id,
             'is_active': True,
             'is_present': False,
-            'retreat': f'http://testserver/retreat/retreats/{str(self.reservation.retreat.id)}/',
-            'url': f'http://testserver/retreat/reservations/{str(self.reservation.id)}/',
-            'user': f'http://testserver/users/{str(self.user.id)}/',
-            'order_line': f'http://testserver/order_lines/{str(self.order_line.id)}/',
+            'retreat': f'http://testserver/retreat/retreats/{str(self.reservation.retreat.id)}',
+            'url': f'http://testserver/retreat/reservations/{str(self.reservation.id)}',
+            'user': f'http://testserver/users/{str(self.user.id)}',
+            'order_line': f'http://testserver/order_lines/{str(self.order_line.id)}',
             'cancelation_date': None,
             'cancelation_action': None,
             'cancelation_reason': None,
@@ -262,9 +262,9 @@ class ReservationTests(CustomAPITestCase):
             'id': self.reservation2.id,
             'is_active': True,
             'is_present': False,
-            'retreat': f'http://testserver/retreat/retreats/{str(self.reservation2.retreat.id)}/',
-            'url': f'http://testserver/retreat/reservations/{str(self.reservation2.id)}/',
-            'user': f'http://testserver/users/{str(self.user2.id)}/',
+            'retreat': f'http://testserver/retreat/retreats/{str(self.reservation2.retreat.id)}',
+            'url': f'http://testserver/retreat/reservations/{str(self.reservation2.id)}',
+            'user': f'http://testserver/users/{str(self.user2.id)}',
             'order_line': None,
             'cancelation_date': None,
             'cancelation_action': None,
@@ -310,7 +310,7 @@ class ReservationTests(CustomAPITestCase):
         content = json.loads(response.content)
         self.assertEqual(
             content['user_details']['url'],
-            f'http://testserver/users/{str(self.user.id)}/'
+            f'http://testserver/users/{str(self.user.id)}'
         )
         self.check_attributes(content)
 
@@ -377,7 +377,7 @@ class ReservationTests(CustomAPITestCase):
 
         self.assertEqual(
             content['user_details']['url'],
-            f'http://testserver/users/{str(self.user.id)}/'
+            f'http://testserver/users/{str(self.user.id)}'
         )
         self.check_attributes(content)
 

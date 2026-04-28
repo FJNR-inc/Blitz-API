@@ -196,7 +196,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
         }
 
         response = self.client.post(
@@ -221,7 +221,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
             "affiliation": None,
             "organization": None,
             "applicable_retreats": [],
@@ -263,7 +263,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
         }
 
         response = self.client.post(
@@ -288,7 +288,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
             "affiliation": None,
             "organization": None,
             "applicable_retreats": [],
@@ -328,7 +328,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
         }
 
         response = self.client.post(
@@ -353,7 +353,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
             "affiliation": None,
             "organization": None,
             "applicable_retreats": [],
@@ -394,7 +394,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
         }
 
         response = self.client.post(
@@ -436,7 +436,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
         }
 
         response = self.client.post(
@@ -485,9 +485,9 @@ class CouponTests(CustomAPITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
-            "organization": f"http://testserver/organizations/{str(organization.id)}/",
-            "affiliation": f"http://testserver/affiliations/{str(affiliation.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
+            "organization": f"http://testserver/organizations/{str(organization.id)}",
+            "affiliation": f"http://testserver/affiliations/{str(affiliation.id)}",
         }
 
         response = self.client.post(
@@ -507,7 +507,7 @@ class CouponTests(CustomAPITestCase):
             response.json(),
             {
                 "id": response.json()['id'],
-                "url": f"http://testserver/coupons/{str(response.json()['id'])}/",
+                "url": f"http://testserver/coupons/{str(response.json()['id'])}",
                 "applicable_product_types": [
                     "package"
                 ],
@@ -519,9 +519,9 @@ class CouponTests(CustomAPITestCase):
                 "max_use": 100,
                 "max_use_per_user": 2,
                 "details": "Any package for clients",
-                "owner": f"http://testserver/users/{str(self.user.id)}/",
-                "affiliation": f"http://testserver/affiliations/{str(affiliation.id)}/",
-                "organization": f"http://testserver/organizations/{str(organization.id)}/",
+                "owner": f"http://testserver/users/{str(self.user.id)}",
+                "affiliation": f"http://testserver/affiliations/{str(affiliation.id)}",
+                "organization": f"http://testserver/organizations/{str(organization.id)}",
                 "applicable_retreats": [],
                 "applicable_retreat_types": [],
                 "applicable_timeslots": [],
@@ -553,8 +553,8 @@ class CouponTests(CustomAPITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
-            "affiliation": f"http://testserver/affiliations/{str(affiliation.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
+            "affiliation": f"http://testserver/affiliations/{str(affiliation.id)}",
         }
 
         response = self.client.post(
@@ -601,9 +601,9 @@ class CouponTests(CustomAPITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
-            "organization": f"http://testserver/organizations/{str(organization.id)}/",
-            "affiliation": f"http://testserver/affiliations/{str(affiliation.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
+            "organization": f"http://testserver/organizations/{str(organization.id)}",
+            "affiliation": f"http://testserver/affiliations/{str(affiliation.id)}",
         }
 
         response = self.client.post(
@@ -852,7 +852,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
         }
         with mock.patch(
                 'store.serializers.random.choices', return_value="ABCDEFGH"):
@@ -895,7 +895,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
         }
 
         response = self.client.post(
@@ -1067,7 +1067,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": -100,
             "max_use_per_user": -2,
             "details": "Any package for fjeanneau clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
         }
 
         response = self.client.post(
@@ -1111,7 +1111,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": 1000,
             "max_use_per_user": 20,
             "details": "Any package for clients (updated max_use)",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
         }
 
         response = self.client.put(
@@ -1126,7 +1126,7 @@ class CouponTests(CustomAPITestCase):
         response_data = json.loads(response.content)
 
         content = {
-            "url": f"http://testserver/coupons/{str(self.coupon.id)}/",
+            "url": f"http://testserver/coupons/{str(self.coupon.id)}",
             "id": self.coupon.id,
             "applicable_product_types": [
                 "package"
@@ -1139,7 +1139,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": 1000,
             "max_use_per_user": 20,
             "details": "Any package for clients (updated max_use)",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
             "affiliation": None,
             "organization": None,
             "applicable_retreats": [],
@@ -1189,7 +1189,7 @@ class CouponTests(CustomAPITestCase):
         response_data = json.loads(response.content)
 
         content = {
-            "url": f"http://testserver/coupons/{str(self.coupon.id)}/",
+            "url": f"http://testserver/coupons/{str(self.coupon.id)}",
             "id": self.coupon.id,
             "applicable_product_types": [
                 "package"
@@ -1202,7 +1202,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": 1000,
             "max_use_per_user": 20,
             "details": "Any package for clients (updated max_use)",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
             "affiliation": None,
             "organization": None,
             "applicable_retreats": [],
@@ -1328,7 +1328,7 @@ class CouponTests(CustomAPITestCase):
             'next': None,
             'previous': None,
             'results': [{
-                "url": f"http://testserver/coupons/{str(self.coupon.id)}/",
+                "url": f"http://testserver/coupons/{str(self.coupon.id)}",
                 "id": self.coupon.id,
                 "applicable_product_types": [
                     "package"
@@ -1341,7 +1341,7 @@ class CouponTests(CustomAPITestCase):
                 "max_use": 100,
                 "max_use_per_user": 2,
                 "details": "Any package for clients",
-                "owner": f"http://testserver/users/{str(self.user.id)}/",
+                "owner": f"http://testserver/users/{str(self.user.id)}",
                 "affiliation": None,
                 "organization": None,
                 "applicable_retreats": [],
@@ -1354,7 +1354,7 @@ class CouponTests(CustomAPITestCase):
                 "is_applicable_to_physical_retreat": False,
                 "is_applicable_to_virtual_retreat": False
             }, {
-                "url": f"http://testserver/coupons/{str(self.coupon2.id)}/",
+                "url": f"http://testserver/coupons/{str(self.coupon2.id)}",
                 "id": self.coupon2.id,
                 "applicable_product_types": [],
                 "value": "13.00",
@@ -1365,7 +1365,7 @@ class CouponTests(CustomAPITestCase):
                 "max_use": 100,
                 "max_use_per_user": 2,
                 "details": "Any package for clients",
-                "owner": f"http://testserver/users/{str(self.admin.id)}/",
+                "owner": f"http://testserver/users/{str(self.admin.id)}",
                 "affiliation": None,
                 "organization": None,
                 "applicable_retreats": [],
@@ -1535,7 +1535,7 @@ class CouponTests(CustomAPITestCase):
         data = json.loads(response.content)
 
         content = {
-            "url": f"http://testserver/coupons/{str(self.coupon.id)}/",
+            "url": f"http://testserver/coupons/{str(self.coupon.id)}",
             "id": self.coupon.id,
             "applicable_product_types": [
                 "package"
@@ -1548,7 +1548,7 @@ class CouponTests(CustomAPITestCase):
             "max_use": 100,
             "max_use_per_user": 2,
             "details": "Any package for clients",
-            "owner": f"http://testserver/users/{str(self.user.id)}/",
+            "owner": f"http://testserver/users/{str(self.user.id)}",
             "affiliation": None,
             "organization": None,
             "applicable_retreats": [],
@@ -1662,7 +1662,7 @@ class CouponTests(CustomAPITestCase):
                     'first_name': self.user.first_name,
                     'last_name': self.user.last_name,
                     'email': self.user.email,
-                    'url': f'http://testserver/users/{self.user.id}/',
+                    'url': f'http://testserver/users/{self.user.id}',
                     'phone': None,
                     'personnal_restrictions': None
                 },
@@ -1681,7 +1681,7 @@ class CouponTests(CustomAPITestCase):
                     'first_name': self.user.first_name,
                     'last_name': self.user.last_name,
                     'email': self.user.email,
-                    'url': f'http://testserver/users/{self.user.id}/',
+                    'url': f'http://testserver/users/{self.user.id}',
                     'phone': None,
                     'personnal_restrictions': None
                 },

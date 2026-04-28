@@ -131,8 +131,8 @@ class WaitQueueTests(APITestCase):
             'first_notify': None,
             'list_size': 2,
             'notified': False,
-            'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}/',
-            'user': f'http://testserver/users/{str(self.user.id)}/',
+            'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}',
+            'user': f'http://testserver/users/{str(self.user.id)}',
             'created_at': json.loads(response.content)['created_at'],
             'used': None,
         }
@@ -208,7 +208,7 @@ class WaitQueueTests(APITestCase):
             'first_notify': None,
             'list_size': 2,
             'notified': False,
-            'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}/',
+            'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}',
             'user': {
                 'id': self.user.id,
                 'email': self.user.email,
@@ -441,10 +441,10 @@ class WaitQueueTests(APITestCase):
                 'first_notify': None,
                 'list_size': 1,
                 'notified': False,
-                'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}/',
-                'url': f'http://testserver/retreat/wait_queues/{str(self.wait_queue_subscription.id)}/',
+                'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}',
+                'url': f'http://testserver/retreat/wait_queues/{str(self.wait_queue_subscription.id)}',
                 'used': None,
-                'user': f'http://testserver/users/{str(self.user2.id)}/'
+                'user': f'http://testserver/users/{str(self.user2.id)}'
             }]
         }
 
@@ -488,9 +488,9 @@ class WaitQueueTests(APITestCase):
             'first_notify': None,
             'list_size': 1,
             'notified': False,
-            'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}/',
-            'url': f'http://testserver/retreat/wait_queues/{str(self.wait_queue_subscription.id)}/',
-            'user': f'http://testserver/users/{str(self.user2.id)}/',
+            'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}',
+            'url': f'http://testserver/retreat/wait_queues/{str(self.wait_queue_subscription.id)}',
+            'user': f'http://testserver/users/{str(self.user2.id)}',
             'created_at': json.loads(response.content)['created_at'],
             'used': None,
         }
@@ -540,8 +540,8 @@ class WaitQueueTests(APITestCase):
             'first_notify': None,
             'list_size': 1,
             'notified': False,
-            'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}/',
-            'url': f'http://testserver/retreat/wait_queues/{str(self.wait_queue_subscription.id)}/',
+            'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}',
+            'url': f'http://testserver/retreat/wait_queues/{str(self.wait_queue_subscription.id)}',
             'user': {
                 'id': self.user2.id,
                 'email': self.user2.email,

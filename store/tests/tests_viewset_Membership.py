@@ -79,7 +79,7 @@ class MembershipTests(APITestCase):
             'name': 'advanced_membership',
             'price': '125.00',
             'academic_levels': [
-                f'http://testserver/academic_levels/{str(self.academic_level.id)}/'
+                f'http://testserver/academic_levels/{str(self.academic_level.id)}'
             ],
             'available_on_product_types': [],
             'available_on_products': [],
@@ -252,10 +252,10 @@ class MembershipTests(APITestCase):
             'duration': '365 00:00:00',
             'name': 'basic_membership_updated',
             'price': '10.00',
-            'url': f'http://testserver/memberships/{str(self.membership.id)}/',
+            'url': f'http://testserver/memberships/{str(self.membership.id)}',
             'id': self.membership.id,
             'academic_levels': [
-                f'http://testserver/academic_levels/{str(self.academic_level.id)}/',
+                f'http://testserver/academic_levels/{str(self.academic_level.id)}',
             ],
             'available_on_product_types': [],
             'available_on_products': [],
@@ -346,10 +346,10 @@ class MembershipTests(APITestCase):
                 'duration': '365 00:00:00',
                 'name': 'basic_membership',
                 'price': '50.00',
-                'url': f'http://testserver/memberships/{str(self.membership.id)}/',
+                'url': f'http://testserver/memberships/{str(self.membership.id)}',
                 'id': self.membership.id,
                 'academic_levels': [
-                    f'http://testserver/academic_levels/{str(self.academic_level.id)}/',
+                    f'http://testserver/academic_levels/{str(self.academic_level.id)}',
                 ],
                 'available_on_product_types': [],
                 'available_on_products': [],
@@ -390,9 +390,9 @@ class MembershipTests(APITestCase):
                 'duration': '365 00:00:00',
                 'name': 'basic_membership',
                 'price': '50.00',
-                'url': f'http://testserver/memberships/{str(self.membership.id)}/',
+                'url': f'http://testserver/memberships/{str(self.membership.id)}',
                 'academic_levels': [
-                    f'http://testserver/academic_levels/{str(self.academic_level.id)}/',
+                    f'http://testserver/academic_levels/{str(self.academic_level.id)}',
                 ],
                 'available_on_product_types': [],
                 'available_on_products': [],
@@ -406,9 +406,9 @@ class MembershipTests(APITestCase):
                 'duration': '365 00:00:00',
                 'name': 'pending_membership',
                 'price': '50.00',
-                'url': f'http://testserver/memberships/{str(self.membership_unavailable.id)}/',
+                'url': f'http://testserver/memberships/{str(self.membership_unavailable.id)}',
                 'academic_levels': [
-                    f'http://testserver/academic_levels/{str(self.academic_level.id)}/',
+                    f'http://testserver/academic_levels/{str(self.academic_level.id)}',
                 ],
                 'available_on_product_types': [],
                 'available_on_products': [],
@@ -441,9 +441,9 @@ class MembershipTests(APITestCase):
             'duration': '365 00:00:00',
             'name': 'basic_membership',
             'price': '50.00',
-            'url': f'http://testserver/memberships/{str(self.membership.id)}/',
+            'url': f'http://testserver/memberships/{str(self.membership.id)}',
             'academic_levels': [
-                f'http://testserver/academic_levels/{str(self.academic_level.id)}/',
+                f'http://testserver/academic_levels/{str(self.academic_level.id)}',
             ],
             'available_on_product_types': [],
             'available_on_products': [],
@@ -476,9 +476,9 @@ class MembershipTests(APITestCase):
             'duration': '365 00:00:00',
             'name': 'basic_membership',
             'price': '50.00',
-            'url': f'http://testserver/memberships/{str(self.membership.id)}/',
+            'url': f'http://testserver/memberships/{str(self.membership.id)}',
             'academic_levels': [
-                f'http://testserver/academic_levels/{str(self.academic_level.id)}/',
+                f'http://testserver/academic_levels/{str(self.academic_level.id)}',
             ],
             'available_on_product_types': [],
             'available_on_products': [],

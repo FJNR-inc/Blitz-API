@@ -84,7 +84,7 @@ class PictureTests(APITestCase):
         content = {
             'name': 'random_picture',
             'picture': f'http://testserver/media/workplaces/{fname}',
-            'workplace': f'http://testserver/workplaces/{ self.workplace.id}/'
+            'workplace': f'http://testserver/workplaces/{ self.workplace.id}'
         }
         response_content = json.loads(response.content)
         del response_content['id']
@@ -224,8 +224,8 @@ class PictureTests(APITestCase):
             'name_en': 'new_picture',
             'name_fr': None,
             'picture': f'http://testserver/media/workplaces/{fname}',
-            'url': f'http://testserver/pictures/{self.picture.id}/',
-            'workplace': f'http://testserver/workplaces/{ self.workplace.id}/'
+            'url': f'http://testserver/pictures/{self.picture.id}',
+            'workplace': f'http://testserver/workplaces/{ self.workplace.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -265,8 +265,8 @@ class PictureTests(APITestCase):
                 'id': self.picture.id,
                 'name': 'random_picture',
                 'picture': f'http://testserver{self.picture.picture.url}',
-                'url': f'http://testserver/pictures/{self.picture.id}/',
-                'workplace': f'http://testserver/workplaces/{self.workplace.id}/'
+                'url': f'http://testserver/pictures/{self.picture.id}',
+                'workplace': f'http://testserver/workplaces/{self.workplace.id}'
             }]
         }
 
@@ -290,8 +290,8 @@ class PictureTests(APITestCase):
             'id': self.picture.id,
             'name': 'random_picture',
             'picture': f'http://testserver{self.picture.picture.url}',
-            'url': f'http://testserver/pictures/{self.picture.id}/',
-            'workplace': f'http://testserver/workplaces/{ self.workplace.id}/'
+            'url': f'http://testserver/pictures/{self.picture.id}',
+            'workplace': f'http://testserver/workplaces/{ self.workplace.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)

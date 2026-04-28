@@ -108,7 +108,7 @@ class PictureTests(APITestCase):
         content = {
             'name': 'random_picture',
             'picture': 'http://testserver/media/retreats/' + fname,
-            'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}/'
+            'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}'
         }
 
         response_data = remove_translation_fields(json.loads(response.content))
@@ -254,8 +254,8 @@ class PictureTests(APITestCase):
             'name_en': 'new_picture',
             'name_fr': None,
             'picture': 'http://testserver/media/retreats/' + fname,
-            'url': f'http://testserver/retreat/pictures/{str(self.picture.id)}/',
-            'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}/'
+            'url': f'http://testserver/retreat/pictures/{str(self.picture.id)}',
+            'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -297,8 +297,8 @@ class PictureTests(APITestCase):
                 'id': self.picture.id,
                 'name': 'random_picture',
                 'picture': 'http://testserver' + self.picture.picture.url,
-                'url': f'http://testserver/retreat/pictures/{str(self.picture.id)}/',
-                'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}/'
+                'url': f'http://testserver/retreat/pictures/{str(self.picture.id)}',
+                'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}'
             }]
         }
 
@@ -321,8 +321,8 @@ class PictureTests(APITestCase):
             'id': self.picture.id,
             'name': 'random_picture',
             'picture': 'http://testserver' + self.picture.picture.url,
-            'url': f'http://testserver/retreat/pictures/{str(self.picture.id)}/',
-            'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}/'
+            'url': f'http://testserver/retreat/pictures/{str(self.picture.id)}',
+            'retreat': f'http://testserver/retreat/retreats/{str(self.retreat.id)}'
         }
 
         self.assertEqual(json.loads(response.content), content)

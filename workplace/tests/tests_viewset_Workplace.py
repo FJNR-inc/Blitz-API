@@ -53,7 +53,7 @@ class WorkplaceTests(APITestCase):
             'state_province': 'Random_State',
             'timezone': "America/Montreal",
             'volunteers': [
-                f"http://testserver/users/{self.user.id}/"
+                f"http://testserver/users/{self.user.id}"
             ],
             'is_accessible': False,
         }
@@ -86,7 +86,7 @@ class WorkplaceTests(APITestCase):
             'timezone': "America/Montreal",
             'place_name': '',
             'volunteers': [
-                f'http://testserver/users/{self.user.id}/'
+                f'http://testserver/users/{self.user.id}'
             ],
             'is_accessible': False,
         }
@@ -284,7 +284,7 @@ class WorkplaceTests(APITestCase):
             'timezone': 'America/Montreal',
             'place_name': '',
             'volunteers': [],
-            'url': f'http://testserver/workplaces/{self.workplace.id}/',
+            'url': f'http://testserver/workplaces/{self.workplace.id}',
             'is_accessible': False,
         }
 
@@ -356,7 +356,7 @@ class WorkplaceTests(APITestCase):
                 'timezone': 'America/Montreal',
                 'place_name': '',
                 'volunteers': [],
-                'url': f'http://testserver/workplaces/{self.workplace.id}/',
+                'url': f'http://testserver/workplaces/{self.workplace.id}',
                 'is_accessible': True,
             }]
         }
@@ -448,7 +448,7 @@ class WorkplaceTests(APITestCase):
             'place_name': '',
             'timezone': 'America/Montreal',
             'volunteers': [],
-            'url': f'http://testserver/workplaces/{self.workplace.id}/',
+            'url': f'http://testserver/workplaces/{self.workplace.id}',
             'is_accessible': True,
         }
 

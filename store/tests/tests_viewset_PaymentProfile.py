@@ -93,7 +93,7 @@ class PaymentProfileTests(APITestCase):
                 }],
                 'id': self.payment_profile.id,
                 'name': 'Test profile',
-                'owner': f'http://testserver/users/{self.user.id}/'
+                'owner': f'http://testserver/users/{self.user.id}'
             }]
         }
 
@@ -142,7 +142,7 @@ class PaymentProfileTests(APITestCase):
                 }],
                 'id': self.payment_profile.id,
                 'name': 'Test profile',
-                'owner': f'http://testserver/users/{self.user.id}/'
+                'owner': f'http://testserver/users/{self.user.id}'
             }, {
                 'cards': [{
                     'card_bin': '453091',
@@ -159,7 +159,7 @@ class PaymentProfileTests(APITestCase):
                 }],
                 'id': self.payment_profile_admin.id,
                 'name': 'Test profile admin',
-                'owner': f'http://testserver/users/{self.admin.id}/'
+                'owner': f'http://testserver/users/{self.admin.id}'
             }]
         }
 
@@ -223,7 +223,7 @@ class PaymentProfileTests(APITestCase):
             }],
             'id': self.payment_profile.id,
             'name': 'Test profile',
-            'owner': f'http://testserver/users/{self.user.id}/'
+            'owner': f'http://testserver/users/{self.user.id}'
         }
 
         self.assertEqual(data, content)
@@ -290,7 +290,7 @@ class PaymentProfileTests(APITestCase):
             }],
             'id': self.payment_profile.id,
             'name': 'Test profile',
-            'owner': f'http://testserver/users/{self.user.id}/'
+            'owner': f'http://testserver/users/{self.user.id}'
         }
 
         self.assertEqual(data, content)

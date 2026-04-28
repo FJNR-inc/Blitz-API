@@ -454,7 +454,7 @@ class OrderTests(CustomAPITestCase):
                     'price': 50.0
                 }]
             }],
-            'user': f'http://testserver/users/{self.admin.id}/',
+            'user': f'http://testserver/users/{self.admin.id}',
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -750,7 +750,7 @@ class OrderTests(CustomAPITestCase):
                 'metadata': None,
                 'options': []
             }],
-            'user': f'http://testserver/users/{str(self.admin.id)}/',
+            'user': f'http://testserver/users/{str(self.admin.id)}',
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '0',
             'settlement_id': '0',
@@ -788,7 +788,7 @@ class OrderTests(CustomAPITestCase):
                 'object_id': self.time_slot.id,
                 'quantity': 1,
             }],
-            'target_user': f'http://testserver/users/{str(self.user.id)}/',
+            'target_user': f'http://testserver/users/{str(self.user.id)}',
             'bypass_payment': False,
         }
 
@@ -825,7 +825,7 @@ class OrderTests(CustomAPITestCase):
                 'metadata': None,
                 'options': []
             }],
-            'user': f'http://testserver/users/{str(self.user.id)}/',
+            'user': f'http://testserver/users/{str(self.user.id)}',
             'authorization_id': '0',
             'settlement_id': '0',
             'reference_number': '0',
@@ -854,15 +854,15 @@ class OrderTests(CustomAPITestCase):
             'order_lines': [{
                 'content_type': 'membership',
                 'object_id': self.membership.id,
-                'order': f'http://testserver/orders/{str(self.order.id)}/',
+                'order': f'http://testserver/orders/{str(self.order.id)}',
                 'quantity': 1,
-                'url': f'http://testserver/order_lines/{str(self.order_line.id)}/'
+                'url': f'http://testserver/order_lines/{str(self.order_line.id)}'
             }, {
                 'content_type': 'package',
                 'object_id': self.package.id,
-                'order': f'http://testserver/orders/{str(self.order.id)}/',
+                'order': f'http://testserver/orders/{str(self.order.id)}',
                 'quantity': 2,
-                'url': f'http://testserver/order_lines/{str(self.order_line.id)}/'
+                'url': f'http://testserver/order_lines/{str(self.order_line.id)}'
             }],
         }
 
@@ -893,7 +893,7 @@ class OrderTests(CustomAPITestCase):
                 'object_id': self.time_slot.id,
                 'quantity': 1,
             }],
-            'target_user': f'http://testserver/users/{str(self.user.id)}/',
+            'target_user': f'http://testserver/users/{str(self.user.id)}',
             'bypass_payment': True,
         }
 
@@ -933,7 +933,7 @@ class OrderTests(CustomAPITestCase):
                 'metadata': None,
                 'options': []
             }],
-            'user': f'http://testserver/users/{str(self.user.id)}/',
+            'user': f'http://testserver/users/{str(self.user.id)}',
             'authorization_id': '0',
             'settlement_id': '0',
             'reference_number': '0',
@@ -966,7 +966,7 @@ class OrderTests(CustomAPITestCase):
                 'object_id': self.time_slot.id,
                 'quantity': 1,
             }],
-            'target_user': f'http://testserver/users/{str(self.user.id)}/',
+            'target_user': f'http://testserver/users/{str(self.user.id)}',
             'bypass_payment': False,
         }
 
@@ -1053,7 +1053,7 @@ class OrderTests(CustomAPITestCase):
                 'metadata': None,
                 'options': []
             }],
-            'user': f'http://testserver/users/{str(self.admin.id)}/',
+            'user': f'http://testserver/users/{str(self.admin.id)}',
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '0',
             'settlement_id': '0',
@@ -1838,7 +1838,7 @@ class OrderTests(CustomAPITestCase):
                 'metadata': None,
                 'options': []
             }],
-            'user': f'http://testserver/users/{str(self.user.id)}/',
+            'user': f'http://testserver/users/{str(self.user.id)}',
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -2197,7 +2197,7 @@ class OrderTests(CustomAPITestCase):
                     'options': []
                 }
             ],
-            'user': f'http://testserver/users/{str(self.user.id)}/',
+            'user': f'http://testserver/users/{str(self.user.id)}',
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -2275,7 +2275,7 @@ class OrderTests(CustomAPITestCase):
                 'metadata': None,
                 'options': []
             }],
-            'user': f'http://testserver/users/{str(self.user.id)}/',
+            'user': f'http://testserver/users/{str(self.user.id)}',
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -2561,7 +2561,7 @@ class OrderTests(CustomAPITestCase):
                 'metadata': None,
                 'options': []
             }],
-            'user': f'http://testserver/users/{str(self.user.id)}/',
+            'user': f'http://testserver/users/{str(self.user.id)}',
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -2665,7 +2665,7 @@ class OrderTests(CustomAPITestCase):
                 'metadata': None,
                 'options': []
             }],
-            'user': f'http://testserver/users/{str(self.admin.id)}/',
+            'user': f'http://testserver/users/{str(self.admin.id)}',
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -2972,7 +2972,7 @@ class OrderTests(CustomAPITestCase):
             'settlement_id': '1',
             'reference_number': '751',
             'transaction_date': response_data['transaction_date'],
-            'user': f'http://testserver/users/{str(self.admin.id)}/',
+            'user': f'http://testserver/users/{str(self.admin.id)}',
         }
 
         self.assertEqual(response_data, content)
@@ -2994,15 +2994,15 @@ class OrderTests(CustomAPITestCase):
             'order_lines': [{
                 'content_type': 'membership',
                 'object_id': self.membership.id,
-                'order': f'http://testserver/orders/{str(self.order.id)}/',
+                'order': f'http://testserver/orders/{str(self.order.id)}',
                 'quantity': 1,
-                'url': f'http://testserver/order_lines/{str(self.order_line.id)}/'
+                'url': f'http://testserver/order_lines/{str(self.order_line.id)}'
             }, {
                 'content_type': 'package',
                 'object_id': self.package.id,
-                'order': f'http://testserver/orders/{str(self.order.id)}/',
+                'order': f'http://testserver/orders/{str(self.order.id)}',
                 'quantity': 2,
-                'url': f'http://testserver/order_lines/{str(self.order_line.id)}/'
+                'url': f'http://testserver/order_lines/{str(self.order_line.id)}'
             }],
         }
 
@@ -3184,7 +3184,7 @@ class OrderTests(CustomAPITestCase):
                 'metadata': None,
                 'options': []
             }],
-            'user': f'http://testserver/users/{str(self.admin.id)}/',
+            'user': f'http://testserver/users/{str(self.admin.id)}',
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',
@@ -3299,7 +3299,7 @@ class OrderTests(CustomAPITestCase):
                 'metadata': None,
                 'options': []
             }],
-            'user': f'http://testserver/users/{str(self.admin.id)}/',
+            'user': f'http://testserver/users/{str(self.admin.id)}',
             'transaction_date': response_data['transaction_date'],
             'authorization_id': '1',
             'settlement_id': '1',

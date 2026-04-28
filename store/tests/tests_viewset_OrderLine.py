@@ -545,7 +545,7 @@ class OrderLineTests(CustomAPITestCase):
         self.client.force_authenticate(user=self.admin)
                 
         response = self.client.get(
-            f"http://testserver{reverse('orderline-list')}product_list/",
+            f"{reverse('orderline-list')}/product_list/",
             format='json',
         )
 
