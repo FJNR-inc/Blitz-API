@@ -248,7 +248,7 @@ class OrderTests(CustomAPITestCase):
             retreat=self.retreat,
         )
         self.retreat.activate()
-        self.retreat.add_wait_queue_place(self.user, generate_cron=False)
+        self.retreat.add_wait_queue_place(self.user)
         self.retreat_no_seats = Retreat.objects.create(
             name="mega_retreat",
             details="This is a description of the mega retreat.",
@@ -1732,8 +1732,7 @@ class OrderTests(CustomAPITestCase):
         self.client.force_authenticate(user=self.user)
 
         self.retreat_no_seats.wait_queue_places.all().delete()
-        self.retreat_no_seats.add_wait_queue_place(self.user,
-                                                   generate_cron=False)
+        self.retreat_no_seats.add_wait_queue_place(self.user)
         self.retreat_no_seats.save()
 
         responses.add(
@@ -1787,8 +1786,7 @@ class OrderTests(CustomAPITestCase):
         )
 
         self.retreat_no_seats.wait_queue_places.all().delete()
-        new_wait_queue_place = \
-            self.retreat_no_seats.add_wait_queue_place(self.user)
+        new_wait_queue_place = self.retreat_no_seats.add_wait_queue_place(self.user)
         self.retreat_no_seats.add_user_to_wait_queue(self.user)
         new_wait_queue_place.notify()
 

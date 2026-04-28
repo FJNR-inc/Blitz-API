@@ -24,12 +24,16 @@ app.conf.beat_schedule = {
     },
     'alert_users_of_inactivity': {
         'task': 'blitz_api.tasks.alert_users_of_inactivity',
-        'schedule': crontab(minute=0, hour=9),
+        'schedule': crontab(minute=0, hour='*'),
     },
     'disable_inactive_users': {
         'task': 'blitz_api.tasks.disable_inactive_users',
-        'schedule': crontab(minute=0, hour=10),
-    }
+        'schedule': crontab(minute=0, hour='*'),
+    },
+    'notify_wait_queue_place': {
+        'task': 'retirement.tasks.notify_wait_queue_place',
+        'schedule': crontab(minute=0, hour='*'),
+    },
 }
 
 app.autodiscover_tasks()

@@ -737,34 +737,6 @@ class WaitQueuePlaceViewSet(viewsets.ModelViewSet):
     queryset = WaitQueuePlace.objects.all()
     permission_classes = (permissions.IsAdminOrReadOnly,)
 
-    @action(detail=True, permission_classes=[])
-    def notify(self, request, pk=None):
-
-        time_limit = timezone.now() - timedelta(hours=23, minutes=55)
-
-        wait_queue_place: WaitQueuePlace = self.get_object()
-
-        if not wait_queue_place.wait_queue_places_reserved.filter(
-                create__gt=time_limit):
-            detail, stop = wait_queue_place.notify()
-            response_data = {
-                'detail': detail,
-                'wait_queue_place': wait_queue_place.id,
-                'stop': stop,
-            }
-            if stop:
-                return Response(response_data, status=status.HTTP_200_OK)
-            else:
-                return Response(response_data, status=status.HTTP_202_ACCEPTED)
-        else:
-            response_data = {
-                'wait_queue_place': wait_queue_place.id,
-                'detail': "Last notification was sent less than 24h ago."
-            }
-            return Response(
-                response_data,
-                status=status.HTTP_429_TOO_MANY_REQUESTS)
-
 
 class WaitQueuePlaceReservedViewSet(mixins.ListModelMixin,
                                     mixins.RetrieveModelMixin,

@@ -5,6 +5,8 @@ from django.utils import timezone
 from django.conf import settings
 import requests
 
+from retirement.models import WaitQueuePlace
+
 
 @shared_task
 def assign_retreat_tomatoes():
@@ -44,3 +46,13 @@ def assign_retreat_tomatoes():
         # We don't want to block the task because of a status update
         # Status system should already report the error if needed
         pass
+
+@shared_task
+def notify_wait_queue_place():
+    """
+    Check all wait queue places still available and process the notification system for them.
+    """
+    available_wait_queue_places = WaitQueuePlace.objects.filter(available=True)
+    
+    for place in available_wait_queue_places:
+        place.notify()

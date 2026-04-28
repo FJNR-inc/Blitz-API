@@ -568,7 +568,7 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         
         list_of_users_notified = []
         for wait_queue_place in wait_queue_places:
-            detail, stop = wait_queue_place.notify(force_notify_all=True)
+            detail, stop = wait_queue_place.notify(force_notify_all=True, bypass_delay=True)
             
             list_of_users_notified.append(detail)
             
@@ -658,13 +658,11 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
             'WAIT_QUEUE_RESERVED_SEAT_CREATED'
         )
 
-    def add_wait_queue_place(self, user_cancel, generate_cron=True):
+    def add_wait_queue_place(self, user_cancel):
         new_wait_queue_place = WaitQueuePlace.objects.create(
             retreat=self,
             cancel_by=user_cancel
         )
-        if generate_cron:
-            new_wait_queue_place.generate_cron_task()
         return new_wait_queue_place
 
     def add_user_to_wait_queue(self, user):
@@ -1764,17 +1762,28 @@ class WaitQueuePlace(models.Model):
 
         return retreat_wait_queues
 
-    def notify(self, force_notify_all=False):
-
-        users_notified = []
+    def notify(self, force_notify_all=False, bypass_delay=False):
 
         # Stop the notification process if place not available
         if not self.available:
             return 'Wait queue place not available', True
 
+        # Stop the notification process if retreat already started
         stop = timezone.now() >= self.retreat.start_time
         if stop:
             return 'Retreat already started', stop
+
+        # Stop the notification process if we are in the delay between notifications and the notification is not forced
+        if not bypass_delay:
+            time_limit = timezone.now() - timedelta(hours=23, minutes=55)
+            already_done_in_delay = self.wait_queue_places_reserved.filter(create__gt=time_limit).exists()
+            
+            if already_done_in_delay:
+                # No users notified, do not stop retry
+                return [], False
+
+        # Notification logic start here
+        users_notified = []
 
         # Get all user that have no wait_queue_places_reserved
         # for this WaitQueuePlace
@@ -1804,10 +1813,6 @@ class WaitQueuePlace(models.Model):
                     break
 
         return users_notified, False
-
-    def generate_cron_task(self):
-        cron_manager = CronManager()
-        cron_manager.create_wait_queue_place_notification(self.id)
 
 
 class WaitQueuePlaceReserved(models.Model):

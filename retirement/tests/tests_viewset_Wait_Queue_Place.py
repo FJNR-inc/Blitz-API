@@ -154,7 +154,9 @@ class WaitQueuePlaceTests(APITestCase):
                                                   self.wait_queue_place)
         self.check_count_wait_queue_place(self.wait_queue_place, 1)
 
-        self.wait_queue_place.notify()
+        # We bypass delay since we are in a test and we want to check the next user 
+        # in line is notified without waiting 24h
+        self.wait_queue_place.notify(bypass_delay=True)
 
         self.check_user_has_reserved_place_notify(self.user2,
                                                   self.wait_queue_place)
@@ -194,7 +196,9 @@ class WaitQueuePlaceTests(APITestCase):
         self.assertTrue(stop)
         self.assertEqual(detail, 'Wait queue place not available')
 
-        wait_queue_place2.notify()
+        # We bypass delay since we are in a test and we want to check the next user 
+        # in line is notified without waiting 24h
+        wait_queue_place2.notify(bypass_delay=True)
         self.check_user_has_reserved_place_notify(self.user4,
                                                   wait_queue_place2)
         self.check_user_has_reserved_place_notify(self.user3,
@@ -206,7 +210,10 @@ class WaitQueuePlaceTests(APITestCase):
 
         with mock.patch(
                 'django.utils.timezone.now', return_value=FIXED_TIME):
-            users_notified, stop = wait_queue_place2.notify()
+            
+            # We bypass delay since we are in a test and we want to check the next user 
+            # in line is notified without waiting 24h
+            users_notified, stop = wait_queue_place2.notify(bypass_delay=True)
             self.assertIn(self.user5.email, users_notified)
             self.assertIn(self.user6.email, users_notified)
             self.assertFalse(stop)
@@ -226,62 +233,9 @@ class WaitQueuePlaceTests(APITestCase):
 
         with mock.patch(
                 'django.utils.timezone.now', return_value=FIXED_TIME):
-            detail, stop = wait_queue_place2.notify()
+            
+            # We bypass delay since we are in a test and we want to check the next user 
+            # in line is notified without waiting 24h
+            detail, stop = wait_queue_place2.notify(bypass_delay=True)
             self.assertEqual(detail, 'Retreat already started')
             self.assertTrue(stop)
-
-    def test_view_notify_wait_queue_place(self):
-        self.client.force_authenticate(user=self.admin)
-
-        response = self.client.get(
-            reverse(
-                'retreat:waitqueueplace-notify',
-                kwargs={'pk': self.wait_queue_place.id},
-            ),
-        )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_202_ACCEPTED,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-
-        content = {
-            'detail': [self.user1.email],
-            'wait_queue_place': self.wait_queue_place.id,
-            'stop': False
-        }
-
-        self.assertEqual(response_data, content)
-
-        self.assertTrue(
-            WaitQueuePlaceReserved.objects.filter(
-                user=self.user1,
-                notified__isnull=False,
-                wait_queue_place=self.wait_queue_place
-            ).exists()
-        )
-
-        response = self.client.get(
-            reverse(
-                'retreat:waitqueueplace-notify',
-                kwargs={'pk': self.wait_queue_place.id},
-            ),
-        )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_429_TOO_MANY_REQUESTS,
-            response.content
-        )
-
-        response_data = json.loads(response.content)
-
-        content = {
-            'detail': "Last notification was sent less than 24h ago.",
-            'wait_queue_place': self.wait_queue_place.id,
-        }
-
-        self.assertEqual(response_data, content)

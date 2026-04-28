@@ -118,7 +118,7 @@ class ReservationTests(CustomAPITestCase):
             retreat=self.retreat,
         )
         self.retreat.activate()
-        self.retreat.add_wait_queue_place(self.user, generate_cron=False)
+        self.retreat.add_wait_queue_place(self.user)
 
         self.retreat2 = Retreat.objects.create(
             name="random_retreat",
