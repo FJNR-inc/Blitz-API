@@ -109,7 +109,7 @@ class CustomPaymentTests(APITestCase):
             'settlement_id': '1',
             'transaction_date': response_data['transaction_date'],
             'reference_number': '751',
-            'user': f'http://testserver/users/{str(self.user.id)}/'
+            'user': f'http://testserver/users/{str(self.user.id)}'
         }
 
         self.assertEqual(response_data, content)
@@ -409,8 +409,8 @@ class CustomPaymentTests(APITestCase):
                 'price': "123.00",
                 'name': "test payment",
                 'details': "Description of the test payment",
-                'url': 'http://testserver/custom_payments/1/',
-                'user': f'http://testserver/users/{str(self.user.id)}/'
+                'url': 'http://testserver/custom_payments/1',
+                'user': f'http://testserver/users/{str(self.user.id)}'
             }]
         }
 
@@ -444,8 +444,8 @@ class CustomPaymentTests(APITestCase):
                 'price': "123.00",
                 'name': "test payment",
                 'details': "Description of the test payment",
-                'url': 'http://testserver/custom_payments/1/',
-                'user': f'http://testserver/users/{str(self.user.id)}/'
+                'url': 'http://testserver/custom_payments/1',
+                'user': f'http://testserver/users/{str(self.user.id)}'
             }, {
                 'id': 2,
                 'transaction_date': data['results'][1]['transaction_date'],
@@ -455,8 +455,8 @@ class CustomPaymentTests(APITestCase):
                 'price': "123.00",
                 'name': "admin payment",
                 'details': "Description of the admin payment",
-                'url': 'http://testserver/custom_payments/2/',
-                'user': f'http://testserver/users/{str(self.admin.id)}/'
+                'url': 'http://testserver/custom_payments/2',
+                'user': f'http://testserver/users/{str(self.admin.id)}'
             }]
         }
 
@@ -506,8 +506,8 @@ class CustomPaymentTests(APITestCase):
             'price': "123.00",
             'name': "test payment",
             'details': "Description of the test payment",
-            'url': 'http://testserver/custom_payments/1/',
-            'user': f'http://testserver/users/{str(self.user.id)}/'
+            'url': 'http://testserver/custom_payments/1',
+            'user': f'http://testserver/users/{str(self.user.id)}'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -558,8 +558,8 @@ class CustomPaymentTests(APITestCase):
             'price': "123.00",
             'name': "test payment",
             'details': "Description of the test payment",
-            'url': 'http://testserver/custom_payments/1/',
-            'user': f'http://testserver/users/{str(self.user.id)}/'
+            'url': 'http://testserver/custom_payments/1',
+            'user': f'http://testserver/users/{str(self.user.id)}'
         }
 
         self.assertEqual(json.loads(response.content), content)

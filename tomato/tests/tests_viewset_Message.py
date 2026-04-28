@@ -129,8 +129,8 @@ class MessageTests(CustomAPITestCase):
             'results': [{
                 'id': self.message.id,
                 'message': 'random message',
-                'user': f'http://testserver/users/{str(self.user.id)}/',
-                'url': f'http://testserver/messages/{str(self.message.id)}/'
+                'user': f'http://testserver/users/{str(self.user.id)}',
+                'url': f'http://testserver/messages/{str(self.message.id)}'
             }]
         }
 

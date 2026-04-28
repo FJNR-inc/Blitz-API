@@ -14,3 +14,4 @@ class ActionLogFactory(factory.django.DjangoModelFactory):
     session_key = factory.Sequence(lambda n: f'session {n}')
     source = 'source'
     action = 'action'
+    categories = ''

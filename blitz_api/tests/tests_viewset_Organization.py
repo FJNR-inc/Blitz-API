@@ -100,7 +100,7 @@ class OrganizationTests(APITestCase):
                 'affiliations': [],
                 'id': self.org.id,
                 'name': 'random_organization',
-                'url': f'http://testserver/organizations/{str(self.org.id)}/'
+                'url': f'http://testserver/organizations/{str(self.org.id)}'
             }]
         }
 

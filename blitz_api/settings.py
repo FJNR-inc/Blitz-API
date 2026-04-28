@@ -216,6 +216,9 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = config('FILE_UPLOAD_MAX_MEMORY_SIZE',
 
 # Static and Media files
 if len(sys.argv) > 1 and sys.argv[1] == "test":
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = "media/"
+
     STATIC_URL = "/static/"
     STATIC_ROOT = "static/"
 

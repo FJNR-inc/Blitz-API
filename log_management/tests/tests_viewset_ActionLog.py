@@ -43,6 +43,7 @@ class ActionLogTests(CustomAPITestCase):
         data = {
             'session_key': "my_unique_key",
             'source': "chrono",
+            'categories': "",
             'action': "open_chat",
         }
 
@@ -76,6 +77,7 @@ class ActionLogTests(CustomAPITestCase):
         data = {
             'session_key': "my_unique_key",
             'source': "chrono",
+            'categories': "",
             'action': "open_chat",
         }
 
@@ -107,6 +109,7 @@ class ActionLogTests(CustomAPITestCase):
         data = {
             'session_key': "my_unique_key",
             'source': "chrono",
+            'categories': "",
             'action': "open_chat",
         }
 
@@ -139,6 +142,7 @@ class ActionLogTests(CustomAPITestCase):
             'session_key': "my_unique_key",
             'source': "chrono",
             'action': "open_chat",
+            'categories': "",
             'additional_data': json.dumps(
                 {
                     'key1': 'value1',
@@ -155,7 +159,8 @@ class ActionLogTests(CustomAPITestCase):
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_201_CREATED
+            status.HTTP_201_CREATED,
+            response.json(),
         )
 
         self.check_attributes(response.json())
@@ -178,6 +183,7 @@ class ActionLogTests(CustomAPITestCase):
         data = {
             'session_key': "my_unique_key",
             'source': "chrono",
+            'categories': "",
             'action': "open_chat",
             'additional_data': 12
         }
@@ -207,6 +213,7 @@ class ActionLogTests(CustomAPITestCase):
             ),
             'session_key': "my_unique_key",
             'source': "chrono",
+            'categories': "",
             'action': "open_chat",
         }
 
@@ -240,6 +247,7 @@ class ActionLogTests(CustomAPITestCase):
             ),
             'session_key': "my_unique_key",
             'source': "chrono",
+            'categories': "",
             'action': "open_chat",
         }
 
@@ -278,6 +286,7 @@ class ActionLogTests(CustomAPITestCase):
             ),
             'session_key': "my_unique_key",
             'source': "chrono",
+            'categories': "",
             'action': "open_chat",
         }
 

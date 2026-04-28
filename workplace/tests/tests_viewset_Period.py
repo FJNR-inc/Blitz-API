@@ -98,7 +98,7 @@ class PeriodTests(APITestCase):
             'price': '3.00',
             'total_reservations': 0,
             'start_date': data['start_date'].isoformat(),
-            'workplace': f'http://testserver/workplaces/{self.workplace.id}/'
+            'workplace': f'http://testserver/workplaces/{self.workplace.id}'
         }
 
         response_content = json.loads(response.content)
@@ -373,8 +373,8 @@ class PeriodTests(APITestCase):
             'price': '3.00',
             'total_reservations': 0,
             'start_date': data['start_date'].isoformat(),
-            'url': f'http://testserver/periods/{self.period.id}/',
-            'workplace': f'http://testserver/workplaces/{self.workplace.id}/'
+            'url': f'http://testserver/periods/{self.period.id}',
+            'workplace': f'http://testserver/workplaces/{self.workplace.id}'
         }
 
         self.assertEqual(
@@ -451,8 +451,8 @@ class PeriodTests(APITestCase):
             'total_reservations': 0,
             'end_date': response_data['end_date'],
             'start_date': data['start_date'].isoformat(),
-            'url': f'http://testserver/periods/{self.period.id}/',
-            'workplace': f'http://testserver/workplaces/{self.workplace.id}/'
+            'url': f'http://testserver/periods/{self.period.id}',
+            'workplace': f'http://testserver/workplaces/{self.workplace.id}'
         }
 
         self.assertEqual(
@@ -690,9 +690,8 @@ class PeriodTests(APITestCase):
                 'price': '3.00',
                 'total_reservations': 1,
                 'start_date': data['results'][0]['start_date'],
-                'url': f'http://testserver/periods/{self.period_active.id}/',
-                'workplace': f'http://testserver/workplaces/'
-                f'{self.workplace.id}/'
+                'url': f'http://testserver/periods/{self.period_active.id}',
+                'workplace': f'http://testserver/workplaces/{self.workplace.id}'
             }]
         }
 
@@ -766,9 +765,8 @@ class PeriodTests(APITestCase):
                 'price': '3.00',
                 'total_reservations': 0,
                 'start_date': data['results'][0]['start_date'],
-                'url': f'http://testserver/periods/{self.period.id}/',
-                'workplace':
-                    f'http://testserver/workplaces/{self.workplace.id}/'
+                'url': f'http://testserver/periods/{self.period.id}',
+                'workplace': f'http://testserver/workplaces/{self.workplace.id}'
             }, {
                 'id': self.period_active.id,
                 'end_date': data['results'][1]['end_date'],
@@ -777,9 +775,8 @@ class PeriodTests(APITestCase):
                 'price': '3.00',
                 'total_reservations': 1,
                 'start_date': data['results'][1]['start_date'],
-                'url': f'http://testserver/periods/{self.period_active.id}/',
-                'workplace':
-                    f'http://testserver/workplaces/{self.workplace.id}/'
+                'url': f'http://testserver/periods/{self.period_active.id}',
+                'workplace': f'http://testserver/workplaces/{self.workplace.id}'
             }]
         }
 
@@ -809,8 +806,8 @@ class PeriodTests(APITestCase):
             'price': '3.00',
             'total_reservations': 1,
             'start_date': data['start_date'],
-            'url': f'http://testserver/periods/{self.period_active.id}/',
-            'workplace': f'http://testserver/workplaces/{self.workplace.id}/'
+            'url': f'http://testserver/periods/{self.period_active.id}',
+            'workplace': f'http://testserver/workplaces/{self.workplace.id}'
         }
 
         self.assertEqual(json.loads(response.content), content)
@@ -840,8 +837,8 @@ class PeriodTests(APITestCase):
             'price': '3.00',
             'total_reservations': 0,
             'start_date': data['start_date'],
-            'url': f'http://testserver/periods/{self.period.id}/',
-            'workplace': f'http://testserver/workplaces/{self.workplace.id}/'
+            'url': f'http://testserver/periods/{self.period.id}',
+            'workplace': f'http://testserver/workplaces/{self.workplace.id}'
         }
 
         self.assertEqual(

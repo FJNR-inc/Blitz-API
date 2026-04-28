@@ -148,8 +148,8 @@ class ReservationTests(APITestCase):
         content = {
             'is_active': True,
             'is_present': False,
-            'timeslot': f'http://testserver/time_slots/{self.time_slot.id}/',
-            'user': f'http://testserver/users/{self.user.id}/',
+            'timeslot': f'http://testserver/time_slots/{self.time_slot.id}',
+            'user': f'http://testserver/users/{self.user.id}',
             'cancelation_date': None,
             'cancelation_reason': None,
         }
@@ -249,9 +249,8 @@ class ReservationTests(APITestCase):
         content = {
             'is_active': True,
             'is_present': False,
-            'timeslot': f'http://testserver/time_slots/'
-            f'{self.time_slot_active.id}/',
-            'user': f'http://testserver/users/{self.user.id}/',
+            'timeslot': f'http://testserver/time_slots/{self.time_slot_active.id}',
+            'user': f'http://testserver/users/{self.user.id}',
             'cancelation_date': None,
             'cancelation_reason': None,
         }
@@ -455,9 +454,9 @@ class ReservationTests(APITestCase):
             'id': self.reservation.id,
             'is_active': True,
             'is_present': True,
-            'timeslot': f'http://testserver/time_slots/{self.time_slot_active.id}/',
-            'url': f'http://testserver/reservations/{self.reservation.id}/',
-            'user': f'http://testserver/users/{self.user.id}/',
+            'timeslot': f'http://testserver/time_slots/{self.time_slot_active.id}',
+            'url': f'http://testserver/reservations/{self.reservation.id}',
+            'user': f'http://testserver/users/{self.user.id}',
             'cancelation_date': None,
             'cancelation_reason': None
         }
@@ -566,9 +565,9 @@ class ReservationTests(APITestCase):
             'id': self.reservation_volunteer.id,
             'is_active': True,
             'is_present': True,
-            'timeslot': f'http://testserver/time_slots/{self.time_slot.id}/',
-            'url': f'http://testserver/reservations/{self.reservation_volunteer.id}/',
-            'user': f'http://testserver/users/{self.user.id}/',
+            'timeslot': f'http://testserver/time_slots/{self.time_slot.id}',
+            'url': f'http://testserver/reservations/{self.reservation_volunteer.id}',
+            'user': f'http://testserver/users/{self.user.id}',
             'cancelation_date': None,
             'cancelation_reason': None
         }
@@ -625,9 +624,9 @@ class ReservationTests(APITestCase):
             'id': reservation_admin.id,
             'is_active': True,
             'is_present': True,
-            'timeslot': f'http://testserver/time_slots/{self.time_slot.id}/',
-            'url': f'http://testserver/reservations/{reservation_admin.id}/',
-            'user': f'http://testserver/users/{self.admin.id}/',
+            'timeslot': f'http://testserver/time_slots/{self.time_slot.id}',
+            'url': f'http://testserver/reservations/{reservation_admin.id}',
+            'user': f'http://testserver/users/{self.admin.id}',
             'cancelation_date': None,
             'cancelation_reason': None
         }
@@ -872,32 +871,27 @@ class ReservationTests(APITestCase):
                 'id': self.reservation.id,
                 'is_active': True,
                 'is_present': False,
-                'timeslot': f'http://testserver/time_slots/'
-                f'{self.time_slot_active.id}/',
-                'url': f'http://testserver/reservations/{self.reservation.id}/',
-                'user': f'http://testserver/users/{self.user.id}/',
+                'timeslot': f'http://testserver/time_slots/{self.time_slot_active.id}',
+                'url': f'http://testserver/reservations/{self.reservation.id}',
+                'user': f'http://testserver/users/{self.user.id}',
                 'cancelation_date': None,
                 'cancelation_reason': None
             }, {
                 'id': self.reservation_volunteer.id,
                 'is_active': True,
                 'is_present': False,
-                'timeslot': f'http://testserver/time_slots/'
-                f'{self.time_slot.id}/',
-                'url': f'http://testserver/reservations/'
-                f'{self.reservation_volunteer.id}/',
-                'user': f'http://testserver/users/{self.user.id}/',
+                'timeslot': f'http://testserver/time_slots/{self.time_slot.id}',
+                'url': f'http://testserver/reservations/{self.reservation_volunteer.id}',
+                'user': f'http://testserver/users/{self.user.id}',
                 'cancelation_date': None,
                 'cancelation_reason': None
             }, {
                 'id': self.reservation_admin.id,
                 'is_active': True,
                 'is_present': False,
-                'timeslot': f'http://testserver/time_slots/'
-                f'{self.time_slot_active.id}/',
-                'url': f'http://testserver/reservations/'
-                f'{self.reservation_admin.id}/',
-                'user': f'http://testserver/users/{self.admin.id}/',
+                'timeslot': f'http://testserver/time_slots/{self.time_slot_active.id}',
+                'url': f'http://testserver/reservations/{self.reservation_admin.id}',
+                'user': f'http://testserver/users/{self.admin.id}',
                 'cancelation_date': None,
                 'cancelation_reason': None
             }]
@@ -934,21 +928,18 @@ class ReservationTests(APITestCase):
                 'id': self.reservation.id,
                 'is_active': True,
                 'is_present': False,
-                'timeslot': f'http://testserver/time_slots/'
-                f'{self.time_slot_active.id}/',
-                'url': f'http://testserver/reservations/{self.reservation.id}/',
-                'user': f'http://testserver/users/{self.user.id}/',
+                'timeslot': f'http://testserver/time_slots/{self.time_slot_active.id}',
+                'url': f'http://testserver/reservations/{self.reservation.id}',
+                'user': f'http://testserver/users/{self.user.id}',
                 'cancelation_date': None,
                 'cancelation_reason': None
             }, {
                 'id': self.reservation_volunteer.id,
                 'is_active': True,
                 'is_present': False,
-                'timeslot': f'http://testserver/time_slots/'
-                f'{self.time_slot.id}/',
-                'url': f'http://testserver/reservations/'
-                f'{self.reservation_volunteer.id}/',
-                'user': f'http://testserver/users/{self.user.id}/',
+                'timeslot': f'http://testserver/time_slots/{self.time_slot.id}',
+                'url': f'http://testserver/reservations/{self.reservation_volunteer.id}',
+                'user': f'http://testserver/users/{self.user.id}',
                 'cancelation_date': None,
                 'cancelation_reason': None
             }]
@@ -979,10 +970,9 @@ class ReservationTests(APITestCase):
             'id': self.reservation.id,
             'is_active': True,
             'is_present': False,
-            'timeslot': f'http://testserver/time_slots/'
-            f'{self.time_slot_active.id}/',
-            'url': f'http://testserver/reservations/{self.reservation.id}/',
-            'user': f'http://testserver/users/{self.user.id}/',
+            'timeslot': f'http://testserver/time_slots/{self.time_slot_active.id}',
+            'url': f'http://testserver/reservations/{self.reservation.id}',
+            'user': f'http://testserver/users/{self.user.id}',
             'cancelation_date': None,
             'cancelation_reason': None
         }

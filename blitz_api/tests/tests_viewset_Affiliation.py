@@ -52,7 +52,7 @@ class AffiliationTests(APITestCase):
 
         content = {
             'name': 'fake.affiliation',
-            'organization': f'http://testserver/organizations/{str(self.org.id)}/',
+            'organization': f'http://testserver/organizations/{str(self.org.id)}',
         }
 
         response_data = remove_translation_fields(json.loads(response.content))
@@ -135,8 +135,8 @@ class AffiliationTests(APITestCase):
             'results': [{
                 'id': self.affiliation.id,
                 'name': 'random.affiliation',
-                'organization': f'http://testserver/organizations/{str(self.org.id)}/',
-                'url': f'http://testserver/affiliations/{str(self.affiliation.id)}/'
+                'organization': f'http://testserver/organizations/{str(self.org.id)}',
+                'url': f'http://testserver/affiliations/{str(self.affiliation.id)}'
             }]
         }
 
@@ -167,8 +167,8 @@ class AffiliationTests(APITestCase):
             'results': [{
                 'id': affiliation.id,
                 'name': affiliation.name,
-                'organization': f'http://testserver/organizations/{str(organization.id)}/',
-                'url': f'http://testserver/affiliations/{str(affiliation.id)}/'
+                'organization': f'http://testserver/organizations/{str(organization.id)}',
+                'url': f'http://testserver/affiliations/{str(affiliation.id)}'
             }]
         }
 

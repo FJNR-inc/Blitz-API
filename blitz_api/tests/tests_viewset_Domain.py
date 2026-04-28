@@ -49,7 +49,7 @@ class DomainTests(APITestCase):
         content = {
             'example': "email@fake.domain",
             'name': 'fake.domain',
-            'organization': f'http://testserver/organizations/{str(self.org.id)}/',
+            'organization': f'http://testserver/organizations/{str(self.org.id)}',
         }
 
         response_data = remove_translation_fields(json.loads(response.content))
@@ -133,8 +133,8 @@ class DomainTests(APITestCase):
                 'id': self.domain.id,
                 'example': None,
                 'name': 'random.domain',
-                'organization': f'http://testserver/organizations/{str(self.org.id)}/',
-                'url': f'http://testserver/domains/{str(self.domain.id)}/'
+                'organization': f'http://testserver/organizations/{str(self.org.id)}',
+                'url': f'http://testserver/domains/{str(self.domain.id)}'
             }]
         }
 

@@ -673,7 +673,7 @@ class UsersIdTests(APITestCase):
             "university": {
                 'name': university.name,
             },
-            "affiliation": f"http://testserver/affiliations/{affiliation.id}/",
+            "affiliation": f"http://testserver/affiliations/{affiliation.id}",
 
         }
 
@@ -714,7 +714,7 @@ class UsersIdTests(APITestCase):
             "university": {
                 'name': university.name,
             },
-            "affiliation": f"http://testserver/affiliations/{affiliation.id}/",
+            "affiliation": f"http://testserver/affiliations/{affiliation.id}",
 
         }
 
