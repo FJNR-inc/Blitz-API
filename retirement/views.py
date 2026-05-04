@@ -71,8 +71,6 @@ from .serializers import (
     BatchActivateRetreatSerializer,
 )
 from .services import (
-    send_retreat_reminder_email,
-    send_post_retreat_email,
     send_automatic_email,
 )
 from .exports import (
@@ -420,75 +418,6 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
                     email=email
                 )
                 emails.append(reservation.user.email)
-
-        response_data = {
-            'stop': True,
-            'emails': emails
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
-
-    @action(detail=True, permission_classes=[])
-    def remind_users(self, request, pk=None):
-        """
-        That custom action allows an admin (or automated task) to notify
-        users who will attend the retreat.
-        """
-        retreat = self.get_object()
-        if not retreat.is_active:
-            response_data = {
-                'detail': "Retreat need to be activate to send emails."
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        # This is a hard-coded limitation to allow anonymous users to call
-        # the function.
-        time_limit = retreat.start_time - timedelta(days=8)
-        if timezone.now() < time_limit:
-            response_data = {
-                'detail': "Retreat takes place in more than 8 days."
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        # Notify a user for every reserved seat
-        emails = []
-        for reservation in retreat.reservations.filter(
-                is_active=True, pre_event_send=False):
-            send_retreat_reminder_email(reservation.user, retreat)
-            reservation.pre_event_send = True
-            reservation.save()
-            emails.append(reservation.user.email)
-
-        response_data = {
-            'stop': True,
-            'emails': emails
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
-
-    @action(detail=True, permission_classes=[])
-    def recap(self, request, pk=None):
-        """
-        That custom action allows an admin (or automated task) to notify
-        users who has attended the retreat.
-        """
-        retreat = self.get_object()
-        # This is a hard-coded limitation to allow anonymous users to call
-        # the function.
-        time_limit = retreat.end_time - timedelta(days=1)
-        if timezone.now() < time_limit:
-            response_data = {
-                'detail': "Retreat ends in more than 1 day."
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        # Notify a user for every reserved seat
-        emails = []
-        for reservation in retreat.reservations.filter(
-                is_active=True,
-                post_event_send=False):
-            send_post_retreat_email(reservation.user, retreat)
-            reservation.post_event_send = True
-            reservation.save()
-            emails.append(reservation.user.email)
 
         response_data = {
             'stop': True,

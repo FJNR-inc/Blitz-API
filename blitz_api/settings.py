@@ -349,36 +349,6 @@ ANYMAIL = {
             default='0',
             cast=int
         ),
-        'THROWBACK_VIRTUAL_RETREAT': config(
-            'TEMPLATE_EMAIL_THROWBACK_VIRTUAL_RETREAT',
-            default='14',
-            cast=int
-        ),
-        'THROWBACK_PHYSICAL_RETREAT': config(
-            'TEMPLATE_EMAIL_THROWBACK_PHYSICAL_RETREAT',
-            default='0',
-            cast=int
-        ),
-        'REMINDER_PHYSICAL_RETREAT': config(
-            'TEMPLATE_EMAIL_REMINDER_PHYSICAL_RETREAT',
-            default='0',
-            cast=int
-        ),
-        'REMINDER_VIRTUAL_RETREAT': config(
-            'TEMPLATE_EMAIL_REMINDER_VIRTUAL_RETREAT',
-            default='11',
-            cast=int
-        ),
-        'WELCOME_PHYSICAL_RETREAT': config(
-            'TEMPLATE_EMAIL_WELCOME_PHYSICAL_RETREAT',
-            default='0',
-            cast=int
-        ),
-        'WELCOME_VIRTUAL_RETREAT': config(
-            'TEMPLATE_EMAIL_WELCOME_VIRTUAL_RETREAT',
-            default='12',
-            cast=int
-        ),
         'RENEW_MEMBERSHIP': config(
             'RENEW_MEMBERSHIP',
             default='31',

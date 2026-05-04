@@ -231,15 +231,6 @@ class RetreatSerializer(BaseProductSerializer):
             raise serializers.ValidationError(err)
         return super(RetreatSerializer, self).validate(attr)
 
-    def create(self, validated_data):
-        """
-        Schedule retreat reminder and post-event emails.
-        UPDATE: Commenting out reminder email since they are no longer desired.
-        """
-        retreat = super().create(validated_data)
-
-        return retreat
-
     def to_representation(self, instance):
         is_staff = self.context['request'].user.is_staff
         data = super(RetreatSerializer, self).to_representation(instance)

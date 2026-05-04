@@ -1303,36 +1303,6 @@ class RetreatTests(CustomAPITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_reminder_email(self):
-        """
-        Ensure emails are sent to every user that has a reservation to the
-        targeted retreat.
-        """
-
-        with mock.patch(
-                'retirement.views.timezone.now',
-                return_value=self.retreat.start_time):
-            response = self.client.get(
-                reverse(
-                    'retreat:retreat-remind-users',
-                    kwargs={'pk': self.retreat.id},
-                ),
-            )
-
-        content = {
-            'stop': True,
-            'emails': [],  # No reservation on this retreat
-        }
-
-        self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        self.assertEqual(
-            len(mail.outbox),
-            self.retreat.reservations.filter(is_active=True).count()
-        )
-
     def test_batch_activate_retreat_invalid_ids(self):
         """
         Ensure we can activate multiple retreat with one call.
@@ -1496,84 +1466,6 @@ class RetreatTests(CustomAPITestCase):
             response.content,
             b'',
         )
-
-    def test_reminder_email_too_early(self):
-        """
-        Ensure we can't send emails too early. Prevents spamming by anonymous
-        users.
-        """
-        FIXED_TIME = self.retreat.start_time - timedelta(days=9)
-
-        with mock.patch(
-                'retirement.views.timezone.now', return_value=FIXED_TIME):
-            response = self.client.get(
-                reverse(
-                    'retreat:retreat-remind-users',
-                    kwargs={'pk': self.retreat.id},
-                ),
-            )
-
-        content = {'detail': "Retreat takes place in more than 8 days."}
-
-        self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        self.assertEqual(len(mail.outbox), 0)
-
-    def test_recap_email(self):
-        """
-        Ensure emails are sent to every user that has a reservation to the
-        targeted retreat.
-        """
-
-        with mock.patch(
-                'retirement.views.timezone.now',
-                return_value=self.retreat.end_time):
-            response = self.client.get(
-                reverse(
-                    'retreat:retreat-recap',
-                    kwargs={'pk': self.retreat.id},
-                ),
-            )
-
-        content = {
-            'stop': True,
-            'emails': [],  # No reservation on this retreat
-        }
-
-        self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        self.assertEqual(
-            len(mail.outbox),
-            self.retreat.reservations.filter(is_active=True).count()
-        )
-
-    def test_recap_email_too_early(self):
-        """
-        Ensure we can't send emails too early. Prevents spamming by anonymous
-        users.
-        """
-        FIXED_TIME = self.retreat.end_time - timedelta(days=2)
-
-        with mock.patch(
-                'retirement.views.timezone.now', return_value=FIXED_TIME):
-            response = self.client.get(
-                reverse(
-                    'retreat:retreat-recap',
-                    kwargs={'pk': self.retreat.id},
-                ),
-            )
-
-        content = {'detail': "Retreat ends in more than 1 day."}
-
-        self.assertEqual(json.loads(response.content), content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        self.assertEqual(len(mail.outbox), 0)
 
     def test_list_retreat_not_finished(self):
         """

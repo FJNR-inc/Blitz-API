@@ -43,28 +43,3 @@ class CronManager:
 
         self.create_task(data)
 
-    def create_remind_user(self, retreat_id, reminder_date):
-        remind_users_url = self.url_to_call + reverse(
-            'retreat:retreat-detail',
-            args=[retreat_id]
-        ) + "/remind_users"
-        data = {
-            "execution_datetime": reminder_date,
-            "url": remind_users_url,
-            "description": "Retreat reminder notification"
-        }
-
-        self.create_task(data)
-
-    def create_recap(self, retreat_id, throwback_date):
-        remind_users_url = self.url_to_call + reverse(
-            'retreat:retreat-detail',
-            args=[retreat_id]
-        ) + "/recap"
-        data = {
-            "execution_datetime": throwback_date,
-            "url": remind_users_url,
-            "description": "Retreat post-event notification"
-        }
-
-        self.create_task(data)
