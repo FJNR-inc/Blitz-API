@@ -1195,7 +1195,6 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
         usages_per_order = {}
         for line in OrderLine.objects.filter(coupon=instance):
             is_refunded = Refund.objects.filter(orderline=line).exists()
-            if is_refunded: continue
             
             # Sometimes, we have a cancellation, but since the price was 0 (due to the coupon) we don't have a refund
             # This allow to not display these lines
@@ -1203,6 +1202,8 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
             if line.content_type.model == 'retreat':
                 is_canceled = RetreatReservation.objects.filter(
                     order_line=line, is_active=False).exists()
+                
+            amount_used = line.coupon_real_value if not (is_refunded or is_canceled) else 0
             
             if line.order.id not in usages_per_order:
                 usages_per_order[line.order.id] = {
@@ -1214,7 +1215,7 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
                             'view': self.context['view'],
                         },
                     ).data,
-                    'amount_used': line.coupon_real_value,
+                    'amount_used': amount_used,
                     'user_university': OrganizationSerializer(
                         line.order.user.university,
                         context={
@@ -1223,15 +1224,25 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
                         },
                     ).data,
                     'product_name': set(),
+                    'orderlines': [
+                        {
+                            'amount_used': line.coupon_real_value,
+                            'is_refunded': is_refunded or is_canceled,
+                        }
+                    ]
                 }
                 usages_per_order[line.order.id]['product_name'].add(
                     line.content_object.name)
             else:
-                usages_per_order[line.order.id]['amount_used'] += \
-                    line.coupon_real_value
+                usages_per_order[line.order.id]['amount_used'] += amount_used
                 usages_per_order[line.order.id]['product_name'].add(
                         line.content_object.name
                     )
+                usages_per_order[line.order.id]['orderlines'].append({
+                    'amount_used': line.coupon_real_value,
+                    'is_refunded': is_refunded or is_canceled,
+                })
+
         display_usages = []
         for key, value in usages_per_order.items():
             value['product_name'] = ', '.join(list(sorted(value['product_name'])))
