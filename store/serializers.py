@@ -1194,14 +1194,24 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
         )
         usages_per_order = {}
         for line in OrderLine.objects.filter(coupon=instance):
-            is_refunded = Refund.objects.filter(orderline=line).exists()
+            refunds = Refund.objects.filter(orderline=line)
+            is_refunded = refunds.exists()
             
             # Sometimes, we have a cancellation, but since the price was 0 (due to the coupon) we don't have a refund
             # This allow to not display these lines
             is_canceled = False
+            cancellations = RetreatReservation.objects.filter(order_line=line, is_active=False)
             if line.content_type.model == 'retreat':
-                is_canceled = RetreatReservation.objects.filter(
-                    order_line=line, is_active=False).exists()
+                is_canceled = cancellations.exists()
+    
+            cancellation_reason = []
+            for refund in refunds:
+                if refund.details:
+                    cancellation_reason.append(refund.details)
+            for cancellation in cancellations:
+                if cancellation.cancelation_reason:
+                    cancellation_reason.append(cancellation.cancelation_reason)
+            cancellation_reason = ', '.join(cancellation_reason)
                 
             amount_used = line.coupon_real_value if not (is_refunded or is_canceled) else 0
             
@@ -1228,6 +1238,7 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
                         {
                             'amount_used': line.coupon_real_value,
                             'is_refunded': is_refunded or is_canceled,
+                            'cancellation_reason': cancellation_reason,
                         }
                     ]
                 }
@@ -1241,6 +1252,7 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
                 usages_per_order[line.order.id]['orderlines'].append({
                     'amount_used': line.coupon_real_value,
                     'is_refunded': is_refunded or is_canceled,
+                    'cancellation_reason': cancellation_reason,
                 })
 
         display_usages = []

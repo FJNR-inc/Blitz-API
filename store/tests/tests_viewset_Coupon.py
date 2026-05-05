@@ -1676,15 +1676,18 @@ class CouponTests(CustomAPITestCase):
                 'orderlines': [
                     {
                         'amount_used': 5.0,
-                        'is_refunded': False
+                        'is_refunded': False,
+                        'cancellation_reason': '',
                     },
                     {
                         'amount_used': 6.0,
-                        'is_refunded': False
+                        'is_refunded': False,
+                        'cancellation_reason': '',
                     },
                     {
                         'amount_used': 7.0,
-                        'is_refunded': True
+                        'is_refunded': True,
+                        'cancellation_reason': '',
                     }
                 ]
             },
@@ -1709,7 +1712,8 @@ class CouponTests(CustomAPITestCase):
                 'orderlines': [
                     {
                         'amount_used': 8.0,
-                        'is_refunded': False
+                        'is_refunded': False,
+                        'cancellation_reason': '',
                     }
                  ]
             },
@@ -1734,7 +1738,8 @@ class CouponTests(CustomAPITestCase):
                 'orderlines': [
                     {
                         'amount_used': 9.0,
-                        'is_refunded': True
+                        'is_refunded': True,
+                        'cancellation_reason': '',
                     }
                 ]
             }
