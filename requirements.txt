@@ -16,7 +16,7 @@ django-simple-history==3.11.0
 python-decouple==3.8
 django-storages==1.14.6
 requests==2.33.1
-psycopg-binary==3.3.3
+psycopg-binary==3.3.4
 psycopg==3.3.4
 django-safedelete==1.4.1
 django-request-logging==0.7.5
