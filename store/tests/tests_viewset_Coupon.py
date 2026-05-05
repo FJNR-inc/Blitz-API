@@ -1672,7 +1672,21 @@ class CouponTests(CustomAPITestCase):
                     'name_fr': '',
                     'name_en': ''
                 },
-                'product_name': 'extreme_package, mega_retreat'
+                'product_name': 'extreme_package, mega_retreat',
+                'orderlines': [
+                    {
+                        'amount_used': 5.0,
+                        'is_refunded': False
+                    },
+                    {
+                        'amount_used': 6.0,
+                        'is_refunded': False
+                    },
+                    {
+                        'amount_used': 7.0,
+                        'is_refunded': True
+                    }
+                ]
             },
             {
                 'date': order2.transaction_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
@@ -1691,7 +1705,38 @@ class CouponTests(CustomAPITestCase):
                     'name_fr': '',
                     'name_en': ''
                 },
-                'product_name': 'extreme_package'
+                'product_name': 'extreme_package',
+                'orderlines': [
+                    {
+                        'amount_used': 8.0,
+                        'is_refunded': False
+                    }
+                 ]
+            },
+            {
+                'date': order3.transaction_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                'user': {
+                    'id': self.user.id,
+                    'first_name': self.user.first_name,
+                    'last_name': self.user.last_name,
+                    'email': self.user.email,
+                    'url': f'http://testserver/users/{self.user.id}',
+                    'phone': None,
+                    'personnal_restrictions': None
+                },
+                'amount_used': 0.0,
+                'user_university': {
+                    'name': '',
+                    'name_fr': '',
+                    'name_en': ''
+                },
+                'product_name': 'mega_retreat',
+                'orderlines': [
+                    {
+                        'amount_used': 9.0,
+                        'is_refunded': True
+                    }
+                ]
             }
         ]
 

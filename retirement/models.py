@@ -1519,15 +1519,18 @@ class Reservation(SafeDeleteModel):
                 self.cancelation_date = timezone.now()
                 self.save()
 
-                # Rollback the coupon number of use if the reservation
-                # was done with a coupon
-                if order_line and order_line.coupon:
-                    coupon_user = CouponUser.objects.get(
-                        user=user,
-                        coupon=order_line.coupon,
-                    )
-                    coupon_user.uses = coupon_user.uses - 1
-                    coupon_user.save()
+                # Coupon are considered as a payment method, so we rollback usage only
+                # if we process a refund, not in the case of a simple cancelation without refund.
+                if process_refund:
+                    # Rollback the coupon number of use if the reservation
+                    # was done with a coupon
+                    if order_line and order_line.coupon:
+                        coupon_user = CouponUser.objects.get(
+                            user=user,
+                            coupon=order_line.coupon,
+                        )
+                        coupon_user.uses = coupon_user.uses - 1
+                        coupon_user.save()
 
                 # Create WaitQueuePlace unless retreat is deleted
                 if cancel_reason != self.CANCELATION_REASON_RETREAT_DELETED:
