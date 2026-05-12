@@ -27,28 +27,48 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
 from blitz_api.models import Organization
-from blitz_api.services import (remove_translation_fields,
-                                check_if_translated_field,
-                                getMessageTranslate)
+from blitz_api.services import (
+    remove_translation_fields,
+    check_if_translated_field,
+    getMessageTranslate,
+)
 from log_management.models import Log, EmailLog
 from retirement.services import send_retreat_confirmation_email
 from workplace.models import Reservation
-from retirement.models import Reservation as RetreatReservation, \
-    RetreatInvitation
+from retirement.models import (
+    Reservation as RetreatReservation,
+    RetreatInvitation,
+)
 from retirement.models import (
     Retreat,
     RetreatType
 )
 
-from .exceptions import PaymentAPIError
-from .models import (Package, Membership, Order, OrderLine, BaseProduct,
-                     PaymentProfile, CustomPayment, Coupon, CouponUser, Refund,
-                     MembershipCoupon, OptionProduct, OrderLineBaseProduct)
-from .services import (charge_payment,
-                       create_external_payment_profile,
-                       create_external_card,
-                       get_external_cards,
-                       PAYSAFE_CARD_TYPE, )
+from store.exceptions import PaymentAPIError
+from store.models import (
+    Package, 
+    Membership, 
+    Order, 
+    OrderLine, 
+    BaseProduct,
+    PaymentProfile, 
+    CustomPayment, 
+    Coupon, 
+    CouponUser, 
+    Refund,
+    RefundTransaction,
+    MembershipCoupon, 
+    OptionProduct, 
+    OrderLineBaseProduct
+)
+
+from store.services import (
+    charge_payment,
+    create_external_payment_profile,
+    create_external_card,
+    get_external_cards,
+    PAYSAFE_CARD_TYPE, 
+)
 
 User = get_user_model()
 
@@ -1365,8 +1385,19 @@ class CouponUserSerializer(serializers.HyperlinkedModelSerializer):
         exclude = ('deleted', 'deleted_by_cascade')
 
 
+class RefundTransactionSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = RefundTransaction
+        exclude = ('deleted', 'deleted_by_cascade')
+
 class RefundSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
+    transactions = RefundTransactionSerializer(
+        many=True,
+        read_only=True,
+    )
 
     class Meta:
         model = Refund

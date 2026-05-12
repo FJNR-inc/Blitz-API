@@ -1338,18 +1338,11 @@ class Reservation(SafeDeleteModel):
         # paysafe use value without cent
         amount_to_refund_paysafe = int(round(amount_to_refund * 100))
 
-        refund_response = refund_amount(
-            self.order_line.order.settlement_id,
-            amount_to_refund_paysafe
-        )
-        refund_res_content = refund_response.json()
-
         refund = Refund.objects.create(
             orderline=self.order_line,
             refund_date=timezone.now(),
             amount=amount_to_refund,
             details=refund_reason,
-            refund_id=refund_res_content['id'],
         )
         return refund
 
@@ -1478,38 +1471,10 @@ class Reservation(SafeDeleteModel):
                         )]
                     })
                 if process_refund:
-                    try:
-                        refund = self.make_refund(
-                            self.REFUND_REASON[cancel_reason],
-                            refund_policy
-                        )
-                    except PaymentAPIError as err:
-                        if str(err) == PAYSAFE_EXCEPTION['3406']:
-                            raise rest_framework_serializers.ValidationError({
-                                'non_field_errors': [_(
-                                    "The order has not been charged yet. Try "
-                                    "again later."
-                                )],
-                                'detail': err.detail
-                            })
-                        if str(err) == PAYSAFE_EXCEPTION['3404']:
-                            raise rest_framework_serializers.ValidationError({
-                                'non_field_errors': [_(
-                                    "The order has already been refunded by "
-                                    "Paysafe."
-                                )],
-                                'detail': err.detail
-                            })
-                        raise rest_framework_serializers.ValidationError(
-                            {
-                                'message': str(err),
-                                'non_field_errors': [_(
-                                    "An error occured with the payment system."
-                                    " Please try again later."
-                                )],
-                                'detail': err.detail
-                            }
-                        )
+                    refund = self.make_refund(
+                        self.REFUND_REASON[cancel_reason],
+                        refund_policy
+                    )
                     self.cancelation_action = self.CANCELATION_ACTION_REFUND
                 else:
                     self.cancelation_action = self.CANCELATION_ACTION_NONE

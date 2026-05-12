@@ -20,7 +20,7 @@ from blitz_api.services import (
     getMessageTranslate,
 )
 from log_management.models import Log, EmailLog
-from retirement.services import refund_retreat, send_retreat_confirmation_email
+from retirement.services import send_retreat_confirmation_email
 from store.exceptions import PaymentAPIError
 from store.models import (
     Order,
@@ -368,6 +368,7 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
         allow_blank=True,
         allow_null=True,
     )
+    refund_state = serializers.SerializerMethodField()
 
     def validate(self, attrs):
         """Prevents overlapping reservations."""
@@ -663,6 +664,15 @@ class ReservationSerializer(serializers.HyperlinkedModelSerializer):
             )
 
         return Reservation.objects.get(id=instance_pk)
+
+    def get_refund_state(self, obj):
+        refund = Refund.objects.filter(
+            orderline=obj.order_line,
+        ).first()
+        if refund:
+            return refund.get_state()
+        else:
+            return None
 
     def to_representation(self, instance):
         is_staff = self.context['request'].user.is_staff

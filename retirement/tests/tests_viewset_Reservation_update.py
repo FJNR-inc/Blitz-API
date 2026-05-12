@@ -177,6 +177,7 @@ class ReservationTests(APITestCase):
             'cancelation_date': None,
             'cancelation_action': None,
             'cancelation_reason': None,
+            'refund_state': None,
             'refundable': True,
             'exchangeable': True,
             'invitation': None,

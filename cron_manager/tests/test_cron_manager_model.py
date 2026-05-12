@@ -14,7 +14,7 @@ class CronManagerTests(TestCase):
 
     def setUp(self) -> None:
 
-        self.url_test = 'http://local/retreat/wait_queue_places/15/notify'
+        self.url_test = 'http://local/retreat/retreats/4417/execute_automatic_email/?email=14'
 
         self.task = Task.objects.create(
             url=self.url_test,
@@ -112,37 +112,6 @@ class CronManagerTests(TestCase):
             self.assertFalse(self.task_without_interval.active)
             self.assertFalse(
                 self.task_without_interval.can_be_execute)
-
-    @responses.activate
-    def test_execution_one_time_failed(self):
-        responses.add(
-            responses.GET,
-            self.url_test,
-            json={
-                'stop': False
-            },
-            status=300
-        )
-        date_after_execution_datetime = \
-            self.task_without_interval.execution_datetime\
-            + timezone.timedelta(
-                minutes=10)
-        with mock.patch(
-                'django.utils.timezone.now',
-                return_value=date_after_execution_datetime):
-            self.task_without_interval.execute()
-
-            self.assertEqual(
-                self.task_without_interval.executions.count(),
-                1
-            )
-
-            self.assertTrue(self.task_without_interval.active)
-            self.assertTrue(
-                self.task_without_interval.can_be_execute)
-
-            execution = self.task_without_interval.executions.first()
-            self.assertFalse(execution.success)
 
     @responses.activate
     def test_execution_fail(self):

@@ -335,7 +335,11 @@ class Refund(SafeDeleteModel):
     Represents a refund. It is always linked to an orderline and it can refund
     it fully or partially.
     """
-
+    
+    REFUND_STATE_NOT_REFUNDED = 'not_refunded'
+    REFUND_STATE_PARTIALLY_REFUNDED = 'partially_refunded'
+    REFUND_STATE_REFUNDED = 'refunded'
+    
     class Meta:
         verbose_name = _("Refund")
         verbose_name_plural = _("Refunds")
@@ -364,18 +368,108 @@ class Refund(SafeDeleteModel):
         verbose_name=_("Refund date"),
     )
 
-    refund_id = models.CharField(
-        verbose_name=_("Refund ID"),
-        max_length=253,
-        null=True,
-        blank=True,
-    )
-
     history = HistoricalRecords()
 
     def __str__(self):
         return str(self.orderline) + ', ' + str(self.amount) + "$"
 
+    def remaining_amount_to_refund(self):
+        refunded_amount = 0
+        for transaction in self.transactions.filter(is_successful=True):
+            refunded_amount += transaction.amount
+
+        return self.amount - refunded_amount
+    
+    def get_state(self):
+        if self.transactions.filter(is_successful=True).exists():
+            if self.remaining_amount_to_refund() > 0:
+                return self.REFUND_STATE_PARTIALLY_REFUNDED
+            else:
+                return self.REFUND_STATE_REFUNDED
+        else:
+            return self.REFUND_STATE_NOT_REFUNDED
+
+    def process_automatic_refund(self):
+        amount_to_process = self.remaining_amount_to_refund()
+
+        try:
+            refund_response = refund_amount(
+                self.orderline.order.settlement_id,
+                amount_to_process
+            )
+            refund_res_content = refund_response.json()
+
+            RefundTransaction.objects.create(
+                refund=self,
+                amount=amount_to_process,
+                transaction_date=timezone.now(),
+                transaction_id=refund_res_content['id'],
+                is_successful=True,
+            )
+        except PaymentAPIError as err:
+            error_message = str(err.detail)
+
+            if str(err) == PAYSAFE_EXCEPTION['3406']:
+                error_message = "The order has not been charged yet. Try again later." + str(err.detail)
+
+            if str(err) == PAYSAFE_EXCEPTION['3404']:
+                error_message = "The order has already been refunded by Paysafe." + str(err.detail)
+                
+            RefundTransaction.objects.create(
+                refund=self,
+                amount=amount_to_process,
+                transaction_date=timezone.now(),
+                transaction_id=None,
+                is_successful=False,
+                details=error_message
+            )
+        except Exception:
+            RefundTransaction.objects.create(
+                refund=self,
+                amount=amount_to_process,
+                transaction_date=timezone.now(),
+                transaction_id=None,
+                is_successful=False,
+            )
+
+class RefundTransaction(SafeDeleteModel):
+    
+    refund = models.ForeignKey(
+        Refund,
+        on_delete=models.CASCADE,
+        verbose_name=_("Refund"),
+        related_name='transactions',
+    )
+    
+    amount = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        verbose_name=_("Amount"),
+    )
+
+    transaction_date = models.DateTimeField(
+        verbose_name=_("Transaction date"),
+        auto_now_add=True,
+    )
+    
+    
+    transaction_id = models.CharField(
+        verbose_name=_("Refund ID"),
+        max_length=253,
+        null=True,
+        blank=True,
+    )
+    
+    details = models.TextField(
+        verbose_name=_("Details"),
+        max_length=1000,
+        null=True,
+        blank=True,
+    )
+    
+    is_successful = models.BooleanField(
+        verbose_name=_("Is successful"),
+    )
 
 class BaseProduct(models.Model, ProductDisplayMixin):
     objects = TranslatedInheritanceManager()

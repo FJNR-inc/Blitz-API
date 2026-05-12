@@ -67,6 +67,7 @@ class ReservationTests(CustomAPITestCase):
         'cancelation_date',
         'cancelation_reason',
         'refundable',
+        'refund_state',
         'exchangeable',
         'retreat',
         'order_line',
@@ -247,6 +248,7 @@ class ReservationTests(CustomAPITestCase):
             'cancelation_date': None,
             'cancelation_action': None,
             'cancelation_reason': None,
+            'refund_state': None,
             'refundable': True,
             'exchangeable': True,
             'invitation': None,
@@ -1502,8 +1504,10 @@ class ReservationTests(CustomAPITestCase):
     @responses.activate
     def test_delete_refund_too_fast(self):
         """
-        Ensure that a user can't get a refund if the order payment has not been
-        processed completely.
+        Ensure that the cancellation of the reservation will still succeed even if the user can't get a
+        refund because the order payment has not been processed completely.
+        
+        Refund will be created, RefundTransaction will be managed outside of the call, asynchronously.
         """
         self.client.force_authenticate(user=self.user)
 
@@ -1528,88 +1532,15 @@ class ReservationTests(CustomAPITestCase):
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_400_BAD_REQUEST,
+            status.HTTP_204_NO_CONTENT,
             response.content
         )
 
-        content = {
-            'non_field_errors': [
-                "The order has not been charged yet. Try again later."
-            ]
-        }
-
-        self.assertEqual(
-            json.loads(response.content).get('non_field_errors'),
-            content.get('non_field_errors'))
-
         self.reservation.refresh_from_db()
 
-        self.assertTrue(self.reservation.is_active)
-        self.assertEqual(self.reservation.cancelation_reason, None)
-        self.assertEqual(self.reservation.cancelation_action, None)
-        self.assertEqual(self.reservation.cancelation_date, None)
+        self.assertFalse(self.reservation.is_active)
+        self.assertEqual(self.reservation.cancelation_reason, "U")
+        self.assertEqual(self.reservation.cancelation_action, "R")
+        self.assertEqual(self.reservation.cancelation_date, FIXED_TIME)
 
-        self.reservation.is_active = True
-        self.reservation.cancelation_date = None
-        self.reservation.cancelation_reason = None
-
-        self.assertEqual(len(mail.outbox), 0)
-
-    @responses.activate
-    def test_delete_refund_error(self):
-        """
-        Ensure that a user can cancel one of his retreat reservations.
-        By canceling 'min_day_refund' days or more before the event, the user
-         will be refunded 'refund_rate'% of the price paid.
-        The user will receive an email confirming the refund or inviting the
-         user to contact the support if payment informations are no longer
-         valid.
-        If the user cancels less than 'min_day_refund' days before the event,
-         no refund is made.
-        """
-        self.client.force_authenticate(user=self.user)
-
-        responses.add(
-            responses.POST,
-            "http://example.com/cardpayments/v1/accounts/0123456789/"
-            "settlements/1/refunds",
-            json=UNKNOWN_EXCEPTION,
-            status=400
-        )
-
-        FIXED_TIME = datetime(2018, 1, 1, tzinfo=LOCAL_TIMEZONE)
-
-        with mock.patch(
-                'django.utils.timezone.now', return_value=FIXED_TIME):
-            response = self.client.delete(
-                reverse(
-                    'retreat:reservation-detail',
-                    kwargs={'pk': self.reservation.id},
-                ),
-            )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_400_BAD_REQUEST,
-            response.content
-        )
-
-        content = {
-            'message': "The request could not be processed."
-        }
-
-        # Receiving a 'bytes' object, which is probably wrong...
-        # self.assertEqual(json.dumps(response.content), content)
-
-        self.reservation.refresh_from_db()
-
-        self.assertTrue(self.reservation.is_active)
-        self.assertEqual(self.reservation.cancelation_reason, None)
-        self.assertEqual(self.reservation.cancelation_action, None)
-        self.assertEqual(self.reservation.cancelation_date, None)
-
-        self.reservation.is_active = True
-        self.reservation.cancelation_date = None
-        self.reservation.cancelation_reason = None
-
-        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(len(mail.outbox), 1)

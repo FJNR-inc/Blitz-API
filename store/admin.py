@@ -84,6 +84,49 @@ class RefundAdmin(SimpleHistoryAdmin, ExportActionModelAdmin):
     # https://github.com/farhan0581/django-admin-autocomplete-filter/blob/master/README.md#usage
     class Media:
         pass
+    
+
+class RefundUserFilter(AutocompleteFilter):
+    title = 'User'
+    field_name = 'user'
+    rel_model = Order
+
+    @property
+    def parameter_name(self):
+        return "refund__orderline__order__user"
+
+    @parameter_name.setter
+    def parameter_name(self, value):
+        pass
+
+
+class RefundTransactionAdmin(SimpleHistoryAdmin):
+    list_display = (
+        'refund',
+        'amount',
+        'transaction_date',
+        'transaction_id',
+        'is_successful',
+    )
+    
+    list_filter = (
+        'is_successful',
+        'transaction_date',
+        RefundUserFilter,
+    )
+    
+    search_fields = (
+        'refund__orderline__order__user__email',
+        'refund__orderline__order__user__username',
+        'refund__amount',
+    )
+    
+    autocomplete_fields = ('refund',)
+    
+    def lookup_allowed(self, lookup, value):
+        if lookup == "refund__orderline__order__user":
+            return True
+        return super().lookup_allowed(lookup, value)
 
 
 class MembershipAdmin(SimpleHistoryAdmin, TranslationAdmin,
