@@ -14,7 +14,7 @@ def populate_refund_transaction(apps, schema_editor):
             amount=refund.amount,
             transaction_date=refund.refund_date,
             transaction_id=refund.refund_id,
-            is_successful=refund.is_successful
+            is_successful=True
         )
 
 class Migration(migrations.Migration):
