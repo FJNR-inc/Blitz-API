@@ -21,8 +21,18 @@ LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 def _get_coupon_export_usage(coupon):
     usages_per_order = {}
     for line in OrderLine.objects.filter(coupon=coupon):
-        is_refunded = Refund.objects.filter(orderline=line).exists()
-        if is_refunded: continue
+        
+        # We want to exclude the orderlines that have been refunded, since the coupon has not been used in the end
+        if Refund.objects.filter(orderline=line).exists():
+            continue
+        
+        # Sometimes, we have a cancellation, but since the price was 0 (due to the coupon) we don't have a refund
+        # This allow to not display these lines
+        cancellations = RetreatReservation.objects.filter(order_line=line, is_active=False)
+        if line.content_type.model == 'retreat':
+            if cancellations.exists():
+                continue
+        
         if line.order.id not in usages_per_order:
             usages_per_order[line.order.id] = {
                 'date': line.order.transaction_date.
