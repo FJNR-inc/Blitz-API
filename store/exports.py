@@ -14,6 +14,10 @@ from store.models import (
     OrderLine,
     Refund,
 )
+from retirement.models import (
+    Reservation as RetreatReservation,
+)
+
 
 LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
 
