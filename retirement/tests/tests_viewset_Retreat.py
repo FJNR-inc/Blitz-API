@@ -1041,7 +1041,7 @@ class RetreatTests(CustomAPITestCase):
 
         self.retreat.refresh_from_db()
         self.assertFalse(self.retreat.is_active)
-        self.assertTrue(self.retreat.hide_from_client_admin_panel)
+        self.assertFalse(self.retreat.hide_from_client_admin_panel)
 
         self.retreat.is_active = True
 
@@ -1120,7 +1120,7 @@ class RetreatTests(CustomAPITestCase):
 
         self.retreat.refresh_from_db()
         self.assertFalse(self.retreat.is_active)
-        self.assertTrue(self.retreat.hide_from_client_admin_panel)
+        self.assertFalse(self.retreat.hide_from_client_admin_panel)
 
         self.retreat.is_active = True
 

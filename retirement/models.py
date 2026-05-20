@@ -1096,7 +1096,6 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         A refund will be made if applicable to all participants
         """
         self.is_active = False
-        self.hide_from_client_admin_panel = True
         self.process_impacted_users(
             'deletion', deletion_message, refund_policy)
         self.save()
