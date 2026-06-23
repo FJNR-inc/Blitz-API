@@ -155,7 +155,7 @@ class RetreatAdmin(SimpleHistoryAdmin,
         'is_active',
         'require_purchase_room',
         'hidden',
-        'hide_from_client_admin_panel',
+        'is_cancelled',
     ) + SafeDeleteAdmin.list_filter
 
     search_fields = [

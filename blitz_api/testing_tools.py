@@ -78,12 +78,13 @@ class CustomAPITestCase(APITestCase):
             attrs = self.ATTRIBUTES
 
         missing_keys = list(set(attrs) - set(content.keys()))
-        extra_keys = list(set(content.keys()) - set(attrs))
         self.assertEqual(
             len(missing_keys),
             0,
             'You miss some attributes: ' + str(missing_keys)
         )
+        
+        extra_keys = list(set(content.keys()) - set(attrs))
         self.assertEqual(
             len(extra_keys),
             0,

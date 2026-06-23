@@ -94,7 +94,8 @@ class RetreatTests(CustomAPITestCase):
         'number_of_tomatoes',
         'animator',
         'display_start_time',
-        'hide_from_client_admin_panel',
+        'is_cancelled',
+        'cancelled_at',
         'require_purchase_room',
         'available_on_retreat_types',
         'is_specific_to_community',
@@ -1041,7 +1042,7 @@ class RetreatTests(CustomAPITestCase):
 
         self.retreat.refresh_from_db()
         self.assertFalse(self.retreat.is_active)
-        self.assertFalse(self.retreat.hide_from_client_admin_panel)
+        self.assertTrue(self.retreat.is_cancelled)
 
         self.retreat.is_active = True
 
@@ -1120,7 +1121,7 @@ class RetreatTests(CustomAPITestCase):
 
         self.retreat.refresh_from_db()
         self.assertFalse(self.retreat.is_active)
-        self.assertFalse(self.retreat.hide_from_client_admin_panel)
+        self.assertTrue(self.retreat.is_cancelled)
 
         self.retreat.is_active = True
 

@@ -269,7 +269,29 @@ class UserViewSet(ExportMixin, viewsets.ModelViewSet):
             return Response(content, status=status.HTTP_403_FORBIDDEN)
         
         # Process export in background
-        export_personal_data_of_users.delay(request.user.id, user.id)
+        export_personal_data_of_users.delay(
+            author_id=request.user.id, 
+            user_id=user.id
+        )
+        return Response(status=status.HTTP_200_OK)
+    
+    @action(methods=['post'], detail=False)
+    def trigger_global_personal_data_export(self, request):
+        is_admin = self.request.user.is_superuser
+
+        # Only admin can trigger a global personal data export
+        if not is_owner and not is_admin:
+            content = {
+                'non_field_errors': _(
+                    "You can't export global personal data."
+                ),
+            }
+            return Response(content, status=status.HTTP_403_FORBIDDEN)
+        
+        # Process export in background
+        export_personal_data_of_users.delay(
+            author_id=request.user.id
+        )
         return Response(status=status.HTTP_200_OK)
 
 

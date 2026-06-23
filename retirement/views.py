@@ -184,7 +184,6 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
                 is_active=True,
                 hidden=False
             )
-        queryset = queryset.filter(hide_from_client_admin_panel=False)
 
         queryset = queryset.annotate(
             max_end_date=Max('retreat_dates__end_time'),
@@ -226,7 +225,10 @@ class RetreatViewSet(ExportMixin, viewsets.ModelViewSet):
         
         if instance.is_active:
             instance.custom_delete(deletion_message, refund_policy)
-        
+        elif not instance.is_cancelled:
+            instance.is_cancelled = True
+            instance.cancelled_at = timezone.now()
+            instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @transaction.atomic()

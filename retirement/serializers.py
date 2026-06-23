@@ -168,6 +168,8 @@ class RetreatSerializer(BaseProductSerializer):
     places_remaining = serializers.ReadOnlyField()
     total_reservations = serializers.ReadOnlyField()
     is_active = serializers.BooleanField(read_only=True)
+    is_cancelled = serializers.ReadOnlyField()
+    cancelled_at = serializers.ReadOnlyField()
     reserved_seats = serializers.ReadOnlyField()
     timezone = TimezoneField(
         required=True,

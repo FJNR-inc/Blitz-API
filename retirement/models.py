@@ -421,9 +421,15 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         blank=False,
     )
 
-    hide_from_client_admin_panel = models.BooleanField(
-        verbose_name=_("Hide from client admin panel"),
+    is_cancelled = models.BooleanField(
+        verbose_name=_("Is cancelled"),
         default=False,
+    )
+    
+    cancelled_at = models.DateTimeField(
+        verbose_name=_("Cancelled at"),
+        null=True,
+        blank=True,
     )
 
     # Overwrite the number of tomatoes of the retreat
@@ -1096,6 +1102,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         A refund will be made if applicable to all participants
         """
         self.is_active = False
+        self.is_cancelled = True
+        self.cancelled_at = timezone.now()
         self.process_impacted_users(
             'deletion', deletion_message, refund_policy)
         self.save()
