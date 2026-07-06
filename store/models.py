@@ -17,6 +17,7 @@ from django.contrib.contenttypes.fields import (
     GenericForeignKey,
     GenericRelation,
 )
+from django.utils import timezone
 from django.core.mail import send_mail
 from django.contrib.contenttypes.models import ContentType
 from django.template.loader import render_to_string
@@ -26,6 +27,7 @@ from blitz_api.models import AcademicLevel, Organization, Affiliation
 from modeltranslation.manager import MultilingualManager
 from model_utils.managers import InheritanceManagerMixin
 from log_management.models import Log, EmailLog
+from store.exceptions import PaymentAPIError
 
 User = get_user_model()
 
@@ -390,12 +392,14 @@ class Refund(SafeDeleteModel):
             return self.REFUND_STATE_NOT_REFUNDED
 
     def process_automatic_refund(self):
+        from store.services import refund_amount, PAYSAFE_EXCEPTION
+
         amount_to_process = self.remaining_amount_to_refund()
 
         try:
             refund_response = refund_amount(
                 self.orderline.order.settlement_id,
-                amount_to_process
+                int(round(amount_to_process * 100))
             )
             refund_res_content = refund_response.json()
 
@@ -423,13 +427,14 @@ class Refund(SafeDeleteModel):
                 is_successful=False,
                 details=error_message
             )
-        except Exception:
+        except Exception as err:
             RefundTransaction.objects.create(
                 refund=self,
                 amount=amount_to_process,
                 transaction_date=timezone.now(),
                 transaction_id=None,
                 is_successful=False,
+                details="An unexpected error occurred while processing the refund: " + str(err)
             )
 
 class RefundTransaction(SafeDeleteModel):

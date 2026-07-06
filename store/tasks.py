@@ -1,5 +1,6 @@
 import requests
 
+from decimal import Decimal
 from celery import shared_task
 from django.db import transaction
 from django.db.models import Q
@@ -14,13 +15,15 @@ from store.models import Refund, RefundTransaction
 @shared_task
 def process_refund():
     # Get refunds where the total successful transaction amount is less than the refund amount
+    amount_field = Refund._meta.get_field("amount")
     refunds = Refund.objects.annotate(
         successful_amount=Coalesce(
             Sum(
-                'transactions__amount',
-                filter=Q(transactions__is_successful=True)
+                "transactions__amount",
+                filter=Q(transactions__is_successful=True),
             ),
-            Value(0)
+            Value(Decimal("0")),
+            output_field=amount_field,
         )
     ).filter(
         successful_amount__lt=F('amount')
