@@ -67,15 +67,21 @@ def disable_inactive_users():
 
 
 @shared_task
-def export_personal_data_of_users(author_id, user_id):
-    queryset = get_user_model().objects.filter(id=user_id)
+def export_personal_data_of_users(author_id, user_id=None):
+    queryset = get_user_model().objects.all()
+    
+    if user_id:
+        queryset = queryset.filter(id=user_id)
 
     dataset = UserPersonalDataResource().export(queryset)
 
     LOCAL_TIMEZONE = pytz.timezone(settings.TIME_ZONE)
     date_file = LOCAL_TIMEZONE.localize(datetime.now()).strftime("%Y%m%d-%H%M%S")
 
-    filename = f'export-personal-data-user-{user_id}-{date_file}.xls'
+    if user_id:
+        filename = f'export-personal-data-user-{user_id}-{date_file}.xls'
+    else:
+        filename = f'export-personal-data-users-{date_file}.xls'
 
     new_export = ExportMedia.objects.create(
         name=filename,

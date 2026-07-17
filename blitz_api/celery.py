@@ -34,6 +34,10 @@ app.conf.beat_schedule = {
         'task': 'retirement.tasks.notify_wait_queue_place',
         'schedule': crontab(minute=0, hour='*'),
     },
+    'process_refunds': {
+        'task': 'store.tasks.process_refund',
+        'schedule': crontab(minute=0, hour='*'),
+    },
 }
 
 app.autodiscover_tasks()

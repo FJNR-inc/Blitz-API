@@ -421,9 +421,15 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         blank=False,
     )
 
-    hide_from_client_admin_panel = models.BooleanField(
-        verbose_name=_("Hide from client admin panel"),
+    is_cancelled = models.BooleanField(
+        verbose_name=_("Is cancelled"),
         default=False,
+    )
+    
+    cancelled_at = models.DateTimeField(
+        verbose_name=_("Cancelled at"),
+        null=True,
+        blank=True,
     )
 
     # Overwrite the number of tomatoes of the retreat
@@ -1096,7 +1102,8 @@ class Retreat(Address, SafeDeleteModel, BaseProduct):
         A refund will be made if applicable to all participants
         """
         self.is_active = False
-        self.hide_from_client_admin_panel = True
+        self.is_cancelled = True
+        self.cancelled_at = timezone.now()
         self.process_impacted_users(
             'deletion', deletion_message, refund_policy)
         self.save()
@@ -1338,18 +1345,11 @@ class Reservation(SafeDeleteModel):
         # paysafe use value without cent
         amount_to_refund_paysafe = int(round(amount_to_refund * 100))
 
-        refund_response = refund_amount(
-            self.order_line.order.settlement_id,
-            amount_to_refund_paysafe
-        )
-        refund_res_content = refund_response.json()
-
         refund = Refund.objects.create(
             orderline=self.order_line,
             refund_date=timezone.now(),
             amount=amount_to_refund,
             details=refund_reason,
-            refund_id=refund_res_content['id'],
         )
         return refund
 
@@ -1478,38 +1478,10 @@ class Reservation(SafeDeleteModel):
                         )]
                     })
                 if process_refund:
-                    try:
-                        refund = self.make_refund(
-                            self.REFUND_REASON[cancel_reason],
-                            refund_policy
-                        )
-                    except PaymentAPIError as err:
-                        if str(err) == PAYSAFE_EXCEPTION['3406']:
-                            raise rest_framework_serializers.ValidationError({
-                                'non_field_errors': [_(
-                                    "The order has not been charged yet. Try "
-                                    "again later."
-                                )],
-                                'detail': err.detail
-                            })
-                        if str(err) == PAYSAFE_EXCEPTION['3404']:
-                            raise rest_framework_serializers.ValidationError({
-                                'non_field_errors': [_(
-                                    "The order has already been refunded by "
-                                    "Paysafe."
-                                )],
-                                'detail': err.detail
-                            })
-                        raise rest_framework_serializers.ValidationError(
-                            {
-                                'message': str(err),
-                                'non_field_errors': [_(
-                                    "An error occured with the payment system."
-                                    " Please try again later."
-                                )],
-                                'detail': err.detail
-                            }
-                        )
+                    refund = self.make_refund(
+                        self.REFUND_REASON[cancel_reason],
+                        refund_policy
+                    )
                     self.cancelation_action = self.CANCELATION_ACTION_REFUND
                 else:
                     self.cancelation_action = self.CANCELATION_ACTION_NONE
@@ -1519,15 +1491,18 @@ class Reservation(SafeDeleteModel):
                 self.cancelation_date = timezone.now()
                 self.save()
 
-                # Rollback the coupon number of use if the reservation
-                # was done with a coupon
-                if order_line and order_line.coupon:
-                    coupon_user = CouponUser.objects.get(
-                        user=user,
-                        coupon=order_line.coupon,
-                    )
-                    coupon_user.uses = coupon_user.uses - 1
-                    coupon_user.save()
+                # Coupon are considered as a payment method, so we rollback usage only
+                # if we process a refund, not in the case of a simple cancelation without refund.
+                if process_refund:
+                    # Rollback the coupon number of use if the reservation
+                    # was done with a coupon
+                    if order_line and order_line.coupon:
+                        coupon_user = CouponUser.objects.get(
+                            user=user,
+                            coupon=order_line.coupon,
+                        )
+                        coupon_user.uses = coupon_user.uses - 1
+                        coupon_user.save()
 
                 # Create WaitQueuePlace unless retreat is deleted
                 if cancel_reason != self.CANCELATION_REASON_RETREAT_DELETED:

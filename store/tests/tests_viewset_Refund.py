@@ -117,7 +117,7 @@ class RefundTests(APITestCase):
                 'details': "Refund details",
                 'amount': '10.00',
                 'refund_date': response_data['results'][0]['refund_date'],
-                'refund_id': None,
+                'transactions': [],
                 'url': f'http://testserver/refunds/{self.refund.id}'
             }]
         }
@@ -153,7 +153,7 @@ class RefundTests(APITestCase):
                 'details': "Refund details",
                 'amount': '10.00',
                 'refund_date': response_data['results'][0]['refund_date'],
-                'refund_id': None,
+                'transactions': [],
                 'url': f'http://testserver/refunds/{self.refund.id}'
             }, {
                 'orderline': f'http://testserver/order_lines/{self.order_line_admin.id}',
@@ -161,7 +161,7 @@ class RefundTests(APITestCase):
                 'details': "Admin refund details",
                 'amount': '10.00',
                 'refund_date': response_data['results'][1]['refund_date'],
-                'refund_id': None,
+                'transactions': [],
                 'url': f'http://testserver/refunds/{self.refund_admin.id}'
             }]
         }
@@ -207,7 +207,7 @@ class RefundTests(APITestCase):
             'details': "Refund details",
             'amount': '10.00',
             'refund_date': response_data['refund_date'],
-            'refund_id': None,
+            'transactions': [],
             'url': f'http://testserver/refunds/{self.refund.id}'
         }
 
@@ -255,7 +255,7 @@ class RefundTests(APITestCase):
             'details': "Refund details",
             'amount': '10.00',
             'refund_date': response_data['refund_date'],
-            'refund_id': None,
+            'transactions': [],
             'url': f'http://testserver/refunds/{self.refund.id}'
         }
 

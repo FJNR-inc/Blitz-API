@@ -107,49 +107,6 @@ def send_retreat_confirmation_email(user, retreat):
         return []
 
 
-def refund_retreat(reservation, refund_rate, refund_reason):
-    """
-    reservation: Reservation model instance
-    refund_rate: integer from 0 to 100 defining percentage of amount refunded
-    refund_reason: string for additonnal details
-
-    This function finds the order associated to the reservation and does a
-    complete refund. It also creates the Refund object to keep track of the
-    transaction.
-    """
-    orderline = reservation.order_line
-    user = orderline.order.user
-    retreat = reservation.retreat
-    previous_refunds = orderline.refunds
-    refunded_amount = Decimal(0)
-
-    if previous_refunds:
-        refunded_amount = sum(
-            previous_refunds.all().values_list('amount', flat=True)
-        )
-
-    amount_to_refund = (retreat.price - refunded_amount) * refund_rate
-
-    tax = round(amount_to_refund * Decimal(TAX_RATE), 2)
-    amount_to_refund *= Decimal(TAX_RATE + 1)
-
-    refund_response = refund_amount(
-        orderline.order.settlement_id,
-        int(amount_to_refund)
-    )
-    refund_res_content = refund_response.json()
-
-    refund_instance = Refund.objects.create(
-        orderline=orderline,
-        refund_date=timezone.now(),
-        amount=amount_to_refund / 100,
-        details=refund_reason,
-        refund_id=refund_res_content['id'],
-    )
-
-    return refund_instance
-
-
 def send_automatic_email(user, retreat, email):
     """
     This function sends an automatic email to notify a user that has an

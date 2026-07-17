@@ -27,28 +27,48 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
 from blitz_api.models import Organization
-from blitz_api.services import (remove_translation_fields,
-                                check_if_translated_field,
-                                getMessageTranslate)
+from blitz_api.services import (
+    remove_translation_fields,
+    check_if_translated_field,
+    getMessageTranslate,
+)
 from log_management.models import Log, EmailLog
 from retirement.services import send_retreat_confirmation_email
 from workplace.models import Reservation
-from retirement.models import Reservation as RetreatReservation, \
-    RetreatInvitation
+from retirement.models import (
+    Reservation as RetreatReservation,
+    RetreatInvitation,
+)
 from retirement.models import (
     Retreat,
     RetreatType
 )
 
-from .exceptions import PaymentAPIError
-from .models import (Package, Membership, Order, OrderLine, BaseProduct,
-                     PaymentProfile, CustomPayment, Coupon, CouponUser, Refund,
-                     MembershipCoupon, OptionProduct, OrderLineBaseProduct)
-from .services import (charge_payment,
-                       create_external_payment_profile,
-                       create_external_card,
-                       get_external_cards,
-                       PAYSAFE_CARD_TYPE, )
+from store.exceptions import PaymentAPIError
+from store.models import (
+    Package, 
+    Membership, 
+    Order, 
+    OrderLine, 
+    BaseProduct,
+    PaymentProfile, 
+    CustomPayment, 
+    Coupon, 
+    CouponUser, 
+    Refund,
+    RefundTransaction,
+    MembershipCoupon, 
+    OptionProduct, 
+    OrderLineBaseProduct
+)
+
+from store.services import (
+    charge_payment,
+    create_external_payment_profile,
+    create_external_card,
+    get_external_cards,
+    PAYSAFE_CARD_TYPE, 
+)
 
 User = get_user_model()
 
@@ -1194,15 +1214,26 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
         )
         usages_per_order = {}
         for line in OrderLine.objects.filter(coupon=instance):
-            is_refunded = Refund.objects.filter(orderline=line).exists()
-            if is_refunded: continue
+            refunds = Refund.objects.filter(orderline=line)
+            is_refunded = refunds.exists()
             
             # Sometimes, we have a cancellation, but since the price was 0 (due to the coupon) we don't have a refund
             # This allow to not display these lines
             is_canceled = False
+            cancellations = RetreatReservation.objects.filter(order_line=line, is_active=False)
             if line.content_type.model == 'retreat':
-                is_canceled = RetreatReservation.objects.filter(
-                    order_line=line, is_active=False).exists()
+                is_canceled = cancellations.exists()
+    
+            cancellation_reason = []
+            for refund in refunds:
+                if refund.details:
+                    cancellation_reason.append(refund.details)
+            for cancellation in cancellations:
+                if cancellation.cancelation_reason:
+                    cancellation_reason.append(cancellation.cancelation_reason)
+            cancellation_reason = ', '.join(cancellation_reason)
+                
+            amount_used = line.coupon_real_value if not (is_refunded or is_canceled) else 0
             
             if line.order.id not in usages_per_order:
                 usages_per_order[line.order.id] = {
@@ -1214,7 +1245,7 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
                             'view': self.context['view'],
                         },
                     ).data,
-                    'amount_used': line.coupon_real_value,
+                    'amount_used': amount_used,
                     'user_university': OrganizationSerializer(
                         line.order.user.university,
                         context={
@@ -1223,15 +1254,27 @@ class CouponSerializer(serializers.HyperlinkedModelSerializer):
                         },
                     ).data,
                     'product_name': set(),
+                    'orderlines': [
+                        {
+                            'amount_used': line.coupon_real_value,
+                            'is_refunded': is_refunded or is_canceled,
+                            'cancellation_reason': cancellation_reason,
+                        }
+                    ]
                 }
                 usages_per_order[line.order.id]['product_name'].add(
                     line.content_object.name)
             else:
-                usages_per_order[line.order.id]['amount_used'] += \
-                    line.coupon_real_value
+                usages_per_order[line.order.id]['amount_used'] += amount_used
                 usages_per_order[line.order.id]['product_name'].add(
                         line.content_object.name
                     )
+                usages_per_order[line.order.id]['orderlines'].append({
+                    'amount_used': line.coupon_real_value,
+                    'is_refunded': is_refunded or is_canceled,
+                    'cancellation_reason': cancellation_reason,
+                })
+
         display_usages = []
         for key, value in usages_per_order.items():
             value['product_name'] = ', '.join(list(sorted(value['product_name'])))
@@ -1342,8 +1385,19 @@ class CouponUserSerializer(serializers.HyperlinkedModelSerializer):
         exclude = ('deleted', 'deleted_by_cascade')
 
 
+class RefundTransactionSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = RefundTransaction
+        exclude = ('deleted', 'deleted_by_cascade')
+
 class RefundSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
+    transactions = RefundTransactionSerializer(
+        many=True,
+        read_only=True,
+    )
 
     class Meta:
         model = Refund
