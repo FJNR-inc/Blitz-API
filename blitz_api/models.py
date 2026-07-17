@@ -198,10 +198,10 @@ class User(AbstractUser):
         dates = [date for date in dates if date is not None]
         if dates:
             return max(
-                timezone.datetime(2022, 12, 31, tzinfo=timezone.utc),
+                timezone.datetime(2022, 12, 31, tzinfo=datetime.timezone.utc),
                 *dates
             )
-        return timezone.datetime(2022, 12, 31, tzinfo=timezone.utc)
+        return timezone.datetime(2022, 12, 31, tzinfo=datetime.timezone.utc)
     
     def send_inactivity_alert(self):
         if settings.LOCAL_SETTINGS['EMAIL_SERVICE'] is True:
