@@ -12,7 +12,7 @@ Pygments==2.20.0
 Markdown==3.10.2
 django-anymail==14.0
 Pillow==12.2.0
-django-simple-history==3.11.0
+django-simple-history==3.13.0
 python-decouple==3.8
 django-storages==1.14.6
 requests==2.34.2
