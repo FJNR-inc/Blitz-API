@@ -5,7 +5,7 @@ mkdocs-material==9.7.6
 Django==5.2.14
 djangorestframework==3.17.1
 django-cors-headers==4.9.0
-django-filter==25.2
+django-filter==26.1
 coreapi==2.3.3
 factory-boy==3.3.3
 Pygments==2.20.0
